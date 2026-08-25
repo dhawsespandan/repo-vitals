@@ -1,0 +1,21 @@
+# Runtime dependencies (installed on Render).
+# Pinned to compatible releases; free-tier RAM budget is 512 MB (§8).
+
+Django>=5.2,<5.3
+djangorestframework>=3.15,<4.0
+django-allauth>=65.0,<66.0
+django-environ>=0.12,<0.13
+psycopg[binary]>=3.2,<4.0
+cryptography>=44.0
+gunicorn>=23.0,<24.0
+whitenoise>=6.8,<7.0
+requests>=2.32,<3.0
+
+# Observability for the Phase 1 memory smoke test (§10 Phase 1).
+psutil>=6.0
+
+# fastembed (D7) is not used by request handling until Phase 8, but it is
+# installed from Phase 1 so `manage.py smoke_memory` measures the *real*
+# production worker footprint on the 512 MB tier. Never sentence-transformers
+# or torch: torch alone is ~700 MB installed.
+fastembed>=0.5,<1.0

@@ -1,0 +1,48 @@
+# Dev and research databases (D8: three database contexts).
+#
+#   docker compose up -d db                       → dev Postgres  (port 5432)
+#   docker compose --profile research up -d       → research Postgres (5433)
+#
+# Prod is Supabase and is never defined here. The research database lives on
+# the teammate's machine and holds corpus + backfill data only (D8/D10) — its
+# ~2-4 M dependency_history rows must never touch Supabase's 500 MB tier.
+
+services:
+  db:
+    image: postgres:16
+    container_name: repovitals-dev-db
+    environment:
+      POSTGRES_USER: repovitals
+      POSTGRES_PASSWORD: repovitals
+      POSTGRES_DB: repovitals
+    ports:
+      - "5432:5432"
+    volumes:
+      - dev_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U repovitals"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  research-db:
+    image: postgres:16
+    container_name: repovitals-research-db
+    profiles: ["research"]
+    environment:
+      POSTGRES_USER: repovitals
+      POSTGRES_PASSWORD: repovitals
+      POSTGRES_DB: repovitals_research
+    ports:
+      - "5433:5432"
+    volumes:
+      - research_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U repovitals"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  dev_pgdata:
+  research_pgdata:

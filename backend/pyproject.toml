@@ -1,0 +1,34 @@
+[tool.ruff]
+line-length = 90
+target-version = "py312"
+extend-exclude = [".venv", "*/migrations/*", "staticfiles"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "I",    # import sorting
+    "UP",   # pyupgrade
+    "B",    # bugbear
+    "C4",   # comprehensions
+    "DJ",   # django-specific
+    "S",    # bandit — this is a security tool; its own code should behave
+    "RUF",
+]
+ignore = [
+    "S101",   # assert: pytest is built on it
+    "E501",   # line length is the formatter's job, not the linter's
+    # Django and DRF are *built* on mutable class attributes
+    # (REQUIRED_FIELDS, Meta.fields, permission_classes). Annotating each one
+    # ClassVar to satisfy this rule adds noise and buys nothing.
+    "RUF012",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Settings modules are star-import by design (base -> dev/prod/test).
+"config/settings/*.py" = ["F403", "F405", "E402"]
+# Tests legitimately poke at internals and hard-code obviously-fake secrets.
+"tests/*.py" = ["S105", "S106", "S311", "SLF001"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "config"]
