@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "rest_framework",
     # Local
     "apps.common",
+    "apps.accounts",
 ]
 
 MIDDLEWARE = [
@@ -80,6 +81,13 @@ DATABASES["default"].setdefault("CONN_MAX_AGE", 60)
 if "postgresql" in DATABASES["default"].get("ENGINE", ""):
     DATABASES["default"].setdefault("OPTIONS", {}).setdefault("connect_timeout", 10)
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ── Identity ───────────────────────────────────────────────────────────────
+AUTH_USER_MODEL = "accounts.User"
+
+# Fernet key for app_users.encrypted_github_token. Rotating it invalidates
+# every stored token — users simply re-login (§6).
+TOKEN_ENCRYPTION_KEY = env("TOKEN_ENCRYPTION_KEY")
 
 # ── Sessions, CSRF, cookies (§2) ───────────────────────────────────────────
 SESSION_COOKIE_NAME = "repovitals_session"
