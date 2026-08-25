@@ -1,0 +1,7 @@
+/* Tailwind's layers only. The design system is imported after this file in
+   `main.tsx` so its rules win over Tailwind's preflight reset — an @import
+   here would have to sit above the @tailwind directives (CSS requires imports
+   first), which is exactly the wrong order. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
