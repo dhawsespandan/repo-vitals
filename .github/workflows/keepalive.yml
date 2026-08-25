@@ -1,0 +1,54 @@
+name: Keepalive
+
+# Two free-tier problems, one cron (§4.2, §8):
+#
+#   * Render free web services sleep after ~15 minutes of inactivity and take
+#     roughly 50 seconds to cold-start — long enough that a mentor demo or a
+#     marker's first click looks broken.
+#   * Supabase pauses free projects after about 7 idle days.
+#
+# `/api/health/` performs a real `SELECT 1`, so one request every 10 minutes
+# keeps the web service awake *and* counts as database activity. A cheaper
+# endpoint that skipped the query would let the database pause anyway.
+#
+# GitHub throttles scheduled workflows on busy runners, so the exact interval
+# drifts; that is fine, the requirement is "regularly", not "precisely".
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    name: ping production health endpoint
+    runs-on: ubuntu-latest
+    steps:
+      - name: GET /api/health/
+        env:
+          # Repository variable, not a secret: it is a public URL. Set it under
+          # Settings → Secrets and variables → Actions → Variables.
+          HEALTH_URL: ${{ vars.RENDER_HEALTH_URL }}
+        run: |
+          if [ -z "$HEALTH_URL" ]; then
+            echo "::error::RENDER_HEALTH_URL repository variable is not set."
+            exit 1
+          fi
+          # Retry: a request that lands during a cold start can exceed the
+          # default timeout, and one slow wake-up is not a failure.
+          for attempt in 1 2 3; do
+            status=$(curl -sS -o /tmp/health.json -w '%{http_code}' \
+              --max-time 90 "$HEALTH_URL" || echo "000")
+            echo "attempt $attempt -> HTTP $status"
+            if [ "$status" = "200" ]; then
+              cat /tmp/health.json
+              exit 0
+            fi
+            sleep 20
+          done
+          echo "::error::Health check did not return 200 after 3 attempts."
+          cat /tmp/health.json || true
+          exit 1
