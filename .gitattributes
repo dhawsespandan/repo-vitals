@@ -1,0 +1,9 @@
+# Normalise line endings so the repository is identical on Windows, macOS and
+# the Linux CI runner. Without this, files authored on Windows arrive with CRLF
+# and shell scripts inside workflows fail in ways that look like flakes.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.woff2 binary
+*.ico binary

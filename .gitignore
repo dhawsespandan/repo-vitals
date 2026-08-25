@@ -1,0 +1,42 @@
+# ── Python / Django ────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.sqlite3
+
+# ── Secrets & local config ─────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Local AI / vector store (D7, Phase 8) ──────────────────────────────────
+backend/.chroma/
+.fastembed_cache/
+
+# ── Node / frontend ────────────────────────────────────────────────────────
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+.vercel/
+
+# ── Research data (D8/D10): only manifests are versioned ───────────────────
+research_data/**
+!research_data/.gitkeep
+!research_data/**/.gitkeep
+!research_data/**/*manifest*.json
+
+# ── OS / editor ────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Claude Code local tooling (dev convenience, not part of the deliverable)
+.claude/
