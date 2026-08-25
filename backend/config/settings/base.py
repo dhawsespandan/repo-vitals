@@ -35,6 +35,10 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Third party
     "rest_framework",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.github",
     # Local
     "apps.common",
     "apps.accounts",
@@ -49,6 +53,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # Required by django-allauth >= 0.56.
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -84,6 +90,55 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # ── Identity ───────────────────────────────────────────────────────────────
 AUTH_USER_MODEL = "accounts.User"
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+
+# GitHub owns identity; RepoVitals owns the session. There are no passwords,
+# no local signup form, and no email flows — allauth is used purely as the
+# OAuth2 client (§2).
+ACCOUNT_LOGIN_METHODS = {"username"}
+ACCOUNT_SIGNUP_FIELDS: list[str] = []
+ACCOUNT_USER_MODEL_USERNAME_FIELD = "github_username"
+ACCOUNT_USER_MODEL_EMAIL_FIELD = "email"
+ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_ADAPTER = "apps.accounts.adapters.RepoVitalsAccountAdapter"
+
+SOCIALACCOUNT_ADAPTER = "apps.accounts.adapters.GitHubSocialAccountAdapter"
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
+SOCIALACCOUNT_QUERY_EMAIL = True
+# Skip allauth's interstitial "continue?" page: /api/auth/github/login/ is
+# itself the user's deliberate click.
+SOCIALACCOUNT_LOGIN_ON_GET = True
+# D-list §11 "OAuth token exposure": allauth must never persist the access
+# token in its own SocialToken table. The only copy lives Fernet-encrypted in
+# app_users.encrypted_github_token.
+SOCIALACCOUNT_STORE_TOKENS = False
+
+SOCIALACCOUNT_PROVIDERS = {
+    "github": {
+        # `repo` is the narrowest scope GitHub OAuth Apps offer that can read
+        # a private repository's tree. There is no read-only equivalent; the
+        # enforced mitigation is that no backend code ever issues a write call
+        # (grep-audited in Phase 9). A GitHub-App migration is out of scope
+        # (§12).
+        "SCOPE": ["repo", "read:user", "user:email"],
+        "APPS": [
+            {
+                "provider_id": "github",
+                "client_id": env("GITHUB_OAUTH_CLIENT_ID", default=""),
+                "secret": env("GITHUB_OAUTH_CLIENT_SECRET", default=""),
+                "key": "",
+            }
+        ],
+    }
+}
+
+LOGIN_REDIRECT_URL = f"{FRONTEND_URL}/dashboard"
+LOGIN_URL = f"{FRONTEND_URL}/login"
 
 # Fernet key for app_users.encrypted_github_token. Rotating it invalidates
 # every stored token — users simply re-login (§6).
