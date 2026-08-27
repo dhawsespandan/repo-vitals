@@ -166,14 +166,29 @@ org or its admins — confirmed live against two real orgs on the developer's
 account. This Phase 2 rule is the code-level backstop for the case where an
 org's OAuth restrictions are off and access would otherwise be silent.
 
-### 1.13 Memory smoke test result
+### 1.13 Memory smoke test result — the feasibility question is answered
 
 `manage.py smoke_memory` records worker RSS at four points plus the peak.
-**Record the production number here after the first Render deploy** — the
-figure that matters is the one measured on the 512 MB instance, not on a
-developer machine.
+Run on the real Render free instance (512 MB) by temporarily appending it to
+the build command (Shell access requires the paid Starter plan, so this was
+the only way to reach the live container) and reading the output from the
+deploy log.
 
-| Environment | Date | Baseline | After request | After thread | After embedding | Peak |
-|---|---|---|---|---|---|---|
-| Render free (prod) | _pending first deploy_ | | | | | |
-| Dev machine | _pending_ | | | | | |
+| Environment | Date | Baseline | After request | After thread | After model load | After embedding | Peak |
+|---|---|---|---|---|---|---|---|
+| Render free (prod) | 2026-08-27 | 70.2 MB | 84.1 MB | 86.3 MB | 270.7 MB | 274.5 MB | **274.5 MB / 512 MB (54%)** |
+
+**Verdict: comfortably within budget.** The jump from 86.3 MB to 270.7 MB —
+loading the fastembed ONNX model — is D7's whole justification, and it costs
+~185 MB, not the 700 MB+ torch would have. There is ~237 MB of headroom left
+for everything Phases 3–9 add (connection pool growth, Chroma, request
+handling under load), which is enough margin that memory is not expected to
+be a blocker again before Phase 8 re-verifies with Chroma loaded (§8).
+
+**Bug found and fixed by this run.** The "request cycle" step used Django's
+test `Client()`, which defaults to `Host: testserver` — prod's strict
+`ALLOWED_HOSTS` correctly rejected that with a 400 before the view ever ran,
+so that step measured almost nothing. Fixed by pointing the test client's
+`SERVER_NAME` at whatever host `ALLOWED_HOSTS` actually accepts. Did not
+warrant a second production run: the measurement that step was missing is
+small relative to the embedding step that dominates the peak.

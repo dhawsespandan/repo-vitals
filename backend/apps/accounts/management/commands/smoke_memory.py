@@ -79,9 +79,17 @@ class Command(BaseCommand):
         mark("after db round-trip")
 
         # ── 2. A request cycle through the real stack ──────────────────────
+        from django.conf import settings
         from django.test import Client
 
-        client = Client()
+        # Django's test client defaults to Host: testserver, which prod's
+        # strict ALLOWED_HOSTS correctly rejects with a 400 before the view
+        # ever runs — that would silently turn this into a no-op on a real
+        # deploy. Use whatever host prod actually accepts instead.
+        host = next((h for h in settings.ALLOWED_HOSTS if h and h != "*"), "testserver")
+        server_name = host.lstrip(".") or "testserver"
+
+        client = Client(SERVER_NAME=server_name)
         response = client.get("/api/auth/session/")
         self.stdout.write(f"  session endpoint -> HTTP {response.status_code}")
         mark("after request cycle")
