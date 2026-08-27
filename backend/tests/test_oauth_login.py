@@ -12,7 +12,7 @@ import pytest
 from allauth.account.signals import user_logged_in
 from allauth.core.exceptions import ImmediateHttpResponse
 from allauth.socialaccount.models import SocialAccount, SocialLogin, SocialToken
-from django.test import override_settings
+from django.test import RequestFactory, override_settings
 from django.urls import resolve, reverse
 
 from apps.accounts.adapters import GitHubSocialAccountAdapter
@@ -54,6 +54,25 @@ def test_adapter_tolerates_a_response_without_scope():
     token = adapter.parse_token({"access_token": TOKEN})
 
     assert getattr(token, SCOPES_ATTR) == ""
+
+
+@override_settings(FRONTEND_URL="https://repo-vitals.example.vercel.app")
+def test_callback_url_is_built_from_frontend_url_not_the_request_host():
+    """The whole point: GitHub's redirect must land back on the frontend's own
+    origin, not the backend's real hostname — see the docstring on
+    get_callback_url for why a mismatch here breaks the OAuth state lookup.
+    """
+    adapter = RepoVitalsGitHubOAuth2Adapter.__new__(RepoVitalsGitHubOAuth2Adapter)
+
+    factory = RequestFactory()
+    request = factory.get(
+        "/api/auth/github/login/", SERVER_NAME="repo-vitals-backend.onrender.com"
+    )
+
+    url = adapter.get_callback_url(request, app=None)
+
+    assert url == "https://repo-vitals.example.vercel.app/api/auth/github/callback/"
+    assert "onrender.com" not in url
 
 
 @pytest.mark.django_db

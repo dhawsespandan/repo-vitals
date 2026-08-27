@@ -80,7 +80,12 @@ Create a **development** OAuth app at
 <https://github.com/settings/developers>:
 
 - Homepage URL: `http://localhost:5173`
-- Authorization callback URL: `http://localhost:8000/api/auth/github/callback/`
+- Authorization callback URL: `http://localhost:5173/api/auth/github/callback/`
+
+The callback URL points at the **frontend's** origin, not the backend's —
+`/api/*` is proxied there (Vite locally, the Vercel rewrite in prod), and the
+whole OAuth round trip has to stay on one browser-visible origin for the
+session holding OAuth state to survive GitHub's redirect back.
 
 Keep a separate app for production — never share one between environments.
 

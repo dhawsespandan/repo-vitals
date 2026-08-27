@@ -192,3 +192,45 @@ so that step measured almost nothing. Fixed by pointing the test client's
 `SERVER_NAME` at whatever host `ALLOWED_HOSTS` actually accepts. Did not
 warrant a second production run: the measurement that step was missing is
 small relative to the embedding step that dominates the peak.
+
+### 1.14 GitHub's OAuth callback must be built from FRONTEND_URL, not the request
+
+**Context.** Production login testing (backend on Render, frontend on
+Vercel, `/api/*` proxied between them per §2) failed with allauth's callback
+view reporting a bare `error="unknown"`, no exception. The cause: allauth's
+default `get_callback_url()` builds the redirect URI GitHub is sent from
+`request.build_absolute_uri()` — i.e. the backend's own real hostname
+(`repo-vitals.onrender.com`). Login was initiated through the Vercel-proxied
+`/api/auth/github/login/`, so the browser scoped the session cookie holding
+the OAuth `state` to the Vercel domain. GitHub's redirect back then landed
+the browser directly on the Render domain — a different origin entirely, no
+shared cookie possible regardless of `SameSite` — so the stashed state could
+never be found on the way back.
+
+Locally this went unnoticed: Vite's dev proxy (with `changeOrigin: false`)
+and the dev backend both resolve to the hostname `localhost` (only the port
+differs, and cookies are not port-scoped per RFC 6265), so the cookie stayed
+visible across the whole round trip by coincidence, not by design.
+
+**Decision.** `RepoVitalsGitHubOAuth2Adapter.get_callback_url()` (§`apps/accounts/oauth.py`)
+is overridden to build the callback URL from `settings.FRONTEND_URL` plus the
+reversed callback path, ignoring the request's own host entirely. This keeps
+the whole OAuth round trip — login, GitHub, and the return — on one
+browser-visible origin, exactly as §2 already intends for every other API
+call. The registered "Authorization callback URL" on **both** GitHub OAuth
+Apps (dev and prod) must point at the **frontend's** origin
+(`http://localhost:5173/api/auth/github/callback/` and
+`https://<vercel-app>.vercel.app/api/auth/github/callback/`), not the
+backend's — `.env.example` and the README were updated to match.
+
+**Why.** This is the architecturally correct fix, not a workaround: §2's
+same-site design is what lets the whole app run without CORS or JWTs, and
+this closes the one gap where that design wasn't actually being honored — the
+external redirect leg was quietly falling back to a different-origin URL.
+Also fixed alongside: the adapter's error hook (`authentication_error`) was
+using the wrong, non-existent allauth API (`respond_error`/
+`get_error_redirect` are not real hooks) and silently swallowed every OAuth
+failure into allauth's own generic HTML page instead of the SPA's login
+screen; it now raises `ImmediateHttpResponse` — the documented mechanism —
+and logs the real `error`/`exception` allauth passes, which is what surfaced
+this bug's true cause instead of a dead end.
