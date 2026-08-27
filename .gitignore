@@ -40,3 +40,4 @@ Thumbs.db
 
 # Claude Code local tooling (dev convenience, not part of the deliverable)
 .claude/
+dev.sqlite3

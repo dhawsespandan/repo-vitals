@@ -134,7 +134,39 @@ CORS middleware and JWTs (the Vercel rewrite makes every call same-site);
 `django.contrib.admin`; a TTL cache in front of any registry; any outbound
 HTTP client other than the one `common/http.py` will introduce in Phase 2.
 
-### 1.11 Memory smoke test result
+### 1.12 Repo registration is restricted to the user's own namespace or public repos — binding for Phase 2
+
+**Context.** GitHub OAuth Apps grant the `repo` scope as all-or-nothing: the
+resulting token can technically reach every repository the account can see,
+including ones owned by an organization the user belongs to (e.g. an
+employer). There is no OAuth scope that filters by ownership, and per-repo
+consent only exists on GitHub's separate "GitHub App" mechanism, which §12
+already defers as future work.
+
+**Decision.** Phase 2's pre-scan validation (§5.6) gets one additional
+ordered check, run alongside the existing four: reject registration if the
+repository is private **and** its owner is not the authenticated user's own
+account (`repository.owner.login != user.github_username`). Public repos and
+repos in the user's personal namespace pass; anything owned by an
+organization — regardless of whether the token can technically reach it — is
+rejected before any scan work or GitHub quota is spent on it.
+
+**Why.** The token's technical reach can't be narrowed at the GitHub layer,
+but Repo Vitals' own behavior can be. This guarantees the application itself
+never calls the API for, stores data about, or scans an organization-owned
+repository, which is what actually matters for a user whose account is also a
+member of an employer's org. It costs one extra condition in a validation
+function Phase 2 already needs to write — not a separate effort.
+
+**Operationally verified today:** during OAuth authorization, GitHub shows a
+separate "Organization access" row per org the account belongs to, each with
+its own Grant/Request button, independent of the main "Authorize" action.
+Declining to click an org's Request button means GitHub never notifies that
+org or its admins — confirmed live against two real orgs on the developer's
+account. This Phase 2 rule is the code-level backstop for the case where an
+org's OAuth restrictions are off and access would otherwise be silent.
+
+### 1.13 Memory smoke test result
 
 `manage.py smoke_memory` records worker RSS at four points plus the peak.
 **Record the production number here after the first Render deploy** — the
