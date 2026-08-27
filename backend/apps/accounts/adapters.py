@@ -8,12 +8,16 @@ allauth's own (uninstalled) HTML pages.
 
 from __future__ import annotations
 
+import logging
 from urllib.parse import urlencode
 
 from allauth.account.adapter import DefaultAccountAdapter
+from allauth.core.exceptions import ImmediateHttpResponse
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.conf import settings
 from django.http import HttpResponseRedirect
+
+logger = logging.getLogger(__name__)
 
 
 class RepoVitalsAccountAdapter(DefaultAccountAdapter):
@@ -55,7 +59,7 @@ class GitHubSocialAccountAdapter(DefaultSocialAccountAdapter):
             user.save(update_fields=["password"])
         return user
 
-    def authentication_error(
+    def on_authentication_error(
         self,
         request,
         provider,
@@ -63,13 +67,24 @@ class GitHubSocialAccountAdapter(DefaultSocialAccountAdapter):
         exception=None,
         extra_context=None,
     ) -> None:
-        # allauth would render its own error template; send the user back to
-        # the SPA's login screen with a code it can render instead.
-        request.repovitals_oauth_error = str(error or "oauth_failed")
+        """The real allauth hook (§10 Phase 1: back-nav guard's counterpart —
+        a failed login must land the user back on the SPA's login screen with
+        an explainable code, not allauth's own bare HTML page).
 
-    def respond_error(self, request, error):  # pragma: no cover - allauth hook
-        return self.get_error_redirect(request)
-
-    def get_error_redirect(self, request) -> HttpResponseRedirect:
+        Left unhandled, allauth renders a generic "Third-Party Login Failure"
+        template with a 401 status and the underlying cause is discarded —
+        the earlier version of this method made exactly that mistake: it set
+        an attribute nothing ever read and returned None, so this branch was
+        dead code disguised as a redirect. Raising ImmediateHttpResponse is
+        the actual, documented way to short-circuit allauth's view.
+        """
+        logger.warning(
+            "GitHub OAuth authentication_error: error=%r exception=%r extra=%r",
+            error,
+            exception,
+            extra_context,
+        )
         query = urlencode({"error": "github_oauth_failed"})
-        return HttpResponseRedirect(f"{settings.FRONTEND_URL}/login?{query}")
+        raise ImmediateHttpResponse(
+            HttpResponseRedirect(f"{settings.FRONTEND_URL}/login?{query}")
+        )

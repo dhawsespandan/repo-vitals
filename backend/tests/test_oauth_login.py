@@ -10,7 +10,9 @@ from types import SimpleNamespace
 
 import pytest
 from allauth.account.signals import user_logged_in
+from allauth.core.exceptions import ImmediateHttpResponse
 from allauth.socialaccount.models import SocialAccount, SocialLogin, SocialToken
+from django.test import override_settings
 from django.urls import resolve, reverse
 
 from apps.accounts.adapters import GitHubSocialAccountAdapter
@@ -117,3 +119,31 @@ def test_login_signal_ignores_non_social_logins(user):
 
     user.refresh_from_db()
     assert user.encrypted_github_token == before
+
+
+@override_settings(FRONTEND_URL="https://app.example.com")
+def test_authentication_error_redirects_to_the_frontend_login_screen():
+    """A failed GitHub login must never surface allauth's own HTML page.
+
+    An earlier version of this hook only recorded the error on the request
+    and returned None — a no-op, since ImmediateHttpResponse is the only
+    documented way for this hook to short-circuit allauth's view. That let
+    every OAuth failure fall through to allauth's generic 401 template
+    instead of the SPA's login screen.
+    """
+    adapter = GitHubSocialAccountAdapter()
+
+    with pytest.raises(ImmediateHttpResponse) as excinfo:
+        adapter.on_authentication_error(
+            request=None,
+            provider=SimpleNamespace(id="github"),
+            error="access_denied",
+            exception=None,
+            extra_context=None,
+        )
+
+    response = excinfo.value.response
+    assert response.status_code == 302
+    assert (
+        response["Location"] == "https://app.example.com/login?error=github_oauth_failed"
+    )
