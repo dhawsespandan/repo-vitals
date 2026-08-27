@@ -38,6 +38,32 @@ def test_oauth_urls_match_the_api_surface_spec():
     assert resolve("/api/auth/github/callback/").url_name == "github_callback"
 
 
+@pytest.mark.django_db
+@override_settings(FRONTEND_URL="https://repo-vitals.example.vercel.app")
+def test_login_redirect_sends_github_a_frontend_scoped_callback(api_client):
+    """The regression this whole file exists to catch (§1.14).
+
+    Two separate allauth code paths build/consume the callback URL: the
+    callback *view* uses our adapter directly (wired in urls.py), but the
+    login step goes through GitHubProvider.redirect_from_request(), which
+    hardcodes allauth's own stock adapter unless the provider itself is also
+    overridden. A fix that only patches the adapter (get_callback_url) looks
+    complete and passes an adapter-level unit test, but the login endpoint —
+    what a real browser actually hits first — keeps sending GitHub the
+    backend's own hostname regardless. That mismatch is invisible unless this
+    is asserted against the real endpoint, which is why this test exists
+    alongside the adapter-level ones.
+    """
+    response = api_client.get(
+        reverse("github_login"), SERVER_NAME="repo-vitals-backend.onrender.com"
+    )
+
+    assert response.status_code == 302
+    location = response["Location"]
+    assert "redirect_uri=https%3A%2F%2Frepo-vitals.example.vercel.app" in location
+    assert "onrender.com" not in location
+
+
 def test_adapter_captures_the_granted_scope_string():
     adapter = RepoVitalsGitHubOAuth2Adapter.__new__(RepoVitalsGitHubOAuth2Adapter)
 

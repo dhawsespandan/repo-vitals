@@ -234,3 +234,50 @@ failure into allauth's own generic HTML page instead of the SPA's login
 screen; it now raises `ImmediateHttpResponse` — the documented mechanism —
 and logs the real `error`/`exception` allauth passes, which is what surfaced
 this bug's true cause instead of a dead end.
+
+**Follow-up (same day): §1.14's adapter fix alone was incomplete.** Deployed,
+verified against the real `SOCIALACCOUNT_PROVIDERS["github"]["APPS"]` config,
+and the *login* endpoint (`/api/auth/github/login/`) still sent GitHub the
+backend's own hostname — the callback-URL bug was still live for the one
+request a real browser hits first.
+
+**Root cause.** allauth's callback view and its login view build the
+redirect URL through two entirely different code paths, and only one of them
+goes through the adapter class wired in `urls.py`:
+
+- `OAuth2CallbackView` is instantiated directly with
+  `RepoVitalsGitHubOAuth2Adapter` (`OAuth2CallbackView.adapter_view(...)`),
+  so `get_callback_url()` was correctly overridden there.
+- `OAuth2LoginView` delegates to `provider.redirect_from_request()`, and the
+  *provider* — `GitHubProvider`, from allauth's own `github/provider.py` —
+  hardcodes `oauth2_adapter_class = GitHubOAuth2Adapter` (the stock class).
+  Nothing about registering our adapter on the login view reaches this;
+  the provider instantiates its own hardcoded adapter class independently.
+
+So the earlier fix was real and necessary but not sufficient: an
+adapter-level unit test asserting `get_callback_url()`'s return value passed
+cleanly, while the actual `/api/auth/github/login/` endpoint remained broken
+— the unit test exercised a code path a real request doesn't take.
+
+**Decision.** Added `RepoVitalsGitHubProvider(GitHubProvider)` with
+`oauth2_adapter_class = RepoVitalsGitHubOAuth2Adapter`, registered via
+allauth's own documented override point:
+`SOCIALACCOUNT_PROVIDERS["github"]["provider_class"]` (see
+`allauth/socialaccount/providers/registry.py::ProviderRegistry.load()`,
+which reads exactly this key before falling back to a provider module's
+default `provider_classes` list). No new Django app or URL wiring needed —
+this is the sanctioned extension point for exactly this situation.
+
+**Test added at the right altitude.** `test_login_redirect_sends_github_a_frontend_scoped_callback`
+hits the real `/api/auth/github/login/` endpoint through the test client and
+asserts on the `Location` header, rather than calling `get_callback_url()`
+directly — that is the level at which the bug was invisible to the previous
+test. Verified locally end-to-end before pushing:
+`redirect_uri=https%3A%2F%2Frepo-vitals-lilac.vercel.app%2F...`, not the
+backend's `onrender.com` host.
+
+**Why this is worth stating plainly:** a fix that is correct in isolation
+(the adapter override) can still leave a system broken if it doesn't cover
+every code path that consumes the thing being fixed. The lesson generalizes
+past OAuth — test the entry point a real client hits, not just the unit
+that seems like "the" place a value is computed.

@@ -134,6 +134,12 @@ SOCIALACCOUNT_PROVIDERS = {
                 "key": "",
             }
         ],
+        # allauth's documented override point (registry.py::ProviderRegistry.load)
+        # for swapping in our provider subclass, which points the LOGIN step
+        # at our adapter too — the callback-view adapter override in urls.py
+        # only covers the callback step; see apps/accounts/oauth.py's
+        # module docstring for why both are required (§1.14).
+        "provider_class": "apps.accounts.oauth.RepoVitalsGitHubProvider",
     }
 }
 

@@ -1,4 +1,4 @@
-"""GitHub OAuth2 adapter.
+"""GitHub OAuth2 adapter and provider overrides.
 
 allauth's base `parse_token()` keeps only the access token and drops the rest
 of GitHub's token response, but §5.1 stores `token_scopes` — GitHub can grant
@@ -6,10 +6,33 @@ fewer scopes than were requested, and knowing which ones we actually hold is
 what lets later phases fail loudly instead of mysteriously 404-ing on private
 repositories. So the granted scope string is carried on the in-memory token
 object through to the login signal.
+
+Two override points are needed to fix the callback URL (see
+`get_callback_url` below), not one — the login step and the callback step
+build/consume it through entirely different allauth code paths:
+
+  * The **callback** view (`OAuth2CallbackView`) is instantiated directly
+    with our adapter class in `config/urls.py`
+    (`OAuth2CallbackView.adapter_view(RepoVitalsGitHubOAuth2Adapter)`), so it
+    uses `RepoVitalsGitHubOAuth2Adapter` automatically.
+  * The **login** step does not: `OAuth2LoginView` delegates to
+    `provider.redirect_from_request()`, and the provider — `GitHubProvider`,
+    from allauth's own `github/provider.py` — hardcodes its own
+    `oauth2_adapter_class = GitHubOAuth2Adapter` (the *stock* class, not
+    ours). Passing our adapter to the login view's `adapter_view()` call
+    never reaches that path at all, so the redirect_uri GitHub actually
+    receives at login time was still being built by the stock adapter's
+    `request.build_absolute_uri()` — reproducing this file's whole bug even
+    after the callback-side fix landed.
+
+  `RepoVitalsGitHubProvider` below closes that second path, via allauth's own
+  documented override point: `SOCIALACCOUNT_PROVIDERS["github"]["provider_class"]`
+  (see `allauth/socialaccount/providers/registry.py::ProviderRegistry.load()`).
 """
 
 from __future__ import annotations
 
+from allauth.socialaccount.providers.github.provider import GitHubProvider
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from django.conf import settings
 from django.urls import reverse
@@ -54,3 +77,14 @@ class RepoVitalsGitHubOAuth2Adapter(GitHubOAuth2Adapter):
         """
         path = reverse(f"{self.provider_id}_callback")
         return f"{settings.FRONTEND_URL.rstrip('/')}{path}"
+
+
+class RepoVitalsGitHubProvider(GitHubProvider):
+    """Routes the login-initiation redirect through our adapter too.
+
+    Registered via `SOCIALACCOUNT_PROVIDERS["github"]["provider_class"]`
+    (§6, `config/settings/base.py`) — see this module's top-level docstring
+    for why the callback-view adapter override alone isn't enough.
+    """
+
+    oauth2_adapter_class = RepoVitalsGitHubOAuth2Adapter
