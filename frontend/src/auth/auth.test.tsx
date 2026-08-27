@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -108,6 +108,63 @@ describe("back-navigation guard", () => {
       await screen.findByRole("button", { name: /continue with github/i }),
     ).toBeInTheDocument();
     expect(calls).toContain("POST /api/auth/logout/");
+  });
+});
+
+describe("back-forward cache restoration", () => {
+  it("re-checks the session on a bfcache restore instead of trusting the frozen page", async () => {
+    // The frozen page is the pre-login /login screen — that's what a
+    // bfcache restore hands back verbatim, with no JavaScript re-run.
+    const { fetchMock } = stubFetch({ session: SIGNED_OUT });
+
+    renderApp(["/login"]);
+    await screen.findByRole("button", { name: /continue with github/i });
+
+    // Between the freeze and the restore, the user completed the OAuth
+    // round trip via full-page redirects the frozen page never saw — the
+    // server-side session is now authenticated even though the restored
+    // page's own state still says otherwise.
+    fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+      if (String(input).endsWith("/api/auth/session/")) {
+        return new Response(JSON.stringify(SIGNED_IN), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      return new Response(null, { status: 404 });
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        Object.assign(new Event("pageshow"), { persisted: true }),
+      );
+    });
+
+    // A stale bfcache restore that isn't re-checked would leave this button
+    // on screen forever; the guard depends on the fresh check replacing it.
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: /continue with github/i }),
+      ).not.toBeInTheDocument(),
+    );
+  });
+
+  it("ignores an ordinary pageshow (not a bfcache restore)", async () => {
+    const { fetchMock } = stubFetch({ session: SIGNED_OUT });
+
+    renderApp(["/login"]);
+    await screen.findByRole("button", { name: /continue with github/i });
+    const callsBefore = fetchMock.mock.calls.length;
+
+    act(() => {
+      window.dispatchEvent(
+        Object.assign(new Event("pageshow"), { persisted: false }),
+      );
+    });
+
+    // No extra session check for a normal, non-restored pageshow.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(fetchMock.mock.calls.length).toBe(callsBefore);
   });
 });
 

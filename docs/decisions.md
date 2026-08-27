@@ -281,3 +281,45 @@ backend's `onrender.com` host.
 every code path that consumes the thing being fixed. The lesson generalizes
 past OAuth — test the entry point a real client hits, not just the unit
 that seems like "the" place a value is computed.
+
+### 1.15 The back-navigation guard needs a `pageshow` listener too
+
+**Context.** Production testing of the (now-fixed) OAuth flow: after
+signing in, pressing the browser's Back button landed directly on the raw
+login screen — no sign-out confirmation, the exact case §10 Phase 1
+requires the guard to prevent.
+
+**Root cause.** The guard (§1.7) is a routing rule: the `/login` route
+refuses to render for an authenticated user and redirects with a
+confirm-logout flag. That rule only runs when React re-executes on a route
+change. But the OAuth round trip is several full-page redirects (this app →
+GitHub → the callback → `/dashboard`), not in-app route transitions — so
+the browser's actual back-stack holds a *pre-login* `/login` page load as a
+distinct history entry. Pressing Back can restore that entry straight from
+the browser's back-forward cache: the frozen page reappears with **no
+JavaScript re-execution at all**, including the session check the guard's
+redirect logic depends on. The rule was never wrong; it simply never got a
+chance to run.
+
+**Decision.** `AuthContext` listens for the `pageshow` event and, when
+`event.persisted` is true — the standard, cross-browser signal that a page
+came from bfcache rather than a fresh load — forces `status` back to
+`"loading"` and re-runs the session check. Routing back through `"loading"`
+matters: it prevents the stale frozen page from flashing before the fresh
+check resolves.
+
+**Verification.** `frontend/src/auth/auth.test.tsx` dispatches a synthetic
+`pageshow` event with `persisted: true` against a page that started
+`signed-out`, while the stubbed session endpoint now reports `signed-in`
+(modelling "the real session changed while this page was frozen") and
+asserts the stale UI is replaced. A companion test confirms an *ordinary*
+`pageshow` (`persisted: false`) triggers no extra check. Real
+back-forward-cache restoration was not reproduced in the local automation —
+that needs a genuine browser back-gesture — so this was verified by the
+user's actual back button in production after deploying the fix.
+
+**Why this is worth stating plainly, again:** this is the same shape of
+lesson as §1.14 — a component that is correct in isolation (the routing
+rule) can still fail if a browser mechanism bypasses the assumption it
+relies on (that React re-runs on every "page"). bfcache is exactly this kind
+of easy-to-miss mechanism for any client-side auth guard.

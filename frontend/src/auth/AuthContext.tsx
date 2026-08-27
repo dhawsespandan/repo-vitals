@@ -54,6 +54,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void refresh();
   }, [refresh]);
 
+  useEffect(() => {
+    // The OAuth dance is several full-page redirects (this app -> GitHub ->
+    // the callback -> /dashboard), not in-app route changes. Pressing Back
+    // from /dashboard can restore the *frozen* pre-login page straight from
+    // the browser's back-forward cache: no JavaScript re-runs, including this
+    // very session check, so the stale anonymous UI reappears untouched and
+    // the back-navigation guard — which depends on this check running — never
+    // gets a chance to intervene. `pageshow` with `event.persisted` is the
+    // documented signal for exactly this restoration; force a fresh check
+    // (through "loading", so a stale render never flashes) whenever it fires.
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        setStatus("loading");
+        void refresh();
+      }
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, [refresh]);
+
   const login = useCallback(() => {
     // Full navigation: the OAuth dance needs the browser, not fetch.
     window.location.assign(GITHUB_LOGIN_URL);
