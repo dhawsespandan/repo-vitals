@@ -43,7 +43,22 @@ export function usePolling<T>({
   onError,
 }: PollingOptions<T>) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const cancelled = useRef(false);
+  /**
+   * Which loop is the live one.
+   *
+   * A single `cancelled` boolean is not enough, and the failure is a real one
+   * rather than a theoretical tidiness point: when the effect re-runs — React
+   * StrictMode's double mount in development, or `enabled` flipping in
+   * production — the cleanup would set it true and the new run would set it
+   * straight back to false. A request already in flight from the *old* run
+   * then resolves, reads `false`, and schedules its own timer. From that point
+   * on there are two chains polling the same endpoint forever, and every
+   * subsequent re-run adds another.
+   *
+   * An incrementing token cannot be reset by a later run: each loop compares
+   * the id it started with, and only the newest ever matches.
+   */
+  const runId = useRef(0);
   const [polling, setPolling] = useState(false);
 
   // The callbacks are read through refs so that a caller passing inline
@@ -60,51 +75,60 @@ export function usePolling<T>({
     }
   }, []);
 
-  const tick = useCallback(async () => {
-    if (cancelled.current) return;
-    try {
-      const value = await refs.current.fetcher();
-      if (cancelled.current) return;
-      refs.current.onResult(value);
+  const tick = useCallback(
+    async (id: number) => {
+      if (id !== runId.current) return;
+      try {
+        const value = await refs.current.fetcher();
+        if (id !== runId.current) return;
+        refs.current.onResult(value);
 
-      if (!refs.current.shouldContinue(value)) {
+        if (!refs.current.shouldContinue(value)) {
+          setPolling(false);
+          return;
+        }
+        setPolling(true);
+        // Hidden tabs stop scheduling. `visibilitychange` below restarts them.
+        if (typeof document !== "undefined" && document.hidden) return;
+        timer.current = setTimeout(() => void tick(id), intervalMs);
+      } catch (error) {
+        if (id !== runId.current) return;
         setPolling(false);
-        return;
+        refs.current.onError?.(error);
       }
-      setPolling(true);
-      // Hidden tabs stop scheduling. `visibilitychange` below restarts them.
-      if (typeof document !== "undefined" && document.hidden) return;
-      timer.current = setTimeout(() => void tick(), intervalMs);
-    } catch (error) {
-      if (cancelled.current) return;
-      setPolling(false);
-      refs.current.onError?.(error);
-    }
-  }, [intervalMs]);
+    },
+    [intervalMs],
+  );
 
   useEffect(() => {
-    cancelled.current = false;
+    // Claim a new id, which orphans any loop still in flight from a previous
+    // run of this effect.
+    const id = (runId.current += 1);
+
     if (!enabled) {
       clear();
       setPolling(false);
-      return () => clear();
+      return () => {
+        runId.current += 1;
+        clear();
+      };
     }
 
-    void tick();
+    void tick(id);
 
     const onVisible = () => {
       // Ask straight away rather than waiting out an interval: someone
       // returning to the tab is asking "is it done?" by the act of returning.
-      if (!document.hidden && !cancelled.current) {
+      if (!document.hidden && id === runId.current) {
         clear();
-        void tick();
+        void tick(id);
       }
     };
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("focus", onVisible);
 
     return () => {
-      cancelled.current = true;
+      runId.current += 1;
       clear();
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("focus", onVisible);
@@ -114,7 +138,7 @@ export function usePolling<T>({
   /** Fetch now, outside the schedule — used after an action changes state. */
   const refresh = useCallback(() => {
     clear();
-    void tick();
+    void tick(runId.current);
   }, [clear, tick]);
 
   return { polling, refresh };

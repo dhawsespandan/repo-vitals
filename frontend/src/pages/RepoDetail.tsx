@@ -18,6 +18,7 @@ import type {
   DependencyOccurrence,
   Repository,
   ScanDetail,
+  ScanState,
   ScanStatusResponse,
 } from "../types";
 import { isScanActive } from "../types";
@@ -247,10 +248,11 @@ export function RepoDetail() {
                 label="Unassessable"
                 value={scan ? scan.unassessableCount : "—"}
               />
-              <Metric
-                label="Last scan"
-                value={scan ? relativeTime(scan.completedAt) : "never"}
-              />
+              {/* Read from the newest scan rather than from the results.
+                  "Last scan: never" beside a failure message from four
+                  minutes ago is not a true sentence, and it was the first
+                  thing a real page made obvious. */}
+              <Metric label="Last scan" value={lastScanLabel(current, scan)} />
             </div>
           </div>
         </div>
@@ -409,6 +411,28 @@ export function RepoDetail() {
       )}
     </main>
   );
+}
+
+/**
+ * When the repository was last scanned — which is not the same question as
+ * when the results on screen were produced.
+ *
+ * The other three metrics describe the completed scan, so they are blank until
+ * one exists. This one describes the repository, and a repository whose only
+ * scan failed four minutes ago has emphatically been scanned.
+ */
+function lastScanLabel(
+  current: ScanState | null,
+  results: ScanDetail | null,
+): string {
+  if (current && (current.status === "queued" || current.status === "running")) {
+    return "in progress";
+  }
+  if (current?.status === "failed") {
+    return `failed ${relativeTime(current.completedAt ?? current.createdAt)}`;
+  }
+  if (results) return relativeTime(results.completedAt);
+  return "never";
 }
 
 function Metric({ label, value }: { label: string; value: number | string }) {
