@@ -231,9 +231,7 @@ class TestCvssArithmetic:
 
 class TestOsvDocuments:
     def test_every_stored_field_comes_off_the_document(self):
-        vuln = osv.build_vulnerability(
-            osv_doc("vuln_lodash_command_injection"), "lodash"
-        )
+        vuln = osv.build_vulnerability(osv_doc("vuln_lodash_command_injection"), "lodash")
 
         assert vuln.osv_id == "GHSA-35jh-r3h4-6jhm"
         assert vuln.cve_id == "CVE-2021-23337"
@@ -273,9 +271,7 @@ class TestOsvDocuments:
         assert vuln.affected_range == ">=0 <=1.3.0"
 
     def test_a_missing_reference_falls_back_to_the_osv_page(self):
-        vuln = osv.build_vulnerability(
-            {"id": "GHSA-abcd", "affected": []}, "anything"
-        )
+        vuln = osv.build_vulnerability({"id": "GHSA-abcd", "affected": []}, "anything")
 
         assert vuln.source_url == "https://osv.dev/vulnerability/GHSA-abcd"
 
@@ -318,9 +314,7 @@ class TestOsvBatching:
             content_type="application/json",
         )
 
-        osv.OsvClient().query_batch(
-            "npm", [("lodash", "4.17.19"), ("lodash", "4.17.21")]
-        )
+        osv.OsvClient().query_batch("npm", [("lodash", "4.17.19"), ("lodash", "4.17.21")])
 
         assert [query["version"] for query in captured[0]] == ["4.17.19", "4.17.21"]
 
@@ -335,9 +329,7 @@ class TestOsvBatching:
         )
 
         with pytest.raises(ValueError):
-            osv.OsvClient().query_batch(
-                "npm", [("a", "1.0.0"), ("b", "1.0.0")]
-            )
+            osv.OsvClient().query_batch("npm", [("a", "1.0.0"), ("b", "1.0.0")])
 
     @responses.activate
     def test_advisory_details_are_fetched_once_and_reused_across_packages(self):

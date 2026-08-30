@@ -55,9 +55,7 @@ class ScanStateContextMixin:
     def scan_context(self, repositories) -> dict:
         return {
             **super().get_serializer_context(),
-            SCAN_STATES: scan_states_for(
-                [repository.pk for repository in repositories]
-            ),
+            SCAN_STATES: scan_states_for([repository.pk for repository in repositories]),
         }
 
 

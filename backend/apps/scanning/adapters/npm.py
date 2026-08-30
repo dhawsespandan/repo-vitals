@@ -254,9 +254,7 @@ class NpmAdapter(DependencyAdapter):
                 # A range with no lockfile. The scanner asks the registry for
                 # the latest release and tags the row `range_latest_approx`.
                 specs.append(
-                    DepSpec(
-                        name=name, declared_specifier=specifier_text, group=group
-                    )
+                    DepSpec(name=name, declared_specifier=specifier_text, group=group)
                 )
 
         return specs

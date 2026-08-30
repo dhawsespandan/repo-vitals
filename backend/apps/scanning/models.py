@@ -206,9 +206,7 @@ class ScanRun(models.Model):
 
 class ManifestFile(models.Model):
     manifest_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    scan = models.ForeignKey(
-        ScanRun, on_delete=models.CASCADE, related_name="manifests"
-    )
+    scan = models.ForeignKey(ScanRun, on_delete=models.CASCADE, related_name="manifests")
 
     ecosystem = models.TextField(choices=Ecosystem.choices)
     # Repository-relative, e.g. `services/api/package.json`. Root manifests
@@ -281,9 +279,7 @@ class DependencyOccurrence(models.Model):
     construction, which only works if they exist independently here.
     """
 
-    dependency_id = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, editable=False
-    )
+    dependency_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     manifest = models.ForeignKey(
         ManifestFile, on_delete=models.CASCADE, related_name="occurrences"
     )
@@ -330,9 +326,7 @@ class DependencyOccurrence(models.Model):
     highest_severity = models.TextField(  # noqa: DJ001
         choices=Severity.choices, null=True, blank=True
     )
-    cvss_max = models.DecimalField(
-        max_digits=3, decimal_places=1, null=True, blank=True
-    )
+    cvss_max = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True)
     cvss_reduced_confidence = models.BooleanField(default=False)
 
     # ── derived by the scoring engine (Phase 4); NULL until then ───────────

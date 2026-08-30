@@ -163,9 +163,9 @@ def mock_everything() -> None:
 
 
 def occurrences(scan: ScanRun):
-    return DependencyOccurrence.objects.filter(
-        manifest__scan=scan
-    ).select_related("manifest", "package")
+    return DependencyOccurrence.objects.filter(manifest__scan=scan).select_related(
+        "manifest", "package"
+    )
 
 
 @pytest.mark.django_db
@@ -288,20 +288,14 @@ class TestGoldenRepository:
         assert vuln.fixed_version == "4.17.21"
 
     @responses.activate
-    def test_the_scan_is_one_batch_call_and_one_fetch_per_distinct_advisory(
-        self, scan
-    ):
+    def test_the_scan_is_one_batch_call_and_one_fetch_per_distinct_advisory(self, scan):
         """§8: batching is what makes this fit a free tier at all."""
         mock_everything()
 
         scanner.run_scan(scan)
 
-        batches = [
-            call for call in responses.calls if "querybatch" in call.request.url
-        ]
-        details = [
-            call for call in responses.calls if "/v1/vulns/" in call.request.url
-        ]
+        batches = [call for call in responses.calls if "querybatch" in call.request.url]
+        details = [call for call in responses.calls if "/v1/vulns/" in call.request.url]
         assert len(batches) == 1
         assert len(details) == 2
 
@@ -441,9 +435,7 @@ class TestUnassessableOccurrences:
         assert "internal-tool" not in names
 
     @responses.activate
-    def test_a_package_missing_from_the_registry_is_unassessable_not_clean(
-        self, scan
-    ):
+    def test_a_package_missing_from_the_registry_is_unassessable_not_clean(self, scan):
         mock_github()
         mock_osv()
         for name in ("express", "lodash", "react", "typescript"):
@@ -471,7 +463,10 @@ class TestFailureHandling:
         mock_registry()
         mock_osv()
         responses.add(
-            responses.GET, TREE_API, json=load("github/tree_npm_monorepo.json"), status=200
+            responses.GET,
+            TREE_API,
+            json=load("github/tree_npm_monorepo.json"),
+            status=200,
         )
         for sha, rel in (
             ("root-manifest", "manifests/root_package.json"),
@@ -495,9 +490,7 @@ class TestFailureHandling:
         scanner.run_scan(scan)
 
         paths = set(
-            ManifestFile.objects.filter(scan=scan).values_list(
-                "manifest_path", flat=True
-            )
+            ManifestFile.objects.filter(scan=scan).values_list("manifest_path", flat=True)
         )
         assert "services/api/package.json" not in paths
         assert "package.json" in paths
@@ -560,9 +553,7 @@ class TestFailureHandling:
         assert not ManifestFile.objects.filter(scan=scan).exists()
 
     @responses.activate
-    def test_a_repository_whose_manifests_vanished_says_which_problem_it_is(
-        self, scan
-    ):
+    def test_a_repository_whose_manifests_vanished_says_which_problem_it_is(self, scan):
         responses.add(
             responses.GET,
             TREE_API,
@@ -608,7 +599,5 @@ class TestSizeCaps:
 
         root = ManifestFile.objects.get(scan=scan, manifest_path="package.json")
         assert root.lockfile_path is None
-        express = occurrences(scan).get(
-            manifest=root, package__package_name="express"
-        )
+        express = occurrences(scan).get(manifest=root, package__package_name="express")
         assert express.resolution == Resolution.RANGE_LATEST_APPROX.value

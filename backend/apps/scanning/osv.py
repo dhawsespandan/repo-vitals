@@ -213,11 +213,14 @@ def _best_cvss(document: dict) -> float | None:
     matters for a tool whose job is to warn.
     """
     scores: list[float] = []
-    for block in (document.get("severity"), *(
-        affected.get("severity")
-        for affected in document.get("affected", [])
-        if isinstance(affected, dict)
-    )):
+    for block in (
+        document.get("severity"),
+        *(
+            affected.get("severity")
+            for affected in document.get("affected", [])
+            if isinstance(affected, dict)
+        ),
+    ):
         if not isinstance(block, list):
             continue
         for entry in block:
@@ -340,7 +343,9 @@ class OsvClient:
                 logger.warning("OSV querybatch failed for a chunk of %d.", len(chunk))
                 raise
 
-            results = response.data.get("results") if isinstance(response.data, dict) else None
+            results = (
+                response.data.get("results") if isinstance(response.data, dict) else None
+            )
             if not isinstance(results, list):
                 raise ValueError("OSV querybatch returned an unexpected shape.")
 

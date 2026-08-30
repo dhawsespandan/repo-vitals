@@ -56,9 +56,7 @@ STALE_SCAN_AFTER = timedelta(minutes=15)
 #: Shown when a scan failed for a reason with no user-facing remedy. Internal
 #: detail stays in the logs: an exception message is written for developers and
 #: can carry paths, ids or upstream text that has no business in a browser.
-GENERIC_FAILURE = (
-    "Something went wrong while scanning this repository. Please try again."
-)
+GENERIC_FAILURE = "Something went wrong while scanning this repository. Please try again."
 
 
 class ScanInProgress(Exception):
@@ -133,9 +131,7 @@ def active_scan(repository_id) -> ScanRun | None:
     )
 
 
-def start_scan(
-    repository, user, trigger_type: str = TriggerType.MANUAL.value
-) -> ScanRun:
+def start_scan(repository, user, trigger_type: str = TriggerType.MANUAL.value) -> ScanRun:
     """Create a queued scan and hand it to a thread. Raises `ScanInProgress`.
 
     The lock is held across the check *and* the insert, and released as soon as
@@ -195,9 +191,9 @@ def execute(scan_id) -> None:
     a status machine, or an exception-handling policy in the way.
     """
     try:
-        scan = ScanRun.objects.select_related(
-            "repository", "triggered_by"
-        ).get(pk=scan_id)
+        scan = ScanRun.objects.select_related("repository", "triggered_by").get(
+            pk=scan_id
+        )
     except ScanRun.DoesNotExist:
         # The repository was deleted between the trigger and the thread
         # starting; the scan cascaded with it. Nothing to do and nothing wrong.

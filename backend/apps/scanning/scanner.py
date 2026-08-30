@@ -170,8 +170,7 @@ def _fetch_tree(scan: ScanRun, token: str) -> list[dict]:
         ) from exc
     except http.UpstreamError as exc:
         raise ScanFailed(
-            "We couldn't reach GitHub to read this repository. Please try "
-            "again shortly."
+            "We couldn't reach GitHub to read this repository. Please try again shortly."
         ) from exc
 
     data = response.data if isinstance(response.data, dict) else {}
@@ -179,7 +178,10 @@ def _fetch_tree(scan: ScanRun, token: str) -> list[dict]:
         # §5.6 accepts this: a ~100k-entry tree is far outside this product's
         # demonstrated scale, and walking the tree directory by directory would
         # spend the user's whole rate-limit budget on the rare case.
-        logger.info("Tree for %s was truncated; scanning the returned entries.", scan.repository_id)
+        logger.info(
+            "Tree for %s was truncated; scanning the returned entries.",
+            scan.repository_id,
+        )
 
     tree = data.get("tree")
     return tree if isinstance(tree, list) else []
@@ -462,9 +464,7 @@ def _persist(
                 registry_url = pooled.facts.registry_url if pooled.facts else None
                 packages[key] = _package_for(*key, registry_url)
             occurrences.append(
-                _build_occurrence(
-                    pooled, packages[key], manifests[pooled.plan.path]
-                )
+                _build_occurrence(pooled, packages[key], manifests[pooled.plan.path])
             )
 
         DependencyOccurrence.objects.bulk_create(occurrences)

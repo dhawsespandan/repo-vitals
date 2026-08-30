@@ -139,13 +139,9 @@ class DependencyOccurrenceSerializer(serializers.ModelSerializer):
     packageName = serializers.CharField(source="package.package_name", read_only=True)
     ecosystem = serializers.CharField(source="package.ecosystem", read_only=True)
     registryUrl = serializers.CharField(source="package.registry_url", read_only=True)
-    manifestPath = serializers.CharField(
-        source="manifest.manifest_path", read_only=True
-    )
+    manifestPath = serializers.CharField(source="manifest.manifest_path", read_only=True)
     group = serializers.CharField(source="dependency_group", read_only=True)
-    declaredSpecifier = serializers.CharField(
-        source="declared_specifier", read_only=True
-    )
+    declaredSpecifier = serializers.CharField(source="declared_specifier", read_only=True)
     resolvedVersion = serializers.CharField(source="resolved_version", read_only=True)
     latestVersion = serializers.CharField(source="latest_version", read_only=True)
     latestReleaseAt = serializers.DateTimeField(
@@ -154,9 +150,7 @@ class DependencyOccurrenceSerializer(serializers.ModelSerializer):
     stalenessDays = serializers.IntegerField(source="staleness_days", read_only=True)
     versionsBehind = serializers.SerializerMethodField()
     isDeprecated = serializers.BooleanField(source="is_deprecated", read_only=True)
-    deprecationReason = serializers.CharField(
-        source="deprecation_reason", read_only=True
-    )
+    deprecationReason = serializers.CharField(source="deprecation_reason", read_only=True)
     isUnassessable = serializers.BooleanField(source="is_unassessable", read_only=True)
     unassessableReason = serializers.CharField(
         source="unassessable_reason", read_only=True

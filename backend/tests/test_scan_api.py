@@ -207,9 +207,7 @@ class TestStaleScans:
 
 @pytest.mark.django_db
 class TestScanStatus:
-    def test_a_never_scanned_repository_answers_with_nulls(
-        self, auth_client, repository
-    ):
+    def test_a_never_scanned_repository_answers_with_nulls(self, auth_client, repository):
         response = auth_client.get(status_url(repository))
 
         assert response.status_code == 200
@@ -326,9 +324,7 @@ class TestScanDetailAndDependencies:
 
     def test_unassessable_rows_sort_last(self, auth_client, completed):
         """They are not findings; opening on them buries the rows that matter."""
-        rows = auth_client.get(f"/api/scans/{completed.pk}/dependencies/").data[
-            "results"
-        ]
+        rows = auth_client.get(f"/api/scans/{completed.pk}/dependencies/").data["results"]
 
         assert [row["isUnassessable"] for row in rows] == [False, True]
 
@@ -341,13 +337,9 @@ class TestScanDetailAndDependencies:
 
         assert response.data["count"] == 0
 
-    def test_a_row_carries_its_manifest_path_and_provenance(
-        self, auth_client, completed
-    ):
+    def test_a_row_carries_its_manifest_path_and_provenance(self, auth_client, completed):
         """Both are the point of the table, so both are on every row."""
-        rows = auth_client.get(f"/api/scans/{completed.pk}/dependencies/").data[
-            "results"
-        ]
+        rows = auth_client.get(f"/api/scans/{completed.pk}/dependencies/").data["results"]
         express = next(row for row in rows if row["packageName"] == "express")
 
         assert express["manifestPath"] == "package.json"

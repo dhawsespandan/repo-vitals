@@ -103,9 +103,7 @@ class NpmRegistryClient:
         url = f"{NPM_REGISTRY}/{quote(name, safe='@')}"
         summary: dict
         try:
-            response = http.get_json(
-                url, accept=JSON_ACCEPT, timeout=REGISTRY_TIMEOUT
-            )
+            response = http.get_json(url, accept=JSON_ACCEPT, timeout=REGISTRY_TIMEOUT)
         except http.UpstreamNotFound:
             # A definite answer: the registry has never published this name.
             summary = {"not_found": True}

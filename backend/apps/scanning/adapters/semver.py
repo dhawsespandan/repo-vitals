@@ -118,9 +118,7 @@ def latest_of(versions: list[str]) -> str | None:
     return max(pool, key=lambda pair: pair[1].sort_key())[0]
 
 
-def versions_behind(
-    resolved: str | None, released: list[str]
-) -> tuple[int, int, int]:
+def versions_behind(resolved: str | None, released: list[str]) -> tuple[int, int, int]:
     """How many published releases sit ahead of `resolved`, by level.
 
     Counting *releases*, not arithmetic on the version numbers themselves. The
@@ -156,9 +154,7 @@ def versions_behind(
     majors = {v.major for v in stable if v.major > current.major}
 
     minors = {
-        v.minor
-        for v in stable
-        if v.major == current.major and v.minor > current.minor
+        v.minor for v in stable if v.major == current.major and v.minor > current.minor
     }
 
     patches = {
