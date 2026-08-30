@@ -1,0 +1,209 @@
+"""Scan serializers. camelCase to match `frontend/src/types/index.ts` (Phase 1).
+
+Two shapes appear repeatedly and mean different things, so they are named
+rather than inlined:
+
+* **`ScanStateSerializer`** — a repository's newest scan, whatever its status.
+  This is what a status pill and the polling loop read, and it is small on
+  purpose because it is fetched every three seconds.
+* **`ScanDetailSerializer`** — one scan and its manifests, fetched once when a
+  detail page opens.
+
+Neither exposes a database id that is not a UUID primary key, and every
+queryset reaching them has already passed through `OwnedQuerySetMixin`.
+"""
+
+from __future__ import annotations
+
+from django.db.models import Count, Q
+from rest_framework import serializers
+
+from .models import DependencyOccurrence, ManifestFile, ScanRun
+
+
+def annotated_scans():
+    """`ScanRun` rows carrying the four counts every scan surface displays.
+
+    Computed rather than stored: §5.1 puts these counts on `scan_history`, not
+    on `scan_runs`, because a denormalized count on a live row is a second
+    source of truth that can disagree with the rows it counts. `distinct=True`
+    throughout — the counts share one join path, so without it each multiplies
+    the others.
+    """
+    return ScanRun.objects.annotate(
+        manifest_count=Count("manifests", distinct=True),
+        dependency_count=Count("manifests__occurrences", distinct=True),
+        unassessable_count=Count(
+            "manifests__occurrences",
+            filter=Q(manifests__occurrences__is_unassessable=True),
+            distinct=True,
+        ),
+        flagged_count=Count(
+            "manifests__occurrences",
+            filter=Q(manifests__occurrences__is_flagged=True),
+            distinct=True,
+        ),
+    )
+
+
+class ScanStateSerializer(serializers.ModelSerializer):
+    """One scan, small enough to poll. Counts default to 0 when unannotated."""
+
+    id = serializers.UUIDField(source="scan_id", read_only=True)
+    triggerType = serializers.CharField(source="trigger_type", read_only=True)
+    startedAt = serializers.DateTimeField(source="started_at", read_only=True)
+    completedAt = serializers.DateTimeField(source="completed_at", read_only=True)
+    errorMessage = serializers.CharField(source="error_message", read_only=True)
+    createdAt = serializers.DateTimeField(source="created_at", read_only=True)
+
+    # Phase 4 fills these; until then they are null and the UI shows no score
+    # rather than a placeholder number (see `RepoCard`'s hollow ring).
+    riskScore = serializers.DecimalField(
+        source="risk_score", max_digits=5, decimal_places=2, read_only=True
+    )
+    scoringFormulaVersion = serializers.CharField(
+        source="scoring_formula_version", read_only=True
+    )
+
+    manifestCount = serializers.IntegerField(source="manifest_count", default=0)
+    dependencyCount = serializers.IntegerField(source="dependency_count", default=0)
+    unassessableCount = serializers.IntegerField(source="unassessable_count", default=0)
+    flaggedCount = serializers.IntegerField(source="flagged_count", default=0)
+
+    class Meta:
+        model = ScanRun
+        fields = [
+            "id",
+            "status",
+            "triggerType",
+            "classification",
+            "riskScore",
+            "scoringFormulaVersion",
+            "errorMessage",
+            "createdAt",
+            "startedAt",
+            "completedAt",
+            "manifestCount",
+            "dependencyCount",
+            "unassessableCount",
+            "flaggedCount",
+        ]
+        read_only_fields = fields
+
+
+class ManifestSerializer(serializers.ModelSerializer):
+    id = serializers.UUIDField(source="manifest_id", read_only=True)
+    manifestPath = serializers.CharField(source="manifest_path", read_only=True)
+    lockfilePath = serializers.CharField(source="lockfile_path", read_only=True)
+    parserName = serializers.CharField(source="parser_name", read_only=True)
+    dependencyCount = serializers.IntegerField(source="dependency_count", default=0)
+
+    class Meta:
+        model = ManifestFile
+        fields = [
+            "id",
+            "ecosystem",
+            "manifestPath",
+            "lockfilePath",
+            "parserName",
+            "dependencyCount",
+        ]
+        read_only_fields = fields
+
+
+class ScanDetailSerializer(ScanStateSerializer):
+    manifests = serializers.SerializerMethodField()
+
+    class Meta(ScanStateSerializer.Meta):
+        fields = [*ScanStateSerializer.Meta.fields, "manifests"]
+        read_only_fields = fields
+
+    def get_manifests(self, scan: ScanRun) -> list[dict]:
+        manifests = scan.manifests.annotate(
+            dependency_count=Count("occurrences")
+        ).order_by("manifest_path")
+        return ManifestSerializer(manifests, many=True).data
+
+
+class DependencyOccurrenceSerializer(serializers.ModelSerializer):
+    """One row of the dependency table.
+
+    Deliberately without the vulnerability list: §5.5 gives that its own route
+    (`GET /api/dependencies/{id}/`, Phase 5), and a table of 300 rows each
+    carrying nested advisories is a page-weight problem for information nobody
+    has asked to see yet. The count and the worst severity are enough for the
+    badge, and both are already stored on the occurrence.
+    """
+
+    id = serializers.UUIDField(source="dependency_id", read_only=True)
+    packageName = serializers.CharField(source="package.package_name", read_only=True)
+    ecosystem = serializers.CharField(source="package.ecosystem", read_only=True)
+    registryUrl = serializers.CharField(source="package.registry_url", read_only=True)
+    manifestPath = serializers.CharField(
+        source="manifest.manifest_path", read_only=True
+    )
+    group = serializers.CharField(source="dependency_group", read_only=True)
+    declaredSpecifier = serializers.CharField(
+        source="declared_specifier", read_only=True
+    )
+    resolvedVersion = serializers.CharField(source="resolved_version", read_only=True)
+    latestVersion = serializers.CharField(source="latest_version", read_only=True)
+    latestReleaseAt = serializers.DateTimeField(
+        source="latest_release_at", read_only=True
+    )
+    stalenessDays = serializers.IntegerField(source="staleness_days", read_only=True)
+    versionsBehind = serializers.SerializerMethodField()
+    isDeprecated = serializers.BooleanField(source="is_deprecated", read_only=True)
+    deprecationReason = serializers.CharField(
+        source="deprecation_reason", read_only=True
+    )
+    isUnassessable = serializers.BooleanField(source="is_unassessable", read_only=True)
+    unassessableReason = serializers.CharField(
+        source="unassessable_reason", read_only=True
+    )
+    vulnerabilityCount = serializers.IntegerField(
+        source="vulnerability_count", read_only=True
+    )
+    highestSeverity = serializers.CharField(source="highest_severity", read_only=True)
+    cvssMax = serializers.DecimalField(
+        source="cvss_max", max_digits=3, decimal_places=1, read_only=True
+    )
+    isFlagged = serializers.BooleanField(source="is_flagged", read_only=True)
+    riskComponentScore = serializers.DecimalField(
+        source="risk_component_score", max_digits=5, decimal_places=2, read_only=True
+    )
+
+    class Meta:
+        model = DependencyOccurrence
+        fields = [
+            "id",
+            "packageName",
+            "ecosystem",
+            "registryUrl",
+            "manifestPath",
+            "group",
+            "declaredSpecifier",
+            "resolvedVersion",
+            "resolution",
+            "latestVersion",
+            "latestReleaseAt",
+            "stalenessDays",
+            "versionsBehind",
+            "isDeprecated",
+            "deprecationReason",
+            "isUnassessable",
+            "unassessableReason",
+            "vulnerabilityCount",
+            "highestSeverity",
+            "cvssMax",
+            "isFlagged",
+            "riskComponentScore",
+        ]
+        read_only_fields = fields
+
+    def get_versionsBehind(self, occurrence: DependencyOccurrence) -> dict:
+        return {
+            "major": occurrence.versions_behind_major,
+            "minor": occurrence.versions_behind_minor,
+            "patch": occurrence.versions_behind_patch,
+        }

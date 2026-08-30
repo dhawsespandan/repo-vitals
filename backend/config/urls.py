@@ -21,7 +21,13 @@ from django.urls import path
 from apps.accounts.oauth import RepoVitalsGitHubOAuth2Adapter
 from apps.accounts.views import LogoutView, SessionView
 from apps.common.views import HealthView
-from apps.repositories.views import RepositoryDestroyView, RepositoryListCreateView
+from apps.repositories.views import RepositoryDetailView, RepositoryListCreateView
+from apps.scanning.views import (
+    RepositoryScanStatusView,
+    RepositoryScanView,
+    ScanDependenciesView,
+    ScanDetailView,
+)
 
 github_login = OAuth2LoginView.adapter_view(RepoVitalsGitHubOAuth2Adapter)
 github_callback = OAuth2CallbackView.adapter_view(RepoVitalsGitHubOAuth2Adapter)
@@ -42,7 +48,23 @@ urlpatterns = [
     ),
     path(
         "api/repositories/<uuid:repository_id>/",
-        RepositoryDestroyView.as_view(),
+        RepositoryDetailView.as_view(),
         name="repository-detail",
+    ),
+    path(
+        "api/repositories/<uuid:repository_id>/scan/",
+        RepositoryScanView.as_view(),
+        name="repository-scan",
+    ),
+    path(
+        "api/repositories/<uuid:repository_id>/scan-status/",
+        RepositoryScanStatusView.as_view(),
+        name="repository-scan-status",
+    ),
+    path("api/scans/<uuid:scan_id>/", ScanDetailView.as_view(), name="scan-detail"),
+    path(
+        "api/scans/<uuid:scan_id>/dependencies/",
+        ScanDependenciesView.as_view(),
+        name="scan-dependencies",
     ),
 ]

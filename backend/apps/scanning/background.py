@@ -89,22 +89,34 @@ def _lock_for(repository_id) -> threading.Lock:
         return _locks[key]
 
 
-def _expire_stale(repository_id) -> None:
-    """Fail any active scan old enough to be presumed dead."""
-    cutoff = timezone.now() - STALE_SCAN_AFTER
-    stale = ScanRun.objects.filter(
-        repository_id=repository_id,
+#: What a scan that never reported back says for itself.
+STALLED_MESSAGE = "This scan stopped before it finished. Please run it again."
+
+
+def expire_stale(repository_ids) -> int:
+    """Fail every active scan old enough to be presumed dead. Returns the count.
+
+    Called from the read path as well as the trigger path, and deliberately so:
+    a repository whose worker was restarted mid-scan would otherwise sit on a
+    spinner until someone thought to press Run scan again. One `UPDATE` that
+    normally matches nothing is a cheap price for a UI that repairs itself.
+    """
+    ids = list(repository_ids)
+    if not ids:
+        return 0
+    now = timezone.now()
+    stalled = ScanRun.objects.filter(
+        repository_id__in=ids,
         status__in=ScanStatus.active(),
-        created_at__lt=cutoff,
+        created_at__lt=now - STALE_SCAN_AFTER,
+    ).update(
+        status=ScanStatus.FAILED.value,
+        error_message=STALLED_MESSAGE,
+        completed_at=now,
     )
-    for scan in stale:
-        logger.warning("Marking a stalled scan failed: %s", scan.pk)
-        scan.status = ScanStatus.FAILED.value
-        scan.error_message = (
-            "This scan stopped before it finished. Please run it again."
-        )
-        scan.completed_at = timezone.now()
-        scan.save(update_fields=["status", "error_message", "completed_at"])
+    if stalled:
+        logger.warning("Marked %d stalled scan(s) failed.", stalled)
+    return stalled
 
 
 def active_scan(repository_id) -> ScanRun | None:
@@ -134,7 +146,7 @@ def start_scan(
     """
     lock = _lock_for(repository.pk)
     with lock:
-        _expire_stale(repository.pk)
+        expire_stale([repository.pk])
         existing = active_scan(repository.pk)
         if existing is not None:
             raise ScanInProgress(existing)
@@ -155,7 +167,7 @@ def spawn(target: Callable, *args) -> threading.Thread:
     """Run `target` on a daemon thread with connection hygiene at both ends.
 
     Daemon so a deploy or a restart is never held open by a scan in flight: the
-    row is left `running`, and `_expire_stale` releases it on the next trigger.
+    row is left `running`, and `expire_stale` releases it on the next read or trigger.
     Losing a scan to a restart is recoverable; refusing to shut down is not.
     """
 

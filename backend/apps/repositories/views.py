@@ -1,11 +1,27 @@
 """Repository endpoints — §5.5.
 
-    POST   /api/repositories/        validate (§5.6) + register
+    POST   /api/repositories/        validate (§5.6) + register, then scan
     GET    /api/repositories/        the user's own registrations
+    GET    /api/repositories/{id}/   one registration (Phase 3; see below)
     DELETE /api/repositories/{id}/   remove one
 
-All three sit behind `OwnedQuerySetMixin`, so a foreign id is invisible rather
-than forbidden (§11 BOLA).
+All of them sit behind `OwnedQuerySetMixin`, so a foreign id is invisible
+rather than forbidden (§11 BOLA).
+
+**The GET on `{id}/` is a Phase 3 addition to a route §5.5 already lists.**
+The repository detail page has to render for someone who typed the URL or
+refreshed the tab, and without it the only way to learn a repository's name is
+to fetch the whole list and filter client-side. It is a method on an existing
+route rather than a new route, and it answers with the same serializer the
+list does.
+
+**Registration triggers the initial scan and does not wait for it.** §10 Phase
+3's acceptance is "registration returns < 2 s with the scan running behind",
+and §8 forces the same conclusion from the other side: Render's ~100 s request
+timeout makes an inline scan impossible in the general case. A scan that fails
+to *start* is logged and swallowed — the registration itself succeeded, and
+answering 500 would leave the user with a repository they can see but were
+told they do not have.
 """
 
 from __future__ import annotations
@@ -16,17 +32,47 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 
 from apps.common.authz import OwnedQuerySetMixin
+from apps.scanning.background import ScanInProgress, start_scan
+from apps.scanning.models import TriggerType
+from apps.scanning.views import scan_states_for
 
 from .models import Repository
-from .serializers import RepositorySerializer
+from .serializers import SCAN_STATES, RepositorySerializer
 from .validation import DuplicateRegistration, validate_and_describe
 
 logger = logging.getLogger(__name__)
 
 
-class RepositoryListCreateView(OwnedQuerySetMixin, generics.ListCreateAPIView):
+class ScanStateContextMixin:
+    """Batch-load the scan state for whatever rows this view is about to send.
+
+    One query for every repository in the response rather than one per row —
+    see `repositories/serializers.py`. Views call it explicitly rather than
+    inheriting a `get_serializer_context` override, because the create path
+    serializes a single fresh row that is not in any queryset yet.
+    """
+
+    def scan_context(self, repositories) -> dict:
+        return {
+            **super().get_serializer_context(),
+            SCAN_STATES: scan_states_for(
+                [repository.pk for repository in repositories]
+            ),
+        }
+
+
+class RepositoryListCreateView(
+    ScanStateContextMixin, OwnedQuerySetMixin, generics.ListCreateAPIView
+):
     queryset = Repository.objects.all()
     serializer_class = RepositorySerializer
+
+    def list(self, request, *args, **kwargs):
+        repositories = list(self.filter_queryset(self.get_queryset()))
+        serializer = self.get_serializer_class()(
+            repositories, many=True, context=self.scan_context(repositories)
+        )
+        return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
         """Register a repository, or explain precisely why it cannot be.
@@ -73,14 +119,29 @@ class RepositoryListCreateView(OwnedQuerySetMixin, generics.ListCreateAPIView):
             repository.visibility,
             repository.access_level,
         )
+
+        try:
+            start_scan(repository, request.user, TriggerType.INITIAL.value)
+        except ScanInProgress:
+            # Unreachable for a row created a line ago, and harmless if it ever
+            # were: the scan the user wanted is already running.
+            logger.info("Initial scan for %s was already running.", repository.pk)
+        except Exception:
+            # The registration stands. The user can press Run scan.
+            logger.exception("Could not start the initial scan for %s.", repository.pk)
+
         return Response(
-            RepositorySerializer(repository).data,
+            RepositorySerializer(
+                repository, context=self.scan_context([repository])
+            ).data,
             status=status.HTTP_201_CREATED,
         )
 
 
-class RepositoryDestroyView(OwnedQuerySetMixin, generics.DestroyAPIView):
-    """Remove a registration.
+class RepositoryDetailView(
+    ScanStateContextMixin, OwnedQuerySetMixin, generics.RetrieveDestroyAPIView
+):
+    """Read or remove one registration.
 
     The row's operational data (scans, manifests, occurrences, reports from
     Phase 3 onward) cascades with it. The research tables do **not** — D9 is
@@ -94,3 +155,10 @@ class RepositoryDestroyView(OwnedQuerySetMixin, generics.DestroyAPIView):
     serializer_class = RepositorySerializer
     lookup_field = "repository_id"
     lookup_url_kwarg = "repository_id"
+
+    def retrieve(self, request, *args, **kwargs):
+        repository = self.get_object()
+        serializer = self.get_serializer_class()(
+            repository, context=self.scan_context([repository])
+        )
+        return Response(serializer.data)
