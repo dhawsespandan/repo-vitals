@@ -412,3 +412,67 @@ whenever the run ends).
 Render free is 750 instance-hours/month against ~730 hours in a month — so
 one always-on service is exactly what §8 already intends. The constraint is
 not the budget; it is GitHub's scheduler.
+
+---
+
+## Phase 2 — Registration + pre-scan validation
+
+### 2.1 Two outcome codes §5.6 does not list
+
+§5.6 fixes six outcomes and calls their messages binding. Two situations the
+implementation actually hits are not among them.
+
+**`github_unavailable` (503).** §5.6 gives exactly one 503, `github_rate_limited`.
+But a connection failure, a DNS problem, or a GitHub 5xx is not a rate limit.
+Reusing the rate-limit code for them would mislead anyone reading logs or
+metrics — "we are being throttled" is a very different operational story from
+"GitHub is down" — and the difference matters as soon as Phase 3 starts
+scanning on a quota budget. The **user-facing message is deliberately
+identical** to `github_rate_limited`'s, because "try again in a few minutes"
+is the right advice either way. So the diagnosis splits; the experience does
+not.
+
+**`private_repo_not_owned` (403).** §1.12 adds a fifth check — reject a
+private repository whose owner is not the authenticated user — but §5.6's
+table predates it and has no row for the outcome. The two existing 403/404
+codes would both misdescribe it: `no_write_access` tells the user to go get
+write access, which does not help (the rule holds regardless of their
+permissions), and `repo_inaccessible` would be a plain lie about a repository
+we can see perfectly well. It gets its own code and a message that states the
+actual rule.
+
+**Why this is safe to do:** the frontend branches on `code`, never on message
+text (§5.6, `types/index.ts`), so adding codes is additive. The six specified
+codes and messages are reproduced verbatim.
+
+### 2.2 The ownership check runs *before* the write-access check
+
+§1.12 says its rule runs "alongside the existing four" without fixing a
+position. Position turns out to be observable: a private organization
+repository that the user *can* push to fails both check 3 (ownership) and
+would pass check 4 (eligibility) — while a private org repo they cannot push
+to fails both. Whichever runs first is the reason the user sees.
+
+Ownership goes first. "We don't monitor other people's private repositories"
+is a statement about what the product will do at all; "you need write access"
+is an invitation to go and obtain write access, which in this case would
+change nothing. The check that refuses outright has to be the one that
+speaks, or the message sends the user off to do pointless work.
+
+### 2.3 Manifest matching skips vendored directories
+
+§5.6 requires matching adapter patterns *anywhere* in the recursive tree,
+precisely so that split-by-functionality repositories are not missed. Taken
+literally, that also matches `node_modules/**/package.json` — and a repository
+with a checked-in `node_modules` would qualify as an npm project on the
+strength of its vendored dependencies alone, even if it has no manifest of
+its own.
+
+Path segments naming a vendor directory (currently just `node_modules`) are
+skipped. This is narrower than it looks: it excludes only manifests *inside*
+such a directory, never the repository's own.
+
+`SUPPORTED_MANIFESTS` lives in `repositories/validation.py` for now. Phase 3
+introduces `scanning/adapters/` and owns the pattern registry from then on;
+Phase 6 adds the PyPI filenames and, per §5.6, updates the
+`ecosystem_unsupported` message to name both ecosystems.
