@@ -13,11 +13,17 @@ name: Keepalive
 #
 # IT ONLY ACTUALLY SOLVES THE SECOND ONE. The `*/10` schedule below is a
 # request, not a guarantee: GitHub heavily throttles scheduled workflows, and
-# on this repository the measured gap between consecutive runs is 2–11 hours
-# (46 runs sampled, 2026-08-30), not 10 minutes. That is far inside
-# Supabase's ~7-day window, so the database never pauses — but it is far
-# outside Render's 15-minute sleep timer, so the service is asleep for most
-# of every gap and a first click still eats the cold start.
+# the measured gap between consecutive *successful* runs here is 2–11 hours
+# (mean ~5.75 h; 12 runs since this workflow started passing on 2026-08-27),
+# not 10 minutes. That is far inside Supabase's ~7-day window, so the
+# database never pauses — but it is far outside Render's 15-minute sleep
+# timer, so the service is asleep for most of every gap and a first click
+# still eats the cold start.
+#
+# Historical note for anyone reading a mostly-red Actions tab: the 34 runs
+# before 2026-08-27 all failed on the guard below, because RENDER_HEALTH_URL
+# did not exist until the backend was first deployed. Every run since is
+# green. See docs/decisions.md §1.17.
 #
 # Keeping Render genuinely awake needs an off-GitHub pinger (UptimeRobot,
 # cron-job.org, or similar free service) aimed at the same URL. That is a

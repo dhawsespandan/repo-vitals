@@ -352,12 +352,37 @@ downstream depends on the location.
 **Context.** §4.2 and §8 both treat one `*/10` GitHub Actions cron as the
 answer to two separate free-tier timers: Render's 15-minute sleep and
 Supabase's ~7-day pause. Phase 1's acceptance criterion ("keepalive history
-shows health 200s") passes — every scheduled run succeeds.
+shows health 200s") passes — every run since the workflow was correctly
+configured has succeeded.
 
-**But the stated cadence is not real.** GitHub heavily throttles scheduled
-workflows; `*/10` is a request, not a guarantee. Measured on this repository
-(46 runs sampled 2026-08-30), the gap between consecutive runs is **2 to 11
-hours**, not 10 minutes.
+**Read the run history with this caveat.** Of the 46 runs on record
+(2026-08-25 → 2026-08-30), **34 are failures and 12 are successes** — the
+Actions tab is roughly three-quarters red, which looks alarming and isn't.
+Every failure predates `2026-08-27T03:23Z`; the first success is
+`2026-08-27T10:01Z` and all 12 runs since are green. The cause is mundane:
+the workflow hard-fails by design when the `RENDER_HEALTH_URL` repository
+variable is unset (see its own guard clause), and that variable did not
+exist until the backend was first deployed on 2026-08-27. The red band is
+the pre-deployment period, not a fault in the workflow.
+
+**The stated cadence is not real.** GitHub heavily throttles scheduled
+workflows; `*/10` is a request, not a guarantee. Measured 2026-08-30:
+
+| Sample | n | min gap | max gap | mean gap |
+|---|---|---|---|---|
+| Successful runs (post-deployment, the meaningful set) | 12 | 2.05 h | 10.86 h | 5.75 h |
+| All 46 runs (mixes in the pre-deployment failures) | 46 | 0.33 h | 10.86 h | 2.31 h |
+
+**Cite the first row, not the second.** The all-runs range dips to 20
+minutes only because GitHub scheduled a freshly-created repository more
+generously during the period when every run was failing anyway; those ticks
+did not ping anything. The honest figure for what the keepalive actually
+achieves is **2–11 hours between successful pings, averaging ~5.75 h**.
+
+If anything the wider spread strengthens the conclusion: the cadence is not
+merely slow, it is *unpredictable* across two orders of magnitude, so it
+cannot be relied on in either direction — not to keep a service warm, and
+not to be counted on as a heartbeat with any particular period.
 
 **Consequence, split by purpose:**
 

@@ -159,7 +159,7 @@ Record the production figure in `docs/decisions.md` §1.13.
 | Frontend | Vercel Hobby, root `frontend/` | `vercel.json` rewrites `/api/(.*)` to the Render service — update the host after the first deploy |
 | Backend | Render free web service, root `backend/` | build `pip install -r requirements.txt`; pre-deploy `python manage.py migrate`; start `gunicorn config.wsgi -c gunicorn.conf.py` |
 | Database | Supabase free | 500 MB; product and cohort data only |
-| Keepalive | `.github/workflows/keepalive.yml` | asks for every 10 min, actually runs every 2–11 h; set the `RENDER_HEALTH_URL` repository variable |
+| Keepalive | `.github/workflows/keepalive.yml` | asks for every 10 min, actually runs every 2–11 h; **set the `RENDER_HEALTH_URL` repository variable** or every run fails |
 
 The keepalive cron is load-bearing, not hygiene: Render free services sleep
 after ~15 minutes (≈50 s cold start) and Supabase pauses free projects after
@@ -167,11 +167,16 @@ about 7 idle days. `/api/health/` performs a real query, so each ping counts
 as both web-service traffic and database activity.
 
 **It only actually solves the Supabase half.** GitHub throttles scheduled
-workflows heavily — the measured gap here is 2–11 hours, not 10 minutes,
-which is comfortably inside Supabase's ~7-day window but far outside
-Render's 15-minute sleep timer. To keep the backend genuinely warm (worth it
-before a demo), point a free external pinger such as UptimeRobot or
-cron-job.org at the same `/api/health/` URL. See `docs/decisions.md` §1.17.
+workflows heavily — the measured gap between successful runs is 2–11 hours
+(mean ~5.75 h), not 10 minutes. That is comfortably inside Supabase's ~7-day
+window but far outside Render's 15-minute sleep timer. To keep the backend
+genuinely warm (worth it before a demo), point a free external pinger such
+as UptimeRobot or cron-job.org at the same `/api/health/` URL. See
+`docs/decisions.md` §1.17.
+
+If the Actions tab looks mostly red, check the dates: every keepalive run
+before 2026-08-27 failed because `RENDER_HEALTH_URL` had not been set yet.
+All runs since are green.
 
 ---
 
