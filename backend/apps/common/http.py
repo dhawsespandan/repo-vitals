@@ -38,10 +38,17 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-# Hosts this application is permitted to reach. Phase 3 adds the package
-# registries (registry.npmjs.org, pypi.org), OSV and deps.dev; Phases 7/13 add
-# the LLM providers. Adding a host here is a deliberate, reviewable act.
-ALLOWED_HOSTS: frozenset[str] = frozenset({"api.github.com"})
+# Hosts this application is permitted to reach. Phase 6 adds pypi.org, Phase 12
+# adds deps.dev, and Phases 7/13 add the LLM providers. Adding a host here is a
+# deliberate, reviewable act — the list is the whole SSRF defence, so a host
+# goes in when the phase that calls it lands and not a phase earlier.
+ALLOWED_HOSTS: frozenset[str] = frozenset(
+    {
+        "api.github.com",
+        "registry.npmjs.org",
+        "api.osv.dev",
+    }
+)
 
 # (connect, read). Kept short: a slow upstream must not hold a worker thread.
 DEFAULT_TIMEOUT: tuple[float, float] = (5.0, 15.0)

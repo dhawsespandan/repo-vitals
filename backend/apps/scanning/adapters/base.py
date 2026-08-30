@@ -113,6 +113,13 @@ class PackageFacts:
     """
 
     name: str
+    #: The version every version-dependent field below was evaluated against.
+    #: Equal to the caller's `resolved_version` when there was one, otherwise
+    #: the registry's latest release (the `range_latest_approx` path). The
+    #: scanner stores this rather than re-deriving it, so the resolved version,
+    #: the deprecation flag and the versions-behind counts can never end up
+    #: describing three different versions of the same package.
+    assessed_version: str | None = None
     latest_version: str | None = None
     latest_release_at: object | None = None  # datetime | None
     staleness_days: int | None = None
@@ -128,6 +135,13 @@ class PackageFacts:
     #: private package, or an unpublished one. The occurrence survives as
     #: unassessable rather than silently scoring as clean.
     not_found: bool = False
+    #: Set when the registry could not be reached for this package. Kept apart
+    #: from `not_found` because they are opposite claims: one is a fact about
+    #: the package, the other a fact about our afternoon. The scanner records
+    #: the row unassessable, and fails the whole scan only if *every* lookup
+    #: came back this way — unambiguous evidence the registry is down rather
+    #: than the packages being unusual.
+    unavailable: bool = False
 
 
 class ManifestParseError(Exception):
