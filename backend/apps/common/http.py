@@ -68,6 +68,14 @@ class UpstreamNotFound(UpstreamError):
     """404 — the resource does not exist, or the token cannot see it."""
 
 
+class UpstreamUnauthorized(UpstreamError):
+    """401 — the credential itself is bad (GitHub: "Bad credentials").
+
+    Distinct from 403 because the remedy is different in kind: no amount of
+    waiting or retrying fixes a revoked or expired token, only a fresh login.
+    """
+
+
 class UpstreamForbidden(UpstreamError):
     """403 that is not a rate limit."""
 
@@ -254,6 +262,8 @@ def get_json(
                 f"Upstream returned {response.status_code} after {attempt + 1} attempts."
             )
 
+        if response.status_code == 401:
+            raise UpstreamUnauthorized(f"Upstream returned 401 for {path}.")
         if response.status_code == 404:
             raise UpstreamNotFound(f"Upstream returned 404 for {path}.")
         if response.status_code == 409:

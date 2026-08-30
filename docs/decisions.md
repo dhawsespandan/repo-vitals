@@ -417,10 +417,10 @@ not the budget; it is GitHub's scheduler.
 
 ## Phase 2 — Registration + pre-scan validation
 
-### 2.1 Two outcome codes §5.6 does not list
+### 2.1 Three outcome codes §5.6 does not list
 
-§5.6 fixes six outcomes and calls their messages binding. Two situations the
-implementation actually hits are not among them.
+§5.6 fixes six outcomes and calls their messages binding. Three situations
+the implementation actually hits are not among them.
 
 **`github_unavailable` (503).** §5.6 gives exactly one 503, `github_rate_limited`.
 But a connection failure, a DNS problem, or a GitHub 5xx is not a rate limit.
@@ -440,6 +440,18 @@ write access, which does not help (the rule holds regardless of their
 permissions), and `repo_inaccessible` would be a plain lie about a repository
 we can see perfectly well. It gets its own code and a message that states the
 actual rule.
+
+**`github_reauth_required` (401).** Found by running the finished phase
+against a revoked token rather than by reading the spec. GitHub answers 401
+"Bad credentials", which fell through to `github_unavailable` and told the
+user to *try again in a few minutes* — advice that can never come true,
+because retrying does not un-revoke a token. It is also not a rare path:
+tokens die when the user removes the OAuth app, when GitHub expires them, and
+whenever `TOKEN_ENCRYPTION_KEY` is rotated (§6 already anticipates that last
+one with "users simply re-login"). The message now says the only thing that
+actually works — sign out and sign in again — and `common/http.py` gained a
+matching `UpstreamUnauthorized`, never retried, because no number of retries
+fixes a credential.
 
 **Why this is safe to do:** the frontend branches on `code`, never on message
 text (§5.6, `types/index.ts`), so adding codes is additive. The six specified

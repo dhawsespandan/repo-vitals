@@ -409,6 +409,23 @@ class TestUpstreamFailures:
         assert caught.value.status_code == 503
 
     @responses.activate
+    def test_a_revoked_token_asks_the_user_to_sign_in_again(self, owner_user):
+        """Found by running the phase against a revoked token.
+
+        GitHub answers 401 "Bad credentials". Before this, that fell through to
+        github_unavailable — "try again in a few minutes" — which is advice
+        that can never come true, because retrying does not un-revoke a token.
+        """
+        responses.add(responses.GET, REPO_URL, json={}, status=401)
+
+        with pytest.raises(ApiError) as caught:
+            validate_and_describe(owner_user, "github.com/expressjs/express")
+
+        assert caught.value.code == "github_reauth_required"
+        assert caught.value.status_code == 401
+        assert len(responses.calls) == 1
+
+    @responses.activate
     def test_a_user_without_a_stored_token_cannot_reach_anything(self, user):
         user.encrypted_github_token = ""
         user.save(update_fields=["encrypted_github_token"])

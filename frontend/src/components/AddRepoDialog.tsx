@@ -37,6 +37,7 @@ const TONE_BY_CODE: Record<string, Tone> = {
   ecosystem_unsupported: "warn",
   repo_empty: "warn",
   private_repo_not_owned: "warn",
+  github_reauth_required: "warn",
   repo_inaccessible: "error",
   github_rate_limited: "error",
   github_unavailable: "error",

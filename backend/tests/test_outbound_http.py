@@ -104,6 +104,16 @@ class TestStatusMapping:
             http.get_json("https://api.github.com/repos/o/r")
 
     @responses.activate
+    def test_401_is_unauthorized(self):
+        """A bad credential, not a missing resource: only a fresh login fixes it."""
+        responses.add(
+            responses.GET, "https://api.github.com/repos/o/r", json={}, status=401
+        )
+        with pytest.raises(http.UpstreamUnauthorized):
+            http.get_json("https://api.github.com/repos/o/r")
+        assert len(responses.calls) == 1
+
+    @responses.activate
     def test_a_plain_403_is_forbidden_not_a_rate_limit(self):
         responses.add(
             responses.GET, "https://api.github.com/repos/o/r", json={}, status=403

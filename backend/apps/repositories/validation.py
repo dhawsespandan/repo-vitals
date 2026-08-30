@@ -114,6 +114,25 @@ def _rate_limited() -> ApiError:
     )
 
 
+def _reauth_required() -> ApiError:
+    """The stored token is no longer valid.
+
+    Found by running Phase 2 against a revoked token: GitHub answers 401 "Bad
+    credentials", which fell through to `github_unavailable` and told the user
+    to try again in a few minutes. Retrying can never fix a revoked token, so
+    that advice sends them round a loop that cannot terminate. Tokens are
+    revoked routinely — the user removes the OAuth app, GitHub expires it, or
+    `TOKEN_ENCRYPTION_KEY` is rotated (§6, which already says users simply
+    re-login) — so this is a normal path, not an exotic one.
+    """
+    return ApiError(
+        "github_reauth_required",
+        "Your GitHub sign-in is no longer valid. Please sign out and sign in "
+        "again to continue.",
+        status_code=status.HTTP_401_UNAUTHORIZED,
+    )
+
+
 def _unavailable() -> ApiError:
     """GitHub reachable-but-broken: same user-facing advice, different cause.
 
@@ -185,6 +204,8 @@ def _fetch(path: str, token: str, params: dict | None = None) -> http.UpstreamRe
         return http.get_json(f"{GITHUB_API}{path}", token=token, params=params)
     except http.UpstreamRateLimited as exc:
         raise _rate_limited() from exc
+    except http.UpstreamUnauthorized as exc:
+        raise _reauth_required() from exc
     except http.UpstreamNotFound as exc:
         raise _inaccessible() from exc
     except http.UpstreamForbidden as exc:
