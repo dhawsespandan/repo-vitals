@@ -1,0 +1,13 @@
+{
+  "name": "shop",
+  "lockfileVersion": 1,
+  "dependencies": {
+    "express": {
+      "version": "4.16.0",
+      "resolved": "https://registry.npmjs.org/express/-/express-4.16.0.tgz"
+    },
+    "lodash": {
+      "version": "4.17.20"
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "left-pad",
+  "dist-tags": {
+    "latest": "1.3.0"
+  },
+  "versions": {
+    "1.3.0": {
+      "version": "1.3.0",
+      "deprecated": true
+    }
+  },
+  "time": {
+    "created": "2014-03-05T00:00:00.000Z",
+    "1.3.0": "2018-03-01T00:00:00.000Z"
+  }
+}

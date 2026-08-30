@@ -1,0 +1,61 @@
+{
+  "sha": "treesha",
+  "truncated": false,
+  "tree": [
+    {
+      "path": "README.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "readme",
+      "size": 1200
+    },
+    {
+      "path": "package.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "root-manifest",
+      "size": 612
+    },
+    {
+      "path": "package-lock.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "root-lock",
+      "size": 48211
+    },
+    {
+      "path": "services",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "servicesdir"
+    },
+    {
+      "path": "services/api/package.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "api-manifest",
+      "size": 388
+    },
+    {
+      "path": "services/worker/package.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "worker-manifest",
+      "size": 214
+    },
+    {
+      "path": "node_modules/left-pad/package.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "vendored",
+      "size": 300
+    },
+    {
+      "path": "docs/package.json.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "notamanifest",
+      "size": 90
+    }
+  ]
+}

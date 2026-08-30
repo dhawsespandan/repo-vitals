@@ -1,0 +1,14 @@
+{
+  "name": "specifier-zoo",
+  "dependencies": {
+    "local-path": "file:../local",
+    "linked": "link:../linked",
+    "in-workspace": "workspace:*",
+    "from-git": "git+ssh://git@github.com/acme/thing.git",
+    "from-github-prefix": "github:acme/thing",
+    "from-github-shorthand": "acme/thing#main",
+    "from-url": "https://example.com/pkg.tgz",
+    "aliased": "npm:lodash@^4",
+    "express": "^4.16.0"
+  }
+}
