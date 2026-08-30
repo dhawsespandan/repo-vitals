@@ -830,3 +830,36 @@ permanently skipped exactly where it is most often run.
 The lock *dictionary's* own race — two threads reaching an unseen repository at
 once and each creating their own lock, which is no lock at all — is tested with
 real threads, because that one needs no database.
+
+### 3.13 Two bugs a green suite could not see
+
+The Phase 2 post-mortem (§2.5) said a passing frontend test is evidence the
+code ran, not that the product works, and that a local browser check is cheap
+enough to do before calling a phase done. Doing it found two.
+
+**`usePolling` ran two overlapping loops.** The guard was a single `cancelled`
+boolean ref. When the effect re-ran — React StrictMode's double mount in
+development, or `enabled` flipping in production — the cleanup set it true and
+the new run set it straight back to false; a request already in flight from
+the *old* run then resolved, read `false`, and scheduled its own timer. Two
+chains polling the same endpoint, and another with every subsequent re-run.
+
+Every assertion about polling still passed, because every one of them was
+about *behaviour* — does it stop on a terminal state, does it pause when
+hidden — and both chains behaved correctly. The defect was in the *count*, and
+nothing on screen shows a request count. It was found by counting scan-status
+requests in the browser: four in eight seconds against a three-second
+interval. The fix is an incrementing run token, which a later run cannot
+reset. `usePolling.test.tsx` pins it, and was run against the old
+implementation to confirm it actually fails there — a regression test that
+does not fail on the regression is decoration.
+
+**"Last scan: never" sat directly beside a failure message from four minutes
+ago.** The metric read from the completed scan, which for a repository whose
+only scan failed is null. The other three metrics in that row describe the
+results and are rightly blank; this one describes the repository, and a
+repository whose scan failed has emphatically been scanned. It now reads "in
+progress", "failed 4 min ago", or a timestamp.
+
+Neither was a logic error, which is the pattern §2.5 already named: correct
+code, placed or worded so a reader draws the wrong conclusion.
