@@ -181,19 +181,23 @@ def _backoff(attempt: int) -> float:
 
 
 def _follow(
+    method: str,
     url: str,
     headers: dict[str, str],
     params: dict[str, Any] | None,
+    json_body: Any | None,
     timeout: tuple[float, float],
 ) -> requests.Response:
-    """GET `url`, following redirects by hand so every hop is host-checked."""
+    """Send one request, following redirects by hand so every hop is host-checked."""
     current = url
     for _hop in range(MAX_REDIRECTS + 1):
         _check_host(current)
-        response = _session().get(
+        response = _session().request(
+            method,
             current,
             headers=headers,
             params=params,
+            json=json_body,
             timeout=timeout,
             allow_redirects=False,
         )
@@ -209,27 +213,33 @@ def _follow(
         # Query parameters are part of the original URL; the redirect target
         # carries its own, so they are not re-appended.
         params = None
+        if response.status_code == 303:
+            # 303 means "go and GET this instead"; carrying the body forward
+            # would re-send it somewhere that did not ask for it.
+            method, json_body = "GET", None
 
     raise UpstreamUnavailable("Too many redirects.")
 
 
-def get_json(
+def _request_json(
+    method: str,
     url: str,
     *,
-    token: str | None = None,
-    params: dict[str, Any] | None = None,
-    accept: str = "application/vnd.github+json",
-    timeout: tuple[float, float] = DEFAULT_TIMEOUT,
-    retries: int = MAX_RETRIES,
+    token: str | None,
+    params: dict[str, Any] | None,
+    json_body: Any | None,
+    accept: str,
+    timeout: tuple[float, float],
+    retries: int,
 ) -> UpstreamResponse:
-    """GET a JSON document from an allowlisted host.
+    """The shared body of `get_json` and `post_json`.
 
-    `url` must be built by the caller from a module-level constant — never
-    from user input. A pasted repository URL is parsed to `owner/repo` and
-    discarded long before it reaches this function (§5.6).
-
-    Returns only on 2xx; every other outcome raises the matching
-    `UpstreamError` subclass.
+    Retry policy is deliberately identical for both. That is safe here only
+    because the one POST this project makes — OSV's `querybatch` — is a
+    read-only query that happens to need a request body; a retried POST is
+    otherwise a duplicate-side-effect bug waiting to happen. If a
+    state-changing POST is ever added, it needs `retries=0` and a comment
+    saying why.
     """
     headers = {"Accept": accept}
     if token:
@@ -240,13 +250,15 @@ def get_json(
 
     while True:
         try:
-            response = _follow(url, headers, params, timeout)
+            response = _follow(method, url, headers, params, json_body, timeout)
         except requests.RequestException as exc:
             if attempt < retries:
                 attempt += 1
                 _sleep(_backoff(attempt))
                 continue
-            logger.warning("Outbound GET %s failed after %d attempts.", path, attempt + 1)
+            logger.warning(
+                "Outbound %s %s failed after %d attempts.", method, path, attempt + 1
+            )
             raise UpstreamUnavailable(
                 f"Could not reach {urlparse(url).hostname}."
             ) from exc
@@ -257,7 +269,7 @@ def get_json(
                 attempt += 1
                 _sleep(wait)
                 continue
-            logger.warning("Outbound GET %s hit an upstream rate limit.", path)
+            logger.warning("Outbound %s %s hit an upstream rate limit.", method, path)
             raise UpstreamRateLimited("Upstream rate limit reached.", retry_after=wait)
 
         if response.status_code >= 500:
@@ -287,3 +299,63 @@ def get_json(
             headers=dict(response.headers),
             data=_parse_json(response),
         )
+
+
+def get_json(
+    url: str,
+    *,
+    token: str | None = None,
+    params: dict[str, Any] | None = None,
+    accept: str = "application/vnd.github+json",
+    timeout: tuple[float, float] = DEFAULT_TIMEOUT,
+    retries: int = MAX_RETRIES,
+) -> UpstreamResponse:
+    """GET a JSON document from an allowlisted host.
+
+    `url` must be built by the caller from a module-level constant — never
+    from user input. A pasted repository URL is parsed to `owner/repo` and
+    discarded long before it reaches this function (§5.6).
+
+    Returns only on 2xx; every other outcome raises the matching
+    `UpstreamError` subclass.
+    """
+    return _request_json(
+        "GET",
+        url,
+        token=token,
+        params=params,
+        json_body=None,
+        accept=accept,
+        timeout=timeout,
+        retries=retries,
+    )
+
+
+def post_json(
+    url: str,
+    body: Any,
+    *,
+    token: str | None = None,
+    accept: str = "application/json",
+    timeout: tuple[float, float] = DEFAULT_TIMEOUT,
+    retries: int = MAX_RETRIES,
+) -> UpstreamResponse:
+    """POST a JSON body to an allowlisted host and read a JSON answer.
+
+    Added in Phase 3 for OSV's `querybatch` (§10), which is the reason this
+    project needs a POST at all: asking about 100 packages in one call instead
+    of 100 calls is the difference between a scan that fits a free tier and one
+    that does not (§8). The same allowlist, redirect and retry rules apply — a
+    second outbound path with its own rules is exactly what `common/http.py`
+    exists to prevent.
+    """
+    return _request_json(
+        "POST",
+        url,
+        token=token,
+        params=None,
+        json_body=body,
+        accept=accept,
+        timeout=timeout,
+        retries=retries,
+    )
