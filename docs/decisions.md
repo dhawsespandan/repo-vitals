@@ -606,3 +606,227 @@ it into view. The scroll is the part that makes §5.6's "redirect" mean
 anything before Phase 5 supplies a real route. It runs on a `setTimeout`
 rather than `requestAnimationFrame` because browsers throttle frame callbacks
 in undisplayed tabs, and this must not depend on frames ticking.
+
+---
+
+## Phase 3 — Scanner core, npm adapter, background scans
+
+### 3.1 `WEIGHTS_VERSION` arrives a phase early, defaulting to `unscored`
+
+§5.1 makes `scan_runs.scoring_formula_version` NOT NULL, and §6 lists
+`WEIGHTS_VERSION` against Phase 4. Phase 3 creates the table and writes rows,
+so it needs a value a phase before the config register expects one.
+
+The options were to pick Phase 4's bootstrap tag (`v0_equal`) now, or to say
+what is actually true. A Phase 3 scan runs no formula: `risk_score` and
+`classification` are NULL, and `risk_component_score` is NULL on every
+occurrence. Tagging those rows `v0_equal` would claim a formula produced them
+— the sort of small untruth that becomes a real problem when the research
+recomputes scores from stored signals under an explicitly chosen weights
+version (D6) and finds rows attributed to a version that never touched them.
+
+So the default is the literal string `unscored`, and Phase 4 changes the
+default when `weights_v0_equal.yaml` ships. `.env.example` carries it with the
+same explanation.
+
+### 3.2 Layout additions to §3
+
+Two files §3's tree does not list:
+
+* **`scanning/adapters/semver.py`** — SemVer parsing, ordering and release
+  distance. Not a dependency, because the two things needed here are small and
+  a SemVer library's main offering is range *satisfaction* (`^1.2 ∩ >=1.4 <2`),
+  which this project deliberately does not do: resolution comes from a lockfile
+  or it does not happen (§10 Phase 3). Re-deriving what a package manager
+  *would* have installed is exactly the guess the product exists to avoid.
+  Phase 6 adds a PEP 440 equivalent beside it rather than making one function
+  serve two grammars.
+* **`scanning/serializers.py`** — every other app has one; §3's tree simply
+  does not enumerate serializer modules for any app.
+
+`retention.py` is named in §3 under `scanning/` and is **not** written here.
+§5.7's retention deletes the prior completed scan *after* the history rows are
+written, and history writes are Phase 4's. Shipping the delete first would
+destroy scans with nowhere permanent for them to have gone.
+
+### 3.3 `npm:` aliases are a documented gap, not a resolved specifier
+
+`"my-lodash": "npm:lodash@^4"` installs a registry package under a local name.
+Unlike `file:` or `git+`, it *is* assessable in principle — the registry knows
+`lodash` perfectly well.
+
+It is recorded unassessable anyway, with reason `alias_specifier`. Resolving it
+means re-deriving npm's alias grammar, including `npm:@scope/pkg@1.2.3` where
+the version separator is the *second* `@` and the first is part of the name.
+Getting that wrong does not fail loudly: it silently attributes one package's
+advisories and deprecation to another, which is worse than any number of
+honest "can't assess" rows. Same shape as Phase 6's `dynamic_setup_py` (§10),
+which the plan already treats as a documented gap rather than a miscount.
+
+Worth revisiting if real repositories turn out to use aliases often. Recorded
+here rather than built (§12).
+
+### 3.4 Only npm's own lockfiles are read
+
+`package-lock.json` and `npm-shrinkwrap.json` are JSON and are parsed.
+`yarn.lock` is a bespoke format and `pnpm-lock.yaml` is YAML, which would mean
+a new dependency and a new parser each.
+
+Neither is read, so a yarn-only or pnpm-only repository resolves every row
+through `range_latest_approx` — a *degraded* answer that says so on every row
+(the provenance chip in the dependency table), not a wrong one. That asymmetry
+is acceptable where a half-understood lockfile parse would not be: a lockfile
+misread produces confident, specific, wrong versions.
+
+Adding pnpm later costs one YAML dependency and one parser; adding yarn costs
+a hand-written grammar. Neither is in Phase 3's scope.
+
+### 3.5 The three ways a scan can fail, and why they differ
+
+A scan meets three kinds of bad news, and treating them alike would be wrong
+in three different directions.
+
+**One package the registry has never published** → that occurrence becomes
+unassessable with `not_in_registry`. It is a fact about the package, it is
+stable, and the row stays visible with its reason.
+
+**The registry answering nothing at all** → the whole scan fails. Marking every
+row unassessable would write a permanent claim about the packages out of a
+temporary fact about the network, and the next scan would silently disagree
+with this one for no reason a reader could see. The rule is deliberately
+all-or-nothing rather than a percentage threshold: every lookup failing is
+unambiguous evidence about the registry, where "sixty percent failed" is a
+number someone would have to defend.
+
+**OSV unreachable** → the whole scan fails, always. This one has no
+one-package variant, because a missing batch answer is *indistinguishable from
+"no advisories"*. Recording a partial OSV result would report a repository
+clean because the vulnerability database was down, which is the single worst
+output this product could produce.
+
+### 3.6 A scan can die without finishing, so `running` has an expiry
+
+Render restarts free instances at will (§8), and a killed process leaves a row
+saying `running` with nobody running it. The per-repository lock is
+in-process, so a restart also forgets it. Without a rule, that repository is
+wedged behind a 409 permanently.
+
+Any active scan older than fifteen minutes is presumed dead: it stops blocking
+new work, and it is marked failed with a message saying to run it again. The
+expiry runs on the **read** path as well as the trigger path — one `UPDATE`
+that normally matches nothing — so the page repairs itself instead of spinning
+until someone thinks to press Run scan. Fifteen minutes against an acceptance
+target of under two (§10 Phase 3) is wide enough that a slow upstream is never
+mistaken for a crash.
+
+### 3.7 A guard on manifest count, and two size caps
+
+Three limits, none of them in the plan, all of them answering §11's
+"rate-limit exhaustion" row and §8's memory budget:
+
+* **`MAX_MANIFESTS = 50`**, shallowest paths first. A repository at this
+  product's scale has single figures; a tree with fifty-plus is generated or
+  vendored in a way `VENDOR_DIRS` did not catch, and scanning all of it spends
+  the user's GitHub quota discovering that. Sorting by depth keeps the
+  repository's own root manifests ahead of anything deeply nested when the cut
+  falls.
+* **`MAX_MANIFEST_BYTES = 1 MiB`** — anything larger is not a `package.json`.
+* **`MAX_LOCKFILE_BYTES = 6 MiB`** — lockfiles legitimately reach megabytes.
+  Past the cap the manifest still scans; its rows fall back to
+  `range_latest_approx` and `manifest_files.lockfile_path` is left NULL, which
+  is what tells a reader why.
+
+Both size checks run against the size the **tree** already reported, before
+any fetch, so an oversized file costs nothing.
+
+Blobs are read from `GET /git/blobs/{sha}` rather than the contents API. The
+tree hands over the sha and the size together, and the blob endpoint's ceiling
+accommodates real lockfiles where the contents API's 1 MB does not.
+
+### 3.8 CVSS is computed from the vector, not read from a field
+
+OSV publishes severity as a CVSS **vector string**; §5.2 needs a number.
+`osv.py` transcribes the CVSS v3.1 base-score arithmetic (§8.1) and is checked
+against the specification's own published worked examples.
+
+This matters beyond tidiness. §5.2's fallback chain is OSV → NVD → a 5.0
+placeholder flagged `cvss_reduced_confidence`, and it only ever reaches its
+second step if the first is genuinely tried. Deriving the score here keeps the
+placeholder for advisories that really carry no severity, which is a far
+smaller set than "advisories whose score is not a plain number in the JSON".
+Phase 5's whole purpose is to show this arithmetic to a reader, so it had
+better be the specification's arithmetic.
+
+Where an advisory also carries the publisher's own severity word
+(`database_specific.severity`, which GitHub advisories do), **that** is what
+`severity` stores — it is a statement by the people who analysed the
+vulnerability rather than an inference from a number. Both are stored, and
+§5.2's formula consumes `cvss_score`, so a disagreement changes the label a
+user reads and never the arithmetic.
+
+### 3.9 `versions_behind_*` counts releases, not version arithmetic
+
+§5.1 stores three counters and D3 keeps them out of the formula, so they exist
+for the research and the UI alone. Two readings were available: subtract the
+version components, or count the releases that actually shipped between the
+resolved version and the latest.
+
+Counting releases. `2.0.0` against a latest of `2.11.0` is "eleven minor
+versions behind" by subtraction, but if the package skipped `2.4` there was
+never a `2.4` for anyone to be behind. The levels are independent slices of
+the same release list — majors above this one, minors above it *within* this
+major, patches above it within this minor — and prereleases are excluded
+throughout, because being "behind" a `3.0.0-beta.1` is not a claim about a
+project that tracks stable releases.
+
+Costless to get right, and a misleading number here would be carried straight
+into the research as a covariate.
+
+### 3.10 Two API-surface additions to §5.5
+
+**`GET /api/repositories/{id}/`** — a method on a route §5.5 already lists for
+`DELETE`. The detail page has to render for someone who typed the URL or
+refreshed the tab; without it the only way to learn a repository's name is to
+fetch the whole list and filter in the browser. It answers with the same
+serializer the list does.
+
+**`scan-status` answers two fields, not one.** `scan` is the newest scan
+whatever its status; `latestCompletedScanId` is the last scan that produced
+results. They are two different questions and they diverge exactly when it
+matters: while a rescan runs, the pill must say "Scanning…" and the dependency
+table must keep showing the previous, still-true results. Collapsing them into
+one field is how a UI ends up either showing a finished table under a spinner
+or blanking the table the moment a rescan starts.
+
+### 3.11 A foreign scan id is a 404 on the dependencies route, not an empty page
+
+`OwnedQuerySetMixin` on the occurrence queryset already leaks nothing — a
+foreign scan's rows are simply not in the set. But it would answer a foreign
+id exactly as it answers a genuinely empty scan, and every other route on this
+surface answers 404. The route therefore resolves the scan through an
+owner-scoped queryset first.
+
+The reason is the standing BOLA suite (§11, extended every phase): it should
+be able to assert one rule across every route, not a rule plus a table of
+exceptions. An exception that leaks nothing today is one refactor away from
+leaking a count.
+
+### 3.12 Lock contention is tested by observation, not by racing threads
+
+The rule is that the "is a scan already running?" check and the row insert both
+happen inside the per-repository lock — the window between them is exactly what
+a double-click fits through. The obvious test races two threads and asserts one
+wins.
+
+It is asserted by observation instead: the test watches whether the lock is
+held during the check and during the insert. Two reasons. A race test passes
+whenever the timing happens to be kind, and this property is either true of the
+code or it is not. And it cannot run on SQLite at all — pytest's test
+transaction holds the database's single write lock, so a second thread's write
+blocks until the test ends. Since the local signal is SQLite (Docker does not
+start reliably on the dev machine, §1 notes) a race test here would be
+permanently skipped exactly where it is most often run.
+
+The lock *dictionary's* own race — two threads reaching an unseen repository at
+once and each creating their own lock, which is no lock at all — is tested with
+real threads, because that one needs no database.
