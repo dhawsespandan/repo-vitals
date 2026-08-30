@@ -408,10 +408,62 @@ for), and having the job sleep-and-repeat inside a single run (burns Actions
 minutes to impersonate a service purpose-built for this, and still stops
 whenever the run ends).
 
-**Free-tier note:** keeping the service awake 24/7 is within budget —
-Render free is 750 instance-hours/month against ~730 hours in a month — so
-one always-on service is exactly what §8 already intends. The constraint is
-not the budget; it is GitHub's scheduler.
+**Free-tier note — corrected 2026-08-30.** An earlier version of this section
+said 24/7 was comfortably within budget, citing "~730 hours in a month". That
+understates it. Checked against Render's own free-tier documentation:
+
+* the allowance is **750 instance-hours per calendar month per _workspace_**,
+  not per service;
+* hours are consumed only while a service is running — a spun-down service
+  costs nothing;
+* exhausting the allowance **suspends every free service in the workspace
+  until the 1st of the next month**.
+
+A 31-day month is 744 hours, so always-on leaves a **6-hour margin (0.8%)**,
+and it only holds while this workspace hosts exactly one service. Render's
+docs do not specify whether a deploy briefly runs two instances, whether
+restarts count, or how hours are rounded, and they reserve the right to
+restart a free service at any time. So the margin rests on undocumented
+accounting, and the failure mode is a month-long outage.
+
+**Decision: ping on a 06:00–24:00 window, not 24/7.** 18 h/day × 31 = 558
+hours, a 192-hour margin that absorbs deploys and any upstream surprise
+without needing to be thought about again. The 00:00–06:00 hours it gives up
+are ones the commit history shows no activity in, so nothing is lost. It also
+avoids permanently reserving the whole workspace for this one project.
+
+The constraint is therefore **both** the scheduler and the budget — the
+scheduler is why GitHub Actions cannot do this job, and the budget is why the
+replacement is windowed rather than continuous.
+
+**Two setup traps, both hit on the first attempt (2026-08-30).**
+
+*Timezone.* cron-job.org schedules in **UTC** unless the job's own time zone
+is changed (it is on the job's ADVANCED tab, not next to the schedule). Left
+at UTC, `*/10 6-23 * * *` runs 11:30–05:29 IST — it sleeps through the 10:00
+hour, which the commit history shows is the single busiest working hour of
+the day. Set the job's time zone to **Asia/Kolkata** and confirm the label
+under "Next executions" stops saying `(UTC)`.
+
+*"Failed (output too large)".* Every scheduled GET failed with this, against
+a 31-byte JSON body. The size is not the issue: Render fronts the service
+with Cloudflare, which returns `Transfer-Encoding: chunked` and **no
+`Content-Length`** — verified true regardless of `Accept`, `Accept-Encoding`
+or user agent, so it is not DRF content negotiation and not a bot challenge.
+A fetcher enforcing a response cap cannot pre-check an undeclared length and
+aborts. The endpoint already advertises `allow: GET, HEAD, OPTIONS`, and
+Django routes HEAD to the same handler, so **HEAD** still executes the
+`SELECT 1` (Supabase activity preserved, 503-on-DB-failure preserved) while
+returning no body for the cap to trip on. Worth knowing because the job had
+"disable after too many failures" enabled: left alone it would have switched
+itself off within a day or two and quietly restored the cold starts.
+
+**After v1.0 this should get narrower, not wider.** A finished project is
+opened for a demo or a review a handful of times a month; 558 hours of warmth
+to serve that is poor value, and the consequence of a suspension is worst
+exactly when the project is being evaluated. Narrowing the window further, or
+retiring the pinger and warming the service by hand before a demo, is the
+right end state.
 
 ---
 
