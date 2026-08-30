@@ -323,3 +323,67 @@ lesson as §1.14 — a component that is correct in isolation (the routing
 rule) can still fail if a browser mechanism bypasses the assumption it
 relies on (that React re-runs on every "page"). bfcache is exactly this kind
 of easy-to-miss mechanism for any client-side auth guard.
+
+### 1.16 `smoke_memory` lives in `accounts`, not `research` — §3 layout deviation
+
+**Context.** §3's monorepo layout lists `smoke_memory.py` under
+`apps/research/management/commands/`. It currently lives in
+`apps/accounts/management/commands/`.
+
+**Decision.** Leave it in `accounts` for now; move it to `research` when
+that app is actually created in Phase 11.
+
+**Why.** `apps/research/` does not exist until Phase 11, and §3 describes it
+as "never imported by request-handling code". Creating the whole package in
+Phase 1 to host one command would mean carrying an otherwise-empty app in
+`INSTALLED_APPS` for ten phases, which is worse than a documented
+one-command deviation. The command is also genuinely not research code in
+Phase 1 — it exists to answer a deployment feasibility question about the
+production worker (§1.13), which is an operations concern, and it exercises
+the login path that `accounts` owns.
+
+**How to apply:** when Phase 11 creates `apps/research/`, move this command
+there and delete this note. Until then, `manage.py smoke_memory` is the
+command's stable public name regardless of which app hosts it, so nothing
+downstream depends on the location.
+
+### 1.17 The keepalive cron does not keep Render awake — only Supabase alive
+
+**Context.** §4.2 and §8 both treat one `*/10` GitHub Actions cron as the
+answer to two separate free-tier timers: Render's 15-minute sleep and
+Supabase's ~7-day pause. Phase 1's acceptance criterion ("keepalive history
+shows health 200s") passes — every scheduled run succeeds.
+
+**But the stated cadence is not real.** GitHub heavily throttles scheduled
+workflows; `*/10` is a request, not a guarantee. Measured on this repository
+(46 runs sampled 2026-08-30), the gap between consecutive runs is **2 to 11
+hours**, not 10 minutes.
+
+**Consequence, split by purpose:**
+
+| Timer | Window | Actual cadence | Result |
+|---|---|---|---|
+| Supabase pause | ~7 days | 2–11 h | **solved** — comfortably inside |
+| Render sleep | 15 min | 2–11 h | **not solved** — asleep most of every gap |
+
+So a first click on the live URL still pays the ~50 s cold start, which is
+precisely the mentor-demo failure §4.2 wanted to avoid. The plan's §8 answer
+for the Render row is, in practice, not satisfied by this mechanism.
+
+**Decision.** Keep the workflow — it genuinely solves the Supabase half and
+costs nothing — and record honestly that it does not solve the Render half.
+Keeping Render awake needs an off-GitHub pinger (UptimeRobot, cron-job.org,
+or similar free service) aimed at the same `/api/health/` URL. That is a
+hosting-account action rather than a code change, so it is **outstanding
+work for the developer**, not something this repository can assert.
+
+**Rejected alternatives**, both of which would look like fixes and aren't:
+lowering the cron interval (GitHub throttles regardless of what is asked
+for), and having the job sleep-and-repeat inside a single run (burns Actions
+minutes to impersonate a service purpose-built for this, and still stops
+whenever the run ends).
+
+**Free-tier note:** keeping the service awake 24/7 is within budget —
+Render free is 750 instance-hours/month against ~730 hours in a month — so
+one always-on service is exactly what §8 already intends. The constraint is
+not the budget; it is GitHub's scheduler.

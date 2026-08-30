@@ -1,18 +1,31 @@
 name: Keepalive
 
-# Two free-tier problems, one cron (§4.2, §8):
+# §4.2/§8 ask this cron to solve two free-tier problems:
 #
 #   * Render free web services sleep after ~15 minutes of inactivity and take
 #     roughly 50 seconds to cold-start — long enough that a mentor demo or a
 #     marker's first click looks broken.
 #   * Supabase pauses free projects after about 7 idle days.
 #
-# `/api/health/` performs a real `SELECT 1`, so one request every 10 minutes
-# keeps the web service awake *and* counts as database activity. A cheaper
-# endpoint that skipped the query would let the database pause anyway.
+# `/api/health/` performs a real `SELECT 1`, so each request counts as
+# database activity as well as web-service traffic. A cheaper endpoint that
+# skipped the query would let the database pause anyway.
 #
-# GitHub throttles scheduled workflows on busy runners, so the exact interval
-# drifts; that is fine, the requirement is "regularly", not "precisely".
+# IT ONLY ACTUALLY SOLVES THE SECOND ONE. The `*/10` schedule below is a
+# request, not a guarantee: GitHub heavily throttles scheduled workflows, and
+# on this repository the measured gap between consecutive runs is 2–11 hours
+# (46 runs sampled, 2026-08-30), not 10 minutes. That is far inside
+# Supabase's ~7-day window, so the database never pauses — but it is far
+# outside Render's 15-minute sleep timer, so the service is asleep for most
+# of every gap and a first click still eats the cold start.
+#
+# Keeping Render genuinely awake needs an off-GitHub pinger (UptimeRobot,
+# cron-job.org, or similar free service) aimed at the same URL. That is a
+# hosting-account action, not a code change, so it is recorded in
+# docs/decisions.md §1.17 rather than faked here. Do not "fix" this by
+# lowering the cron interval — GitHub throttles regardless of what is asked
+# — nor by having the job sleep-and-repeat, which just burns Actions minutes
+# to impersonate a service built for this.
 
 on:
   schedule:
