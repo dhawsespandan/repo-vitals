@@ -476,3 +476,34 @@ such a directory, never the repository's own.
 introduces `scanning/adapters/` and owns the pattern registry from then on;
 Phase 6 adds the PyPI filenames and, per §5.6, updates the
 `ecosystem_unsupported` message to name both ecosystems.
+
+### 2.4 Four deviations from the wireframe's register flow
+
+`plan/wireframe.html` is the binding visual specification, so departures from
+it are recorded rather than assumed.
+
+**The "Try: eligible / unsupported / read-only / not found" chips are gone.**
+They exist so someone opening the wireframe with no backend can trigger each
+validation branch; they paste fabricated URLs (`github.com/ghost/missing-repo`)
+that a real server can only reject. Keeping them would ship a demo device as a
+product feature.
+
+**The submit button says "Register", not "Register & scan".** Registration does
+not scan until Phase 3. The wireframe is drawn against the finished product;
+promising a scan the build cannot yet perform is the one change that would
+make the button lie. Phase 3 restores the wireframe's label along with the
+behaviour.
+
+**Client-side validation is not reproduced.** The wireframe validates the URL
+as you type, from a regex over the string. §10 Phase 2 says the server
+re-parses authoritatively and §5.6 owns every message, so the field accepts
+anything non-empty and the outcome comes from the API. The tone (green /
+amber / red) is chosen from the returned `code`, never from the message text.
+An unrecognised code renders as an error, so a code added server-side can
+never appear as reassuring green.
+
+**A duplicate marks the existing card instead of navigating to it.** §5.6's
+duplicate outcome says the frontend redirects to the existing repository.
+There is no per-repository route until Phase 5, so the dialog closes and the
+row is highlighted for a few seconds. Same intent — "you already have this,
+here it is" — with the only navigation the app currently has.

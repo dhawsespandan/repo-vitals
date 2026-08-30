@@ -8,7 +8,12 @@
  * app is ever served from a different origin during a debugging session.
  */
 
-import type { ApiErrorBody, SessionResponse } from "../types";
+import type {
+  ApiErrorBody,
+  RegisterResult,
+  Repository,
+  SessionResponse,
+} from "../types";
 
 /** A failed API call, carrying the backend's `{code, message}` envelope. */
 export class ApiError extends Error {
@@ -105,3 +110,45 @@ export const postLogout = () => api.post<void>("/auth/logout/");
  * cookies intact.
  */
 export const GITHUB_LOGIN_URL = "/api/auth/github/login/";
+
+/** `GET /api/repositories/` — the caller's own registrations. */
+export const listRepositories = () => api.get<Repository[]>("/repositories/");
+
+/**
+ * `POST /api/repositories/` — validate (§5.6) then register.
+ *
+ * Rejections arrive as `ApiError`, carrying the `code` the UI branches on.
+ * The two success shapes are distinguished here rather than at the call site:
+ * a 201 is a new registration, and a 200 carrying `already_registered` is the
+ * duplicate answer with the repository the user actually wants.
+ */
+export async function registerRepository(url: string): Promise<RegisterResult> {
+  const payload = await api.post<Repository | DuplicatePayload>(
+    "/repositories/",
+    { url },
+  );
+  if (isDuplicate(payload)) {
+    return {
+      outcome: "duplicate",
+      repository: payload.repository,
+      message: payload.message,
+    };
+  }
+  return { outcome: "created", repository: payload };
+}
+
+interface DuplicatePayload {
+  code: "already_registered";
+  message: string;
+  repository: Repository;
+}
+
+function isDuplicate(
+  payload: Repository | DuplicatePayload,
+): payload is DuplicatePayload {
+  return (payload as DuplicatePayload).code === "already_registered";
+}
+
+/** `DELETE /api/repositories/{id}/` — 204 on success. */
+export const deleteRepository = (id: string) =>
+  api.delete<void>(`/repositories/${id}/`);

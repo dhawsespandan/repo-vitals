@@ -4,7 +4,7 @@ import { vi } from "vitest";
 
 import { App } from "../App";
 import { AuthProvider } from "../auth/AuthContext";
-import type { SessionResponse } from "../types";
+import type { Repository, SessionResponse } from "../types";
 
 export const SIGNED_IN: SessionResponse = {
   authenticated: true,
@@ -19,19 +19,55 @@ export const SIGNED_IN: SessionResponse = {
 
 export const SIGNED_OUT: SessionResponse = { authenticated: false, user: null };
 
+export const REPOSITORY: Repository = {
+  id: "b6b0a0f2-2a1e-4f5b-9d3c-7c1b2a3d4e5f",
+  owner: "arjun-dev",
+  name: "checkout-service",
+  fullName: "arjun-dev/checkout-service",
+  htmlUrl: "https://github.com/arjun-dev/checkout-service",
+  defaultBranch: "main",
+  visibility: "public",
+  accessLevel: "owner",
+  registeredAt: "2026-08-30T09:00:00Z",
+};
+
+/** What `POST /api/repositories/` should answer with. */
+export interface RegisterStub {
+  status: number;
+  body: unknown;
+}
+
 interface StubOptions {
   session: SessionResponse;
   /** Status returned by POST /api/auth/logout/. */
   logoutStatus?: number;
+  /** Rows returned by GET /api/repositories/. */
+  repositories?: Repository[];
+  register?: RegisterStub;
+  /** Status returned by DELETE /api/repositories/{id}/. */
+  deleteStatus?: number;
 }
 
 /**
- * Stubs `fetch` for the two Phase 1 endpoints. Hand-rolled rather than pulled
- * from a mocking library: two routes do not justify the dependency, and an
- * explicit switch makes it obvious in each test which calls were expected.
+ * Stubs `fetch` for the endpoints the SPA actually calls. Hand-rolled rather
+ * than pulled from a mocking library: a handful of routes does not justify the
+ * dependency, and an explicit switch makes it obvious in each test which calls
+ * were expected.
  */
-export function stubFetch({ session, logoutStatus = 204 }: StubOptions) {
+export function stubFetch({
+  session,
+  logoutStatus = 204,
+  repositories = [],
+  register,
+  deleteStatus = 204,
+}: StubOptions) {
   const calls: string[] = [];
+
+  const json = (body: unknown, status: number) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    });
 
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
@@ -39,18 +75,21 @@ export function stubFetch({ session, logoutStatus = 204 }: StubOptions) {
     calls.push(`${method} ${url}`);
 
     if (url.endsWith("/api/auth/session/")) {
-      return new Response(JSON.stringify(session), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
+      return json(session, 200);
     }
     if (url.endsWith("/api/auth/logout/")) {
       return new Response(null, { status: logoutStatus });
     }
-    return new Response(JSON.stringify({ code: "not_found", message: "no" }), {
-      status: 404,
-      headers: { "Content-Type": "application/json" },
-    });
+    if (url.endsWith("/api/repositories/") && method === "GET") {
+      return json(repositories, 200);
+    }
+    if (url.endsWith("/api/repositories/") && method === "POST") {
+      return json(register?.body ?? REPOSITORY, register?.status ?? 201);
+    }
+    if (url.includes("/api/repositories/") && method === "DELETE") {
+      return new Response(null, { status: deleteStatus });
+    }
+    return json({ code: "not_found", message: "no" }, 404);
   });
 
   vi.stubGlobal("fetch", fetchMock);
