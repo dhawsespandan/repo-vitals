@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "apps.common",
     "apps.accounts",
     "apps.repositories",
+    "apps.scanning",
 ]
 
 MIDDLEWARE = [
@@ -146,6 +147,12 @@ SOCIALACCOUNT_PROVIDERS = {
 
 LOGIN_REDIRECT_URL = f"{FRONTEND_URL}/dashboard"
 LOGIN_URL = f"{FRONTEND_URL}/login"
+
+# The weights file every scan is tagged with (§5.4, §6). Phase 4 ships
+# `weights_v0_equal.yaml` and changes this default; until a formula exists,
+# "unscored" is the truthful provenance for a scan that recorded signals and
+# computed no score.
+WEIGHTS_VERSION = env("WEIGHTS_VERSION", default="unscored")
 
 # Fernet key for app_users.encrypted_github_token. Rotating it invalidates
 # every stored token — users simply re-login (§6).
