@@ -21,6 +21,7 @@ from django.urls import path
 from apps.accounts.oauth import RepoVitalsGitHubOAuth2Adapter
 from apps.accounts.views import LogoutView, SessionView
 from apps.common.views import HealthView
+from apps.repositories.views import RepositoryDestroyView, RepositoryListCreateView
 
 github_login = OAuth2LoginView.adapter_view(RepoVitalsGitHubOAuth2Adapter)
 github_callback = OAuth2CallbackView.adapter_view(RepoVitalsGitHubOAuth2Adapter)
@@ -34,4 +35,14 @@ urlpatterns = [
     path("api/auth/github/callback/", github_callback, name="github_callback"),
     path("api/auth/session/", SessionView.as_view(), name="auth-session"),
     path("api/auth/logout/", LogoutView.as_view(), name="auth-logout"),
+    path(
+        "api/repositories/",
+        RepositoryListCreateView.as_view(),
+        name="repository-list",
+    ),
+    path(
+        "api/repositories/<uuid:repository_id>/",
+        RepositoryDestroyView.as_view(),
+        name="repository-detail",
+    ),
 ]
