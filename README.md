@@ -18,9 +18,18 @@ auto-fix; the export is a handoff, not a commit.
 
 ## Status
 
-**Phase 1 of 14 — foundations.** GitHub sign-in, session lifecycle, an empty
-dashboard, CI, and deploys, all live. Registration lands in Phase 2, scanning
-in Phase 3, scores in Phase 4.
+**Phase 3 of 14 — scanning.** GitHub sign-in and session lifecycle (Phase 1),
+repository registration with the four pre-scan validation checks (Phase 2),
+and now a background scanner: registration triggers a scan, the dashboard
+polls it, and the detail page lists every dependency from every manifest in
+the tree with its resolved version, where that version came from, how stale
+the package is, and any CVEs against it.
+
+**There is no score yet.** Phase 4 turns those signals into a number — every
+one of them is already stored raw, because scoring is a pure function over
+stored signals and history rows are never rewritten when the weights change.
+Until then the product measures and does not judge, and the UI says so rather
+than showing a placeholder.
 
 The build is planned end to end in [`plan/`](plan/):
 
