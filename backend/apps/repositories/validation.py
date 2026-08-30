@@ -38,6 +38,7 @@ from rest_framework import status
 
 from apps.common import http
 from apps.common.errors import ApiError
+from apps.scanning import adapters
 
 from .models import AccessLevel, Repository, Visibility
 
@@ -55,17 +56,17 @@ _NAME_RE = re.compile(r"^[A-Za-z0-9._-]{1,100}$")
 
 _SSH_RE = re.compile(r"^git@github\.com:(?P<path>.+)$", re.IGNORECASE)
 
-# Manifest filenames that prove an ecosystem is present. Phase 3 moves this to
-# the adapter registry (`scanning/adapters/`) and Phase 6 adds the PyPI entries
-# — at which point `ECOSYSTEM_SUPPORT_MESSAGE` below changes with it, as §5.6
-# specifies. Matching is on the basename anywhere in the tree: root-only checks
-# silently miss split-by-functionality repositories (§5.6).
-SUPPORTED_MANIFESTS: frozenset[str] = frozenset({"package.json"})
-
-# Vendored dependencies are not the repository's own manifests. A checked-in
-# node_modules would otherwise make every repository look like an npm project.
-_VENDOR_DIRS: frozenset[str] = frozenset({"node_modules"})
-
+# Manifest filenames that prove an ecosystem is present, and the vendor
+# directories that do not count. Both now come from the adapter registry
+# (Phase 3, `docs/decisions.md` §2.3): validation's question — "is there
+# anything here we could scan?" — must be answered by the same list the
+# scanner will actually parse, or the two drift and a repository registers
+# only to find nothing. Phase 6 adds the PyPI filenames by registering an
+# adapter, at which point `ECOSYSTEM_SUPPORT_MESSAGE` below changes with it,
+# as §5.6 specifies.
+#
+# Matching is on the basename anywhere in the tree: root-only checks silently
+# miss split-by-functionality repositories (§5.6).
 ECOSYSTEM_SUPPORT_MESSAGE = (
     "This repository's dependency ecosystem isn't supported yet. "
     "We currently support Node.js/npm projects."
@@ -255,11 +256,7 @@ def _manifest_present(tree: list[dict]) -> bool:
     for entry in tree:
         if entry.get("type") != "blob":
             continue
-        path = entry.get("path") or ""
-        segments = path.split("/")
-        if _VENDOR_DIRS.intersection(segments[:-1]):
-            continue
-        if segments[-1] in SUPPORTED_MANIFESTS:
+        if adapters.adapter_for_path(entry.get("path") or "") is not None:
             return True
     return False
 
