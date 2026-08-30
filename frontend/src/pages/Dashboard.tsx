@@ -6,7 +6,9 @@ import { BlueprintCorners } from "../components/Blueprint";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { FolderIcon, PlusIcon } from "../components/Icons";
 import { RepoCard } from "../components/RepoCard";
+import { usePolling } from "../hooks/usePolling";
 import type { Repository } from "../types";
+import { isScanActive } from "../types";
 
 interface StatProps {
   label: string;
@@ -53,10 +55,19 @@ function Stat({ label, value, note, valueColor }: StatProps) {
 }
 
 /**
- * Phase 2 fills the dashboard's frame with real registrations. The three
- * score-derived statistics stay at zero: nothing is scanned until Phase 3 and
- * nothing is scored until Phase 4, and showing a computed-looking number for
- * data that does not exist would be worse than showing none.
+ * The dashboard, with Phase 3's scan state on it.
+ *
+ * The score-derived statistics stay blank: nothing is scored until Phase 4,
+ * and a computed-looking number over data that does not exist is worse than no
+ * number. The two counts that *are* real now — dependencies observed, and
+ * occurrences we could not assess — replace two of the four tiles, because a
+ * tile showing a permanent zero teaches a reader to ignore that row of the
+ * page.
+ *
+ * The whole list is re-fetched while any repository is scanning, rather than
+ * each card polling its own status endpoint. One request per interval instead
+ * of one per scanning card, and the list endpoint already batch-loads scan
+ * state in a single query (`scanning.views.scan_states_for`).
  */
 export function Dashboard() {
   const [repositories, setRepositories] = useState<Repository[]>([]);
@@ -78,6 +89,21 @@ export function Dashboard() {
       setLoading(false);
     }
   }, []);
+
+  const scanning = repositories.some((r) => isScanActive(r.latestScan));
+
+  usePolling<Repository[]>({
+    fetcher: listRepositories,
+    shouldContinue: (rows) => rows.some((r) => isScanActive(r.latestScan)),
+    enabled: !loading && !loadError && scanning,
+    onResult: (rows) => {
+      setRepositories(rows);
+      setLoadError(false);
+    },
+    // A dropped poll is not worth an error banner over a page that is already
+    // rendering correct, if slightly stale, data. The next tick retries.
+    onError: () => undefined,
+  });
 
   useEffect(() => {
     void load();
@@ -132,6 +158,17 @@ export function Dashboard() {
   };
 
   const owners = new Set(repositories.map((r) => r.owner)).size;
+  const scanned = repositories.filter(
+    (r) => r.latestScan?.status === "completed",
+  );
+  const dependencies = scanned.reduce(
+    (total, r) => total + (r.latestScan?.dependencyCount ?? 0),
+    0,
+  );
+  const unassessable = scanned.reduce(
+    (total, r) => total + (r.latestScan?.unassessableCount ?? 0),
+    0,
+  );
 
   return (
     <main
@@ -197,14 +234,24 @@ export function Dashboard() {
               : `${owners} ${owners === 1 ? "owner" : "owners"}`
           }
         />
-        <Stat label="High-Alert" value="0" note="needs action" valueColor="#a8524a" />
         <Stat
-          label="Flagged deps"
-          value="0"
-          note={`across ${repositories.length} repos`}
+          label="Dependencies"
+          value={scanned.length === 0 ? "—" : String(dependencies)}
+          note={
+            scanned.length === 0
+              ? "nothing scanned yet"
+              : `across ${scanned.length} scanned`
+          }
+        />
+        <Stat
+          label="Unassessable"
+          value={scanned.length === 0 ? "—" : String(unassessable)}
+          note="no registry answer"
           valueColor="var(--color-accent)"
         />
-        <Stat label="Avg score" value="—" note="/ 100" />
+        {/* Phase 4 computes the score; until then this tile says so rather
+            than showing a zero that would read as "everything is fine". */}
+        <Stat label="Avg score" value="—" note="scoring lands in Phase 4" />
       </div>
 
       {notice && (

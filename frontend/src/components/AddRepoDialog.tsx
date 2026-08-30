@@ -143,7 +143,8 @@ export function AddRepoDialog({
         <div className="dialog-body">
           Paste a GitHub URL. Repo Vitals validates reachability, your access,
           duplicates, and manifest presence before registering — no scan cost is
-          spent on an ineligible repo.
+          spent on an ineligible repo. Registration starts the first scan; it
+          runs in the background and the card shows its progress.
         </div>
 
         <div className="field">
@@ -205,7 +206,7 @@ export function AddRepoDialog({
               disabled={!url.trim() || submitting}
               onClick={() => void submit()}
             >
-              {submitting ? "Checking…" : "Register"}
+              {submitting ? "Checking…" : "Register & scan"}
             </button>
           )}
         </div>

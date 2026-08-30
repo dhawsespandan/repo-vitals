@@ -10,8 +10,12 @@
 
 import type {
   ApiErrorBody,
+  DependencyOccurrence,
+  Paginated,
   RegisterResult,
   Repository,
+  ScanDetail,
+  ScanStatusResponse,
   SessionResponse,
 } from "../types";
 
@@ -152,3 +156,37 @@ function isDuplicate(
 /** `DELETE /api/repositories/{id}/` — 204 on success. */
 export const deleteRepository = (id: string) =>
   api.delete<void>(`/repositories/${id}/`);
+
+/** `GET /api/repositories/{id}/` — one registration, with its scan state. */
+export const getRepository = (id: string) =>
+  api.get<Repository>(`/repositories/${id}/`);
+
+/**
+ * `GET /api/repositories/{id}/scan-status/` — the polling endpoint.
+ *
+ * Small by design: it is fetched every three seconds while a scan runs, and
+ * everything heavy (manifests, dependency rows) lives behind the scan routes
+ * that are fetched once.
+ */
+export const getScanStatus = (id: string) =>
+  api.get<ScanStatusResponse>(`/repositories/${id}/scan-status/`);
+
+/**
+ * `POST /api/repositories/{id}/scan/` — 202, or 409 `scan_in_progress`.
+ *
+ * The 409 is not an error the user needs to see as one: it means the scan they
+ * asked for is already happening. Callers catch the code and re-read the
+ * status rather than showing a failure.
+ */
+export const startScan = (id: string) =>
+  api.post<ScanStatusResponse>(`/repositories/${id}/scan/`);
+
+/** `GET /api/scans/{id}/` — one scan, its counts and its manifests. */
+export const getScan = (scanId: string) =>
+  api.get<ScanDetail>(`/scans/${scanId}/`);
+
+/** `GET /api/scans/{id}/dependencies/?page=` — one page of occurrences. */
+export const listScanDependencies = (scanId: string, page = 1) =>
+  api.get<Paginated<DependencyOccurrence>>(
+    `/scans/${scanId}/dependencies/?page=${page}`,
+  );

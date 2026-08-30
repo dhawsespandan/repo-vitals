@@ -7,6 +7,7 @@ import { useLastAppPath, CONFIRM_LOGOUT_STATE } from "./auth/backNavGuard";
 import { FullPageLoader } from "./components/FullPageLoader";
 import { Dashboard } from "./pages/Dashboard";
 import { Login } from "./pages/Login";
+import { RepoDetail } from "./pages/RepoDetail";
 
 /**
  * The `/login` route, and the back-navigation guard in one place.
@@ -41,6 +42,7 @@ export function App() {
         <Route path="/login" element={<LoginRoute />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/repositories/:repositoryId" element={<RepoDetail />} />
         </Route>
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>

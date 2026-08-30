@@ -1,17 +1,25 @@
 /**
  * One registered repository (wireframe artboard `isDashboard`, card grid).
  *
- * The wireframe's card is drawn for a repository that has been scanned: a
- * score ring, a classification tag, "N flagged · N deps". None of that exists
- * in Phase 2 — registration does not scan (Phase 3) and nothing is scored
- * until Phase 4. Rather than invent placeholder numbers, the card keeps the
- * wireframe's exact geometry and renders the ring hollow with an em dash, so
- * when the real values arrive nothing has to be re-cut.
+ * The wireframe's card is drawn for a scanned, scored repository: a filled
+ * score ring, a classification tag, "N flagged · N deps". Phase 3 supplies the
+ * scan half — a status pill, a dependency count, and a route into the detail
+ * page — and leaves the ring hollow, because nothing is scored until Phase 4
+ * and a placeholder number would read as a real one. The geometry stays the
+ * wireframe's throughout, so Phase 4 fills the ring rather than re-cutting the
+ * card.
+ *
+ * The identity block is a link, per the wireframe's `repo.open`. Remove is a
+ * button inside the same card, so it stops the click from reaching the link —
+ * asking to delete must not navigate.
  */
+
+import { Link } from "react-router-dom";
 
 import type { Repository } from "../types";
 import { BlueprintCorners } from "./Blueprint";
 import { FolderIcon, LockIcon, TrashIcon } from "./Icons";
+import { StatusPill } from "./StatusPill";
 
 interface RepoCardProps {
   repository: Repository;
@@ -21,6 +29,9 @@ interface RepoCardProps {
 }
 
 export function RepoCard({ repository, highlighted, onDelete }: RepoCardProps) {
+  const scan = repository.latestScan;
+  const scanning = scan?.status === "queued" || scan?.status === "running";
+
   return (
     <div
       className="blueprint"
@@ -51,7 +62,10 @@ export function RepoCard({ repository, highlighted, onDelete }: RepoCardProps) {
           alignItems: "flex-start",
         }}
       >
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <Link
+          to={`/repositories/${repository.id}`}
+          style={{ flex: 1, minWidth: 0, color: "inherit", textDecoration: "none" }}
+        >
           <div
             style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}
           >
@@ -89,36 +103,62 @@ export function RepoCard({ repository, highlighted, onDelete }: RepoCardProps) {
             )}
             <span className="tag tag-neutral">{repository.accessLevel}</span>
           </div>
-        </div>
+        </Link>
 
-        {/* The wireframe's 58px score ring, unfilled: there is no scan to
-            score yet. Phase 4 supplies the stroke and the number. */}
-        <div style={{ position: "relative", width: 58, height: 58, flex: "none" }}>
-          <svg width="58" height="58" viewBox="0 0 58 58" aria-hidden="true">
-            <circle
-              cx="29"
-              cy="29"
-              r="22"
-              fill="none"
-              stroke="var(--color-divider)"
-              strokeWidth="4.5"
-            />
-          </svg>
+        {/* The wireframe's 58px slot: a spinner while a scan runs (its
+            `repo.scanning` branch), otherwise the score ring left unfilled —
+            nothing is scored until Phase 4, and a number here would be an
+            invention rather than a measurement. */}
+        {scanning ? (
           <div
-            className="text-muted"
             style={{
-              position: "absolute",
-              inset: 0,
+              width: 58,
+              height: 58,
               display: "grid",
               placeItems: "center",
-              fontFamily: "var(--font-heading)",
-              fontWeight: 600,
-              fontSize: 19,
+              flex: "none",
             }}
           >
-            —
+            <div
+              aria-hidden="true"
+              style={{
+                width: 32,
+                height: 32,
+                border: "3px solid var(--color-divider)",
+                borderTopColor: "var(--color-accent)",
+                borderRadius: "50%",
+                animation: "dsspin .9s linear infinite",
+              }}
+            />
           </div>
-        </div>
+        ) : (
+          <div style={{ position: "relative", width: 58, height: 58, flex: "none" }}>
+            <svg width="58" height="58" viewBox="0 0 58 58" aria-hidden="true">
+              <circle
+                cx="29"
+                cy="29"
+                r="22"
+                fill="none"
+                stroke="var(--color-divider)"
+                strokeWidth="4.5"
+              />
+            </svg>
+            <div
+              className="text-muted"
+              style={{
+                position: "absolute",
+                inset: 0,
+                display: "grid",
+                placeItems: "center",
+                fontFamily: "var(--font-heading)",
+                fontWeight: 600,
+                fontSize: 19,
+              }}
+            >
+              —
+            </div>
+          </div>
+        )}
       </div>
 
       <div
@@ -131,13 +171,28 @@ export function RepoCard({ repository, highlighted, onDelete }: RepoCardProps) {
           gap: 10,
         }}
       >
-        <span className="tag tag-neutral">Not scanned yet</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+          <StatusPill scan={scan} showSpinner={false} />
+          {scan?.status === "completed" && (
+            <span className="text-muted" style={{ fontSize: 12 }}>
+              {scan.dependencyCount} dep{scan.dependencyCount === 1 ? "" : "s"}
+              {scan.unassessableCount > 0 &&
+                ` · ${scan.unassessableCount} unassessable`}
+            </span>
+          )}
+        </div>
         <button
           type="button"
           className="btn btn-ghost"
           style={{ height: 28, fontSize: 12.5 }}
           aria-label={`Remove ${repository.fullName}`}
-          onClick={() => onDelete(repository)}
+          onClick={(event) => {
+            // The identity block above is a link; a click that reached it
+            // would navigate away from the confirm dialog in the same tick.
+            event.preventDefault();
+            event.stopPropagation();
+            onDelete(repository);
+          }}
         >
           <TrashIcon size={14} />
           Remove

@@ -52,7 +52,7 @@ describe("registration outcomes", () => {
       screen.getByLabelText(/repository url/i),
       "github.com/arjun-dev/checkout-service",
     );
-    await user.click(screen.getByRole("button", { name: /^register$/i }));
+    await user.click(screen.getByRole("button", { name: /register & scan/i }));
 
     expect(await screen.findByTestId("repo-card")).toBeInTheDocument();
     expect(screen.getByTestId("dashboard-notice")).toHaveTextContent(
@@ -99,7 +99,7 @@ describe("registration outcomes", () => {
       const user = await openRegisterDialog();
 
       await user.type(screen.getByLabelText(/repository url/i), "github.com/o/r");
-      await user.click(screen.getByRole("button", { name: /^register$/i }));
+      await user.click(screen.getByRole("button", { name: /register & scan/i }));
 
       expect(await screen.findByTestId("register-feedback")).toHaveTextContent(
         message,
@@ -130,7 +130,7 @@ describe("registration outcomes", () => {
       screen.getByLabelText(/repository url/i),
       "github.com/arjun-dev/checkout-service",
     );
-    await user.click(screen.getByRole("button", { name: /^register$/i }));
+    await user.click(screen.getByRole("button", { name: /register & scan/i }));
 
     // Reported from prod: the dialog used to close in silence, putting its
     // message on the page behind it where a user scrolled among their cards
@@ -164,7 +164,7 @@ describe("registration outcomes", () => {
       screen.getByLabelText(/repository url/i),
       "github.com/arjun-dev/checkout-service",
     );
-    await user.click(screen.getByRole("button", { name: /^register$/i }));
+    await user.click(screen.getByRole("button", { name: /register & scan/i }));
     await user.click(await screen.findByRole("button", { name: /show me/i }));
 
     await waitFor(() =>
