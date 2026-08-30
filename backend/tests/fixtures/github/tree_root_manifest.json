@@ -1,0 +1,127 @@
+{
+  "sha": "023767fe9872e029271df1418f73401bff20ff40",
+  "url": "https://api.github.com/repos/expressjs/express/git/trees/023767fe9872e029271df1418f73401bff20ff40",
+  "tree": [
+    {
+      "path": ".editorconfig",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "12cf11112327ddabb3bec33ec49a60f9fe18ca48",
+      "size": 180,
+      "url": "https://api.github.com/repos/expressjs/express/git/blobs/12cf11112327ddabb3bec33ec49a60f9fe18ca48"
+    },
+    {
+      "path": ".eslintignore",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "62562b74a3b5a79e82ca417b02e0f597d85f5e2f",
+      "size": 22,
+      "url": "https://api.github.com/repos/expressjs/express/git/blobs/62562b74a3b5a79e82ca417b02e0f597d85f5e2f"
+    },
+    {
+      "path": ".eslintrc.yml",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f9359bf289293a17195e1948c5798103b294ab2c",
+      "size": 415,
+      "url": "https://api.github.com/repos/expressjs/express/git/blobs/f9359bf289293a17195e1948c5798103b294ab2c"
+    },
+    {
+      "path": ".github/dependabot.yml",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a6096a49b45192e7c5ac5f0f2bdcb17d0b18d1b1",
+      "size": 373,
+      "url": "https://api.github.com/repos/expressjs/express/git/blobs/a6096a49b45192e7c5ac5f0f2bdcb17d0b18d1b1"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c330a14a77711f429d63a1ee5d2e864ee3b0c891",
+      "size": 3230,
+      "url": "https://api.github.com/repos/expressjs/express/git/blobs/c330a14a77711f429d63a1ee5d2e864ee3b0c891"
+    },
+    {
+      "path": ".github/workflows/codeql.yml",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ea54bfa73d92cbbe97c6c2578761ceb0efd842b6",
+      "size": 2654,
+      "url": "https://api.github.com/repos/expressjs/express/git/blobs/ea54bfa73d92cbbe97c6c2578761ceb0efd842b6"
+    },
+    {
+      "path": ".github/workflows/legacy.yml",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4a0313349dae48928a180e168b9681e25854ef42",
+      "size": 2748,
+      "url": "https://api.github.com/repos/expressjs/express/git/blobs/4a0313349dae48928a180e168b9681e25854ef42"
+    },
+    {
+      "path": ".github/workflows/scorecard.yml",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "72570aa94224ac99d6802251b5e14c492ea7d229",
+      "size": 2981,
+      "url": "https://api.github.com/repos/expressjs/express/git/blobs/72570aa94224ac99d6802251b5e14c492ea7d229"
+    },
+    {
+      "path": ".gitignore",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "768368cd652ffc47c8df6ed98591cd571b17e2b0",
+      "size": 257,
+      "url": "https://api.github.com/repos/expressjs/express/git/blobs/768368cd652ffc47c8df6ed98591cd571b17e2b0"
+    },
+    {
+      "path": ".npmrc",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "bd684249468ed8ddf97747eff63cfc9fdc4a162a",
+      "size": 72,
+      "url": "https://api.github.com/repos/expressjs/express/git/blobs/bd684249468ed8ddf97747eff63cfc9fdc4a162a"
+    },
+    {
+      "path": "History.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a00fc1f2de655de2d312b2187f739d836269a421",
+      "size": 127754,
+      "url": "https://api.github.com/repos/expressjs/express/git/blobs/a00fc1f2de655de2d312b2187f739d836269a421"
+    },
+    {
+      "path": "LICENSE",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "aa927e44e31d486f807634887662efa39256bf84",
+      "size": 1249,
+      "url": "https://api.github.com/repos/expressjs/express/git/blobs/aa927e44e31d486f807634887662efa39256bf84"
+    },
+    {
+      "path": "Readme.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7dd9405242003dc6ebdbe92ca730fd52226f37dc",
+      "size": 10371,
+      "url": "https://api.github.com/repos/expressjs/express/git/blobs/7dd9405242003dc6ebdbe92ca730fd52226f37dc"
+    },
+    {
+      "path": "examples/README.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "bd1f1f6310fb49a4bcc00968b4a934140d667839",
+      "size": 1592,
+      "url": "https://api.github.com/repos/expressjs/express/git/blobs/bd1f1f6310fb49a4bcc00968b4a934140d667839"
+    },
+    {
+      "path": "package.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b133c1c8732ef9ad303bb687ad9029a82c775c46",
+      "size": 2731,
+      "url": "https://api.github.com/repos/expressjs/express/git/blobs/b133c1c8732ef9ad303bb687ad9029a82c775c46"
+    }
+  ],
+  "truncated": false
+}

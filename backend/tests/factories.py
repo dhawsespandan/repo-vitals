@@ -6,6 +6,7 @@ import factory
 
 from apps.accounts.crypto import encrypt_token
 from apps.accounts.models import User
+from apps.repositories.models import AccessLevel, Repository, Visibility
 
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -26,3 +27,18 @@ class UserFactory(factory.django.DjangoModelFactory):
         lambda: encrypt_token("gho_testtokentesttokentesttoken00000000")
     )
     token_scopes = "repo,read:user,user:email"
+
+
+class RepositoryFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Repository
+
+    user = factory.SubFactory(UserFactory)
+    github_repo_id = factory.Sequence(lambda n: 500000 + n)
+    owner = factory.LazyAttribute(lambda o: o.user.github_username)
+    name = factory.Sequence(lambda n: f"service-{n}")
+    full_name = factory.LazyAttribute(lambda o: f"{o.owner}/{o.name}")
+    html_url = factory.LazyAttribute(lambda o: f"https://github.com/{o.full_name}")
+    default_branch = "main"
+    visibility = Visibility.PUBLIC
+    access_level = AccessLevel.OWNER
