@@ -91,16 +91,31 @@ export function Dashboard() {
   );
 
   /**
-   * §5.6's duplicate outcome is "redirect to the existing repository". There
-   * is no per-repository route until Phase 5, so the equivalent here is to
-   * close the dialog and mark the row the user is actually looking for.
+   * §5.6's duplicate outcome is "redirect to the existing repository". There is
+   * no per-repository route until Phase 5, so the nearest honest equivalent is
+   * to bring the row to the user: highlight it, and scroll it into view.
+   *
+   * The scroll is not decoration. The first version of this only set a
+   * highlight and a notice near the top of the page, which a user scrolled
+   * down among their cards never saw — the dialog just vanished. Going to the
+   * row is the part that makes "redirect" mean anything before Phase 5.
    */
   const pointAt = (repository: Repository, message: string) => {
     setAddOpen(false);
     setNotice(message);
     setHighlighted(repository.id);
     if (highlightTimer.current) clearTimeout(highlightTimer.current);
-    highlightTimer.current = setTimeout(() => setHighlighted(null), 4000);
+    highlightTimer.current = setTimeout(() => setHighlighted(null), 8000);
+
+    // After the dialog unmounts and the row has rendered. A timeout rather
+    // than requestAnimationFrame: browsers throttle or halt frame callbacks in
+    // a backgrounded or undisplayed tab, and this scroll is the part that
+    // makes the answer findable — it must not depend on frames ticking.
+    setTimeout(() => {
+      const card = document.querySelector(`[data-repo-id="${repository.id}"]`);
+      // jsdom has no layout, so scrollIntoView is absent there.
+      card?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+    }, 0);
   };
 
   const confirmDelete = async () => {

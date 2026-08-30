@@ -14,8 +14,10 @@ import { ApiError, registerRepository } from "../api/client";
 import type { Repository } from "../types";
 import { BlueprintCorners } from "./Blueprint";
 
-/** The three feedback tones the design system defines for validation results. */
+/** The four feedback tones the design system defines for validation results. */
 const TONES = {
+  /** Accent, not green: a duplicate is neither a success nor a problem. */
+  info: { border: "#5980a6", background: "#e6eef6", text: "#2c455d" },
   ok: { border: "#3f7d5a", background: "#e3efe7", text: "#245036" },
   warn: { border: "#a8792f", background: "#efe8d5", text: "#6a4b16" },
   error: { border: "#a8524a", background: "#efddda", text: "#6a2a23" },
@@ -66,12 +68,15 @@ export function AddRepoDialog({
   const [url, setUrl] = useState("");
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  /** Set when §5.6 answers `already_registered`; the dialog then offers to go there. */
+  const [duplicate, setDuplicate] = useState<Repository | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
     setUrl("");
     setFeedback(null);
+    setDuplicate(null);
     setSubmitting(false);
     inputRef.current?.focus();
 
@@ -88,10 +93,18 @@ export function AddRepoDialog({
     if (!url.trim() || submitting) return;
     setSubmitting(true);
     setFeedback(null);
+    setDuplicate(null);
     try {
       const result = await registerRepository(url);
       if (result.outcome === "duplicate") {
-        onDuplicate(result.repository, result.message);
+        // Reported from prod: this used to close the dialog and put its
+        // message on the page behind it. Every other outcome answers here, in
+        // the dialog, so a duplicate closing silently read as the form
+        // swallowing the input. It now says so in place, and offers to take
+        // the user to the row they actually want.
+        setDuplicate(result.repository);
+        setFeedback({ tone: "info", message: result.message });
+        setSubmitting(false);
       } else {
         onRegistered(result.repository);
       }
@@ -175,16 +188,26 @@ export function AddRepoDialog({
             onClick={onCancel}
             disabled={submitting}
           >
-            Cancel
+            {duplicate ? "Close" : "Cancel"}
           </button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            disabled={!url.trim() || submitting}
-            onClick={() => void submit()}
-          >
-            {submitting ? "Checking…" : "Register"}
-          </button>
+          {duplicate ? (
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => onDuplicate(duplicate, feedback?.message ?? "")}
+            >
+              Show me
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={!url.trim() || submitting}
+              onClick={() => void submit()}
+            >
+              {submitting ? "Checking…" : "Register"}
+            </button>
+          )}
         </div>
       </div>
     </div>

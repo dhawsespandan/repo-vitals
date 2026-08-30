@@ -132,8 +132,41 @@ describe("registration outcomes", () => {
     );
     await user.click(screen.getByRole("button", { name: /^register$/i }));
 
-    // The dialog closes and the row the user was looking for is marked,
-    // rather than a second card appearing.
+    // Reported from prod: the dialog used to close in silence, putting its
+    // message on the page behind it where a user scrolled among their cards
+    // never saw it. The answer belongs where the other five outcomes appear.
+    expect(await screen.findByTestId("register-feedback")).toHaveTextContent(
+      /already monitoring this repository/i,
+    );
+    expect(screen.getByTestId("add-repo-backdrop")).toBeInTheDocument();
+    // And no second card, whatever else happens.
+    expect(screen.getAllByTestId("repo-card")).toHaveLength(1);
+  });
+
+  it("takes the user to the existing row when they ask to see it", async () => {
+    stubFetch({
+      session: SIGNED_IN,
+      repositories: [REPOSITORY],
+      register: {
+        status: 200,
+        body: {
+          code: "already_registered",
+          message: "You're already monitoring this repository.",
+          repository: REPOSITORY,
+        },
+      },
+    });
+
+    renderApp(["/dashboard"]);
+    const user = await openRegisterDialog();
+
+    await user.type(
+      screen.getByLabelText(/repository url/i),
+      "github.com/arjun-dev/checkout-service",
+    );
+    await user.click(screen.getByRole("button", { name: /^register$/i }));
+    await user.click(await screen.findByRole("button", { name: /show me/i }));
+
     await waitFor(() =>
       expect(screen.queryByTestId("add-repo-backdrop")).not.toBeInTheDocument(),
     );
@@ -141,6 +174,9 @@ describe("registration outcomes", () => {
     expect(screen.getByTestId("repo-card")).toHaveAttribute(
       "data-highlighted",
       "true",
+    );
+    expect(screen.getByTestId("dashboard-notice")).toHaveTextContent(
+      /already monitoring this repository/i,
     );
   });
 });

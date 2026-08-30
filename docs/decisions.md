@@ -514,8 +514,43 @@ amber / red) is chosen from the returned `code`, never from the message text.
 An unrecognised code renders as an error, so a code added server-side can
 never appear as reassuring green.
 
-**A duplicate marks the existing card instead of navigating to it.** §5.6's
-duplicate outcome says the frontend redirects to the existing repository.
-There is no per-repository route until Phase 5, so the dialog closes and the
-row is highlighted for a few seconds. Same intent — "you already have this,
-here it is" — with the only navigation the app currently has.
+**A duplicate is answered in the dialog, then goes to the existing card.**
+§5.6's duplicate outcome says the frontend redirects to the existing
+repository. There is no per-repository route until Phase 5, so the nearest
+honest equivalent is to bring the row to the user. See §2.5 — the first
+attempt at this was wrong in a way that only showed up on prod.
+
+### 2.5 A duplicate has to answer where the user is looking
+
+Reported from the first live run on prod: registering an already-registered
+repository produced **no visible message at all**. Correctly, no second card
+appeared — but from the user's seat the dialog simply vanished, which reads as
+the form swallowing the input.
+
+**It was not a logic bug, which is what made it easy to ship.** The duplicate
+payload was recognised, `onDuplicate` ran, and the notice was set — the proof
+is that a *mis*-recognised duplicate would have taken the `onRegistered` path
+and added a second card, which did not happen. The message was in the DOM the
+whole time. It was just placed near the top of the page, above the card grid,
+while the user was scrolled down among their cards. The dialog closed, the
+answer rendered off-screen, and the highlight expired after four seconds.
+
+The frontend test passed because it asserted the dialog had closed, that only
+one card existed, and that the card was highlighted — everything except
+whether a human could *see* the answer. jsdom has no viewport, so "rendered
+somewhere in the document" and "visible to the user" are the same thing there
+and only the same thing there.
+
+**The design error underneath:** five of the six §5.6 outcomes answer inside
+the dialog. The duplicate was the only one that closed the dialog and put its
+answer somewhere else. Consistency of *where the answer appears* matters more
+than the wording of any individual message — an answer in an unexpected place
+is functionally no answer.
+
+**Now:** the duplicate renders in the dialog like every other outcome, in an
+accent tone (it is neither a success nor a failure), and the primary button
+becomes "Show me" — which closes the dialog, highlights the row, and scrolls
+it into view. The scroll is the part that makes §5.6's "redirect" mean
+anything before Phase 5 supplies a real route. It runs on a `setTimeout`
+rather than `requestAnimationFrame` because browsers throttle frame callbacks
+in undisplayed tabs, and this must not depend on frames ticking.

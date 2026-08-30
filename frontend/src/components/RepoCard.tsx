@@ -25,6 +25,7 @@ export function RepoCard({ repository, highlighted, onDelete }: RepoCardProps) {
     <div
       className="blueprint"
       data-testid="repo-card"
+      data-repo-id={repository.id}
       data-highlighted={highlighted ? "true" : undefined}
       style={{
         border: `1px solid ${
