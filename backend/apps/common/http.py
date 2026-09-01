@@ -27,6 +27,7 @@ Nothing here logs headers: the caller's OAuth token travels in one.
 
 from __future__ import annotations
 
+import json
 import logging
 import threading
 import time
@@ -55,6 +56,12 @@ DEFAULT_TIMEOUT: tuple[float, float] = (5.0, 15.0)
 
 MAX_RETRIES = 2
 BACKOFF_BASE_SECONDS = 0.5
+#: Default ceiling on a response body. Generous for the GitHub and OSV
+#: documents this project reads (a large blob is ~6 MB base64), and low enough
+#: that a runaway response cannot exhaust the 512 MB tier (§8). Callers with a
+#: different budget pass their own; `None` disables the cap entirely and should
+#: be reserved for responses whose size is already known.
+DEFAULT_MAX_BYTES = 16 * 1024 * 1024
 MAX_REDIRECTS = 3
 # A rate-limit reset an hour away is not something to sleep on inside a
 # request; past this the call fails fast and the user is asked to retry.
@@ -97,6 +104,17 @@ class UpstreamRateLimited(UpstreamError):
     def __init__(self, message: str, retry_after: float | None = None) -> None:
         super().__init__(message)
         self.retry_after = retry_after
+
+
+class UpstreamTooLarge(UpstreamError):
+    """The response body exceeded the caller's cap.
+
+    Separate from `UpstreamUnavailable` because it is not a failure to answer
+    — the upstream answered fine, at a size this tier cannot hold. Callers
+    that have a smaller representation available (the npm registry's
+    abbreviated packument) catch this and ask for that instead, which is a
+    degraded answer rather than no answer.
+    """
 
 
 class UpstreamUnavailable(UpstreamError):
@@ -167,9 +185,55 @@ def _is_rate_limited(response: requests.Response) -> bool:
     return response.headers.get("Retry-After") is not None
 
 
-def _parse_json(response: requests.Response) -> Any:
+def _read_capped(response: requests.Response, max_bytes: int | None) -> bytes:
+    """Pull the body, refusing it the moment it exceeds `max_bytes`.
+
+    The cap exists because this process is the whole service (§2: one gunicorn
+    worker, 8 threads, 512 MB — §8). An npm packument for a long-lived package
+    is not a hypothetical edge: `typescript` is ~15 MB on the wire and ~73 MB
+    once parsed into Python objects. Three concurrent scans of ordinary
+    repositories can therefore allocate more transient memory than the whole
+    tier allows, and the process that dies takes every other user's request
+    with it — an OOM is not scoped to the scan that caused it.
+
+    `Content-Length` is checked first when the upstream sends one, which turns
+    the common case into zero transferred bytes. It cannot be relied on alone:
+    Cloudflare fronts several of these hosts with `Transfer-Encoding: chunked`
+    and no length at all (the same property that broke the keepalive pinger,
+    `docs/decisions.md` §1.17), so the running total is what actually enforces
+    the cap.
+    """
+    if max_bytes is None:
+        return response.content
+
+    declared = response.headers.get("Content-Length")
+    if declared is not None:
+        try:
+            if int(declared) > max_bytes:
+                response.close()
+                raise UpstreamTooLarge(
+                    f"Upstream declared {declared} bytes, over the {max_bytes} cap."
+                )
+        except ValueError:
+            pass
+
+    chunks: list[bytes] = []
+    total = 0
+    for chunk in response.iter_content(chunk_size=64 * 1024):
+        if not chunk:
+            continue
+        total += len(chunk)
+        if total > max_bytes:
+            response.close()
+            raise UpstreamTooLarge(f"Upstream body exceeded the {max_bytes} byte cap.")
+        chunks.append(chunk)
+    return b"".join(chunks)
+
+
+def _parse_json(response: requests.Response, max_bytes: int | None = None) -> Any:
+    body = _read_capped(response, max_bytes)
     try:
-        return response.json()
+        return json.loads(body)
     except ValueError as exc:
         raise UpstreamUnavailable(
             f"Upstream returned {response.status_code} with a non-JSON body."
@@ -200,9 +264,18 @@ def _follow(
             json=json_body,
             timeout=timeout,
             allow_redirects=False,
+            # The body is pulled in chunks by `_read_capped` so an oversized
+            # one can be refused mid-transfer rather than after it is already
+            # resident. Without this, `requests` has buffered the whole thing
+            # before any cap could look at it.
+            stream=True,
         )
         if response.status_code not in (301, 302, 303, 307, 308):
             return response
+
+        # A redirect's own body is never read, so the connection has to be
+        # released explicitly or it is held until garbage collection.
+        response.close()
 
         location = response.headers.get("Location")
         if not location:
@@ -231,6 +304,7 @@ def _request_json(
     accept: str,
     timeout: tuple[float, float],
     retries: int,
+    max_bytes: int | None,
 ) -> UpstreamResponse:
     """The shared body of `get_json` and `post_json`.
 
@@ -297,7 +371,7 @@ def _request_json(
         return UpstreamResponse(
             status_code=response.status_code,
             headers=dict(response.headers),
-            data=_parse_json(response),
+            data=_parse_json(response, max_bytes),
         )
 
 
@@ -309,6 +383,7 @@ def get_json(
     accept: str = "application/vnd.github+json",
     timeout: tuple[float, float] = DEFAULT_TIMEOUT,
     retries: int = MAX_RETRIES,
+    max_bytes: int | None = DEFAULT_MAX_BYTES,
 ) -> UpstreamResponse:
     """GET a JSON document from an allowlisted host.
 
@@ -328,6 +403,7 @@ def get_json(
         accept=accept,
         timeout=timeout,
         retries=retries,
+        max_bytes=max_bytes,
     )
 
 
@@ -339,6 +415,7 @@ def post_json(
     accept: str = "application/json",
     timeout: tuple[float, float] = DEFAULT_TIMEOUT,
     retries: int = MAX_RETRIES,
+    max_bytes: int | None = DEFAULT_MAX_BYTES,
 ) -> UpstreamResponse:
     """POST a JSON body to an allowlisted host and read a JSON answer.
 
@@ -358,4 +435,5 @@ def post_json(
         accept=accept,
         timeout=timeout,
         retries=retries,
+        max_bytes=max_bytes,
     )

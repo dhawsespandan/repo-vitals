@@ -358,3 +358,120 @@ class TestOsvBatching:
         )
 
         assert osv.OsvClient().detail("GHSA-missing", "lodash") is None
+
+
+class TestPackumentSizeFallback:
+    """A packument too large for this tier still answers three of four questions.
+
+    §8's memory budget is the constraint; §5.2's missing-value policy is what
+    makes the degradation safe. Losing the `time` map costs `staleness_days`
+    and nothing else, and an unknown staleness has a defined behaviour — the
+    term is dropped and its weight redistributed — where a wrong one does not.
+    """
+
+    @responses.activate
+    def test_an_oversized_packument_falls_back_to_the_abbreviated_form(self):
+        from apps.scanning.adapters import registry_clients
+
+        # First call (full) is over the cap; second (abbreviated) is not.
+        responses.add(
+            responses.GET,
+            "https://registry.npmjs.org/huge",
+            body="x" * (registry_clients.MAX_PACKUMENT_BYTES + 1),
+            status=200,
+            content_type="application/json",
+        )
+        responses.add(
+            responses.GET,
+            "https://registry.npmjs.org/huge",
+            json={
+                "dist-tags": {"latest": "5.0.0"},
+                "versions": {
+                    "4.0.0": {"deprecated": "moved to 5"},
+                    "5.0.0": {},
+                },
+                "modified": "2026-01-01T00:00:00.000Z",
+            },
+            status=200,
+        )
+
+        facts = NpmRegistryClient().facts("huge", "4.0.0")
+
+        assert len(responses.calls) == 2
+        assert responses.calls[1].request.headers["Accept"] == (
+            registry_clients.ABBREVIATED_ACCEPT
+        )
+        # Still answered: latest, versions-behind, deprecation.
+        assert facts.latest_version == "5.0.0"
+        assert facts.versions_behind_major == 1
+        assert facts.is_deprecated
+        assert facts.deprecation_reason == "moved to 5"
+
+    @responses.activate
+    def test_the_fallback_reports_staleness_unknown_rather_than_guessing(self):
+        """`modified` is present and deliberately not used.
+
+        It moves when metadata is edited — a deprecation being added is enough
+        — so reading it as a release date would report an abandoned package as
+        freshly maintained. NULL means unknown, which §5.2 handles.
+        """
+        from apps.scanning.adapters import registry_clients
+
+        responses.add(
+            responses.GET,
+            "https://registry.npmjs.org/huge",
+            body="x" * (registry_clients.MAX_PACKUMENT_BYTES + 1),
+            status=200,
+            content_type="application/json",
+        )
+        responses.add(
+            responses.GET,
+            "https://registry.npmjs.org/huge",
+            json={
+                "dist-tags": {"latest": "5.0.0"},
+                "versions": {"5.0.0": {}},
+                "modified": "2026-01-01T00:00:00.000Z",
+            },
+            status=200,
+        )
+
+        facts = NpmRegistryClient().facts("huge", "5.0.0")
+
+        assert facts.staleness_days is None
+        assert facts.latest_release_at is None
+
+    @responses.activate
+    def test_an_abbreviated_document_also_over_the_cap_is_unavailable(self):
+        """Not silently clean: a package this tier cannot read is unassessable."""
+        from apps.scanning.adapters import registry_clients
+
+        responses.add(
+            responses.GET,
+            "https://registry.npmjs.org/enormous",
+            body="x" * (registry_clients.MAX_PACKUMENT_BYTES + 1),
+            status=200,
+            content_type="application/json",
+        )
+        responses.add(
+            responses.GET,
+            "https://registry.npmjs.org/enormous",
+            body="x" * (registry_clients.MAX_ABBREVIATED_BYTES + 1),
+            status=200,
+            content_type="application/json",
+        )
+
+        facts = NpmRegistryClient().facts("enormous", "1.0.0")
+
+        assert facts.unavailable
+        assert not facts.not_found
+
+    @responses.activate
+    def test_the_abbreviated_cap_is_wide_enough_for_typescript(self):
+        """Measured: typescript abbreviates to 8.7 MB.
+
+        A cap below that would make one of npm's most common dev dependencies
+        permanently unassessable — a worse outcome than the memory it saves.
+        """
+        from apps.scanning.adapters import registry_clients
+
+        assert registry_clients.MAX_ABBREVIATED_BYTES > 9 * 1024 * 1024

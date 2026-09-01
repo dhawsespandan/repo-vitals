@@ -256,3 +256,81 @@ class TestRequestShape:
 
         with pytest.raises(http.UpstreamUnavailable):
             http.get_json("https://api.github.com/repos/o/r")
+
+
+class TestResponseSizeCap:
+    """§8: this process is the whole service, so a big body is an outage risk.
+
+    An npm packument for a long-lived package is ~15 MB on the wire and ~73 MB
+    parsed. Without a cap, two or three concurrent scans of ordinary
+    repositories can allocate more than the 512 MB tier has — and the OOM kills
+    the worker for every user, not just the scan that caused it.
+    """
+
+    @responses.activate
+    def test_a_body_over_the_cap_is_refused(self):
+        responses.add(
+            responses.GET,
+            "https://api.github.com/big",
+            body="x" * 5000,
+            status=200,
+            content_type="application/json",
+        )
+
+        with pytest.raises(http.UpstreamTooLarge):
+            http.get_json("https://api.github.com/big", max_bytes=1000)
+
+    @responses.activate
+    def test_a_body_under_the_cap_is_returned(self):
+        responses.add(
+            responses.GET, "https://api.github.com/small", json={"ok": True}, status=200
+        )
+
+        response = http.get_json("https://api.github.com/small", max_bytes=1000)
+
+        assert response.data == {"ok": True}
+
+    @responses.activate
+    def test_a_declared_content_length_is_refused_before_the_transfer(self):
+        """The cheap path: the upstream told us, so nothing needs downloading."""
+        responses.add(
+            responses.GET,
+            "https://api.github.com/declared",
+            body="x" * 5000,
+            status=200,
+            headers={"Content-Length": "5000"},
+            content_type="application/json",
+        )
+
+        with pytest.raises(http.UpstreamTooLarge):
+            http.get_json("https://api.github.com/declared", max_bytes=1000)
+
+    @responses.activate
+    def test_too_large_is_not_retried(self):
+        """It is an answer, not a failure — retrying returns the same size."""
+        responses.add(
+            responses.GET,
+            "https://api.github.com/big",
+            body="x" * 5000,
+            status=200,
+            content_type="application/json",
+        )
+
+        with pytest.raises(http.UpstreamTooLarge):
+            http.get_json("https://api.github.com/big", max_bytes=1000)
+
+        assert len(responses.calls) == 1
+
+    @responses.activate
+    def test_the_cap_can_be_lifted_for_a_known_small_response(self):
+        responses.add(
+            responses.GET,
+            "https://api.github.com/big",
+            body='{"ok": true}',
+            status=200,
+            content_type="application/json",
+        )
+
+        assert http.get_json("https://api.github.com/big", max_bytes=None).data == {
+            "ok": True
+        }

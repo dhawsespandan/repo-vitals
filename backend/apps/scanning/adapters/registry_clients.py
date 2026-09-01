@@ -1,14 +1,24 @@
 """Package-registry clients. One per ecosystem; npm is the only one until Phase 6.
 
-**Why the full package document.** `registry.npmjs.org/{name}` served with the
-abbreviated `application/vnd.npm.install-v1+json` accept header is far smaller,
-and it does carry `dist-tags` and per-version `deprecated`. It does not carry
-the `time` map — and without per-version publish timestamps there is no
+**The full package document, with a measured escape hatch.**
+`registry.npmjs.org/{name}` served with the abbreviated
+`application/vnd.npm.install-v1+json` accept header is far smaller, and it does
+carry `dist-tags` and per-version `deprecated`. It does not carry the `time`
+map — and without per-version publish timestamps there is no
 `latest_release_at`, therefore no `staleness_days`, which is one of the four
 Tier-1 formula signals (D3). The plan names the full document for exactly this
-reason (§10 Phase 3). The document is parsed, four scalars are extracted, and
-the dict is dropped: only the small `PackageFacts` is cached, never the
-megabyte it came from.
+reason (§10 Phase 3), so that is what is asked for first.
+
+It cannot be asked for unconditionally, though. A packument is unbounded, and
+the largest ones are big enough to end the process: `vite` is 38.9 MB on the
+wire and 79.3 MB once parsed, against a worker measured at 274.5 MB of 512 MB
+(§1.13). See `MAX_PACKUMENT_BYTES` for the measurements and the two caps they
+produced. Over the cap, the abbreviated form is fetched instead and staleness
+becomes unknown — which §5.2 already has a policy for.
+
+Either way the document is parsed, a handful of scalars are extracted, and the
+dict is dropped: only the small `PackageFacts` is cached, never the megabytes
+it came from.
 
 **The cache is per scan, and has no TTL.** §12 defers a TTL caching layer
 deliberately: at this scale the only duplication worth removing is *within* one
@@ -50,11 +60,42 @@ NPM_PACKAGE_PAGE = "https://www.npmjs.com/package"
 # sending the right one keeps the call self-describing.
 JSON_ACCEPT = "application/json"
 
+#: The registry's reduced representation. It carries `dist-tags`, the version
+#: list and per-version `deprecated`, but **not** the `time` map — which is why
+#: it is the fallback and not the default.
+ABBREVIATED_ACCEPT = "application/vnd.npm.install-v1+json"
+
 # Package documents for popular packages run to megabytes. The read timeout is
 # raised over the default because the transfer, not the server, is the slow
 # part — and a scan is a background thread, so a slow read costs latency rather
 # than a held request.
 REGISTRY_TIMEOUT: tuple[float, float] = (5.0, 30.0)
+
+#: Ceilings on a packument, measured against the live registry rather than
+#: guessed. Wire size, then resident cost once `json.loads` has turned it into
+#: Python objects — the second is what actually threatens the tier, and it runs
+#: 3 to 4 times the first:
+#:
+#:     package        full    parsed   abbreviated   parsed
+#:     vite          38.9 MB  79.3 MB     2.3 MB      5.5 MB
+#:     typescript    15.6 MB  53.2 MB     8.7 MB     24.6 MB
+#:     @types/node   11.1 MB  41.0 MB     2.3 MB      3.2 MB
+#:     react          6.9 MB  22.6 MB     2.9 MB      5.2 MB
+#:     express        0.8 MB   2.6 MB     0.3 MB      0.0 MB
+#:
+#: §1.13 measured the worker at 274.5 MB of 512 MB, leaving ~237 MB. One
+#: uncapped `vite` lookup — a dependency of the very first repository scanned on
+#: prod — costs a third of that on its own, and an OOM kills the worker for
+#: *every* user rather than just the scan that caused it. Phase 8 puts an
+#: embedding model in the same process, which only tightens it.
+#:
+#: 8 MiB on the full document admits `react`, `express`, `axios`, `eslint` and
+#: the long tail whole, and pushes the handful of giants onto the abbreviated
+#: path. 16 MiB there is not laxity: `typescript` abbreviates to 8.7 MB, and a
+#: cap that rejected it would make one of npm's most common dev dependencies
+#: permanently unassessable.
+MAX_PACKUMENT_BYTES = 8 * 1024 * 1024
+MAX_ABBREVIATED_BYTES = 16 * 1024 * 1024
 
 
 def _parse_timestamp(raw: object) -> datetime | None:
@@ -103,11 +144,47 @@ class NpmRegistryClient:
         url = f"{NPM_REGISTRY}/{quote(name, safe='@')}"
         summary: dict
         try:
-            response = http.get_json(url, accept=JSON_ACCEPT, timeout=REGISTRY_TIMEOUT)
+            try:
+                response = http.get_json(
+                    url,
+                    accept=JSON_ACCEPT,
+                    timeout=REGISTRY_TIMEOUT,
+                    max_bytes=MAX_PACKUMENT_BYTES,
+                )
+            except http.UpstreamTooLarge:
+                # A handful of very long-lived packages publish packuments this
+                # tier cannot hold (see the table above). The abbreviated form
+                # still answers three of the four questions — latest version,
+                # the release list, and per-version deprecation — and drops only
+                # the `time` map.
+                #
+                # Losing `time` means `staleness_days` is unknown, which §5.2
+                # already has a policy for: the term is excluded and its weight
+                # redistributed across the remaining signals for that
+                # occurrence. A designed degradation, not a hole.
+                #
+                # And it degrades in the right direction, which is why this is
+                # an acceptable trade rather than a regrettable one. A packument
+                # only grows past 8 MiB by accumulating thousands of releases,
+                # which is what an *actively maintained* package looks like — so
+                # the staleness being dropped is the one that would have read
+                # near zero anyway. A package that stopped shipping stops
+                # growing, stays under the cap, and keeps the signal in the only
+                # case where it carries information.
+                logger.info("Packument over the size cap; using the abbreviated form.")
+                response = http.get_json(
+                    url,
+                    accept=ABBREVIATED_ACCEPT,
+                    timeout=REGISTRY_TIMEOUT,
+                    max_bytes=MAX_ABBREVIATED_BYTES,
+                )
         except http.UpstreamNotFound:
             # A definite answer: the registry has never published this name.
             summary = {"not_found": True}
         except http.UpstreamError:
+            # Includes an abbreviated document that is *also* over the cap. A
+            # package that large is unassessable on this tier, and saying so is
+            # better than a half-read answer.
             logger.warning("npm registry lookup failed for a package.")
             summary = {"unavailable": True}
         else:
@@ -148,6 +225,14 @@ class NpmRegistryClient:
                 continue
             deprecations[version] = reason if isinstance(reason, str) else ""
 
+        # Absent from the abbreviated packument, which is exactly why that form
+        # is a fallback. The document's top-level `modified` is *not* pressed
+        # into service as a substitute: it moves when metadata is edited — a
+        # deprecation being added, a maintainer changing — so reading it as a
+        # release date would report a package as freshly maintained on the
+        # strength of an edit. §5.1 asks for "days since the package's latest
+        # release", and an honest unknown is what §5.2's missing-value policy
+        # is for.
         times = document.get("time")
         times = times if isinstance(times, dict) else {}
 
