@@ -11,6 +11,12 @@ gunicorn>=23.0,<24.0
 whitenoise>=6.8,<7.0
 requests>=2.32,<3.0
 
+# The versioned weights registry (§5.4) is YAML. Declared explicitly rather
+# than leaned on as a fastembed transitive: `apps/scoring/weights.py` imports
+# it directly, and an undeclared import is one dependency bump from a failed
+# deploy.
+PyYAML>=6.0,<7.0
+
 # Observability for the Phase 1 memory smoke test (§10 Phase 1).
 psutil>=6.0
 

@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "apps.accounts",
     "apps.repositories",
     "apps.scanning",
+    "apps.scoring",
 ]
 
 MIDDLEWARE = [
@@ -148,11 +149,14 @@ SOCIALACCOUNT_PROVIDERS = {
 LOGIN_REDIRECT_URL = f"{FRONTEND_URL}/dashboard"
 LOGIN_URL = f"{FRONTEND_URL}/login"
 
-# The weights file every scan is tagged with (§5.4, §6). Phase 4 ships
-# `weights_v0_equal.yaml` and changes this default; until a formula exists,
-# "unscored" is the truthful provenance for a scan that recorded signals and
-# computed no score.
-WEIGHTS_VERSION = env("WEIGHTS_VERSION", default="unscored")
+# Which file in `backend/weights/` scores every scan (§5.4, §6). The value
+# names the file (`v1` -> `weights_v1.yaml`) and must match the `version:` tag
+# inside it — `apps.scoring.weights` refuses to load a file that disagrees,
+# because that tag is what a research rescore hands back to reproduce a number.
+#
+# `v0_equal` is §7's fallback for the WP-1 gate and stays in the registry
+# permanently as the naive baseline WP-6 measures against.
+WEIGHTS_VERSION = env("WEIGHTS_VERSION", default="v0_equal")
 
 # Fernet key for app_users.encrypted_github_token. Rotating it invalidates
 # every stored token — users simply re-login (§6).

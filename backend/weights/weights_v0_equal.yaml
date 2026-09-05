@@ -1,0 +1,23 @@
+# Bootstrap weights — equal mass on all four signals.
+#
+# §7's fallback for the WP-1 gate: "ship weights_v0_equal (0.25x4), swap on
+# arrival — zero code change". It exists so the scoring engine can be built,
+# tested and demonstrated before any elicitation has happened, and so that
+# every later weights version has something to be compared against.
+#
+# It is a real, defensible baseline rather than a placeholder: equal weighting
+# is the maximum-entropy prior over four signals nobody has yet ranked. It is
+# not the shipped default — `WEIGHTS_VERSION` selects `v1` (WP-1) — but any
+# claim that AHP weights beat naive weighting is measured against this file,
+# so it stays in the registry permanently.
+
+version: v0_equal
+derivation: bootstrap-equal
+normalization: { cve_count_cap: 10, staleness_cap_days: 1095 }
+flag_rule:     { stale_flag_days: 730 }
+thresholds:    { safe_min: 80, medium_min: 50 }
+rollup:        { decay: 0.5, max_terms: 20 }
+weights:
+  npm:  { deprecation: 0.25, severity: 0.25, count: 0.25, staleness: 0.25 }
+  pypi: { deprecation: 0.25, severity: 0.25, count: 0.25, staleness: 0.25 }
+epss: { enabled: false, weight: 0.0 }
