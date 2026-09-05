@@ -6,6 +6,7 @@ import { BlueprintCorners } from "../components/Blueprint";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { FolderIcon, PlusIcon } from "../components/Icons";
 import { RepoCard } from "../components/RepoCard";
+import { CLASSIFICATION_TONE } from "../components/ScoreBadge";
 import { usePolling } from "../hooks/usePolling";
 import type { Repository } from "../types";
 import { isScanActive } from "../types";
@@ -55,14 +56,12 @@ function Stat({ label, value, note, valueColor }: StatProps) {
 }
 
 /**
- * The dashboard, with Phase 3's scan state on it.
+ * The dashboard: every registered repository, its score, and four totals.
  *
- * The score-derived statistics stay blank: nothing is scored until Phase 4,
- * and a computed-looking number over data that does not exist is worse than no
- * number. The two counts that *are* real now — dependencies observed, and
- * occurrences we could not assess — replace two of the four tiles, because a
- * tile showing a permanent zero teaches a reader to ignore that row of the
- * page.
+ * The tiles show a dash rather than a zero for anything nothing has been
+ * measured for yet. A tile reading "0" over an empty account is a computed
+ * claim about data that does not exist, and it teaches a reader to ignore that
+ * row of the page.
  *
  * The whole list is re-fetched while any repository is scanning, rather than
  * each card polling its own status endpoint. One request per interval instead
@@ -170,6 +169,31 @@ export function Dashboard() {
     0,
   );
 
+  /**
+   * The mean of the repository scores — a plain average, deliberately, and
+   * only here.
+   *
+   * §5.3 forbids a mean *inside* the formula because averaging occurrence
+   * scores lets clean dependencies dilute critical ones. This is the other
+   * kind of average: one number per repository, each already computed by the
+   * rank-decayed roll-up, summarising a list a person is looking at. Nothing
+   * is being scored here, so there is nothing to dilute.
+   *
+   * Repositories whose scan has not produced a number are left out rather than
+   * counted as zero, and the tile says how many went into it.
+   */
+  const withScores = scanned.filter((r) => r.latestScan?.riskScore != null);
+  const weightsVersion = withScores[0]?.latestScan?.scoringFormulaVersion ?? "";
+  const averageScore =
+    withScores.length === 0
+      ? null
+      : Math.round(
+          withScores.reduce(
+            (total, r) => total + Number(r.latestScan?.riskScore ?? 0),
+            0,
+          ) / withScores.length,
+        );
+
   return (
     <main
       style={{
@@ -249,9 +273,26 @@ export function Dashboard() {
           note="no registry answer"
           valueColor="var(--color-accent)"
         />
-        {/* Phase 4 computes the score; until then this tile says so rather
-            than showing a zero that would read as "everything is fine". */}
-        <Stat label="Avg score" value="—" note="scoring lands in Phase 4" />
+        <Stat
+          label="Avg score"
+          value={averageScore === null ? "—" : String(averageScore)}
+          note={
+            averageScore === null
+              ? "nothing scored yet"
+              : `across ${withScores.length} scored · weights ${weightsVersion}`
+          }
+          valueColor={
+            averageScore === null
+              ? undefined
+              : CLASSIFICATION_TONE[
+                  averageScore >= 80
+                    ? "safe"
+                    : averageScore >= 50
+                      ? "medium"
+                      : "high_alert"
+                ].stroke
+          }
+        />
       </div>
 
       {notice && (

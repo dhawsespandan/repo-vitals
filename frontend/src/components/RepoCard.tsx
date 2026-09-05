@@ -1,13 +1,16 @@
 /**
  * One registered repository (wireframe artboard `isDashboard`, card grid).
  *
- * The wireframe's card is drawn for a scanned, scored repository: a filled
- * score ring, a classification tag, "N flagged · N deps". Phase 3 supplies the
- * scan half — a status pill, a dependency count, and a route into the detail
- * page — and leaves the ring hollow, because nothing is scored until Phase 4
- * and a placeholder number would read as a real one. The geometry stays the
- * wireframe's throughout, so Phase 4 fills the ring rather than re-cutting the
- * card.
+ * The card the wireframe draws is now the card that renders: a filled score
+ * ring, a classification tag, and "N flagged · N deps". Phase 3 built the
+ * geometry and left the ring hollow because nothing was scored yet; Phase 4
+ * fills it without re-cutting the card.
+ *
+ * **The footer says two different things depending on what happened.** Once a
+ * scan has produced a score, it is the classification tag — the answer the
+ * card exists to give. Before then, or when the scan failed, it is the status
+ * pill, because "Scan failed" is the answer and a classification would be an
+ * invention. Both occupy the same slot, so the eye lands in one place.
  *
  * The identity block is a link, per the wireframe's `repo.open`. Remove is a
  * button inside the same card, so it stops the click from reaching the link —
@@ -19,6 +22,7 @@ import { Link } from "react-router-dom";
 import type { Repository } from "../types";
 import { BlueprintCorners } from "./Blueprint";
 import { FolderIcon, LockIcon, TrashIcon } from "./Icons";
+import { ClassificationTag, ScoreBadge } from "./ScoreBadge";
 import { StatusPill } from "./StatusPill";
 
 interface RepoCardProps {
@@ -31,6 +35,10 @@ interface RepoCardProps {
 export function RepoCard({ repository, highlighted, onDelete }: RepoCardProps) {
   const scan = repository.latestScan;
   const scanning = scan?.status === "queued" || scan?.status === "running";
+  // A score and a classification always arrive together (`score_scan` writes
+  // both in one save), but the tag is what the reader acts on, so it is the
+  // one the branch tests.
+  const scored = scan?.classification != null && scan.riskScore !== null;
 
   return (
     <div
@@ -106,9 +114,8 @@ export function RepoCard({ repository, highlighted, onDelete }: RepoCardProps) {
         </Link>
 
         {/* The wireframe's 58px slot: a spinner while a scan runs (its
-            `repo.scanning` branch), otherwise the score ring left unfilled —
-            nothing is scored until Phase 4, and a number here would be an
-            invention rather than a measurement. */}
+            `repo.scanning` branch), otherwise the score ring — filled once a
+            scan has produced a number, empty with a dash before that. */}
         {scanning ? (
           <div
             style={{
@@ -132,32 +139,10 @@ export function RepoCard({ repository, highlighted, onDelete }: RepoCardProps) {
             />
           </div>
         ) : (
-          <div style={{ position: "relative", width: 58, height: 58, flex: "none" }}>
-            <svg width="58" height="58" viewBox="0 0 58 58" aria-hidden="true">
-              <circle
-                cx="29"
-                cy="29"
-                r="22"
-                fill="none"
-                stroke="var(--color-divider)"
-                strokeWidth="4.5"
-              />
-            </svg>
-            <div
-              className="text-muted"
-              style={{
-                position: "absolute",
-                inset: 0,
-                display: "grid",
-                placeItems: "center",
-                fontFamily: "var(--font-heading)",
-                fontWeight: 600,
-                fontSize: 19,
-              }}
-            >
-              —
-            </div>
-          </div>
+          <ScoreBadge
+            score={scan?.riskScore ?? null}
+            classification={scan?.classification ?? null}
+          />
         )}
       </div>
 
@@ -172,12 +157,27 @@ export function RepoCard({ repository, highlighted, onDelete }: RepoCardProps) {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-          <StatusPill scan={scan} showSpinner={false} />
+          {scored ? (
+            <ClassificationTag classification={scan.classification} />
+          ) : (
+            <StatusPill scan={scan} showSpinner={false} />
+          )}
           {scan?.status === "completed" && (
             <span className="text-muted" style={{ fontSize: 12 }}>
-              {scan.dependencyCount} dep{scan.dependencyCount === 1 ? "" : "s"}
-              {scan.unassessableCount > 0 &&
-                ` · ${scan.unassessableCount} unassessable`}
+              {/* A repository where nothing could be assessed still scores 100
+                  and still classifies Safe — §5.2 excludes unassessable
+                  occurrences from every denominator, so there is no penalty to
+                  carry. Saying "0 flagged" beside that green ring invites the
+                  reader to do the subtraction and mostly they will not, so the
+                  line says it outright instead. */}
+              {scan.dependencyCount > 0 &&
+              scan.unassessableCount === scan.dependencyCount
+                ? `${scan.dependencyCount} dep${scan.dependencyCount === 1 ? "" : "s"} · none assessable`
+                : `${scan.flaggedCount} flagged · ${scan.dependencyCount} dep${scan.dependencyCount === 1 ? "" : "s"}${
+                    scan.unassessableCount > 0
+                      ? ` · ${scan.unassessableCount} unassessable`
+                      : ""
+                  }`}
             </span>
           )}
         </div>

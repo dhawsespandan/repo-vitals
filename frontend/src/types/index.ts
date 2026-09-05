@@ -51,20 +51,27 @@ export function isScanActive(scan: ScanState | null | undefined): boolean {
     ACTIVE_SCAN_STATUSES.includes(scan.status);
 }
 
+/** §5.3's three bands: >=80 Safe, 50-79 Medium, <50 High-Alert. */
+export type Classification = "safe" | "medium" | "high_alert";
+
 /**
  * One scan, small enough to poll every three seconds
  * (`apps/scanning/serializers.py::ScanStateSerializer`).
  *
- * `riskScore` and `classification` stay null until Phase 4 ships the scoring
- * engine. They are in the type from the start because the shape is the
- * backend's, not the UI's — but nothing renders a score while they are null,
- * and a zero would be a claim rather than an absence.
+ * `riskScore` and `classification` are null until the scan completes and is
+ * scored — a running scan has measured nothing yet, and a failed one never
+ * will. Nothing renders a number while they are null: a zero is the claim
+ * "as bad as the formula can say", which is the opposite of an absence.
+ *
+ * `riskScore` is a string because it is a Postgres `NUMERIC(5,2)`, and DRF
+ * serializes those as strings on purpose — the exact two decimals are what the
+ * per-signal arithmetic on the detail page has to add up to.
  */
 export interface ScanState {
   id: string;
   status: ScanStatus;
   triggerType: "initial" | "manual";
-  classification: "safe" | "medium" | "high_alert" | null;
+  classification: Classification | null;
   riskScore: string | null;
   scoringFormulaVersion: string;
   errorMessage: string | null;
@@ -95,9 +102,26 @@ export interface ManifestFile {
   dependencyCount: number;
 }
 
+/**
+ * One occurrence's decayed share of the repository's deduction (§5.3).
+ *
+ * `penalty` is what the occurrence itself cost; `points` is what it cost the
+ * repository after the roll-up's rank decay, which is the number the strip
+ * shows. They are equal only for the worst occurrence, which is undecayed.
+ */
+export interface ScoreContributor {
+  dependencyId: string;
+  packageName: string;
+  manifestPath: string;
+  penalty: string;
+  points: string;
+}
+
 /** `GET /api/scans/{id}/`. */
 export interface ScanDetail extends ScanState {
   manifests: ManifestFile[];
+  /** Worst first, at most three. Empty when the scan is unscored or clean. */
+  topContributors: ScoreContributor[];
 }
 
 export type DependencyGroup =
@@ -137,6 +161,8 @@ export interface DependencyOccurrence {
   cvssMax: string | null;
   isFlagged: boolean;
   riskComponentScore: string | null;
+  /** True when the severity term rested on §5.2's 5.0 CVSS placeholder. */
+  cvssReducedConfidence: boolean;
 }
 
 /** DRF's `PageNumberPagination` envelope. */

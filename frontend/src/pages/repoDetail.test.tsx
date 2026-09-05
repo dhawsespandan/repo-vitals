@@ -299,12 +299,16 @@ describe("the dashboard while a scan runs", () => {
 
     renderApp(["/dashboard"]);
 
+    // A finished scan replaces the status pill with its answer: the score in
+    // the ring and the classification tag beside the counts. Waiting on the
+    // pill would wait for something a completed card no longer renders.
     await waitFor(() =>
-      expect(screen.getByTestId("status-pill")).toHaveAttribute(
-        "data-status",
-        "completed",
+      expect(screen.getByTestId("classification-tag")).toHaveAttribute(
+        "data-classification",
+        "medium",
       ),
     );
+    expect(screen.getByTestId("score-badge")).toHaveAttribute("data-score", "68.45");
     expect(screen.getByTestId("repo-card")).toHaveTextContent(/3 deps/);
     expect(screen.getByTestId("repo-card")).toHaveTextContent(/1 unassessable/);
   });
@@ -387,5 +391,117 @@ describe("completeness of the table", () => {
     await screen.findAllByTestId("dependency-row");
 
     expect(screen.queryByTestId("skipped-manifests")).not.toBeInTheDocument();
+  });
+});
+
+describe("the score on the detail page", () => {
+  const scored = (overrides = {}) =>
+    stubFetch({
+      session: SIGNED_IN,
+      repository: repository({
+        latestScan: scanState(),
+        latestCompletedScanId: SCAN_ID,
+      }),
+      scanStatus: () => ({
+        scan: scanState(),
+        latestCompletedScanId: SCAN_ID,
+      }),
+      scan: scanDetail(overrides),
+      dependencies: ROWS,
+    });
+
+  it("puts the score, its classification and its working in the header", async () => {
+    scored({
+      riskScore: "28.22",
+      classification: "high_alert",
+      flaggedCount: 2,
+      topContributors: [
+        {
+          dependencyId: "row-request",
+          packageName: "request",
+          manifestPath: "package.json",
+          penalty: "56.00",
+          points: "56.00",
+        },
+        {
+          dependencyId: "row-lodash-root",
+          packageName: "lodash",
+          manifestPath: "package.json",
+          penalty: "31.55",
+          points: "15.78",
+        },
+      ],
+    });
+
+    renderApp(DETAIL_ROUTE);
+
+    const badge = await screen.findByTestId("score-badge");
+    expect(badge).toHaveTextContent("28");
+    expect(screen.getByTestId("classification-tag")).toHaveTextContent("High-Alert");
+
+    // The mentor demo in one assertion: the number, then the packages it came
+    // from, then the points each cost — all on screen together.
+    const strip = screen.getByTestId("score-contributors");
+    expect(within(strip).getAllByTestId("score-contributor")).toHaveLength(2);
+    expect(strip).toHaveTextContent("request");
+    expect(strip).toHaveTextContent("−56.00");
+    expect(strip).toHaveTextContent("−15.78");
+  });
+
+  it("shows no score at all while a rescan is running", async () => {
+    // The previous number is being replaced. A ring still showing it under a
+    // spinner would be reporting a measurement that is currently in doubt.
+    stubFetch({
+      session: SIGNED_IN,
+      repository: repository({
+        latestScan: scanState({ status: "running" }),
+        latestCompletedScanId: SCAN_ID,
+      }),
+      scanStatus: () => ({
+        scan: scanState({ status: "running" }),
+        latestCompletedScanId: SCAN_ID,
+      }),
+      scan: scanDetail(),
+      dependencies: ROWS,
+    });
+
+    renderApp(DETAIL_ROUTE);
+
+    await screen.findByTestId("status-pill");
+    expect(screen.queryByTestId("score-badge")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("classification-tag")).not.toBeInTheDocument();
+  });
+
+  it("shows no score when the only scan failed", async () => {
+    stubFetch({
+      session: SIGNED_IN,
+      repository: repository({
+        latestScan: scanState({
+          status: "failed",
+          errorMessage: "GitHub rate-limited this scan.",
+        }),
+      }),
+      scanStatus: () => ({
+        scan: scanState({ status: "failed" }),
+        latestCompletedScanId: null,
+      }),
+    });
+
+    renderApp(DETAIL_ROUTE);
+
+    await screen.findByTestId("scan-failed");
+    // A dash, never a zero: nothing was measured, which is not the same claim
+    // as "measured, and as bad as it gets".
+    expect(screen.getByTestId("score-badge")).toHaveTextContent("—");
+    expect(screen.queryByTestId("score-contributors")).not.toBeInTheDocument();
+  });
+
+  it("counts the flagged dependencies in the header metrics", async () => {
+    scored({ flaggedCount: 2 });
+
+    renderApp(DETAIL_ROUTE);
+
+    const flagged = await screen.findByText("Flagged");
+    expect(flagged.parentElement).toHaveTextContent("2");
   });
 });

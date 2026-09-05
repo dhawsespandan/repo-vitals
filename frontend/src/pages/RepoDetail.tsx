@@ -12,6 +12,8 @@ import {
 import { BlueprintCorners } from "../components/Blueprint";
 import { DependencyTable } from "../components/DependencyTable";
 import { FolderIcon, LockIcon } from "../components/Icons";
+import { ClassificationTag, ScoreBadge } from "../components/ScoreBadge";
+import { ScoreContributors } from "../components/ScoreContributors";
 import { StatusPill, relativeTime } from "../components/StatusPill";
 import { usePolling } from "../hooks/usePolling";
 import type {
@@ -24,14 +26,14 @@ import type {
 import { isScanActive } from "../types";
 
 /**
- * RepoDetail v1 (wireframe artboard `isDrilldown`).
+ * RepoDetail (wireframe artboard `isDrilldown`).
  *
  * The wireframe's page is drawn around a score: a 108 px ring, a
- * classification tag, and a signal-by-signal breakdown of where the points
- * went. None of that exists yet — Phase 4 computes the score and Phase 5 draws
- * the breakdown — so this version keeps the wireframe's frame and fills it
- * with what a Phase 3 scan actually knows: how many dependencies, across how
- * many manifests, resolved how, and which of them carry findings.
+ * classification tag, and an account of where the points went. Phase 4 fills
+ * the first two and the level above the third — which occurrences the number
+ * came from and what each cost. The signal-by-signal breakdown *inside* one
+ * occurrence is Phase 5's, so the strip here stops at the package level rather
+ * than showing a bar chart with nothing behind it.
  *
  * **What the page displays and what it reports are two different scans.** The
  * table shows `latestCompletedScanId`; the pill shows the newest scan of any
@@ -242,6 +244,7 @@ export function RepoDetail() {
             </div>
 
             <div style={{ display: "flex", gap: 26, marginTop: 16, flexWrap: "wrap" }}>
+              <Metric label="Flagged" value={scan ? scan.flaggedCount : "—"} />
               <Metric label="Dependencies" value={scan ? scan.dependencyCount : "—"} />
               <Metric label="Manifests" value={scan ? scan.manifestCount : "—"} />
               <Metric
@@ -255,7 +258,44 @@ export function RepoDetail() {
               <Metric label="Last scan" value={lastScanLabel(current, scan)} />
             </div>
           </div>
+
+          {/* The wireframe's `curNotScanning` branch: the 108px ring and its
+              tag, replaced by nothing at all while a scan runs. A ring that
+              kept showing the previous score under a spinner would be reporting
+              a measurement that is currently being replaced. */}
+          {!active && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 10,
+              }}
+            >
+              <ScoreBadge
+                score={scan?.riskScore ?? null}
+                classification={scan?.classification ?? null}
+                variant="header"
+              />
+              <ClassificationTag classification={scan?.classification ?? null} />
+            </div>
+          )}
         </div>
+
+        {/* Directly beneath the ring, because a number nobody can check is
+            not evidence — and this is the sentence the mentor demo turns on:
+            "the score is these three packages, here's the arithmetic". */}
+        {scan && scan.riskScore !== null && (
+          <div
+            style={{
+              marginTop: 18,
+              paddingTop: 16,
+              borderTop: "1px solid var(--color-divider)",
+            }}
+          >
+            <ScoreContributors scan={scan} />
+          </div>
+        )}
 
         <div
           style={{

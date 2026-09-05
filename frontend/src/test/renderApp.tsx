@@ -28,15 +28,25 @@ export const SIGNED_OUT: SessionResponse = { authenticated: false, user: null };
 
 export const SCAN_ID = "0f2c1d5e-3b4a-4c6d-8e9f-1a2b3c4d5e6f";
 
-/** A completed scan, with the counts a Phase 3 card and header display. */
+/**
+ * A completed, scored scan with the counts a card and a header display.
+ *
+ * The score fields follow the status rather than being fixed, because in
+ * production they are not independent: `score_scan` runs on the completion
+ * path, so a completed scan always carries a number and a queued, running or
+ * failed one never does. A fixture that handed a running scan a score would
+ * let a component pass a test against a state the backend cannot produce.
+ */
 export function scanState(overrides: Partial<ScanState> = {}): ScanState {
+  const status = overrides.status ?? "completed";
+  const scored = status === "completed";
   return {
     id: SCAN_ID,
     status: "completed",
     triggerType: "initial",
-    classification: null,
-    riskScore: null,
-    scoringFormulaVersion: "unscored",
+    classification: scored ? "medium" : null,
+    riskScore: scored ? "68.45" : null,
+    scoringFormulaVersion: "v1",
     errorMessage: null,
     createdAt: "2026-08-30T09:00:00Z",
     startedAt: "2026-08-30T09:00:01Z",
@@ -100,7 +110,8 @@ export function dependency(
     highestSeverity: null,
     cvssMax: null,
     isFlagged: false,
-    riskComponentScore: null,
+    riskComponentScore: "100.00",
+    cvssReducedConfidence: false,
     ...overrides,
   };
 }
@@ -143,6 +154,15 @@ interface StubOptions {
 export function scanDetail(overrides: Partial<ScanDetail> = {}): ScanDetail {
   return {
     ...scanState(),
+    topContributors: [
+      {
+        dependencyId: "aaaaaaaa-0000-4000-8000-000000000002",
+        packageName: "request",
+        manifestPath: "services/api/package.json",
+        penalty: "56.00",
+        points: "56.00",
+      },
+    ],
     manifests: [
       {
         id: "cccccccc-0000-4000-8000-000000000001",
