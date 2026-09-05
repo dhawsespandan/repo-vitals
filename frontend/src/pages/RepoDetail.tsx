@@ -59,6 +59,8 @@ export function RepoDetail() {
   const [notFound, setNotFound] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [notice, setNotice] = useState("");
+  // A start request is in flight. See `busy` below.
+  const [starting, setStarting] = useState(false);
   // Opens on Flagged, always — including when nothing is flagged, where the
   // empty state is the answer rather than an absence of one. Switching the
   // default to All on a clean repository would move the answer to a different
@@ -132,14 +134,33 @@ export function RepoDetail() {
     onResult: setState,
   });
 
+  /**
+   * The scan is running, or a request to start one is in flight.
+   *
+   * The second half matters as much as the first and was missing. `active`
+   * only turns true once the server's answer arrives, so between the click
+   * and the response the button was live and a second click sent a second
+   * POST. The server's lock meant that produced one ScanRun and a 409 — the
+   * right outcome, reached by making a request that should never have been
+   * made, and nothing on screen would ever have shown it (§3.13: no assertion
+   * about behaviour notices a request count).
+   */
+  const busy = active || starting;
+
   const runScan = async () => {
+    // A guard as well as a disabled attribute: `disabled` covers the pointer,
+    // and this covers the keyboard repeat, the second tab, and the replayed
+    // request. The lock that actually decides is the server's either way.
+    if (busy) return;
     setNotice("");
+    setStarting(true);
     try {
       setState(await startScan(repositoryId));
     } catch (error) {
       if (error instanceof ApiError && error.code === "scan_in_progress") {
         // Not a failure: the scan they asked for is already running. Re-read
-        // the state rather than telling them off for asking.
+        // the state rather than telling them off for asking — the refreshed
+        // state turns the page to the scanning view, which is the answer.
         refresh();
         return;
       }
@@ -148,6 +169,8 @@ export function RepoDetail() {
           ? error.message
           : "We couldn't start a scan. Please try again.",
       );
+    } finally {
+      setStarting(false);
     }
   };
 
@@ -324,10 +347,11 @@ export function RepoDetail() {
             type="button"
             className="btn btn-secondary"
             style={{ height: 36 }}
-            disabled={active}
+            data-testid="run-scan"
+            disabled={busy}
             onClick={() => void runScan()}
           >
-            {active ? "Scanning…" : "Run scan"}
+            {active ? "Scanning…" : starting ? "Starting…" : "Run scan"}
           </button>
           <span
             className="text-muted"
@@ -385,6 +409,8 @@ export function RepoDetail() {
           <button
             type="button"
             className="btn btn-secondary"
+            data-testid="retry-scan"
+            disabled={busy}
             onClick={() => void runScan()}
           >
             Try again
@@ -409,7 +435,8 @@ export function RepoDetail() {
             <button
               type="button"
               className="btn btn-primary"
-              disabled={active}
+              data-testid="first-scan"
+              disabled={busy}
               onClick={() => void runScan()}
             >
               Run the first scan

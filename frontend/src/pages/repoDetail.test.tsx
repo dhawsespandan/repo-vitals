@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -433,6 +433,53 @@ describe("running a scan from the detail page", () => {
     expect(calls.some((call) => call.startsWith("POST") && call.endsWith("/scan/"))).toBe(
       true,
     );
+  });
+
+  it("sends one POST for a double-click, not two", async () => {
+    // The server's lock already guarantees one ScanRun (§3.12), so both
+    // requests would have produced the right *data*. The defect is the second
+    // request itself, and nothing on screen shows a request count — the same
+    // shape as the duplicated polling loop in §3.13.
+    const { calls } = stubFetch({
+      session: SIGNED_IN,
+      repository: repository(),
+      scanStatus: () => ({
+        scan: scanState({ status: "running" }),
+        latestCompletedScanId: null,
+      }),
+    });
+
+    renderApp(DETAIL_ROUTE);
+    const button = await screen.findByTestId("first-scan");
+
+    // `fireEvent`, not `userEvent`: the window this closes is the one between
+    // the click and the server's answer, and `userEvent.click` awaits its own
+    // effects, so a second awaited click always lands after the state has
+    // already caught up. Two raw dispatches with nothing awaited between them
+    // are what a real double-click is.
+    fireEvent.click(button);
+    fireEvent.click(button);
+
+    await waitFor(() =>
+      expect(calls.filter((call) => call.endsWith("/scan/"))).toHaveLength(1),
+    );
+  });
+
+  it("disables every scan control while one is running", async () => {
+    stubFetch({
+      session: SIGNED_IN,
+      repository: repository({ latestScan: scanState({ status: "running" }) }),
+      scanStatus: () => ({
+        scan: scanState({ status: "running" }),
+        latestCompletedScanId: null,
+      }),
+    });
+
+    renderApp(DETAIL_ROUTE);
+
+    const button = await screen.findByTestId("run-scan");
+    expect(button).toBeDisabled();
+    expect(button).toHaveTextContent("Scanning…");
   });
 
   it("treats a 409 as 'already running', not as a failure", async () => {
