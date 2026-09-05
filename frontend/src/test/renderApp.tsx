@@ -42,6 +42,7 @@ export function scanState(overrides: Partial<ScanState> = {}): ScanState {
     startedAt: "2026-08-30T09:00:01Z",
     completedAt: "2026-08-30T09:00:42Z",
     manifestCount: 2,
+    skippedManifestCount: 0,
     dependencyCount: 3,
     unassessableCount: 1,
     flaggedCount: 0,
@@ -129,8 +130,10 @@ interface StubOptions {
   scanStatus?: () => { scan: ScanState | null; latestCompletedScanId: string | null };
   /** Answer to GET /api/scans/{id}/. */
   scan?: ScanDetail;
-  /** Rows returned by GET /api/scans/{id}/dependencies/. */
+  /** Rows returned by GET /api/scans/{id}/dependencies/, paginated like the API. */
   dependencies?: DependencyOccurrence[];
+  /** Page size the stubbed paginator uses. Defaults to the backend's 50. */
+  pageSize?: number;
   /** Status returned by POST /api/repositories/{id}/scan/. */
   startScanStatus?: number;
   /** Body returned by POST /api/repositories/{id}/scan/ when it is not 202. */
@@ -180,6 +183,7 @@ export function stubFetch({
   scanStatus,
   scan,
   dependencies = [],
+  pageSize = 50,
   startScanStatus = 202,
   startScanBody,
 }: StubOptions) {
@@ -224,12 +228,20 @@ export function stubFetch({
       );
     }
     if (url.includes("/dependencies/") && method === "GET") {
+      // Paginated for real, so a test can tell "loaded page one" from "loaded
+      // every page". `pageSize` defaults to the backend's 50.
+      const page = Number(new URL(url, "http://x").searchParams.get("page") ?? 1);
+      const start = (page - 1) * pageSize;
+      const slice = dependencies.slice(start, start + pageSize);
       return json(
         {
           count: dependencies.length,
-          next: null,
-          previous: null,
-          results: dependencies,
+          next:
+            start + pageSize < dependencies.length
+              ? `/api/scans/x/dependencies/?page=${page + 1}`
+              : null,
+          previous: page > 1 ? `/api/scans/x/dependencies/?page=${page - 1}` : null,
+          results: slice,
         },
         200,
       );

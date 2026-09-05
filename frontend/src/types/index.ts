@@ -72,6 +72,8 @@ export interface ScanState {
   startedAt: string | null;
   completedAt: string | null;
   manifestCount: number;
+  /** Manifests found in the tree and not read — see RepoDetail's notice. */
+  skippedManifestCount: number;
   dependencyCount: number;
   unassessableCount: number;
   flaggedCount: number;

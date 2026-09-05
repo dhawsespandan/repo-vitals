@@ -190,3 +190,42 @@ export const listScanDependencies = (scanId: string, page = 1) =>
   api.get<Paginated<DependencyOccurrence>>(
     `/scans/${scanId}/dependencies/?page=${page}`,
   );
+
+/**
+ * Pages beyond which the detail table stops fetching. 50 rows a page, so this
+ * is 1,000 dependencies — comfortably past anything in this product's
+ * population, and a bound rather than an unbounded loop against a free tier.
+ */
+export const MAX_DEPENDENCY_PAGES = 20;
+
+/**
+ * Every dependency of a scan, following the paginator to the end.
+ *
+ * §10 Phase 3 says the detail page "lists every dependency from every manifest
+ * in the tree"; one page of 50 is not that. The pages are walked in sequence
+ * rather than in parallel because the point is completeness, not speed, and a
+ * burst of twenty concurrent requests at a sleeping Render instance is a worse
+ * trade than an extra second.
+ *
+ * Returns what it managed to read plus the server's own total, so the caller
+ * can say so when the two differ — a truncated table that claims to be
+ * complete is the failure this product exists to avoid.
+ */
+export async function listAllScanDependencies(
+  scanId: string,
+): Promise<{ rows: DependencyOccurrence[]; total: number }> {
+  const first = await listScanDependencies(scanId);
+  const rows = [...first.results];
+
+  for (
+    let page = 2;
+    first.next !== null && page <= MAX_DEPENDENCY_PAGES && rows.length < first.count;
+    page += 1
+  ) {
+    const next = await listScanDependencies(scanId, page);
+    rows.push(...next.results);
+    if (next.next === null) break;
+  }
+
+  return { rows, total: first.count };
+}

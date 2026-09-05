@@ -90,6 +90,30 @@ def scan_state(repository_id) -> dict:
     return scan_states_for([repository_id]).get(str(repository_id), dict(EMPTY_STATE))
 
 
+def _boolean_param(raw: str | None) -> bool | None:
+    """Read a query-string boolean, or None when it says nothing.
+
+    The three states matter and only two were handled before: a truthy value
+    filtered, and *everything else* — including an explicit `false` — fell
+    through to no filter at all. `?flagged=false` therefore returned every row
+    rather than the clean ones, which is the opposite of what it asks for and
+    silent about it. Phase 5's Flagged / All / Unassessable tabs are the caller
+    that would have found out the hard way.
+
+    An unrecognised value is None (no filter) rather than False: guessing that
+    `?flagged=maybe` means "show me the unflagged ones" would be inventing an
+    answer to a question nobody asked.
+    """
+    if raw is None:
+        return None
+    value = raw.strip().lower()
+    if value in ("1", "true", "yes", "on"):
+        return True
+    if value in ("0", "false", "no", "off"):
+        return False
+    return None
+
+
 def trigger_scan(repository: Repository, user, trigger_type: str):
     """Start a scan, or raise the §5.5 409. Shared by registration and the route."""
     try:
@@ -191,13 +215,13 @@ class ScanDependenciesView(OwnedQuerySetMixin, generics.ListAPIView):
             .select_related("manifest", "package")
         )
 
-        flagged = self.request.query_params.get("flagged")
-        if flagged is not None and flagged.lower() in ("1", "true", "yes"):
-            queryset = queryset.filter(is_flagged=True)
+        flagged = _boolean_param(self.request.query_params.get("flagged"))
+        if flagged is not None:
+            queryset = queryset.filter(is_flagged=flagged)
 
-        unassessable = self.request.query_params.get("unassessable")
-        if unassessable is not None and unassessable.lower() in ("1", "true", "yes"):
-            queryset = queryset.filter(is_unassessable=True)
+        unassessable = _boolean_param(self.request.query_params.get("unassessable"))
+        if unassessable is not None:
+            queryset = queryset.filter(is_unassessable=unassessable)
 
         # Unassessable rows sort last: they are not findings, and a table that
         # opens on six "can't assess" rows buries the ones that matter.

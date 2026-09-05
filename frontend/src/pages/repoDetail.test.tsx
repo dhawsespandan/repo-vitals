@@ -323,3 +323,69 @@ describe("the dashboard while a scan runs", () => {
     ).toHaveLength(1);
   });
 });
+
+describe("completeness of the table", () => {
+  it("loads every page, not just the first", async () => {
+    // §10 Phase 3 says the page "lists every dependency from every manifest";
+    // one page of 50 is not that.
+    const many = Array.from({ length: 7 }, (_, index) =>
+      dependency({ id: `row-${index}`, packageName: `pkg-${index}` }),
+    );
+    const { calls } = stubFetch({
+      session: SIGNED_IN,
+      repository: repository({
+        latestScan: scanState({ dependencyCount: 7 }),
+        latestCompletedScanId: SCAN_ID,
+      }),
+      scan: scanDetail({ dependencyCount: 7 }),
+      dependencies: many,
+      pageSize: 3,
+    });
+
+    renderApp(DETAIL_ROUTE);
+
+    await waitFor(async () =>
+      expect(await screen.findAllByTestId("dependency-row")).toHaveLength(7),
+    );
+    expect(
+      calls.filter((call) => call.includes("/dependencies/")),
+    ).toHaveLength(3);
+  });
+
+  it("says so when manifests could not be read", async () => {
+    // The header line claims "pooled across N manifests". Where that is not
+    // the whole picture, the page has to say so in the same place rather than
+    // leaving the omission in a server log.
+    stubFetch({
+      session: SIGNED_IN,
+      repository: repository({
+        latestScan: scanState({ skippedManifestCount: 2 }),
+        latestCompletedScanId: SCAN_ID,
+      }),
+      scan: scanDetail({ skippedManifestCount: 2 }),
+      dependencies: ROWS,
+    });
+
+    renderApp(DETAIL_ROUTE);
+
+    const notice = await screen.findByTestId("skipped-manifests");
+    expect(notice).toHaveTextContent(/2 manifests .* were not read/i);
+  });
+
+  it("stays quiet when every manifest was read", async () => {
+    stubFetch({
+      session: SIGNED_IN,
+      repository: repository({
+        latestScan: scanState(),
+        latestCompletedScanId: SCAN_ID,
+      }),
+      scan: scanDetail(),
+      dependencies: ROWS,
+    });
+
+    renderApp(DETAIL_ROUTE);
+    await screen.findAllByTestId("dependency-row");
+
+    expect(screen.queryByTestId("skipped-manifests")).not.toBeInTheDocument();
+  });
+});

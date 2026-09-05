@@ -539,3 +539,85 @@ class TestRouting:
         assert reverse("scan-dependencies", kwargs={"scan_id": scan.pk}) == (
             f"/api/scans/{scan.pk}/dependencies/"
         )
+
+
+@pytest.mark.django_db
+class TestDependencyFilters:
+    """`?flagged=` and `?unassessable=` have three states, not two.
+
+    An explicit `false` used to fall through to no filter and return every
+    row — the opposite of what it asks for, silently. Phase 5's tabs are the
+    caller that would otherwise have found out the hard way.
+    """
+
+    @pytest.fixture
+    def scan_with_rows(self, repository):
+        from apps.scanning.models import DependencyOccurrence, ManifestFile, Package
+
+        scan = ScanRun.objects.create(
+            repository=repository,
+            triggered_by=repository.user,
+            trigger_type=TriggerType.INITIAL.value,
+            status=ScanStatus.COMPLETED.value,
+            scoring_formula_version="unscored",
+            completed_at=timezone.now(),
+        )
+        manifest = ManifestFile.objects.create(
+            scan=scan,
+            ecosystem="npm",
+            manifest_path="package.json",
+            parser_name="npm/package.json@1",
+        )
+        for name, flagged, unassessable in (
+            ("flagged-dep", True, False),
+            ("clean-dep", False, False),
+            ("skipped-dep", False, True),
+        ):
+            DependencyOccurrence.objects.create(
+                manifest=manifest,
+                package=Package.objects.create(ecosystem="npm", package_name=name),
+                declared_specifier="^1.0.0",
+                is_flagged=flagged,
+                is_unassessable=unassessable,
+            )
+        return scan
+
+    def names(self, client, scan, query=""):
+        response = client.get(f"/api/scans/{scan.pk}/dependencies/{query}")
+        return {row["packageName"] for row in response.data["results"]}
+
+    def test_no_filter_returns_everything(self, auth_client, scan_with_rows):
+        assert self.names(auth_client, scan_with_rows) == {
+            "flagged-dep",
+            "clean-dep",
+            "skipped-dep",
+        }
+
+    def test_flagged_true_returns_only_flagged(self, auth_client, scan_with_rows):
+        assert self.names(auth_client, scan_with_rows, "?flagged=true") == {"flagged-dep"}
+
+    def test_flagged_false_returns_only_unflagged(self, auth_client, scan_with_rows):
+        """The bug: this used to return all three."""
+        assert self.names(auth_client, scan_with_rows, "?flagged=false") == {
+            "clean-dep",
+            "skipped-dep",
+        }
+
+    def test_unassessable_false_excludes_them(self, auth_client, scan_with_rows):
+        assert self.names(auth_client, scan_with_rows, "?unassessable=false") == {
+            "flagged-dep",
+            "clean-dep",
+        }
+
+    def test_the_two_filters_compose(self, auth_client, scan_with_rows):
+        query = "?flagged=false&unassessable=false"
+
+        assert self.names(auth_client, scan_with_rows, query) == {"clean-dep"}
+
+    def test_an_unrecognised_value_filters_nothing(self, auth_client, scan_with_rows):
+        """Not False: guessing what `?flagged=maybe` means invents an answer."""
+        assert self.names(auth_client, scan_with_rows, "?flagged=maybe") == {
+            "flagged-dep",
+            "clean-dep",
+            "skipped-dep",
+        }

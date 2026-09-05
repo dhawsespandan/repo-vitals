@@ -6,7 +6,7 @@ import {
   getRepository,
   getScan,
   getScanStatus,
-  listScanDependencies,
+  listAllScanDependencies,
   startScan,
 } from "../api/client";
 import { BlueprintCorners } from "../components/Blueprint";
@@ -92,12 +92,12 @@ export function RepoDetail() {
     let live = true;
     Promise.all([
       getScan(completedScanId),
-      listScanDependencies(completedScanId),
+      listAllScanDependencies(completedScanId),
     ])
-      .then(([detail, page]) => {
+      .then(([detail, dependencies]) => {
         if (!live) return;
         setScan(detail);
-        setRows(page.results);
+        setRows(dependencies.rows);
       })
       .catch(() => {
         if (live) setLoadError(true);
@@ -399,11 +399,37 @@ export function RepoDetail() {
               independently
             </span>
           </div>
+
+          {/* The line above claims a complete picture. Where it isn't one,
+              this says so in the same place, rather than leaving the omission
+              in a server log nobody reads. */}
+          {scan.skippedManifestCount > 0 && (
+            <div
+              role="status"
+              data-testid="skipped-manifests"
+              style={{
+                border: "1px solid #a8792f",
+                background: "#efe8d5",
+                color: "#6a4b16",
+                padding: "8px 11px",
+                fontSize: 12.5,
+                lineHeight: 1.5,
+                marginBottom: 10,
+              }}
+            >
+              {scan.skippedManifestCount} manifest
+              {scan.skippedManifestCount === 1 ? "" : "s"} in this repository
+              {scan.skippedManifestCount === 1 ? " was" : " were"} not read —
+              too large, unreadable, or past the per-scan limit. The
+              dependencies below are everything else.
+            </div>
+          )}
+
           <DependencyTable
             rows={rows}
             caption={
               scan.dependencyCount > rows.length
-                ? `Showing the first ${rows.length} of ${scan.dependencyCount}.`
+                ? `Showing ${rows.length} of ${scan.dependencyCount}.`
                 : undefined
             }
           />
