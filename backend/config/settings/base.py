@@ -154,9 +154,9 @@ LOGIN_URL = f"{FRONTEND_URL}/login"
 # inside it — `apps.scoring.weights` refuses to load a file that disagrees,
 # because that tag is what a research rescore hands back to reproduce a number.
 #
-# `v0_equal` is §7's fallback for the WP-1 gate and stays in the registry
-# permanently as the naive baseline WP-6 measures against.
-WEIGHTS_VERSION = env("WEIGHTS_VERSION", default="v0_equal")
+# `v1` is WP-1's delivered vector. `v0_equal` is §7's fallback and stays in the
+# registry permanently as the naive baseline WP-6 measures against.
+WEIGHTS_VERSION = env("WEIGHTS_VERSION", default="v1")
 
 # Fernet key for app_users.encrypted_github_token. Rotating it invalidates
 # every stored token — users simply re-login (§6).

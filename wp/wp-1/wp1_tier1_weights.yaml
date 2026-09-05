@@ -1,0 +1,52 @@
+# WP-1 Tier-1 Weight Assignment
+# Derived via informal AHP (Saaty pairwise comparison, eigenvector method)
+# Consistency Ratio: 0.0115 (< 0.10 threshold — inherited from seed matrix, not independently earned)
+# Date: 2026-08-26
+# Starting matrix (from project design work):
+#   Deprecation vs Severity: 2
+#   Deprecation vs Count: 3
+#   Deprecation vs Staleness: 4
+#   Severity vs Count: 2
+#   Severity vs Staleness: 3
+#   Count vs Staleness: 2
+# Cell-by-cell challenge of the seed matrix (WP-1 step 2):
+# Each of the six pairwise judgments was individually evaluated and retained;
+# none were modified. Per-cell reasoning:
+#
+#   Deprecation vs Severity (2 — kept):
+#     A first-party "stop using this" declaration is stronger than a CVSS score
+#     that may never be exploited, but severity can still be catastrophic — moderate
+#     dominance, not strong. 2 is defensible; 3 would overweight deprecation.
+#
+#   Deprecation vs Count (3 — kept):
+#     One deprecated dependency is a clearer action signal than several low-count
+#     vulns. Count is breadth, deprecation is certainty. 3 reflects that certainty
+#     outranks breadth but doesn't swamp it.
+#
+#   Deprecation vs Staleness (4 — kept):
+#     Staleness is an indirect proxy (abandonment / undisclosed risk); deprecation
+#     is an explicit maintainer statement. 4 captures the directness gap. Considered
+#     dropping to 3 — rejected because staleness alone doesn't prove risk.
+#
+#   Severity vs Count (2 — kept):
+#     One critical CVE outweighs two low-severity ones in practice, but a long tail
+#     of mediums still matters. 2 keeps severity ahead without dismissing breadth.
+#
+#   Severity vs Staleness (3 — kept):
+#     Known, scored vulnerabilities are concrete evidence; staleness is a leading
+#     indicator at best. 3 captures the evidence-quality gap.
+#
+#   Count vs Staleness (2 — kept):
+#     Both are second-tier signals. Count is at least measured; staleness is inferred.
+#     2 gives count a slight edge without overstating it.
+
+version: v1
+derivation: informal-pairwise
+normalization: { cve_count_cap: 10, staleness_cap_days: 1095 }
+flag_rule:     { stale_flag_days: 730 }
+thresholds:    { safe_min: 80, medium_min: 50 }
+rollup:        { decay: 0.5, max_terms: 20 }
+weights:
+  npm:  { deprecation: 0.46, severity: 0.28, count: 0.16, staleness: 0.10 }
+  pypi: { deprecation: 0.32, severity: 0.35, count: 0.16, staleness: 0.17 }
+epss: { enabled: false, weight: 0.0 }
