@@ -84,6 +84,14 @@ export interface ScanState {
   dependencyCount: number;
   unassessableCount: number;
   flaggedCount: number;
+  /**
+   * Assessed and clean. With the two above it partitions `dependencyCount`
+   * exactly — every occurrence is flagged, clean, or unassessable, once. The
+   * backend counts it from the same predicate the tab filters on rather than
+   * letting the browser subtract, because "not flagged" and "clean" are not
+   * the same statement: an unassessable row is not flagged either.
+   */
+  cleanCount: number;
 }
 
 /** `GET /api/repositories/{id}/scan-status/`. */
@@ -163,6 +171,116 @@ export interface DependencyOccurrence {
   riskComponentScore: string | null;
   /** True when the severity term rested on §5.2's 5.0 CVSS placeholder. */
   cvssReducedConfidence: boolean;
+}
+
+/** The four Tier-1 signals (D3), plus the fifth §5.4 can enable. */
+export type SignalName =
+  | "deprecation"
+  | "severity"
+  | "count"
+  | "staleness"
+  | "epss";
+
+/**
+ * One signal's full chain for one occurrence (§5.2), as the backend
+ * recomputed it from stored values.
+ *
+ * `raw` is the stored measurement in its own JSON type: a boolean for
+ * deprecation, an integer for the CVE and day counts, a decimal string for
+ * CVSS, and null where the signal exists but nothing was measurable.
+ *
+ * `weight` is the *effective* weight after §5.2's redistribution, which is why
+ * it can differ from the weights file. Both it and `normalized` are reported
+ * to four decimals — enough that `weight x normalized x 100` reproduces
+ * `points`, which is the arithmetic the panel invites a reader to check.
+ */
+export interface ScoringTerm {
+  signal: SignalName;
+  raw: boolean | number | string | null;
+  normalized: string;
+  weight: string;
+  points: string;
+}
+
+/** A signal that scored nothing because nothing was measured (§5.2). */
+export interface OmittedTerm {
+  signal: SignalName;
+  /** What the weights file gives it, before redistribution moved the mass. */
+  declaredWeight: string;
+  reason: "no_publish_history" | "not_measured" | string;
+}
+
+/** The bounds §5.4 owns, sent alongside the numbers they produced. */
+export interface ScoringCaps {
+  cveCount: number;
+  stalenessDays: number;
+  staleFlagDays: number;
+}
+
+/**
+ * §5.2 opened up for one occurrence.
+ *
+ * `points` across `terms` sum to `deduction` exactly, and `100 - deduction`
+ * is `score`. No tolerance is needed: §4.1 quantizes each term to two decimals
+ * before summing, so the arithmetic on screen is the arithmetic that ran.
+ */
+export interface DependencyScoring {
+  weightsVersion: string;
+  ecosystem: "npm" | "pypi";
+  score: string;
+  deduction: string;
+  /**
+   * False only when the weights file behind this scan's version has changed
+   * since it ran, so the recomputed arithmetic no longer reaches the stored
+   * score. The panel says so rather than showing working that contradicts the
+   * badge above it.
+   */
+  matchesStoredScore: boolean;
+  /** True when the severity term rested on §5.2's 5.0 CVSS placeholder. */
+  cvssReducedConfidence: boolean;
+  caps: ScoringCaps;
+  terms: ScoringTerm[];
+  omitted: OmittedTerm[];
+}
+
+/** One advisory, verbatim from OSV (`dependency_vulnerabilities`, §5.1). */
+export interface Vulnerability {
+  id: string;
+  osvId: string;
+  cveId: string | null;
+  severity: Severity | null;
+  cvssScore: string | null;
+  publishedAt: string | null;
+  summary: string | null;
+  affectedRange: string | null;
+  fixedVersion: string | null;
+  sourceUrl: string | null;
+}
+
+/** Which clauses of §5.2's flag rule fired. */
+export type FlagReason = "deprecated" | "vulnerable" | "stale";
+
+/**
+ * `GET /api/dependencies/{id}/` — the table row plus the three things the
+ * list route deliberately leaves out.
+ *
+ * `scoring` is null for an unassessable occurrence: §5.2 excluded it from the
+ * score and from every denominator, so there is no arithmetic behind it, and
+ * a row of zeroes would assert that we looked and found nothing.
+ */
+export interface DependencyBreakdown extends DependencyOccurrence {
+  scanId: string;
+  manifest: {
+    id: string;
+    path: string;
+    ecosystem: "npm" | "pypi";
+    /** Null when no lockfile was read — the reason a row says "approximated". */
+    lockfilePath: string | null;
+    parserName: string;
+  };
+  scoring: DependencyScoring | null;
+  flagReasons: FlagReason[];
+  vulnerabilities: Vulnerability[];
 }
 
 /** DRF's `PageNumberPagination` envelope. */

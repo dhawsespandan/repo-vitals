@@ -10,6 +10,7 @@
 
 import type {
   ApiErrorBody,
+  DependencyBreakdown,
   DependencyOccurrence,
   Paginated,
   RegisterResult,
@@ -184,6 +185,16 @@ export const startScan = (id: string) =>
 /** `GET /api/scans/{id}/` — one scan, its counts and its manifests. */
 export const getScan = (scanId: string) =>
   api.get<ScanDetail>(`/scans/${scanId}/`);
+
+/**
+ * `GET /api/dependencies/{id}/` — one occurrence and why it scored that.
+ *
+ * Fetched when a row is expanded rather than with the table: the per-signal
+ * arithmetic and the nested advisories are the heaviest part of the payload
+ * and the part nobody has asked to see until they ask.
+ */
+export const getDependency = (dependencyId: string) =>
+  api.get<DependencyBreakdown>(`/dependencies/${dependencyId}/`);
 
 /** `GET /api/scans/{id}/dependencies/?page=` — one page of occurrences. */
 export const listScanDependencies = (scanId: string, page = 1) =>

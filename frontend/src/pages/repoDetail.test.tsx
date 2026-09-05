@@ -40,6 +40,10 @@ const ROWS = [
     vulnerabilityCount: 2,
     highestSeverity: "high",
     cvssMax: "9.8",
+    // §5.2's flag rule fires on either of the two signals above, so a fixture
+    // that left this false would be a row the backend cannot produce — and
+    // the Flagged tab reads exactly this field.
+    isFlagged: true,
   }),
   dependency({
     id: "row-lodash-api",
@@ -60,6 +64,30 @@ const ROWS = [
     unassessableReason: "file_specifier",
   }),
 ];
+
+/**
+ * The scan that produced ROWS: one flagged, two assessed and clean, one that
+ * could not be assessed. The counts partition the total, because the backend's
+ * do (`annotated_scans`) and a fixture that broke the partition would let the
+ * tab strip pass against a scan the backend cannot produce.
+ */
+const ROWS_SCAN = scanDetail({
+  dependencyCount: 4,
+  flaggedCount: 1,
+  cleanCount: 2,
+  unassessableCount: 1,
+});
+
+/**
+ * Switch to the All tab and return its rows.
+ *
+ * The page opens on Flagged (§10 Phase 5) — the right default, and the wrong
+ * one for a test about the table itself rather than about triage.
+ */
+async function allRows() {
+  await userEvent.click(await screen.findByRole("radio", { name: /^All/ }));
+  return screen.findAllByTestId("dependency-row");
+}
 
 describe("repository detail", () => {
   it("shows the scanning skeleton while the first scan is running", async () => {
@@ -92,7 +120,7 @@ describe("repository detail", () => {
         scan: scanState({ status: "completed" }),
         latestCompletedScanId: SCAN_ID,
       }),
-      scan: scanDetail(),
+      scan: ROWS_SCAN,
       dependencies: ROWS,
     });
 
@@ -101,7 +129,7 @@ describe("repository detail", () => {
     await waitFor(() =>
       expect(screen.queryByTestId("scanning-skeleton")).not.toBeInTheDocument(),
     );
-    expect(await screen.findAllByTestId("dependency-row")).toHaveLength(4);
+    expect(await allRows()).toHaveLength(4);
   });
 
   it("stops polling once the scan reaches a terminal state", async () => {
@@ -111,7 +139,7 @@ describe("repository detail", () => {
         latestScan: scanState(),
         latestCompletedScanId: SCAN_ID,
       }),
-      scan: scanDetail(),
+      scan: ROWS_SCAN,
       dependencies: ROWS,
     });
 
@@ -132,14 +160,14 @@ describe("dependency table", () => {
         latestScan: scanState(),
         latestCompletedScanId: SCAN_ID,
       }),
-      scan: scanDetail(),
+      scan: ROWS_SCAN,
       dependencies: ROWS,
     });
   });
 
   it("shows the same package from two manifests as two rows", async () => {
     renderApp(DETAIL_ROUTE);
-    const rows = await screen.findAllByTestId("dependency-row");
+    const rows = await allRows();
 
     const lodash = rows.filter((row) => row.dataset.package === "lodash");
 
@@ -151,7 +179,7 @@ describe("dependency table", () => {
 
   it("says where each resolved version came from", async () => {
     renderApp(DETAIL_ROUTE);
-    const rows = await screen.findAllByTestId("dependency-row");
+    const rows = await allRows();
 
     const [express] = rows.filter((row) => row.dataset.package === "express");
     const approximated = rows.filter(
@@ -166,7 +194,7 @@ describe("dependency table", () => {
 
   it("badges the vulnerable, deprecated occurrence and not its clean twin", async () => {
     renderApp(DETAIL_ROUTE);
-    const rows = await screen.findAllByTestId("dependency-row");
+    const rows = await allRows();
     const [vulnerable, clean] = rows.filter(
       (row) => row.dataset.package === "lodash",
     );
@@ -180,7 +208,7 @@ describe("dependency table", () => {
 
   it("keeps unassessable rows visible, with their reason in words", async () => {
     renderApp(DETAIL_ROUTE);
-    const rows = await screen.findAllByTestId("dependency-row");
+    const rows = await allRows();
 
     const unassessable = rows.filter((row) => row.dataset.unassessable === "true");
 
@@ -188,6 +216,173 @@ describe("dependency table", () => {
     // checked, 3 skipped" is a different claim from "43 checked".
     expect(unassessable).toHaveLength(1);
     expect(within(unassessable[0]!).getByText(/local file path/i)).toBeInTheDocument();
+  });
+});
+
+describe("the three tabs", () => {
+  const stub = (overrides = {}) =>
+    stubFetch({
+      session: SIGNED_IN,
+      repository: repository({
+        latestScan: scanState(),
+        latestCompletedScanId: SCAN_ID,
+      }),
+      scan: scanDetail({ ...ROWS_SCAN, ...overrides }),
+      dependencies: ROWS,
+    });
+
+  it("opens on Flagged, showing only the flagged occurrences", async () => {
+    stub();
+    renderApp(DETAIL_ROUTE);
+
+    const rows = await screen.findAllByTestId("dependency-row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.dataset.package).toBe("lodash");
+    expect(screen.getByRole("radio", { name: /^Flagged/ })).toBeChecked();
+  });
+
+  it("labels each tab with the scan's own count, and states the partition", async () => {
+    stub();
+    renderApp(DETAIL_ROUTE);
+
+    await screen.findAllByTestId("dependency-row");
+    expect(screen.getByRole("radio", { name: "Flagged (1)" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "All (4)" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("radio", { name: "Unassessable (1)" }),
+    ).toBeInTheDocument();
+
+    // The three parts and the whole, on screen together — so a reader never
+    // has to subtract to find out the score did not cover everything.
+    const line = screen.getByTestId("dependency-partition");
+    expect(line).toHaveTextContent(
+      "1 flagged · 2 assessed and clean · 1 not assessable = 4 occurrences",
+    );
+
+    const [flagged, clean, unassessable, total] = (
+      line.textContent ?? ""
+    )
+      .match(/\d+/g)!
+      .map(Number);
+    expect(flagged! + clean! + unassessable!).toBe(total);
+  });
+
+  it("shows only the unassessable rows on their own tab", async () => {
+    stub();
+    renderApp(DETAIL_ROUTE);
+
+    await screen.findAllByTestId("dependency-row");
+    await userEvent.click(screen.getByRole("radio", { name: /^Unassessable/ }));
+
+    const rows = screen.getAllByTestId("dependency-row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.dataset.unassessable).toBe("true");
+  });
+
+  it("says how many of a tab's rows it is actually showing", async () => {
+    // The server counted the scan; the browser has the pages it loaded. A
+    // label reading "Flagged (3)" over one row is the §4.11 defect again.
+    stub({ flaggedCount: 3, dependencyCount: 6, cleanCount: 2 });
+    renderApp(DETAIL_ROUTE);
+
+    expect(await screen.findByTestId("dependency-caption")).toHaveTextContent(
+      "Showing 1 of 3.",
+    );
+  });
+
+  it("does not call a repository clean when nothing in it could be assessed", async () => {
+    // §4.7 one level down: "nothing flagged" reads as "we checked everything
+    // and it is fine", which is a conclusion this scan cannot support.
+    stubFetch({
+      session: SIGNED_IN,
+      repository: repository({
+        latestScan: scanState(),
+        latestCompletedScanId: SCAN_ID,
+      }),
+      scan: scanDetail({
+        dependencyCount: 2,
+        flaggedCount: 0,
+        cleanCount: 0,
+        unassessableCount: 2,
+      }),
+      dependencies: [
+        dependency({
+          id: "row-a",
+          packageName: "shared-utils",
+          isUnassessable: true,
+          unassessableReason: "file_specifier",
+        }),
+        dependency({
+          id: "row-b",
+          packageName: "internal-ui",
+          isUnassessable: true,
+          unassessableReason: "workspace_specifier",
+        }),
+      ],
+    });
+
+    renderApp(DETAIL_ROUTE);
+
+    const empty = await screen.findByTestId("empty-flagged");
+    expect(empty).toHaveTextContent(/Nothing in this repository could be assessed/i);
+    expect(empty).not.toHaveTextContent(/this repository is clear/i);
+
+    // And the way to the rows it could not speak for is one click away.
+    await userEvent.click(
+      within(empty).getByRole("button", { name: /couldn't assess/i }),
+    );
+    expect(screen.getAllByTestId("dependency-row")).toHaveLength(2);
+  });
+
+  /** The same repository with its one flagged occurrence removed. */
+  const withoutFlagged = ROWS.filter((row) => !row.isFlagged);
+
+  it("names the unassessable remainder even when everything else is clean", async () => {
+    stubFetch({
+      session: SIGNED_IN,
+      repository: repository({
+        latestScan: scanState(),
+        latestCompletedScanId: SCAN_ID,
+      }),
+      scan: scanDetail({
+        dependencyCount: 3,
+        flaggedCount: 0,
+        cleanCount: 2,
+        unassessableCount: 1,
+      }),
+      dependencies: withoutFlagged,
+    });
+
+    renderApp(DETAIL_ROUTE);
+
+    const empty = await screen.findByTestId("empty-flagged");
+    expect(empty).toHaveTextContent(
+      /2 of 3 occurrences were assessed and came back clean/i,
+    );
+    expect(empty).toHaveTextContent(/the score does not cover them/i);
+  });
+
+  it("says a repository is clear only when there is nothing it could not check", async () => {
+    stubFetch({
+      session: SIGNED_IN,
+      repository: repository({
+        latestScan: scanState(),
+        latestCompletedScanId: SCAN_ID,
+      }),
+      scan: scanDetail({
+        dependencyCount: 2,
+        flaggedCount: 0,
+        cleanCount: 2,
+        unassessableCount: 0,
+      }),
+      dependencies: withoutFlagged.filter((row) => !row.isUnassessable),
+    });
+
+    renderApp(DETAIL_ROUTE);
+
+    expect(await screen.findByTestId("empty-flagged")).toHaveTextContent(
+      /All 2 dependencies resolve to maintained, non-vulnerable versions/i,
+    );
   });
 });
 
@@ -341,16 +536,14 @@ describe("completeness of the table", () => {
         latestScan: scanState({ dependencyCount: 7 }),
         latestCompletedScanId: SCAN_ID,
       }),
-      scan: scanDetail({ dependencyCount: 7 }),
+      scan: scanDetail({ dependencyCount: 7, cleanCount: 7, unassessableCount: 0 }),
       dependencies: many,
       pageSize: 3,
     });
 
     renderApp(DETAIL_ROUTE);
 
-    await waitFor(async () =>
-      expect(await screen.findAllByTestId("dependency-row")).toHaveLength(7),
-    );
+    await waitFor(async () => expect(await allRows()).toHaveLength(7));
     expect(
       calls.filter((call) => call.includes("/dependencies/")),
     ).toHaveLength(3);
@@ -366,7 +559,10 @@ describe("completeness of the table", () => {
         latestScan: scanState({ skippedManifestCount: 2 }),
         latestCompletedScanId: SCAN_ID,
       }),
-      scan: scanDetail({ skippedManifestCount: 2 }),
+      scan: scanDetail({
+        ...ROWS_SCAN,
+        skippedManifestCount: 2,
+      }),
       dependencies: ROWS,
     });
 
@@ -383,12 +579,12 @@ describe("completeness of the table", () => {
         latestScan: scanState(),
         latestCompletedScanId: SCAN_ID,
       }),
-      scan: scanDetail(),
+      scan: ROWS_SCAN,
       dependencies: ROWS,
     });
 
     renderApp(DETAIL_ROUTE);
-    await screen.findAllByTestId("dependency-row");
+    await allRows();
 
     expect(screen.queryByTestId("skipped-manifests")).not.toBeInTheDocument();
   });
@@ -461,7 +657,7 @@ describe("the score on the detail page", () => {
         scan: scanState({ status: "running" }),
         latestCompletedScanId: SCAN_ID,
       }),
-      scan: scanDetail(),
+      scan: ROWS_SCAN,
       dependencies: ROWS,
     });
 

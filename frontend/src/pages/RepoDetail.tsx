@@ -11,7 +11,7 @@ import {
 } from "../api/client";
 import { BlueprintCorners } from "../components/Blueprint";
 import { DependencyTable } from "../components/DependencyTable";
-import { FolderIcon, LockIcon } from "../components/Icons";
+import { CheckIcon, FolderIcon, LockIcon } from "../components/Icons";
 import { ClassificationTag, ScoreBadge } from "../components/ScoreBadge";
 import { ScoreContributors } from "../components/ScoreContributors";
 import { StatusPill, relativeTime } from "../components/StatusPill";
@@ -40,6 +40,13 @@ import { isScanActive } from "../types";
  * status. Press Run scan and the pill turns to "Scanning…" while the table
  * keeps showing the last real results, which is what a person expects — the
  * previous answer stays readable until a new one exists to replace it.
+ *
+ * Phase 5 adds the three tabs (§10) and, beneath them, the sentence they are
+ * three views of: flagged + clean + unassessable, which is every dependency
+ * exactly once. The partition is stated rather than left to be inferred from
+ * three tab labels, because the interesting repository is the one where the
+ * third number is not zero — and a reader who never opens that tab should
+ * still know the score did not cover those rows.
  */
 export function RepoDetail() {
   const { repositoryId = "" } = useParams();
@@ -52,6 +59,11 @@ export function RepoDetail() {
   const [notFound, setNotFound] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [notice, setNotice] = useState("");
+  // Opens on Flagged, always — including when nothing is flagged, where the
+  // empty state is the answer rather than an absence of one. Switching the
+  // default to All on a clean repository would move the answer to a different
+  // place depending on what the answer was.
+  const [tab, setTab] = useState<Tab>("flagged");
 
   useEffect(() => {
     let live = true;
@@ -440,6 +452,8 @@ export function RepoDetail() {
             </span>
           </div>
 
+          <DependencyTabs scan={scan} value={tab} onChange={setTab} />
+
           {/* The line above claims a complete picture. Where it isn't one,
               this says so in the same place, rather than leaving the omission
               in a server log nobody reads. */}
@@ -465,17 +479,201 @@ export function RepoDetail() {
             </div>
           )}
 
-          <DependencyTable
-            rows={rows}
-            caption={
-              scan.dependencyCount > rows.length
-                ? `Showing ${rows.length} of ${scan.dependencyCount}.`
-                : undefined
-            }
-          />
+          <TabContents scan={scan} tab={tab} rows={rows} onChangeTab={setTab} />
         </div>
       )}
     </main>
+  );
+}
+
+/** Which slice of the dependency table is on screen. */
+type Tab = "flagged" | "all" | "unassessable";
+
+const TAB_LABEL: Record<Tab, string> = {
+  flagged: "Flagged",
+  all: "All",
+  unassessable: "Unassessable",
+};
+
+/** How many rows the *scan* has in each slice, from the server's own counts. */
+function serverCount(scan: ScanDetail, tab: Tab): number {
+  if (tab === "flagged") return scan.flaggedCount;
+  if (tab === "unassessable") return scan.unassessableCount;
+  return scan.dependencyCount;
+}
+
+function matches(row: DependencyOccurrence, tab: Tab): boolean {
+  if (tab === "flagged") return row.isFlagged;
+  if (tab === "unassessable") return row.isUnassessable;
+  return true;
+}
+
+/**
+ * The three views, and the partition they are three views of.
+ *
+ * Counts come from the server rather than from `rows.length`, because the
+ * server counted the scan and the browser only has the pages it managed to
+ * load. Where those differ the table below says so per tab — a label reading
+ * "Flagged (12)" above ten rows is the same class of defect as a strip whose
+ * numbers do not sum (`docs/decisions.md` §4.11).
+ */
+function DependencyTabs({
+  scan,
+  value,
+  onChange,
+}: {
+  scan: ScanDetail;
+  value: Tab;
+  onChange: (tab: Tab) => void;
+}) {
+  return (
+    <div style={{ marginBottom: 12 }}>
+      <div className="seg" role="radiogroup" aria-label="Which dependencies to show">
+        {(Object.keys(TAB_LABEL) as Tab[]).map((tab) => (
+          <label key={tab} className="seg-opt" data-testid={`tab-${tab}`}>
+            <input
+              type="radio"
+              name="dependency-tab"
+              checked={value === tab}
+              onChange={() => onChange(tab)}
+            />
+            <span>
+              {TAB_LABEL[tab]} ({serverCount(scan, tab)})
+            </span>
+          </label>
+        ))}
+      </div>
+
+      {/* Stated, not inferred. The three counts add to the whole, and the
+          third one is the part the score never covered — a reader who never
+          opens that tab should still know it exists. */}
+      <div
+        className="text-muted"
+        data-testid="dependency-partition"
+        style={{ fontSize: 11.5, marginTop: 7 }}
+      >
+        {scan.flaggedCount} flagged · {scan.cleanCount} assessed and clean ·{" "}
+        {scan.unassessableCount} not assessable ={" "}
+        {scan.dependencyCount} occurrence
+        {scan.dependencyCount === 1 ? "" : "s"}
+      </div>
+    </div>
+  );
+}
+
+function TabContents({
+  scan,
+  tab,
+  rows,
+  onChangeTab,
+}: {
+  scan: ScanDetail;
+  tab: Tab;
+  rows: DependencyOccurrence[];
+  onChangeTab: (tab: Tab) => void;
+}) {
+  const visible = rows.filter((row) => matches(row, tab));
+  const total = serverCount(scan, tab);
+
+  if (visible.length === 0) {
+    return <EmptyTab scan={scan} tab={tab} onChangeTab={onChangeTab} />;
+  }
+
+  return (
+    <DependencyTable
+      rows={visible}
+      caption={
+        total > visible.length
+          ? `Showing ${visible.length} of ${total}.`
+          : undefined
+      }
+    />
+  );
+}
+
+/**
+ * What a tab says when it has nothing to show.
+ *
+ * The Flagged one is the case worth getting right. "Nothing is flagged" reads
+ * as "this repository is clean", and on a repository where half the
+ * dependencies could not be assessed that is a conclusion the scan does not
+ * support — the same defect §4.7 found on the score badge, one level down. So
+ * the sentence is built from what was actually assessed, and it points at the
+ * rows it could not speak for.
+ */
+function EmptyTab({
+  scan,
+  tab,
+  onChangeTab,
+}: {
+  scan: ScanDetail;
+  tab: Tab;
+  onChangeTab: (tab: Tab) => void;
+}) {
+  const body = () => {
+    if (tab === "unassessable") {
+      return "Every dependency in this repository could be assessed — nothing was skipped.";
+    }
+    if (tab === "all") {
+      return "No dependencies were declared in the manifests we read.";
+    }
+    if (scan.cleanCount === 0) {
+      return `Nothing in this repository could be assessed, so nothing could be flagged. All ${scan.unassessableCount} occurrences are on the Unassessable tab, with the reason for each.`;
+    }
+    if (scan.unassessableCount > 0) {
+      return `${scan.cleanCount} of ${scan.dependencyCount} occurrences were assessed and came back clean — maintained, current, and free of known advisories. The other ${scan.unassessableCount} could not be assessed at all, and the score does not cover them.`;
+    }
+    return `All ${scan.dependencyCount} dependencies resolve to maintained, non-vulnerable versions. Nothing to remediate — this repository is clear.`;
+  };
+
+  return (
+    <div
+      data-testid={`empty-${tab}`}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 11,
+        textAlign: "center",
+        padding: "38px 26px",
+        border: "1px solid var(--color-divider)",
+      }}
+    >
+      {tab === "flagged" && scan.cleanCount > 0 && (
+        <span
+          aria-hidden="true"
+          style={{
+            width: 46,
+            height: 46,
+            display: "grid",
+            placeItems: "center",
+            border: "1px solid #3f7d5a",
+            color: "#3f7d5a",
+          }}
+        >
+          <CheckIcon size={23} />
+        </span>
+      )}
+      <h3 style={{ margin: 0 }}>
+        {tab === "flagged"
+          ? "No dependencies flagged"
+          : tab === "unassessable"
+            ? "Nothing was skipped"
+            : "No dependencies found"}
+      </h3>
+      <p className="text-muted" style={{ maxWidth: "54ch", fontSize: 13.5, margin: 0 }}>
+        {body()}
+      </p>
+      {tab === "flagged" && scan.unassessableCount > 0 && (
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={() => onChangeTab("unassessable")}
+        >
+          See the {scan.unassessableCount} we couldn&apos;t assess
+        </button>
+      )}
+    </div>
   );
 }
 

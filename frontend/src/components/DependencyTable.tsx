@@ -1,4 +1,7 @@
+import { useId, useState } from "react";
+
 import type { DependencyOccurrence, Resolution } from "../types";
+import { WhyFlaggedPanel } from "./WhyFlaggedPanel";
 
 /**
  * The dependency table (wireframe artboard `isDrilldown`, "Flagged
@@ -22,6 +25,12 @@ import type { DependencyOccurrence, Resolution } from "../types";
  * **Unassessable rows are present, greyed, and reasoned.** They sort last and
  * carry their reason, because the alternative — omitting them — is the
  * silent miscount this product exists to avoid.
+ *
+ * **Every row opens.** Phase 5 adds a Why? control to each one, including the
+ * clean ones and the unassessable ones. Putting it only on flagged rows would
+ * make "no explanation available" and "nothing to explain" look identical, and
+ * the two most interesting questions a reader has are about the other kinds:
+ * why is this one *not* flagged, and what exactly could we not assess?
  */
 
 const RESOLUTION_LABEL: Record<Resolution, string> = {
@@ -125,6 +134,8 @@ function FindingsCell({ row }: { row: DependencyOccurrence }) {
   return <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>{badges}</div>;
 }
 
+const COLUMN_COUNT = 7;
+
 interface DependencyTableProps {
   rows: DependencyOccurrence[];
   /** Shown above the table; the caller knows the manifest count. */
@@ -132,6 +143,18 @@ interface DependencyTableProps {
 }
 
 export function DependencyTable({ rows, caption }: DependencyTableProps) {
+  /**
+   * One row open at a time.
+   *
+   * An accordion rather than independent toggles: each open row fetches its
+   * own breakdown, and the panel is tall enough that two of them push the
+   * second off-screen anyway. It also bounds the request count, which is the
+   * question no assertion about behaviour ever notices (`docs/decisions.md`
+   * §3.13).
+   */
+  const [openId, setOpenId] = useState<string | null>(null);
+  const panelPrefix = useId();
+
   return (
     <div style={{ overflowX: "auto" }}>
       {caption && (
@@ -152,54 +175,94 @@ export function DependencyTable({ rows, caption }: DependencyTableProps) {
             <th>Latest</th>
             <th>Location</th>
             <th>Findings</th>
+            {/* Named for a screen reader walking the row, blank on screen —
+                the wireframe leaves this header empty and a visible word
+                above a one-word button is noise. */}
+            <th aria-label="Breakdown" />
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
-            <tr
-              key={row.id}
-              data-testid="dependency-row"
-              data-package={row.packageName}
-              data-unassessable={row.isUnassessable ? "true" : undefined}
-              style={row.isUnassessable ? { opacity: 0.72 } : undefined}
-            >
-              <td>
-                <code style={{ fontSize: 13 }}>{row.packageName}</code>
-                <div className="text-muted" style={{ fontSize: 11 }}>
-                  {row.group}
-                </div>
-              </td>
-              <td>
-                <code className="text-muted" style={{ fontSize: 12 }}>
-                  {row.declaredSpecifier || "—"}
-                </code>
-              </td>
-              <td>
-                <VersionCell row={row} />
-              </td>
-              <td>
-                {row.latestVersion ? (
+          {rows.map((row) => {
+            const open = openId === row.id;
+            const panelId = `${panelPrefix}-${row.id}`;
+            return [
+              <tr
+                key={row.id}
+                data-testid="dependency-row"
+                data-package={row.packageName}
+                data-unassessable={row.isUnassessable ? "true" : undefined}
+                data-open={open ? "true" : undefined}
+                style={row.isUnassessable ? { opacity: 0.72 } : undefined}
+              >
+                <td>
+                  <code style={{ fontSize: 13 }}>{row.packageName}</code>
+                  <div className="text-muted" style={{ fontSize: 11 }}>
+                    {row.group}
+                  </div>
+                </td>
+                <td>
                   <code className="text-muted" style={{ fontSize: 12 }}>
-                    {row.latestVersion}
+                    {row.declaredSpecifier || "—"}
                   </code>
-                ) : (
-                  <span className="text-muted">—</span>
-                )}
-              </td>
-              <td>
-                <code
-                  className="text-muted"
-                  style={{ fontSize: 11 }}
-                  data-testid="manifest-path"
-                >
-                  {row.manifestPath}
-                </code>
-              </td>
-              <td>
-                <FindingsCell row={row} />
-              </td>
-            </tr>
-          ))}
+                </td>
+                <td>
+                  <VersionCell row={row} />
+                </td>
+                <td>
+                  {row.latestVersion ? (
+                    <code className="text-muted" style={{ fontSize: 12 }}>
+                      {row.latestVersion}
+                    </code>
+                  ) : (
+                    <span className="text-muted">—</span>
+                  )}
+                </td>
+                <td>
+                  <code
+                    className="text-muted"
+                    style={{ fontSize: 11 }}
+                    data-testid="manifest-path"
+                  >
+                    {row.manifestPath}
+                  </code>
+                </td>
+                <td>
+                  <FindingsCell row={row} />
+                </td>
+                <td style={{ textAlign: "right" }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{ height: 30, fontSize: 12.5, padding: "0 11px" }}
+                    aria-expanded={open}
+                    aria-controls={panelId}
+                    // The visible label is one word in a narrow column, so the
+                    // accessible name carries the identity — three rows can
+                    // otherwise all be called "Why?", including the two that
+                    // are the same package in different manifests.
+                    aria-label={`Why? ${row.packageName} in ${row.manifestPath}`}
+                    onClick={() => setOpenId(open ? null : row.id)}
+                  >
+                    {open ? "Hide" : "Why?"}
+                  </button>
+                </td>
+              </tr>,
+              open ? (
+                <tr key={`${row.id}-panel`} data-testid="dependency-panel-row">
+                  <td
+                    id={panelId}
+                    colSpan={COLUMN_COUNT}
+                    style={{
+                      background: "color-mix(in srgb, var(--color-bg) 70%, transparent)",
+                      padding: "16px 18px 20px",
+                    }}
+                  >
+                    <WhyFlaggedPanel row={row} />
+                  </td>
+                </tr>
+              ) : null,
+            ];
+          })}
         </tbody>
       </table>
     </div>

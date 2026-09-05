@@ -104,6 +104,15 @@ export function FolderIcon(props: IconProps) {
   );
 }
 
+/** The wireframe's clear-repository mark, at its 1.6px weight. */
+export function CheckIcon(props: IconProps) {
+  return (
+    <Icon strokeWidth={1.6} {...props}>
+      <path d="M20 6 9 17l-5-5" />
+    </Icon>
+  );
+}
+
 export function TrashIcon(props: IconProps) {
   return (
     <Icon {...props}>
