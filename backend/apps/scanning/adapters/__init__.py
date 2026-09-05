@@ -17,6 +17,7 @@ from .base import (
     adapter_for_path,
     all_adapters,
     get_adapter,
+    matches_workspace_globs,
     supported_ecosystems,
     supported_manifest_names,
 )
@@ -32,6 +33,7 @@ __all__ = [
     "adapter_for_path",
     "all_adapters",
     "get_adapter",
+    "matches_workspace_globs",
     "npm_adapter",
     "supported_ecosystems",
     "supported_manifest_names",

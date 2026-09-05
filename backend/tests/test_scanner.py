@@ -601,3 +601,205 @@ class TestSizeCaps:
         assert root.lockfile_path is None
         express = occurrences(scan).get(manifest=root, package__package_name="express")
         assert express.resolution == Resolution.RANGE_LATEST_APPROX.value
+
+
+def mock_workspaces_github() -> None:
+    responses.add(
+        responses.GET,
+        TREE_API,
+        json=load("github/tree_npm_workspaces.json"),
+        status=200,
+    )
+    for sha, rel in (
+        ("ws-root-manifest", "manifests/workspaces_root_package.json"),
+        ("ws-root-lock", "manifests/workspaces_root_lock.json"),
+        ("ws-ui-manifest", "manifests/workspaces_ui_package.json"),
+        ("ws-api-manifest", "manifests/workspaces_api_package.json"),
+        ("ws-demo-manifest", "manifests/workspaces_demo_package.json"),
+    ):
+        responses.add(
+            responses.GET,
+            f"{REPO_API}/git/blobs/{sha}",
+            json=blob_response(rel),
+            status=200,
+        )
+
+
+@pytest.mark.django_db
+class TestWorkspacesMonorepo:
+    """One lockfile at the root, by design — and members that must use it.
+
+    A sibling-only lockfile rule is right for an unrelated nested project and
+    wrong here: every workspace package would fall to `range_latest_approx` and
+    be checked against the registry's newest release instead of what it
+    installs. The fixture is built so that mistake reports the repository
+    clean, because `^4.17.0` permits the patched lodash 4.17.21 while the root
+    lock installs the vulnerable 4.17.19.
+    """
+
+    @responses.activate
+    def test_a_workspace_member_resolves_from_the_root_lockfile(self, scan):
+        mock_workspaces_github()
+        mock_registry()
+        mock_osv()
+
+        scanner.run_scan(scan)
+
+        api_lodash = occurrences(scan).get(
+            manifest__manifest_path="packages/api/package.json",
+            package__package_name="lodash",
+        )
+        assert api_lodash.resolved_version == "4.17.19"
+        assert api_lodash.resolution == Resolution.LOCKFILE.value
+
+    @responses.activate
+    def test_that_is_what_finds_the_vulnerability(self, scan):
+        """The whole point. Under the old rule this row reported clean."""
+        mock_workspaces_github()
+        mock_registry()
+        mock_osv()
+
+        scanner.run_scan(scan)
+
+        api_lodash = occurrences(scan).get(
+            manifest__manifest_path="packages/api/package.json",
+            package__package_name="lodash",
+        )
+        assert api_lodash.vulnerability_count == 2
+        assert api_lodash.is_deprecated
+
+    @responses.activate
+    def test_the_inherited_lockfile_path_is_recorded_as_the_root_one(self, scan):
+        """So a reader can see *which* lockfile produced the resolution."""
+        mock_workspaces_github()
+        mock_registry()
+        mock_osv()
+
+        scanner.run_scan(scan)
+
+        member = ManifestFile.objects.get(
+            scan=scan, manifest_path="packages/api/package.json"
+        )
+        assert member.lockfile_path == "package-lock.json"
+
+    @responses.activate
+    def test_a_directory_outside_the_globs_does_not_borrow_it(self, scan):
+        """`examples/demo` is not a declared member, so it must not inherit.
+
+        This is the case the sibling-only rule got right, and it stays right:
+        borrowing a lockfile that never described you invents resolutions.
+        """
+        mock_workspaces_github()
+        mock_registry()
+        mock_osv()
+
+        scanner.run_scan(scan)
+
+        demo = ManifestFile.objects.get(
+            scan=scan, manifest_path="examples/demo/package.json"
+        )
+        assert demo.lockfile_path is None
+        demo_react = occurrences(scan).get(
+            manifest__manifest_path="examples/demo/package.json",
+            package__package_name="react",
+        )
+        assert demo_react.resolution == Resolution.RANGE_LATEST_APPROX.value
+
+    @responses.activate
+    def test_the_shared_lockfile_is_fetched_once(self, scan):
+        """Three members pointing at one root lock is one blob fetch, not three."""
+        mock_workspaces_github()
+        mock_registry()
+        mock_osv()
+
+        scanner.run_scan(scan)
+
+        lock_fetches = [
+            call
+            for call in responses.calls
+            if call.request.url.endswith("/git/blobs/ws-root-lock")
+        ]
+        assert len(lock_fetches) == 1
+
+
+@pytest.mark.django_db
+class TestSkippedManifestsAreCounted:
+    """Three paths drop a manifest; none of them used to leave a trace.
+
+    The detail page says "pooled across N manifests" with complete confidence,
+    so a manifest vanishing into a log line is the silent miscount this product
+    defines itself against (§3.13).
+    """
+
+    @responses.activate
+    def test_a_clean_scan_reports_none_skipped(self, scan):
+        mock_everything()
+
+        scanner.run_scan(scan)
+
+        scan.refresh_from_db()
+        assert scan.skipped_manifest_count == 0
+
+    @responses.activate
+    def test_an_unparseable_manifest_is_counted(self, scan):
+        mock_registry()
+        mock_osv()
+        responses.add(
+            responses.GET,
+            TREE_API,
+            json=load("github/tree_npm_monorepo.json"),
+            status=200,
+        )
+        for sha, rel in (
+            ("root-manifest", "manifests/root_package.json"),
+            ("root-lock", "manifests/root_package_lock.json"),
+            ("worker-manifest", "manifests/worker_package.json"),
+        ):
+            responses.add(
+                responses.GET,
+                f"{REPO_API}/git/blobs/{sha}",
+                json=blob_response(rel),
+                status=200,
+            )
+        responses.add(
+            responses.GET,
+            f"{REPO_API}/git/blobs/api-manifest",
+            json={
+                "encoding": "base64",
+                "content": base64.b64encode(b"{ not json").decode(),
+                "size": 10,
+            },
+            status=200,
+        )
+
+        scanner.run_scan(scan)
+
+        scan.refresh_from_db()
+        assert scan.skipped_manifest_count == 1
+
+    @responses.activate
+    def test_an_oversized_manifest_is_counted(self, scan):
+        tree = load("github/tree_npm_monorepo.json")
+        for entry in tree["tree"]:
+            if entry["path"] == "services/api/package.json":
+                entry["size"] = scanner.MAX_MANIFEST_BYTES + 1
+        mock_github(tree)
+        mock_registry()
+        mock_osv()
+
+        scanner.run_scan(scan)
+
+        scan.refresh_from_db()
+        assert scan.skipped_manifest_count == 1
+
+    @responses.activate
+    def test_manifests_past_the_cap_are_counted(self, scan, monkeypatch):
+        """Truncation is not a failure to read, but it is still an omission."""
+        monkeypatch.setattr(scanner, "MAX_MANIFESTS", 2)
+        mock_everything()
+
+        scanner.run_scan(scan)
+
+        scan.refresh_from_db()
+        assert ManifestFile.objects.filter(scan=scan).count() == 2
+        assert scan.skipped_manifest_count == 1

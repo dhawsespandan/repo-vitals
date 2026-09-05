@@ -66,6 +66,11 @@ class ScanStateSerializer(serializers.ModelSerializer):
     )
 
     manifestCount = serializers.IntegerField(source="manifest_count", default=0)
+    #: Manifests found and not read. Surfaced because the dependency table
+    #: otherwise claims completeness it does not have.
+    skippedManifestCount = serializers.IntegerField(
+        source="skipped_manifest_count", read_only=True
+    )
     dependencyCount = serializers.IntegerField(source="dependency_count", default=0)
     unassessableCount = serializers.IntegerField(source="unassessable_count", default=0)
     flaggedCount = serializers.IntegerField(source="flagged_count", default=0)
@@ -84,6 +89,7 @@ class ScanStateSerializer(serializers.ModelSerializer):
             "startedAt",
             "completedAt",
             "manifestCount",
+            "skippedManifestCount",
             "dependencyCount",
             "unassessableCount",
             "flaggedCount",

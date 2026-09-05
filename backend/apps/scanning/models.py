@@ -161,6 +161,18 @@ class ScanRun(models.Model):
 
     error_message = models.TextField(null=True, blank=True)  # noqa: DJ001
 
+    #: Manifests this scan found in the tree and did not read — over the size
+    #: cap, undecodable, unparseable, or past `MAX_MANIFESTS`.
+    #:
+    #: Not in §5.1, and added anyway. Without it the three `continue` paths in
+    #: the scanner drop a manifest with no trace beyond a log line, while the
+    #: detail page goes on saying "pooled across N manifests" with complete
+    #: confidence. That is the silent miscount this product defines itself
+    #: against — the same shape as the two bugs in §3.13 — and a count is the
+    #: smallest thing that closes it. Operational only: it cascades with the
+    #: scan and never reaches the research tables.
+    skipped_manifest_count = models.IntegerField(default=0)
+
     started_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -188,6 +200,10 @@ class ScanRun(models.Model):
                 condition=models.Q(risk_score__isnull=True)
                 | models.Q(risk_score__gte=0, risk_score__lte=100),
                 name="scan_runs_risk_score_range",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(skipped_manifest_count__gte=0),
+                name="scan_runs_skipped_manifests_non_negative",
             ),
             models.CheckConstraint(
                 condition=models.Q(classification__isnull=True)

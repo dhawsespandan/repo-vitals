@@ -184,6 +184,24 @@ class NpmAdapter(DependencyAdapter):
         # (decisions §3.4).
         return ("npm-shrinkwrap.json", "package-lock.json")
 
+    def workspace_globs(self, manifest_bytes: bytes) -> tuple[str, ...]:
+        """`workspaces` from a root `package.json`, in either accepted shape.
+
+        npm allows an array of globs or `{"packages": [...]}` (the shape yarn
+        popularised). Both appear in the wild, so both are read.
+        """
+        try:
+            manifest = _load_json(manifest_bytes, "package.json")
+        except ManifestParseError:
+            return ()
+
+        declared = manifest.get("workspaces")
+        if isinstance(declared, dict):
+            declared = declared.get("packages")
+        if not isinstance(declared, list):
+            return ()
+        return tuple(entry for entry in declared if isinstance(entry, str) and entry)
+
     def parse(
         self, manifest_bytes: bytes, lockfile_bytes: bytes | None = None
     ) -> list[DepSpec]:

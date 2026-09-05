@@ -1,0 +1,37 @@
+{
+  "name": "acme-monorepo",
+  "lockfileVersion": 3,
+  "packages": {
+    "": {
+      "name": "acme-monorepo",
+      "workspaces": [
+        "packages/*"
+      ]
+    },
+    "node_modules/@acme/api": {
+      "resolved": "packages/api",
+      "link": true
+    },
+    "node_modules/@acme/ui": {
+      "resolved": "packages/ui",
+      "link": true
+    },
+    "node_modules/typescript": {
+      "version": "5.6.3"
+    },
+    "node_modules/lodash": {
+      "version": "4.17.19"
+    },
+    "node_modules/react": {
+      "version": "18.2.0"
+    },
+    "packages/api": {
+      "name": "@acme/api",
+      "version": "1.0.0"
+    },
+    "packages/ui": {
+      "name": "@acme/ui",
+      "version": "1.0.0"
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "sha": "wstree",
+  "truncated": false,
+  "tree": [
+    {
+      "path": "package.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ws-root-manifest",
+      "size": 402
+    },
+    {
+      "path": "package-lock.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ws-root-lock",
+      "size": 91022
+    },
+    {
+      "path": "packages",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "pkgsdir"
+    },
+    {
+      "path": "packages/ui/package.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ws-ui-manifest",
+      "size": 208
+    },
+    {
+      "path": "packages/api/package.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ws-api-manifest",
+      "size": 214
+    },
+    {
+      "path": "examples/demo/package.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ws-demo-manifest",
+      "size": 190
+    }
+  ]
+}

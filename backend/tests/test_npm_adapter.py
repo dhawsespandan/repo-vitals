@@ -228,3 +228,53 @@ class TestSemver:
 
     def test_latest_of_falls_back_to_prereleases_when_that_is_all_there_is(self):
         assert semver.latest_of(["2.0.0-rc.1", "2.0.0-rc.2"]) == "2.0.0-rc.2"
+
+
+class TestWorkspaceGlobs:
+    """`workspaces` is npm's, so reading it lives behind the adapter seam.
+
+    Phase 6's soundness proof says a PyPI repository flows through an unchanged
+    scanner; that only holds if ecosystem-specific concepts like this one stay
+    on this side of the interface.
+    """
+
+    def test_an_array_of_globs_is_read(self):
+        manifest = json.dumps({"workspaces": ["packages/*", "tools/*"]}).encode()
+
+        assert npm.npm_adapter.workspace_globs(manifest) == ("packages/*", "tools/*")
+
+    def test_the_object_form_is_read_too(self):
+        """The shape yarn popularised; both appear in the wild."""
+        manifest = json.dumps({"workspaces": {"packages": ["libs/*"]}}).encode()
+
+        assert npm.npm_adapter.workspace_globs(manifest) == ("libs/*",)
+
+    def test_a_manifest_without_workspaces_declares_none(self):
+        assert npm.npm_adapter.workspace_globs(b'{"name": "plain"}') == ()
+
+    def test_unreadable_bytes_declare_none_rather_than_raising(self):
+        assert npm.npm_adapter.workspace_globs(b"{ not json") == ()
+
+
+class TestGlobMatching:
+    @pytest.mark.parametrize(
+        ("globs", "directory", "expected"),
+        [
+            (("packages/*",), "packages/ui", True),
+            # `*` stops at a separator, which is why fnmatch is not used: it
+            # would claim the root lockfile resolves a deeply nested package.
+            (("packages/*",), "packages/ui/nested", False),
+            (("packages/**",), "packages/ui/nested", True),
+            (("services/api",), "services/api", True),
+            (("services/api",), "services/worker", False),
+            (("packages/*",), "examples/demo", False),
+            (("packages/*", "!packages/private"), "packages/private", False),
+            (("packages/*", "!packages/private"), "packages/public", True),
+            (("packages/*",), "", False),
+            ((), "packages/ui", False),
+        ],
+    )
+    def test_membership(self, globs, directory, expected):
+        from apps.scanning.adapters.base import matches_workspace_globs
+
+        assert matches_workspace_globs(globs, directory) is expected

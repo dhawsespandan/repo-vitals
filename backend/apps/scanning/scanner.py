@@ -286,6 +286,73 @@ def plan_manifests(tree: list[dict]) -> list[ManifestPlan]:
     return plans
 
 
+def tree_manifest_paths(tree: list[dict]) -> list[str]:
+    """Every manifest path in the tree, before `MAX_MANIFESTS` trims it.
+
+    Kept separate from `plan_manifests` so the scan can report how many
+    manifests it did not look at, rather than only how many it read.
+    """
+    return [
+        entry["path"]
+        for entry in tree
+        if isinstance(entry, dict)
+        and entry.get("type") == "blob"
+        and isinstance(entry.get("path"), str)
+        and adapters.adapter_for_path(entry["path"]) is not None
+    ]
+
+
+def adopt_workspace_lockfiles(
+    plans: list[ManifestPlan], sources: dict[str, bytes]
+) -> None:
+    """Let workspace members inherit the lockfile of the root that declares them.
+
+    A sibling-only rule is right for an unrelated nested project — `examples/`
+    or a vendored sample has nothing to do with the root's lockfile, and
+    borrowing it would invent resolutions. It is wrong for an npm *workspaces*
+    monorepo, which by design has exactly one lockfile, at the root, describing
+    every member's install. Under the sibling rule every workspace package
+    falls to `range_latest_approx` and gets checked against the registry's
+    newest release instead of what it actually installs — precisely the
+    failure `npm.py` opens by naming, and invisible from the outside because
+    the rows look perfectly well-formed.
+
+    The distinction is not guessed at. A manifest inherits only when an
+    ancestor manifest *declares* it: the ancestor's `workspaces` globs have to
+    match the member's path relative to that ancestor. The nearest declaring
+    ancestor wins, so nested workspace roots behave.
+    """
+    by_directory = {plan.directory: plan for plan in plans}
+
+    for plan in plans:
+        if plan.lockfile_sha:
+            continue
+
+        directory = plan.directory
+        if not directory:
+            continue
+
+        ancestor_dir = directory
+        while ancestor_dir:
+            ancestor_dir = ancestor_dir.rpartition("/")[0]
+            ancestor = by_directory.get(ancestor_dir)
+            if ancestor is None or not ancestor.lockfile_sha:
+                continue
+
+            ancestor_bytes = sources.get(ancestor.path)
+            if ancestor_bytes is None:
+                continue
+
+            relative = directory[len(ancestor_dir) :].lstrip("/")
+            if adapters.matches_workspace_globs(
+                ancestor.adapter.workspace_globs(ancestor_bytes), relative
+            ):
+                plan.lockfile_path = ancestor.lockfile_path
+                plan.lockfile_sha = ancestor.lockfile_sha
+                plan.lockfile_size = ancestor.lockfile_size
+                break
+
+
 # ── enrichment ─────────────────────────────────────────────────────────────
 
 
@@ -435,7 +502,10 @@ def _build_occurrence(
 
 
 def _persist(
-    scan: ScanRun, plans: list[ManifestPlan], pool: list[PooledOccurrence]
+    scan: ScanRun,
+    plans: list[ManifestPlan],
+    pool: list[PooledOccurrence],
+    skipped: int = 0,
 ) -> None:
     """Write the manifests, occurrences and advisories in one transaction.
 
@@ -494,6 +564,13 @@ def _persist(
                 )
         DependencyVulnerability.objects.bulk_create(vulnerabilities)
 
+        # In the same transaction as the rows it qualifies: a count claiming
+        # two manifests were missed, next to a table that silently has them,
+        # would be worse than no count.
+        if scan.skipped_manifest_count != skipped:
+            scan.skipped_manifest_count = skipped
+            scan.save(update_fields=["skipped_manifest_count"])
+
 
 # ── entry point ────────────────────────────────────────────────────────────
 
@@ -523,22 +600,46 @@ def run_scan(scan: ScanRun) -> None:
             "registered it."
         )
 
-    read: list[ManifestPlan] = []
-    pool: list[PooledOccurrence] = []
+    # Pass one: read every manifest. Nothing is resolved yet, because whether a
+    # manifest inherits an ancestor's lockfile depends on what that ancestor
+    # *says* — and that cannot be known until its bytes are in hand.
+    sources: dict[str, bytes] = {}
+    skipped = 0
     for plan in plans:
         if plan.size > MAX_MANIFEST_BYTES:
             logger.warning("Skipping an oversized manifest during a scan.")
+            skipped += 1
             continue
 
         manifest_bytes = _fetch_blob(scan, token, plan.sha, MAX_MANIFEST_BYTES)
+        if manifest_bytes is None:
+            skipped += 1
+            continue
+        sources[plan.path] = manifest_bytes
+
+    skipped += max(0, len(tree_manifest_paths(tree)) - len(plans))
+
+    adopt_workspace_lockfiles(plans, sources)
+
+    # Pass two: fetch each lockfile once and parse. The cache matters here in a
+    # way it did not before — a workspaces monorepo points every member at the
+    # same root lockfile, and without it a ten-package repo would fetch a
+    # multi-megabyte file ten times.
+    lockfiles: dict[str, bytes | None] = {}
+    read: list[ManifestPlan] = []
+    pool: list[PooledOccurrence] = []
+    for plan in plans:
+        manifest_bytes = sources.get(plan.path)
         if manifest_bytes is None:
             continue
 
         lockfile_bytes = None
         if plan.lockfile_sha and plan.lockfile_size <= MAX_LOCKFILE_BYTES:
-            lockfile_bytes = _fetch_blob(
-                scan, token, plan.lockfile_sha, MAX_LOCKFILE_BYTES
-            )
+            if plan.lockfile_sha not in lockfiles:
+                lockfiles[plan.lockfile_sha] = _fetch_blob(
+                    scan, token, plan.lockfile_sha, MAX_LOCKFILE_BYTES
+                )
+            lockfile_bytes = lockfiles[plan.lockfile_sha]
         if lockfile_bytes is None:
             # No lockfile, or one too large or unreadable. The column is
             # cleared because it is the reason this manifest's rows will say
@@ -550,6 +651,7 @@ def run_scan(scan: ScanRun) -> None:
             specs = plan.adapter.parse(manifest_bytes, lockfile_bytes)
         except adapters.ManifestParseError:
             logger.warning("A manifest could not be parsed; skipping it.")
+            skipped += 1
             continue
 
         # A manifest declaring nothing still gets a row: "we read this and it
@@ -569,11 +671,12 @@ def run_scan(scan: ScanRun) -> None:
 
     _enrich_from_registries(pool)
     _enrich_from_osv(pool)
-    _persist(scan, read, pool)
+    _persist(scan, read, pool, skipped)
 
     logger.info(
-        "Scan %s recorded %d occurrences across %d manifests.",
+        "Scan %s recorded %d occurrences across %d manifests (%d skipped).",
         scan.pk,
         len(pool),
         len(read),
+        skipped,
     )

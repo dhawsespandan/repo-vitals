@@ -30,6 +30,7 @@ way to the UI.
 
 from __future__ import annotations
 
+import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
@@ -173,6 +174,21 @@ class DependencyAdapter(ABC):
         """
         return ()
 
+    def workspace_globs(self, manifest_bytes: bytes) -> tuple[str, ...]:
+        """Globs, relative to this manifest, whose packages share its lockfile.
+
+        A monorepo tool that installs its members from one root lockfile
+        (npm/yarn `workspaces`) declares which directories those members live
+        in. The scanner uses this to let a member manifest with no lockfile of
+        its own inherit the root's — without it, every workspace package falls
+        back to `range_latest_approx` and gets checked against the registry's
+        newest release rather than what it installs.
+
+        Empty by default, so an ecosystem without the concept inherits nothing
+        and the sibling-only rule stands.
+        """
+        return ()
+
     @abstractmethod
     def parse(
         self, manifest_bytes: bytes, lockfile_bytes: bytes | None = None
@@ -186,6 +202,59 @@ class DependencyAdapter(ABC):
     @abstractmethod
     def registry_client(self):
         """The client that answers `PackageFacts` for this ecosystem."""
+
+
+def _glob_to_regex(pattern: str) -> re.Pattern[str]:
+    """Compile one workspace glob.
+
+    `*` stops at a path separator and `**` crosses them, which is the
+    convention every tool using these globs follows. `fnmatch` is not usable
+    here precisely because its `*` matches `/` too, so `packages/*` would
+    swallow `packages/a/nested/deep` and claim the root lockfile resolves it.
+    """
+    parts: list[str] = []
+    index = 0
+    while index < len(pattern):
+        if pattern.startswith("**", index):
+            parts.append(".*")
+            index += 2
+        elif pattern[index] == "*":
+            parts.append("[^/]*")
+            index += 1
+        else:
+            parts.append(re.escape(pattern[index]))
+            index += 1
+    return re.compile(f"^{''.join(parts)}$")
+
+
+def matches_workspace_globs(globs: tuple[str, ...], relative_dir: str) -> bool:
+    """Whether `relative_dir` is a workspace member under any of `globs`.
+
+    A leading `!` negates, as npm allows — an excluded directory is not a
+    member however many other patterns match it, so exclusions are applied
+    after inclusions rather than in order.
+    """
+    if not relative_dir:
+        return False
+
+    included = False
+    for glob in globs:
+        pattern = glob.rstrip("/")
+        if not pattern:
+            continue
+        if pattern.startswith("!"):
+            continue
+        if _glob_to_regex(pattern).match(relative_dir):
+            included = True
+            break
+
+    if not included:
+        return False
+
+    return not any(
+        glob.startswith("!") and _glob_to_regex(glob[1:].rstrip("/")).match(relative_dir)
+        for glob in globs
+    )
 
 
 _ADAPTERS: dict[str, DependencyAdapter] = {}
@@ -246,6 +315,7 @@ __all__ = [
     "adapter_for_path",
     "all_adapters",
     "get_adapter",
+    "matches_workspace_globs",
     "register",
     "supported_ecosystems",
     "supported_manifest_names",
