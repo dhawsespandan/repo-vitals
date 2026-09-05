@@ -681,6 +681,11 @@ misread produces confident, specific, wrong versions.
 Adding pnpm later costs one YAML dependency and one parser; adding yarn costs
 a hand-written grammar. Neither is in Phase 3's scope.
 
+*Superseded in part by §3.15.* This entry framed lockfile coverage as a
+question of file *format*, and missed the case that actually bites: an npm
+workspaces monorepo whose one lockfile sits at the root while its members
+have none.
+
 ### 3.5 The three ways a scan can fail, and why they differ
 
 A scan meets three kinds of bad news, and treating them alike would be wrong
@@ -737,7 +742,8 @@ Three limits, none of them in the plan, all of them answering §11's
   is what tells a reader why.
 
 Both size checks run against the size the **tree** already reported, before
-any fetch, so an oversized file costs nothing.
+any fetch, so an oversized file costs nothing. What none of the three did was
+*tell anyone* — see §3.16.
 
 Blobs are read from `GET /git/blobs/{sha}` rather than the contents API. The
 tree hands over the sha and the size together, and the blob endpoint's ceiling
@@ -863,3 +869,141 @@ progress", "failed 4 min ago", or a timestamp.
 
 Neither was a logic error, which is the pattern §2.5 already named: correct
 code, placed or worded so a reader draws the wrong conclusion.
+
+### 3.14 An unbounded packument is an outage, not a slow scan
+
+`common/http.py` read whatever arrived. That is fine against GitHub and OSV,
+whose documents are bounded by what a repository contains, and not fine
+against an npm packument, which grows without limit as a package accumulates
+releases. Measured against the live registry — wire size, then resident cost
+once `json.loads` has built the Python objects, which runs 3 to 4 times the
+first:
+
+| package | full | parsed | abbreviated | parsed |
+|---|---|---|---|---|
+| `vite` | 38.9 MB | **79.3 MB** | 2.3 MB | 5.5 MB |
+| `typescript` | 15.6 MB | 53.2 MB | 8.7 MB | 24.6 MB |
+| `@types/node` | 11.1 MB | 41.0 MB | 2.3 MB | 3.2 MB |
+| `react` | 6.9 MB | 22.6 MB | 2.9 MB | 5.2 MB |
+| `express` | 0.8 MB | 2.6 MB | 0.3 MB | 0.0 MB |
+
+§1.13 measured the worker at 274.5 MB of 512 MB, leaving ~237 MB. One `vite`
+lookup costs a third of that on its own — and `vite` is a dependency of the
+first repository ever scanned on prod, so this was not a tail risk. The blast
+radius is the point: an OOM kills the gunicorn worker, which is the whole
+service (§2), so one unlucky scan takes down every other user's request.
+Phase 8 puts an embedding model in the same process.
+
+**Two caps, because one is wrong.** The first attempt used a single 4 MiB
+ceiling and looked fine until it was run against real packages: `typescript`
+became permanently *unassessable*, because its abbreviated form is still
+8.7 MB, and `react` lost its staleness for no gain. So: 8 MiB on the full
+document, which admits `react`, `express`, `axios`, `eslint` and the long
+tail whole; 16 MiB on the abbreviated one, which is not laxity but the
+minimum that keeps one of npm's most common dev dependencies readable.
+
+**The degradation self-targets, which is what makes it acceptable.** A
+packument only grows past 8 MiB by accumulating thousands of releases, and
+that is what an *actively maintained* package looks like — so the staleness
+being dropped is the one that would have read near zero anyway. A package
+that stopped shipping stops growing, stays under the cap, and keeps the
+signal in the only case where it carries information. §5.2's missing-value
+policy does the rest: the term is excluded and its weight redistributed.
+
+The abbreviated document's top-level `modified` is deliberately **not** used
+as a staleness substitute. It moves when metadata is edited — a deprecation
+being added is enough — so reading it as a release date would report an
+abandoned package as freshly maintained. §5.1 asks for "days since the
+package's latest release"; an honest unknown beats a confident wrong number.
+
+`UpstreamTooLarge` is its own exception class rather than an
+`UpstreamUnavailable`, because it is not a failure to answer: the upstream
+answered fine, at a size this tier cannot hold. Callers with a smaller
+representation available catch it and ask for that instead.
+
+### 3.15 Workspace members inherit the root lockfile — but only when declared
+
+§3.4 recorded that yarn and pnpm lockfiles are not read. It did not cover the
+case that actually bites, because it is not about the lockfile *format*: an
+npm **workspaces** monorepo has exactly one lockfile, at the root, by design.
+The sibling-only rule meant every workspace member fell to
+`range_latest_approx` and was checked against the registry's newest release
+rather than what it installs.
+
+That is the exact failure `npm.py` opens by naming, and it is invisible from
+outside — the rows look perfectly well-formed, with a resolved version and a
+provenance chip. Sabotaging the fix against the new fixture shows the cost:
+the member resolves to the patched `lodash` 4.17.21 with **0 CVEs** instead
+of the installed 4.17.19 with **2**. The repository reports clean.
+
+**Inheritance is declared, never inferred from proximity.** A manifest adopts
+an ancestor's lockfile only when that ancestor's own `workspaces` globs match
+the member's path relative to it, nearest declaring ancestor first. The
+fixture keeps an `examples/demo` outside the globs precisely to pin the other
+half of the rule: borrowing a lockfile that never described you invents
+resolutions, which is what the sibling-only rule got right and stays right.
+
+Reading `workspaces` is npm's business, so it is an adapter hook
+(`workspace_globs`) rather than scanner logic — Phase 6's soundness claim
+only holds if ecosystem-specific concepts stay behind that seam. The glob
+matcher is hand-written because `fnmatch`'s `*` matches `/` too, which would
+let `packages/*` swallow `packages/a/nested/deep`.
+
+`run_scan` became two passes as a consequence: read every manifest, then
+decide lockfiles and parse. Whether a manifest inherits depends on what its
+ancestor *says*, which cannot be known until the ancestor's bytes are in
+hand. The second pass caches lockfile blobs by sha, which matters here in a
+way it did not before — ten members pointing at one multi-megabyte root lock
+is one fetch, not ten.
+
+### 3.16 A skipped manifest now leaves a trace
+
+Four paths drop a manifest without a `manifest_files` row: over
+`MAX_MANIFEST_BYTES`, an undecodable blob, a parse failure, and
+`MAX_MANIFESTS` truncation. Each logged a warning. Meanwhile the detail page
+said "pooled across N manifests · each occurrence counted independently" with
+complete confidence.
+
+That is the silent miscount this product defines itself against, and it has
+the same shape as both §3.13 bugs: correct code, placed so the reader draws a
+conclusion the system never supported. A log line is not an answer to a
+person looking at a table.
+
+`scan_runs.skipped_manifest_count` is not in §5.1 and was added anyway. A
+count is the smallest thing that closes it, it is operational only — it
+cascades with the scan and never reaches the research tables — and it is
+written in the same transaction as the rows it qualifies, because a count
+claiming two manifests were missed next to a table that silently has them
+would be worse than no count. The detail page renders it as a notice
+immediately under the header line it qualifies, not somewhere else on the
+page (§2.5's lesson).
+
+### 3.17 `?flagged=false` returned everything
+
+The filter tested only for truthy values, so an explicit `false` fell through
+to *no filter* — the opposite of what it asks for, and silent about it.
+Harmless in Phase 3, where nothing sets `is_flagged`; Phase 5's Flagged /
+All / Unassessable tabs are the caller that would have found out the hard
+way.
+
+Three states now, not two. An unrecognised value filters nothing rather than
+defaulting to `False`: guessing that `?flagged=maybe` means "show me the
+unflagged ones" would be inventing an answer to a question nobody asked.
+
+### 3.18 The detail page loads every dependency page
+
+§10 Phase 3's objective is that the detail page "lists every dependency from
+every manifest in the tree". It loaded the first 50 and captioned the rest
+away, which is honest but not the objective.
+
+The client now walks the paginator to the end — in sequence, not in
+parallel, because completeness is the point and a burst of twenty concurrent
+requests at a sleeping Render instance is a worse trade than an extra second.
+Capped at 20 pages (1,000 rows) so it remains a bound rather than an
+unbounded loop, and the caption still reports the server's own total, so a
+table that *did* hit the cap cannot claim to be complete.
+
+Phase 5's tabs will likely revisit this: filtering server-side is cheaper
+than fetching everything and hiding most of it. Recorded here so that when
+they land, the reason this is a full fetch is on the record rather than
+rediscovered.
