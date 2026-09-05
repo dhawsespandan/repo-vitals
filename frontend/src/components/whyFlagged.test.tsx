@@ -15,7 +15,8 @@
  * could not measure instead of quietly showing zeroes.
  */
 
-import { screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
+import { StrictMode } from "react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -31,6 +32,7 @@ import {
   stubFetch,
 } from "../test/renderApp";
 import type { DependencyBreakdown, DependencyOccurrence } from "../types";
+import { WhyFlaggedPanel } from "./WhyFlaggedPanel";
 
 beforeEach(() => {
   vi.unstubAllGlobals();
@@ -53,6 +55,18 @@ const LODASH: DependencyOccurrence = dependency({
   isFlagged: true,
   riskComponentScore: "19.71",
 });
+
+/**
+ * The breakdown that belongs to LODASH.
+ *
+ * Named here rather than taking `dependencyBreakdown`'s default, because a
+ * breakdown reporting a different package than the row it opened under is a
+ * response the backend cannot produce — and the panel stamps the name it was
+ * handed, so the mismatch would have been invisible in every assertion that
+ * did not look at it.
+ */
+const lodashBreakdown = (overrides: Partial<DependencyBreakdown> = {}) =>
+  dependencyBreakdown({ id: "row-lodash", packageName: "lodash", ...overrides });
 
 /** One flagged row on screen, and whatever breakdowns the case needs. */
 function show(
@@ -98,7 +112,7 @@ function readTerm(row: HTMLElement) {
 
 describe("the why-flagged panel's arithmetic", () => {
   beforeEach(() => {
-    show([LODASH], { "row-lodash": dependencyBreakdown({ id: "row-lodash" }) });
+    show([LODASH], { "row-lodash": lodashBreakdown() });
   });
 
   it("shows one row per signal, raw through to points", async () => {
@@ -161,7 +175,7 @@ describe("the why-flagged panel's arithmetic", () => {
 
 describe("the evidence behind the numbers", () => {
   it("links each advisory out to where a reader can check it", async () => {
-    show([LODASH], { "row-lodash": dependencyBreakdown({ id: "row-lodash" }) });
+    show([LODASH], { "row-lodash": lodashBreakdown() });
     renderApp(DETAIL_ROUTE);
     const panel = await openPanel(/^Why\? lodash/);
 
@@ -176,7 +190,7 @@ describe("the evidence behind the numbers", () => {
   });
 
   it("quotes the maintainer's deprecation reason verbatim", async () => {
-    show([LODASH], { "row-lodash": dependencyBreakdown({ id: "row-lodash" }) });
+    show([LODASH], { "row-lodash": lodashBreakdown() });
     renderApp(DETAIL_ROUTE);
     const panel = await openPanel(/^Why\? lodash/);
 
@@ -189,10 +203,7 @@ describe("the evidence behind the numbers", () => {
 
   it("says a deprecated package published no reason, rather than showing nothing", async () => {
     show([LODASH], {
-      "row-lodash": dependencyBreakdown({
-        id: "row-lodash",
-        deprecationReason: null,
-      }),
+      "row-lodash": lodashBreakdown({ deprecationReason: null }),
     });
     renderApp(DETAIL_ROUTE);
     const panel = await openPanel(/^Why\? lodash/);
@@ -203,7 +214,7 @@ describe("the evidence behind the numbers", () => {
   });
 
   it("distinguishes a lockfile resolution from an approximation", async () => {
-    show([LODASH], { "row-lodash": dependencyBreakdown({ id: "row-lodash" }) });
+    show([LODASH], { "row-lodash": lodashBreakdown() });
     renderApp(DETAIL_ROUTE);
     const panel = await openPanel(/^Why\? lodash/);
 
@@ -247,7 +258,7 @@ describe("the evidence behind the numbers", () => {
 
 describe("what the panel says about what it could not measure", () => {
   it("names an omitted signal, its weight, and where the weight went", async () => {
-    const base = dependencyBreakdown({ id: "row-lodash" });
+    const base = lodashBreakdown();
     show([LODASH], {
       "row-lodash": {
         ...base,
@@ -311,7 +322,7 @@ describe("what the panel says about what it could not measure", () => {
   });
 
   it("says when the severity term rests on the 5.0 placeholder", async () => {
-    const base = dependencyBreakdown({ id: "row-lodash" });
+    const base = lodashBreakdown();
     show([LODASH], {
       "row-lodash": {
         ...base,
@@ -380,7 +391,7 @@ describe("what the panel says about what it could not measure", () => {
   });
 
   it("says when the weights file no longer reaches the stored score", async () => {
-    const base = dependencyBreakdown({ id: "row-lodash" });
+    const base = lodashBreakdown();
     show([LODASH], {
       "row-lodash": {
         ...base,
@@ -410,7 +421,7 @@ describe("opening and closing a breakdown", () => {
 
   it("fetches one breakdown per row opened, and not before", async () => {
     const { calls } = show(TWO, {
-      "row-lodash": dependencyBreakdown({ id: "row-lodash" }),
+      "row-lodash": lodashBreakdown(),
       "row-express": dependencyBreakdown({
         id: "row-express",
         packageName: "express",
@@ -435,7 +446,7 @@ describe("opening and closing a breakdown", () => {
 
   it("opens one row at a time", async () => {
     show(TWO, {
-      "row-lodash": dependencyBreakdown({ id: "row-lodash" }),
+      "row-lodash": lodashBreakdown(),
       "row-express": dependencyBreakdown({
         id: "row-express",
         packageName: "express",
@@ -451,7 +462,7 @@ describe("opening and closing a breakdown", () => {
   });
 
   it("closes again, and says so on the control", async () => {
-    show([LODASH], { "row-lodash": dependencyBreakdown({ id: "row-lodash" }) });
+    show([LODASH], { "row-lodash": lodashBreakdown() });
 
     renderApp(DETAIL_ROUTE);
     await openPanel(/^Why\? lodash/);
@@ -463,6 +474,40 @@ describe("opening and closing a breakdown", () => {
     await userEvent.click(hide);
     expect(screen.queryByTestId("why-flagged-panel")).not.toBeInTheDocument();
     expect(hide).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("does not duplicate its fetch beyond React's own double mount", async () => {
+    /**
+     * Counted in a real browser first, which is the only place it shows: the
+     * dev server made *two* GETs per panel opened, and nothing on screen said
+     * so (`docs/decisions.md` §3.13 — no assertion about behaviour notices a
+     * request count).
+     *
+     * The cause is `React.StrictMode` in `main.tsx`, which mounts, unmounts
+     * and remounts every component in development so that effects missing a
+     * cleanup are exposed. It is not in the production build. What this test
+     * pins is the part that *is* ours: under a double mount the effect makes
+     * one request per mount and no more, and the `live` flag means the
+     * discarded mount's response cannot overwrite the surviving one's.
+     */
+    const { calls } = show([LODASH], {
+      "row-lodash": lodashBreakdown(),
+    });
+
+    render(
+      <StrictMode>
+        <WhyFlaggedPanel row={LODASH} />
+      </StrictMode>,
+    );
+
+    const panel = await screen.findByTestId("why-flagged-panel");
+    expect(panel).toHaveAttribute("data-package", "lodash");
+
+    const breakdownCalls = calls.filter((call) =>
+      call.includes("/api/dependencies/"),
+    );
+    expect(breakdownCalls.length).toBeLessThanOrEqual(2);
+    expect(new Set(breakdownCalls).size).toBe(1);
   });
 
   it("reports a breakdown it could not load, rather than spinning forever", async () => {

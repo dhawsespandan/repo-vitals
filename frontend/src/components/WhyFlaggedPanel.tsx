@@ -179,7 +179,9 @@ function TermRow({ term, caps }: { term: ScoringTerm; caps: ScoringCaps }) {
           color: Number(term.points) > 0 ? DANGER : "inherit",
         }}
       >
-        &minus;{term.points}
+        {/* No minus sign on a zero. "−0.00" reads as a quantity that was
+            subtracted, and this signal cost the dependency nothing. */}
+        {Number(term.points) > 0 ? `−${term.points}` : term.points}
       </div>
     </div>
   );

@@ -237,6 +237,56 @@ describe("the strip's arithmetic", () => {
     expect(line).not.toHaveTextContent("from the rest");
   });
 
+  it("explains a deduction the clamp cut short", () => {
+    // §5.3 clamps at 0, so on a bad enough repository the three rows shown
+    // already cost more than the 100 the badge could deduct. Found on a
+    // seeded page during Phase 5's browser check: 86.64 + 25.56 + 12.64 sat
+    // beside "100 − 100.00 = 0.00" with nothing said, and a reader who adds
+    // them up gets 124.84. §4.11's fix only covered the other direction.
+    render(
+      <ScoreContributors
+        scan={scanDetail({
+          riskScore: "0.00",
+          classification: "high_alert",
+          topContributors: [
+            {
+              dependencyId: "a",
+              packageName: "request",
+              manifestPath: "package.json",
+              penalty: "86.64",
+              points: "86.64",
+            },
+            {
+              dependencyId: "b",
+              packageName: "internal-logger",
+              manifestPath: "package.json",
+              penalty: "51.11",
+              points: "25.56",
+            },
+            {
+              dependencyId: "c",
+              packageName: "moment",
+              manifestPath: "services/api/package.json",
+              penalty: "50.57",
+              points: "12.64",
+            },
+          ],
+        })}
+      />,
+    );
+
+    const line = screen.getByTestId("score-arithmetic");
+    expect(line).toHaveTextContent("100 − 100.00 = 0.00");
+    expect(screen.getByTestId("score-clamped")).toHaveTextContent(
+      "the 3 above come to 124.84 on their own",
+    );
+    expect(screen.getByTestId("score-clamped")).toHaveTextContent(
+      "only 100.00 of it could be deducted",
+    );
+    // And never both clauses: an overshoot is not a remainder.
+    expect(line).not.toHaveTextContent("from the rest");
+  });
+
   it("shows no equation for a repository that deducted nothing", () => {
     render(
       <ScoreContributors

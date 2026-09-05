@@ -53,6 +53,22 @@ export function ScoreContributors({ scan }: ScoreContributorsProps) {
   // float artefact never produces a "remainder" clause about nothing.
   const remainder = deducted - shown;
   const hasRemainder = remainder > 0.005;
+  /**
+   * The three shown already cost more than the whole deduction.
+   *
+   * Only §5.3's clamp can produce this: the roll-up's decayed penalties summed
+   * past 100, the score floored at 0, and the reported deduction is therefore
+   * 100 rather than the real total. Without the clamp, three of N decayed
+   * penalties can never exceed their own sum.
+   *
+   * Left unexplained it is §4.11 in the opposite direction, and worse: a
+   * reader adding 86.64 + 25.56 + 12.64 beside "100 - 100.00 = 0.00" gets
+   * 124.84 and concludes the page cannot add up. Found on a seeded repository
+   * during Phase 5's browser check; §4.11's fix only ever handled the case
+   * where the shown points fell *short*.
+   */
+  const overshoot = shown - deducted;
+  const clamped = overshoot > 0.005;
 
   return (
     <div data-testid="score-contributors">
@@ -152,6 +168,17 @@ export function ScoreContributors({ scan }: ScoreContributorsProps) {
             <span className="text-muted" style={{ marginLeft: 8 }}>
               ({money(shown)} from the {contributors.length} above,{" "}
               {money(remainder)} from the rest)
+            </span>
+          )}
+          {clamped && (
+            <span
+              className="text-muted"
+              data-testid="score-clamped"
+              style={{ marginLeft: 8 }}
+            >
+              (the {contributors.length} above come to {money(shown)} on their
+              own; a score cannot fall below 0, so only {money(deducted)} of it
+              could be deducted)
             </span>
           )}
         </div>
