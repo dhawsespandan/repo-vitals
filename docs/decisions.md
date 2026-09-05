@@ -1007,3 +1007,272 @@ Phase 5's tabs will likely revisit this: filtering server-side is cheaper
 than fetching everything and hiding most of it. Recorded here so that when
 they land, the reason this is a full fetch is on the record rather than
 rediscovered.
+
+---
+
+## Phase 4 — Scoring engine + weights v1
+
+### 4.1 Rounding is part of the formula, not of the display
+
+§5.2 gives the arithmetic and says nothing about precision, so there were two
+defensible readings: compute at full precision and round only for the screen,
+or round each term as it is produced and sum the rounded values.
+
+The first is what a numerical library would do, and it is wrong here. This
+product's whole claim is that the score is checkable — the mentor demo is
+"open the bad one, the score is these three packages, here's the arithmetic".
+Under full internal precision, a reader adding up the four term contributions
+Phase 5 renders would land a hundredth or two away from the penalty on the
+badge, and a page whose own working disagrees with its own answer has taught
+the reader not to trust either.
+
+So every term is quantized to two decimals (`ROUND_HALF_UP`) before it is
+summed, the occurrence penalties fed into the roll-up are the two-decimal
+values that were *stored*, and each decayed contribution is quantized before
+being added to the deduction. The arithmetic a reader can do by hand is the
+arithmetic that produced the number.
+
+It also makes D6 exact rather than approximate. Research recomputing a
+repository score from `dependency_history` gets the same value the product
+displayed, not one within a rounding tolerance — so an agreement check between
+a stored score and a recomputed one is an equality test with no epsilon in it.
+
+Monotonicity survives: rounding each term independently is monotone in each
+signal, so a sum of rounded terms is still non-decreasing in every input.
+`test_scoring_engine.py` asserts it rather than assuming it.
+
+A related trap, found only by running `rescore` and reading the CSV: the
+clamp's bounds carry no decimals, so a repository that deducted nothing came
+back as `Decimal("100")` while every other row said `100.00`. Invisible in the
+database — `NUMERIC(5,2)` normalizes it — and visible in every artifact
+rendered straight from the engine. Both scores are now quantized after the
+clamp, and the test asserts the *string*, since `Decimal("100") ==
+Decimal("100.00")` is true and no equality assertion could have caught it.
+
+### 4.2 The CVSS placeholder is a derived flag, not a stored signal
+
+§5.2 says a known CVE with no CVSS anywhere is scored at 5.0 with
+`cvss_reduced_confidence` set. §5.1 puts that column on
+`dependency_occurrences`, beside `cvss_max`, which reads as though the scanner
+should write the 5.0 in.
+
+It does not. D6 divides the schema into raw signals and derived values, and an
+imputed severity is derived by definition — it is the formula's answer to a
+missing measurement, not a measurement. So `cvss_max` stays NULL, which is the
+truth about what OSV reported, and the scoring engine writes
+`cvss_reduced_confidence = true` on the rows where its own placeholder was
+used. Research recomputing from `dependency_history` sees the same NULL and
+applies the same rule, so the imputation is reproducible rather than baked in.
+
+§5.2 puts an NVD lookup between OSV and the placeholder. `NVD_API_KEY` is a
+Phase 12 knob (§6), so until then the chain is OSV to placeholder, and the
+flag marks every row it touched. Phase 12 inserts the NVD step ahead of the
+placeholder without changing anything else.
+
+### 4.3 EPSS, if ever enabled, is funded from inside the vector
+
+§5.4's schema has four per-ecosystem weights summing to 1 and an `epss` block
+outside them; §5.2 says EPSS is "appended as a fifth term" when enabled. Read
+literally, an enabled EPSS weight of 0.1 makes the total 1.1, so a maximally
+bad occurrence could be penalised 110 points and the 0-100 bound the product
+states everywhere would be false.
+
+The loader therefore validates that the four weights plus `epss.weight` (when
+enabled) sum to 1 within ±0.001, and refuses a non-zero `epss.weight` while
+EPSS is disabled — a weight that is not applied is a claim the formula does
+not make. §5.4's own example (`enabled: false, weight: 0.0`) passes unchanged,
+and Phase 12 gets a shape that cannot break the bound.
+
+The engine already handles an enabled-but-unmeasured EPSS term through §5.2's
+missing-value policy: no value, no term, weight redistributed. So an
+EPSS-enabled weights file scores correctly against occurrences scanned before
+EPSS enrichment existed, rather than treating them as if exploitation were
+impossible.
+
+### 4.4 The history tables live in `apps/research/`
+
+§3's tree lists `apps/research/` with corpus, backfill and validation modules
+and no `models.py`, and lists `apps/scanning/` without one either — the layout
+omits standard Django files throughout, so it does not settle where
+`scan_history` and `dependency_history` belong.
+
+They are in `apps/research/`, for three reasons. §3's own parenthetical —
+research code is "never imported by request-handling code (except the history
+endpoint helper)" — only makes sense if research owns something the Phase 10
+history endpoint reads. D9's rule that these tables never cascade on any
+trigger becomes an app boundary rather than a comment: there is no foreign key
+out of the app, so no cascade can reach in, and the way one would get added by
+accident (an FK to `repositories`) is not available. And Phases 11-13 write
+these same tables heavily from corpus and backfill code that already lives
+there.
+
+Two files §3 does not list: `apps/research/models.py` and
+`apps/research/history.py`. `apps/scanning/retention.py` is listed and is
+where §5.7's second half lives.
+
+### 4.5 Retention deletes prior scans of any status, not only completed ones
+
+§5.7 says to delete "the repo's prior *completed* `scan_runs` cascade". Taken
+literally, failed scans accumulate for ever on a repository someone retried a
+dozen times — invisible, because nothing in the UI reads a failed scan once a
+newer one exists, but unbounded on a 500 MB free tier (§8).
+
+`prune_prior_scans` deletes every scan of the repository except the one just
+completed. A superseded failure is operational detail too: its `error_message`
+describes a run a later scan has since answered. The rule §5.7 actually states
+— only the latest scan's operational detail survives — is served better by the
+wider deletion than by the narrower one.
+
+The scan being kept is excluded by primary key rather than by status, so the
+completion pipeline (which calls this before marking the scan `completed`)
+cannot delete the run it just finished. Retention still runs only on
+completion, so a failed scan can never delete the completed one whose results
+the page is displaying.
+
+### 4.6 Scoring failure fails the scan
+
+The completion pipeline is three steps: score, record to history, retire the
+previous scan. Any of them can raise, and the question was which failures
+should sink the scan.
+
+All of them. A scan that measured a repository but could not score it has no
+number to show, and a `completed` row with a null `risk_score` renders as a
+blank badge with no explanation — the silent-miscount shape §3.13 and §3.16
+are both about. A visible failure with a Try again beside it is strictly
+better. History failure is likewise fatal: D17's whole argument is that the
+research data cannot be reconstructed later, so a scan that could not be
+recorded is not a scan that should be reported as fine.
+
+Scoring commits in its own transaction; history and retention share one. The
+split is deliberate — scoring only rewrites derived columns on rows that
+already exist, so it is safe committed alone, and if the write-then-delete
+pair fails, the scan is marked failed with its signals scored and its previous
+scan intact. That is a recoverable state, and rolling the score back too would
+lose the diagnosis and buy nothing.
+
+### 4.7 A repository where nothing is assessable scores 100, and has to say so
+
+§5.2 excludes unassessable occurrences from every denominator, and §5.3 rolls
+up over assessable ones. A repository whose dependencies are all `file:` paths
+or git URLs therefore has no penalties, deducts nothing, and scores 100 —
+Safe, with a full green ring.
+
+That is the specification's arithmetic and the code follows it. It is also,
+presented bare, exactly the kind of claim this product exists not to make: a
+reader sees a green 100 and concludes the repository was checked and is clean.
+
+The answer is not to invent a different score. It is to never let the number
+appear without its scope. The card's counts line says "2 deps · none
+assessable" instead of the arithmetic-requiring "0 flagged · 2 deps · 2
+unassessable", and the detail page's strip says outright that nothing could be
+assessed, above "0 of 2 dependencies assessed". Found by seeding the case and
+looking at the page, not by a test — jsdom would have reported the same green
+100 as a pass.
+
+The same pass turned up a second one: the dashboard's "Avg score" tile still
+read "scoring lands in Phase 4" while three cards behind it showed scores. It
+now shows the mean of the scored repositories, with how many went into it and
+which weights version. A plain mean is right *here* and forbidden inside the
+formula (§5.3) — this averages one already-rolled-up number per repository to
+summarise a list, where the formula's ban is on averaging occurrence scores in
+a way that lets clean dependencies dilute critical ones.
+
+### 4.8 Weights v1 — WP-1's vectors, adopted as delivered
+
+WP-1 landed 2026-08-26 with two vectors and a method note:
+
+| Signal | npm | PyPI |
+|---|---|---|
+| deprecation | 0.46 | 0.32 |
+| severity | 0.28 | 0.35 |
+| count | 0.16 | 0.16 |
+| staleness | 0.10 | 0.17 |
+
+Derived by an informal pairwise (Saaty) pass over a pre-filled seed matrix,
+eigenvector-normalised. Each of the six npm judgments was reviewed
+cell-by-cell and retained unmodified; the npm eigenvector's top entry is
+truncated (0.4673 to 0.46) so the published vector sums to exactly 1.00, which
+is why §5.4's ±0.001 tolerance is load-bearing rather than decorative.
+
+The PyPI vector is not an independent elicitation. It is npm's, reasoned down
+by roughly 30% on deprecation and redistributed to severity and staleness, on
+the D2 argument that PyPI's deprecation signals (per-release yanking, the
+rarely-applied `Development Status :: 7 - Inactive` classifier) carry less
+information than npm's free-text deprecation message. The redistribution
+inverts the ecosystem's top two signals — severity 0.35 now outranks
+deprecation 0.32 — which is intentional, and it moves count below staleness on
+PyPI while count outranks staleness on npm. WP-1 records that as a consequence
+of staleness gaining mass, not a reassessment of count.
+
+Two caveats belong with the numbers wherever they are quoted, because both are
+easy to lose in a write-up:
+
+* The Consistency Ratio of 0.0115 is **inherited from the seed matrix, not
+  earned from independent judgment** — a CR that low is the signature of a
+  generated ratio scale rather than a contested human assessment. And CR is a
+  coherence check on the judgments, never a correctness check on the weights.
+* The vectors were produced in a single joint session, with no independent
+  judges and no reconciliation step. WP-3's two independent AHP matrices, the
+  entropy cross-check, and WP-6's validation are what turn this into `v2`.
+  Correctness is that study's answer, not this file's.
+
+`weights/weights_v1.yaml` is the deliverable copied verbatim, comments
+included, under a provenance header — paraphrasing it into something tidier
+would separate the numbers from the reasoning that produced them. A test
+asserts the shipped copy still parses identical to
+`wp/wp-1/wp1_tier1_weights.yaml`, so the paper and the product cannot drift.
+
+`weights_v0_equal.yaml` (0.25 x 4) ships alongside it and stays in the
+registry permanently. §7 lists it as the fallback if WP-1 were late; its
+lasting job is to be the naive baseline WP-6's sensitivity analysis measures
+the elicited weights against.
+
+### 4.9 `rescore` writes files and nothing else
+
+D6 has two halves and the second is the one with teeth: scoring is a pure
+function over stored signals, **and history rows are never mutated by
+re-scoring**. A command that rewrote `risk_component_score` under `v2` would
+destroy the record of what the product actually told a user in March, and two
+research runs under different versions would overwrite each other.
+
+So `manage.py rescore --weights <version> --out <prefix>` opens no write
+transaction at all. It emits `_occurrences.csv`, `_repositories.csv`, and a
+`_manifest.json` recording the weights, the filters, the row counts, how many
+repository scores differ from what was stored, and a note stating in the
+artifact itself that nothing was written — so a panel found on disk a year
+later cannot be mistaken for something the product served. Both CSVs carry
+`stored_*` columns beside the recomputed ones, so the effect of a revision is
+readable without a join.
+
+It is management-command-only: no route, no serializer, never imported by
+request-handling code, the same discipline D13 puts around issue search.
+
+### 4.10 API additions to §5.5
+
+`GET /api/scans/{id}/` gains `topContributors` — at most three occurrences,
+worst first, each with its raw penalty and its rank-decayed points. Not a new
+route, so §5.5's surface is unchanged.
+
+It is computed server-side even though the detail page already holds every
+dependency row and could sum them itself. §5.3's rank decay *is* the
+definition of the score; a second implementation of it in TypeScript would be
+a second definition, free to drift from the one that produced the number on
+the badge beside it.
+
+`GET /api/scans/{id}/dependencies/` gains `cvssReducedConfidence` per row (see
+§4.2). Phase 5's breakdown panel needs it; it is exposed now because the
+column is written now.
+
+### 4.11 The strip states the whole equation, including the part it omits
+
+The contributors strip shows three rows. §5.3's decay makes the tail small but
+not zero, so on a repository with four penalised dependencies the three points
+shown summed to 76.59 while the badge had deducted 76.60. Correct, and one
+hundredth short of adding up — which is worse than showing no working at all,
+because a reader who checks and finds it off has learned the page cannot be
+trusted.
+
+The strip now closes the equation — `100 - 76.60 = 23.40` — and, where the top
+three do not account for all of it, names the remainder: "76.59 from the 3
+above, 0.01 from the rest". Found by seeding a repository and adding the
+numbers up by hand; no assertion in either suite was looking at the sum.
