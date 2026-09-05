@@ -33,6 +33,7 @@ from apps.repositories.models import Repository
 from .background import ScanInProgress, expire_stale, start_scan
 from .models import DependencyOccurrence, ScanRun, ScanStatus, TriggerType
 from .serializers import (
+    DependencyBreakdownSerializer,
     DependencyOccurrenceSerializer,
     ScanDetailSerializer,
     ScanStateSerializer,
@@ -228,3 +229,28 @@ class ScanDependenciesView(OwnedQuerySetMixin, generics.ListAPIView):
         return queryset.order_by(
             "is_unassessable", "manifest__manifest_path", "package__package_name"
         )
+
+
+class DependencyDetailView(OwnedQuerySetMixin, generics.RetrieveAPIView):
+    """`GET /api/dependencies/{id}/` — one occurrence and why it scored that.
+
+    The route §5.5 reserves for Phase 5. It takes the occurrence id directly
+    rather than hanging off the scan, because that is what the UI has: a table
+    row knows its own id and nothing about the route that fetched it.
+
+    Reaching the user takes four joins (`manifest__scan__repository__user`),
+    which is exactly why the mixin owns the rule instead of each view. A
+    foreign occurrence is not in the queryset at all, so it 404s without a
+    permission check anyone could forget to write (§11 BOLA).
+
+    `prefetch_related` on the advisories rather than a second query per row:
+    a package with a dozen CVEs is common, and the panel shows all of them.
+    """
+
+    owner_field = "manifest__scan__repository__user"
+    serializer_class = DependencyBreakdownSerializer
+    lookup_field = "dependency_id"
+    lookup_url_kwarg = "dependency_id"
+    queryset = DependencyOccurrence.objects.select_related(
+        "manifest", "manifest__scan", "package"
+    ).prefetch_related("vulnerabilities")

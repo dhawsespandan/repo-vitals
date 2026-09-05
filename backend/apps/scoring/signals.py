@@ -27,9 +27,9 @@ from django.db import transaction
 
 from apps.scanning.models import DependencyOccurrence, ScanRun
 
-from .engine import classify, is_flagged, roll_up, score_occurrence
-from .normalize import Signals
-from .weights import WeightSet, active_weights
+from .engine import classify, flag_reasons, is_flagged, roll_up, score_occurrence
+from .normalize import EPSS, STALENESS, Signals, raw_value
+from .weights import WeightsError, WeightSet, active_weights, load_weights
 
 logger = logging.getLogger(__name__)
 
@@ -139,6 +139,161 @@ def score_scan(scan: ScanRun, weights: WeightSet | None = None) -> ScanScore:
         assessed_count=len(penalties),
         flagged_count=flagged,
         unassessable_count=unassessable,
+    )
+
+
+#: Why a signal carries no term for one occurrence. Both are absences of
+#: measurement rather than measurements of zero (§5.2), and they are named
+#: separately because the panel says something different about each.
+OMISSION_REASONS: dict[str, str] = {
+    STALENESS: "no_publish_history",
+    EPSS: "not_measured",
+}
+
+
+@dataclass(frozen=True)
+class TermBreakdown:
+    """One signal's full chain, raw through to points (§10 Phase 5)."""
+
+    signal: str
+    #: The stored measurement: a bool, a count, a CVSS score, a day count, or
+    #: None where the signal exists but was not measurable.
+    raw: bool | int | Decimal | None
+    normalized: Decimal
+    #: The *effective* weight, after §5.2's redistribution.
+    weight: Decimal
+    points: Decimal
+
+
+@dataclass(frozen=True)
+class OmittedTerm:
+    """A signal that scored nothing because nothing was measured."""
+
+    signal: str
+    #: What the weights file gives this signal, before it was redistributed.
+    #: Shown so a reader who adds the panel's weights up and gets 1.00 out of
+    #: three terms can see where the fourth one's mass went.
+    declared_weight: Decimal
+    reason: str
+
+
+@dataclass(frozen=True)
+class OccurrenceBreakdown:
+    """Everything the why-flagged panel asserts about one occurrence.
+
+    `score` and `deduction` are recomputed here rather than read off the row,
+    which is the point: the panel's arithmetic and the number it explains come
+    from one evaluation of the formula, so they cannot drift apart. The stored
+    value travels alongside for exactly one purpose -- saying so when they
+    differ (see `matches_stored`).
+    """
+
+    version: str
+    ecosystem: str
+    score: Decimal
+    deduction: Decimal
+    terms: tuple[TermBreakdown, ...]
+    omitted: tuple[OmittedTerm, ...]
+    cvss_reduced_confidence: bool
+    flag_reasons: tuple[str, ...]
+    #: The bounds §5.4 owns, carried alongside the numbers they produced so a
+    #: renderer can say "3 of 10 CVEs" without hard-coding a cap the weights
+    #: file is free to move. Taken from the same `WeightSet` the arithmetic
+    #: used, so they cannot describe a different file than the one that scored.
+    cve_count_cap: int
+    staleness_cap_days: int
+    stale_flag_days: int
+    #: `risk_component_score` as the completion pipeline wrote it, or None for
+    #: a scan no formula has been applied to.
+    stored_score: Decimal | None
+    #: False when this recomputation disagrees with the stored column -- which
+    #: can only happen if the scan's weights file has changed on disk since it
+    #: ran. Surfaced rather than silently preferred either way: a panel whose
+    #: arithmetic contradicts the badge above it has to say so.
+    matches_stored: bool
+
+
+def weights_for_scan(scan: ScanRun) -> WeightSet:
+    """The weights that produced this scan's numbers, not the ones active now.
+
+    `active_weights()` answers "what would we score with today", which is the
+    right question when scoring and the wrong one when explaining. A
+    deployment that moves `WEIGHTS_VERSION` forward does not rescore the scans
+    already on disk (D6 -- history is never mutated), so explaining one of them
+    under the new file would produce a breakdown that does not add up to the
+    score on its own badge.
+
+    Falls back to the active file when the scan's version cannot be loaded --
+    a `v0_equal` retired from the repository, or a Phase 3 row still tagged
+    `unscored`. The fallback is visible downstream: the recomputed score will
+    not match the stored one, and `matches_stored` says so.
+    """
+    try:
+        return load_weights(scan.scoring_formula_version)
+    except WeightsError:
+        logger.warning(
+            "Scan %s is tagged weights '%s', which cannot be loaded; "
+            "explaining it under the active file instead.",
+            scan.pk,
+            scan.scoring_formula_version,
+        )
+        return active_weights()
+
+
+def breakdown_for(
+    occurrence: DependencyOccurrence, weights: WeightSet | None = None
+) -> OccurrenceBreakdown | None:
+    """§5.2 for one occurrence, opened up term by term.
+
+    None for an unassessable occurrence, which has no breakdown to give: §5.2
+    excludes it from scoring and from every denominator, so there is no
+    arithmetic behind it and inventing a row of zeroes would assert that we
+    looked and found nothing.
+    """
+    if occurrence.is_unassessable:
+        return None
+
+    weights = weights or weights_for_scan(occurrence.manifest.scan)
+    ecosystem = occurrence.manifest.ecosystem
+    signals = signals_for(occurrence)
+    result = score_occurrence(signals, weights, ecosystem)
+
+    declared = weights.for_ecosystem(ecosystem)
+    scored = {term.signal for term in result.terms}
+    omitted = tuple(
+        OmittedTerm(
+            signal=name,
+            declared_weight=declared[name],
+            reason=OMISSION_REASONS.get(name, "not_measured"),
+        )
+        for name in weights.signal_order
+        if name in declared and name not in scored
+    )
+
+    stored = occurrence.risk_component_score
+    return OccurrenceBreakdown(
+        version=weights.version,
+        ecosystem=ecosystem,
+        score=result.score,
+        deduction=result.penalty,
+        terms=tuple(
+            TermBreakdown(
+                signal=term.signal,
+                raw=raw_value(signals, term.signal),
+                normalized=term.normalized,
+                weight=term.weight,
+                points=term.points,
+            )
+            for term in result.terms
+        ),
+        omitted=omitted,
+        cvss_reduced_confidence=result.cvss_reduced_confidence,
+        flag_reasons=flag_reasons(signals, weights),
+        cve_count_cap=weights.normalization.cve_count_cap,
+        staleness_cap_days=weights.normalization.staleness_cap_days,
+        stale_flag_days=weights.stale_flag_days,
+        stored_score=stored,
+        matches_stored=stored is not None and Decimal(stored) == result.score,
     )
 
 

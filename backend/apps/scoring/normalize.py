@@ -145,6 +145,37 @@ def normalize(
     return Normalized(terms=terms, cvss_reduced_confidence=reduced_confidence)
 
 
+def raw_value(signals: Signals, name: str) -> bool | int | Decimal | None:
+    """The stored measurement one normalized term was computed from.
+
+    Phase 5's breakdown panel shows the whole chain -- raw, normalized, weight,
+    points -- and the first link is the number the scanner actually recorded.
+    Reading it back through the same `Signals` record the formula saw is what
+    makes the claim "every number on screen is traceable to a stored signal"
+    literally true rather than approximately: there is no second path from the
+    database to the panel that could show a different value than the one that
+    was scored.
+
+    `None` is a real answer for two of the five, and it means different things
+    in each. A null `staleness_days` is "no publish history", and the term is
+    absent from the score entirely. A null `cvss_max` beside a non-zero count
+    is "nobody scored this advisory", and the term is present at §5.2's 5.0
+    placeholder -- which is why the breakdown carries the reduced-confidence
+    flag alongside it.
+    """
+    if name == DEPRECATION:
+        return signals.is_deprecated
+    if name == SEVERITY:
+        return signals.cvss_max
+    if name == COUNT:
+        return signals.vulnerability_count
+    if name == STALENESS:
+        return signals.staleness_days
+    if name == EPSS:
+        return signals.epss
+    raise KeyError(f"'{name}' is not one of {(*SIGNAL_NAMES, EPSS)}.")
+
+
 def redistribute(
     weights: dict[str, Decimal], present: frozenset[str] | set[str]
 ) -> dict[str, Decimal]:

@@ -23,6 +23,7 @@ from apps.accounts.views import LogoutView, SessionView
 from apps.common.views import HealthView
 from apps.repositories.views import RepositoryDetailView, RepositoryListCreateView
 from apps.scanning.views import (
+    DependencyDetailView,
     RepositoryScanStatusView,
     RepositoryScanView,
     ScanDependenciesView,
@@ -66,5 +67,10 @@ urlpatterns = [
         "api/scans/<uuid:scan_id>/dependencies/",
         ScanDependenciesView.as_view(),
         name="scan-dependencies",
+    ),
+    path(
+        "api/dependencies/<uuid:dependency_id>/",
+        DependencyDetailView.as_view(),
+        name="dependency-detail",
     ),
 ]

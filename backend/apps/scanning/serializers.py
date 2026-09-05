@@ -15,12 +15,19 @@ queryset reaching them has already passed through `OwnedQuerySetMixin`.
 
 from __future__ import annotations
 
+from decimal import Decimal
+
 from django.db.models import Count, Q
 from rest_framework import serializers
 
-from apps.scoring.signals import top_contributors
+from apps.scoring.signals import OccurrenceBreakdown, breakdown_for, top_contributors
 
-from .models import DependencyOccurrence, ManifestFile, ScanRun
+from .models import (
+    DependencyOccurrence,
+    DependencyVulnerability,
+    ManifestFile,
+    ScanRun,
+)
 
 
 def annotated_scans():
@@ -251,3 +258,210 @@ class DependencyOccurrenceSerializer(serializers.ModelSerializer):
             "minor": occurrence.versions_behind_minor,
             "patch": occurrence.versions_behind_patch,
         }
+
+
+class DependencyVulnerabilitySerializer(serializers.ModelSerializer):
+    """One advisory, as OSV reported it (§5.1).
+
+    Nothing here is derived or reworded. `summary` is the advisory's own text,
+    `affectedRange` and `fixedVersion` are its own strings, and `sourceUrl` is
+    where a reader goes to check us. The panel's claim is that it is showing
+    what a public database says, so paraphrasing any of it would quietly turn
+    a citation into an assertion of our own.
+    """
+
+    id = serializers.UUIDField(source="vulnerability_id", read_only=True)
+    osvId = serializers.CharField(source="osv_id", read_only=True)
+    cveId = serializers.CharField(source="cve_id", read_only=True)
+    cvssScore = serializers.DecimalField(
+        source="cvss_score", max_digits=3, decimal_places=1, read_only=True
+    )
+    publishedAt = serializers.DateTimeField(source="published_at", read_only=True)
+    affectedRange = serializers.CharField(source="affected_range", read_only=True)
+    fixedVersion = serializers.CharField(source="fixed_version", read_only=True)
+    sourceUrl = serializers.CharField(source="source_url", read_only=True)
+
+    class Meta:
+        model = DependencyVulnerability
+        fields = [
+            "id",
+            "osvId",
+            "cveId",
+            "severity",
+            "cvssScore",
+            "publishedAt",
+            "summary",
+            "affectedRange",
+            "fixedVersion",
+            "sourceUrl",
+        ]
+        read_only_fields = fields
+
+
+#: How many decimals a normalized term and an effective weight are reported to.
+#:
+#: Four, and the choice is load-bearing. Only one of the four terms is ever
+#: inexact -- `min(days, 1095)/1095`; the other three are exact tenths -- and an
+#: effective weight is inexact only when §5.2's redistribution has divided one.
+#: At four decimals a reader multiplying the two columns and the factor of 100
+#: reproduces the `points` beside them, which is the whole claim this panel
+#: makes. Fewer would not; more would print noise as if it were measurement.
+#:
+#: The identity the page actually rests on is exact and independent of this:
+#: §4.1 quantizes every term to two decimals *before* summing, so the points
+#: column adds up to `deduction` to the hundredth, and `100 - deduction` is the
+#: score, with no tolerance needed anywhere.
+TERM_PLACES = Decimal("0.0001")
+
+
+def _term_decimal(value: Decimal) -> str:
+    return str(value.quantize(TERM_PLACES))
+
+
+class DependencyBreakdownSerializer(DependencyOccurrenceSerializer):
+    """`GET /api/dependencies/{id}/` — one occurrence, and why it scored that.
+
+    The table row plus three things it deliberately leaves out: the per-signal
+    arithmetic, the advisories behind the CVE count, and the manifest that
+    declared the dependency. All three are here rather than on the list route
+    because a table of 300 rows carrying nested advisories is a page-weight
+    problem for information nobody has asked to see yet.
+
+    **The arithmetic is recomputed, not read back.** §10 Phase 5 says so, and
+    the reason is D6: the score is a pure function of stored signals under a
+    named weights version, so the panel evaluates that function rather than
+    reading four numbers somebody stored earlier. There is no per-term column
+    in the schema to drift out of date, and a research rescore three years from
+    now runs the same code path over the same signals.
+    """
+
+    scanId = serializers.UUIDField(source="manifest.scan_id", read_only=True)
+    manifest = serializers.SerializerMethodField()
+    scoring = serializers.SerializerMethodField()
+    flagReasons = serializers.SerializerMethodField()
+    vulnerabilities = serializers.SerializerMethodField()
+
+    class Meta(DependencyOccurrenceSerializer.Meta):
+        fields = [
+            *DependencyOccurrenceSerializer.Meta.fields,
+            "scanId",
+            "manifest",
+            "scoring",
+            "flagReasons",
+            "vulnerabilities",
+        ]
+        read_only_fields = fields
+
+    def _breakdown(self, occurrence: DependencyOccurrence) -> OccurrenceBreakdown | None:
+        """Evaluated once per occurrence, not once per field that wants it.
+
+        Keyed by primary key rather than cached on the serializer: three fields
+        ask for it, and a single-slot cache would hand every row of a `many=True`
+        render the first row's arithmetic — correct today, because this
+        serializer only ever serves one object, and wrong the first time it
+        does not.
+        """
+        cache = getattr(self, "_breakdown_cache", None)
+        if cache is None:
+            cache = self._breakdown_cache = {}
+        if occurrence.pk not in cache:
+            cache[occurrence.pk] = breakdown_for(occurrence)
+        return cache[occurrence.pk]
+
+    def get_manifest(self, occurrence: DependencyOccurrence) -> dict:
+        """Where the dependency was declared, and whether a lockfile was read.
+
+        `lockfilePath` is the evidence behind the row's resolution tag. "From
+        lockfile" and "approximated against latest" are materially different
+        claims, and the second is only honest if a reader can see that there
+        was no lockfile to read.
+        """
+        manifest = occurrence.manifest
+        return {
+            "id": str(manifest.manifest_id),
+            "path": manifest.manifest_path,
+            "ecosystem": manifest.ecosystem,
+            "lockfilePath": manifest.lockfile_path,
+            "parserName": manifest.parser_name,
+        }
+
+    def get_flagReasons(self, occurrence: DependencyOccurrence) -> list[str]:
+        """Which clauses of §5.2's flag rule fired, as codes the UI phrases."""
+        breakdown = self._breakdown(occurrence)
+        return list(breakdown.flag_reasons) if breakdown else []
+
+    def get_vulnerabilities(self, occurrence: DependencyOccurrence) -> list[dict]:
+        """Worst first, so the advisory driving `cvssMax` is the one on top.
+
+        Ordered by CVSS descending with nulls last, then by OSV id -- fully
+        specified, because two advisories can share a score and an unstable
+        order would reshuffle the chips on every page load.
+        """
+        rows = sorted(
+            occurrence.vulnerabilities.all(),
+            key=lambda row: (
+                row.cvss_score is None,
+                -(row.cvss_score or Decimal(0)),
+                row.osv_id,
+            ),
+        )
+        return DependencyVulnerabilitySerializer(rows, many=True).data
+
+    def get_scoring(self, occurrence: DependencyOccurrence) -> dict | None:
+        """§5.2 opened up: raw, normalized, weight, points, per signal.
+
+        Null for an unassessable occurrence. That is the honest answer -- it
+        was excluded from the score and from every denominator, so there is no
+        arithmetic to show -- and `isUnassessable` with its reason is what the
+        panel renders instead.
+        """
+        breakdown = self._breakdown(occurrence)
+        if breakdown is None:
+            return None
+
+        return {
+            "weightsVersion": breakdown.version,
+            "ecosystem": breakdown.ecosystem,
+            "score": str(breakdown.score),
+            "deduction": str(breakdown.deduction),
+            #: False only when the weights file behind this scan's version has
+            #: changed since it ran. The panel says so rather than quietly
+            #: showing arithmetic that contradicts the badge above it.
+            "matchesStoredScore": breakdown.matches_stored,
+            "cvssReducedConfidence": breakdown.cvss_reduced_confidence,
+            # The caps travel with the numbers so the panel can say "3 of 10
+            # CVEs" without hard-coding a bound the weights file owns (§5.4).
+            "caps": {
+                "cveCount": breakdown.cve_count_cap,
+                "stalenessDays": breakdown.staleness_cap_days,
+                "staleFlagDays": breakdown.stale_flag_days,
+            },
+            "terms": [
+                {
+                    "signal": term.signal,
+                    "raw": _raw(term.raw),
+                    "normalized": _term_decimal(term.normalized),
+                    "weight": _term_decimal(term.weight),
+                    "points": str(term.points),
+                }
+                for term in breakdown.terms
+            ],
+            "omitted": [
+                {
+                    "signal": omitted.signal,
+                    "declaredWeight": _term_decimal(omitted.declared_weight),
+                    "reason": omitted.reason,
+                }
+                for omitted in breakdown.omitted
+            ],
+        }
+
+
+def _raw(value) -> bool | int | str | None:
+    """A stored signal, in the JSON type it actually is.
+
+    Decimals go out as strings like every other `NUMERIC` on this API; a CVSS
+    of 9.8 through a float would arrive as 9.800000000000001 in some browser
+    eventually, and this panel's entire argument is that its numbers are exact.
+    """
+    return str(value) if isinstance(value, Decimal) else value

@@ -126,6 +126,36 @@ def score_occurrence(
     )
 
 
+#: The three clauses of §5.2's flag rule, as the names the UI renders. They are
+#: codes rather than sentences for the same reason §5.6's outcomes are: the
+#: frontend branches on a code and phrases it, and a reworded sentence must not
+#: be able to change what the backend asserted.
+FLAG_DEPRECATED = "deprecated"
+FLAG_VULNERABLE = "vulnerable"
+FLAG_STALE = "stale"
+
+
+def flag_reasons(signals: Signals, weights: WeightSet) -> tuple[str, ...]:
+    """Which clauses of §5.2's flag rule fired, in the order the rule states.
+
+    The rule is a disjunction, so `is_flagged` only ever answers *that* a row
+    needs a human. Phase 5's panel has to answer *why*, and re-deriving the
+    three clauses in the serializer -- or worse, in TypeScript from the row's
+    other fields -- would be a second copy of the rule, free to disagree with
+    the boolean beside it the day `stale_flag_days` moves. So the disjunction
+    is evaluated once, here, and `is_flagged` is its emptiness test.
+    """
+    reasons: list[str] = []
+    if signals.is_deprecated:
+        reasons.append(FLAG_DEPRECATED)
+    if signals.vulnerability_count > 0:
+        reasons.append(FLAG_VULNERABLE)
+    days = signals.staleness_days
+    if days is not None and days >= weights.stale_flag_days:
+        reasons.append(FLAG_STALE)
+    return tuple(reasons)
+
+
 def is_flagged(signals: Signals, weights: WeightSet) -> bool:
     """§5.2's flag rule — fixed, and deliberately independent of the score.
 
@@ -136,12 +166,7 @@ def is_flagged(signals: Signals, weights: WeightSet) -> bool:
     reweighted — while still being deprecated. So the rule is a disjunction
     over the raw signals and nothing else.
     """
-    if signals.is_deprecated:
-        return True
-    if signals.vulnerability_count > 0:
-        return True
-    days = signals.staleness_days
-    return days is not None and days >= weights.stale_flag_days
+    return bool(flag_reasons(signals, weights))
 
 
 @dataclass(frozen=True)
