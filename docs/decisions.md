@@ -1276,3 +1276,203 @@ The strip now closes the equation — `100 - 76.60 = 23.40` — and, where the t
 three do not account for all of it, names the remainder: "76.59 from the 3
 above, 0.01 from the rest". Found by seeding a repository and adding the
 numbers up by hand; no assertion in either suite was looking at the sum.
+---
+
+## Phase 5 — Drill-down: why every flag exists
+
+### 5.1 The breakdown is recomputed, never stored
+
+§10 Phase 5 says the per-signal contributions are "recomputed live via the
+pure functions from stored signals", and the temptation to store them instead
+is real: four numbers per occurrence, written once at scan time, read back by
+a serializer that does no arithmetic at all.
+
+D6 is why not. The score is defined as a pure function of stored signals under
+a named weights version, so per-term columns would be a second copy of
+something already derivable — free to disagree with the `risk_component_score`
+beside them the first time anything touched one and not the other. There is
+also no schema for them: §5.1 has no per-term table, and inventing one would
+be adding derived state to a schema whose whole organising principle is that
+derived state is recomputed.
+
+The cost is one `score_occurrence` call per request, over four numbers already
+loaded on the row. The benefit is that a research rescore three years from now
+runs the same code path over the same signals and cannot get a different
+answer than the product showed.
+
+### 5.2 Four decimals on screen, and the identity that needs none
+
+The panel invites a reader to multiply `weight x normalized x 100` and find
+the points beside it. That only works if the two factors are printed to enough
+precision, and printing them to *too much* is its own failure — a normalized
+term reported to fifteen digits is noise presented as measurement.
+
+Only one of the four terms is ever inexact. Deprecation is 0 or 1, severity is
+a tenth, count is a tenth; `min(days, 1095)/1095` is the only non-terminating
+one, and an effective weight is inexact only when §5.2's redistribution has
+divided one. At four decimals the reader's own product lands within 0.005 of
+the printed points, which after §4.1's quantization is the same number.
+
+The identity the page actually rests on needs no precision argument at all.
+§4.1 quantizes each term *before* summing, so the points column adds to the
+deduction exactly, and `100 - deduction` is the score exactly. Both are printed
+rather than implied — §4.11 is the record of what happens when working does not
+visibly close — and `test_dependency_api.py` asserts them to the hundredth
+rather than to the ±0.1 §10 allows, because slack the pipeline does not need
+is slack a dropped term could hide in.
+
+### 5.3 A scan is explained under the weights that scored it
+
+`active_weights()` answers "what would we score with today". That is the right
+question when scoring and the wrong one when explaining.
+
+D6 says history is never mutated, so a deployment that moves `WEIGHTS_VERSION`
+forward does not rescore what is already on disk. Explaining one of those scans
+under the new file would print a breakdown that does not add up to the score on
+its own badge — the exact failure the panel exists to prevent, introduced by
+the panel. So `weights_for_scan()` loads `scan_runs.scoring_formula_version`,
+and the endpoint's arithmetic is the arithmetic that produced the stored
+number.
+
+Where that version's file cannot be loaded at all — retired from the
+repository, or a Phase 3 row still tagged `unscored` — it falls back to the
+active file and the response carries `matchesStoredScore: false`. The panel
+then says so in as many words rather than choosing silently between two
+numbers that disagree.
+
+### 5.4 The flag rule keeps one definition, and now names its clauses
+
+The panel has to answer *why* a row is flagged, not just that it is. The
+cheapest version reads the row's other fields in TypeScript and infers the
+clauses — and would be a second copy of §5.2's rule, free to disagree with the
+boolean beside it the day `stale_flag_days` moves.
+
+So `flag_reasons()` in `engine.py` evaluates the disjunction and returns the
+clauses that fired, and `is_flagged()` became its emptiness test. One
+evaluation, one definition, and the codes travel to the browser the way §5.6's
+outcome codes do: the frontend phrases them, and a reworded sentence cannot
+change what the backend asserted.
+
+### 5.5 The bar is arithmetic, not decoration
+
+The wireframe draws each signal as a bar. What the bar *measures* it does not
+say, and the two obvious readings differ sharply.
+
+Filling to the normalized value alone draws a saturated staleness term worth
+0.10 exactly as long as a saturated deprecation term worth 0.46 — visually
+equal, four times apart in what they cost. So each track is instead as wide as
+the signal's share of the formula (its effective weight) and the fill is how
+much of that share the signal actually spent. Filled lengths across the four
+rows are then in the same proportion as the points column, and the empty
+remainder is headroom the signal had and did not use.
+
+Measured on a real page during the browser check: fills of 356/212/25/77 px
+against points of 46.00/27.44/3.20/10.00 — one scale to within a pixel, so the
+drawing and the arithmetic say the same thing.
+
+### 5.6 `cleanCount` is measured, not subtracted
+
+The three tabs need three counts, and two were already annotated. The third is
+`dependencyCount - flaggedCount - unassessableCount` and was still added as its
+own query.
+
+Two reasons. The subtraction *assumes* the partition rather than measuring it,
+and the partition holds only because §5.2 never flags an unassessable
+occurrence — an invariant that lives in the backend and could move there
+without the browser hearing about it. And "not flagged" is not the same
+statement as "clean": subtracting flagged from the total would report "we
+checked this and it is fine" about a row nobody could check, which is §4.7's
+defect wearing a smaller hat. Each count now comes from the same predicate its
+tab filters on, so a tab's label and its contents are defined by one query.
+
+### 5.7 The tabs open on Flagged, and the empty state is built from what was assessed
+
+Flagged is the default even when nothing is flagged. Switching to All on a
+clean repository would put the answer in a different place depending on what
+the answer was, and consistency of placement is the lesson §3.13 was written
+about.
+
+That makes the empty Flagged state load-bearing. "No dependencies flagged"
+reads as "we checked everything and it is clean", which on a repository where
+nothing could be assessed is a conclusion the scan does not support — §4.7 one
+level down. So the sentence is assembled from `cleanCount` and
+`unassessableCount`: nothing assessable says so and offers the tab that lists
+the reasons; a clean repository with unassessable rows names them and states
+that the score does not cover them; and only a repository with nothing it
+could not check is told it is clear.
+
+Tab labels carry the server's counts while the rows come from what the browser
+loaded, so each tab says "Showing N of M" when those differ. A label reading
+"Flagged (12)" over ten rows would be §4.11 again.
+
+### 5.8 Why? sits on every row, not only the flagged ones
+
+The panel is named for flags and the control is not. Putting it only on flagged
+rows would make "no explanation available" and "nothing to explain" look
+identical, and the two most interesting questions a reader brings to this page
+are about the other kinds of row: why is this one *not* flagged, and what
+exactly could we not assess?
+
+An unassessable row answers with no arithmetic at all — `scoring: null`, and
+the sentence that §5.2 excluded it from the score and from every denominator,
+so it neither raised nor lowered the repository's number and nothing here is a
+claim that it is safe. A row of zeroes would have said the opposite.
+
+Rows open one at a time. Each open fetches its own breakdown, the panel is tall
+enough that two push the second off-screen, and an accordion bounds the request
+count.
+
+### 5.9 API additions to §5.5
+
+`GET /api/dependencies/{id}/` is the route §5.5 already reserved for this
+phase; it takes the occurrence id directly because that is what a table row
+has. It carries the list route's fields plus three things that route
+deliberately omits — the per-signal arithmetic, the nested advisories verbatim
+from OSV, and the manifest provenance including the lockfile path that makes
+"from lockfile" a checkable claim rather than an assertion.
+
+`GET /api/scans/{id}/` gains `cleanCount` (§5.6). Not a new route, so §5.5's
+surface is otherwise unchanged.
+
+The normalization caps travel inside the scoring block rather than being
+hard-coded in the browser. §5.4 owns those bounds, and a UI phrasing "3 of 10
+CVEs" from its own constant would go on saying 10 the day a weights file said
+15.
+
+### 5.10 The strip has to close over the clamp too
+
+Found on a seeded page during the browser check, by adding the numbers up.
+
+On a repository bad enough to bottom out, the contributors strip printed three
+values summing to 124.84 directly beside `100 - 100.00 = 0.00`, and said
+nothing. §5.3's roll-up clamps the score at 0, so the deduction the badge can
+report is capped at 100 while the decayed penalties carried on past it. §4.11
+had already fixed the case where the shown points fall *short* of the
+deduction; nobody had asked what happens when they exceed it.
+
+The strip now names the overshoot — "the 3 above come to 124.84 on their own; a
+score cannot fall below 0, so only 100.00 of it could be deducted". The test
+for the condition is exact rather than a heuristic: without the clamp, three of
+N decayed penalties can never exceed their own sum, so `shown > deducted` can
+only mean the clamp fired.
+
+Same pass, smaller: a signal that cost nothing rendered as `-0.00`, a minus
+sign in front of a quantity that was never subtracted. Zero points now print
+unsigned.
+
+### 5.11 Two requests per panel were React, and that was checked rather than assumed
+
+Counting requests in the browser — the habit §3.13 left behind — showed two
+GETs per panel opened where the jsdom test counted one.
+
+The suspicion was `React.StrictMode` in `main.tsx`, which mounts, unmounts and
+remounts every component in development so that effects missing a cleanup are
+exposed. Suspicion is not evidence, so it was removed from the running dev
+server and the count repeated: exactly one request per panel, restored
+afterwards. It is React's development double mount and it is not in the
+production build.
+
+What the test added for it pins is the part that is ours. Under a double mount
+the effect makes one request per mount and no more, and the `live` flag means
+the discarded mount's response cannot overwrite the surviving one's — which is
+the actual hazard, and the one a request count alone would not have shown.
