@@ -31,25 +31,48 @@ from .models import (
 
 
 def annotated_scans():
-    """`ScanRun` rows carrying the four counts every scan surface displays.
+    """`ScanRun` rows carrying the five counts every scan surface displays.
 
     Computed rather than stored: §5.1 puts these counts on `scan_history`, not
     on `scan_runs`, because a denormalized count on a live row is a second
     source of truth that can disagree with the rows it counts. `distinct=True`
     throughout — the counts share one join path, so without it each multiplies
     the others.
+
+    **The last three partition the dependency count**, and Phase 5's tabs are
+    the caller that depends on it: flagged + clean + unassessable is every
+    occurrence, exactly once. `clean_count` could therefore be a subtraction in
+    the browser — and is not, because the subtraction would be assuming the
+    partition rather than measuring it. Each count comes from the same
+    predicate its tab filters on (`?flagged=`, `?unassessable=`), so a tab's
+    label and its contents are defined by one query and cannot disagree.
     """
+    occurrences = "manifests__occurrences"
     return ScanRun.objects.annotate(
         manifest_count=Count("manifests", distinct=True),
-        dependency_count=Count("manifests__occurrences", distinct=True),
+        dependency_count=Count(occurrences, distinct=True),
         unassessable_count=Count(
-            "manifests__occurrences",
-            filter=Q(manifests__occurrences__is_unassessable=True),
+            occurrences,
+            filter=Q(**{f"{occurrences}__is_unassessable": True}),
             distinct=True,
         ),
         flagged_count=Count(
-            "manifests__occurrences",
-            filter=Q(manifests__occurrences__is_flagged=True),
+            occurrences,
+            filter=Q(**{f"{occurrences}__is_flagged": True}),
+            distinct=True,
+        ),
+        # Assessed and found to need nobody's attention — which is a different
+        # statement from "not flagged". An unassessable row is not flagged
+        # either (§5.2 never flags one), and counting it as clean would report
+        # "we checked this and it is fine" about a row we could not check.
+        clean_count=Count(
+            occurrences,
+            filter=Q(
+                **{
+                    f"{occurrences}__is_unassessable": False,
+                    f"{occurrences}__is_flagged": False,
+                }
+            ),
             distinct=True,
         ),
     )
@@ -84,6 +107,9 @@ class ScanStateSerializer(serializers.ModelSerializer):
     dependencyCount = serializers.IntegerField(source="dependency_count", default=0)
     unassessableCount = serializers.IntegerField(source="unassessable_count", default=0)
     flaggedCount = serializers.IntegerField(source="flagged_count", default=0)
+    #: Assessed and clean. Sits beside the other two rather than being derived
+    #: from them in the browser — see `annotated_scans`.
+    cleanCount = serializers.IntegerField(source="clean_count", default=0)
 
     class Meta:
         model = ScanRun
@@ -103,6 +129,7 @@ class ScanStateSerializer(serializers.ModelSerializer):
             "dependencyCount",
             "unassessableCount",
             "flaggedCount",
+            "cleanCount",
         ]
         read_only_fields = fields
 
