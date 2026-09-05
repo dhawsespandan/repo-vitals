@@ -3,10 +3,22 @@
 from __future__ import annotations
 
 import factory
+from django.utils import timezone
 
 from apps.accounts.crypto import encrypt_token
 from apps.accounts.models import User
 from apps.repositories.models import AccessLevel, Repository, Visibility
+from apps.scanning.models import (
+    DependencyGroup,
+    DependencyOccurrence,
+    Ecosystem,
+    ManifestFile,
+    Package,
+    Resolution,
+    ScanRun,
+    ScanStatus,
+    TriggerType,
+)
 
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -42,3 +54,62 @@ class RepositoryFactory(factory.django.DjangoModelFactory):
     default_branch = "main"
     visibility = Visibility.PUBLIC
     access_level = AccessLevel.OWNER
+
+
+class ScanRunFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ScanRun
+
+    repository = factory.SubFactory(RepositoryFactory)
+    triggered_by = factory.LazyAttribute(lambda o: o.repository.user)
+    trigger_type = TriggerType.MANUAL.value
+    status = ScanStatus.COMPLETED.value
+    scoring_formula_version = "v1"
+    completed_at = factory.LazyFunction(timezone.now)
+
+
+class ManifestFileFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ManifestFile
+
+    scan = factory.SubFactory(ScanRunFactory)
+    ecosystem = Ecosystem.NPM.value
+    manifest_path = "package.json"
+    lockfile_path = "package-lock.json"
+    parser_name = "npm/package.json@1"
+
+
+class PackageFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Package
+        django_get_or_create = ("ecosystem", "package_name")
+
+    ecosystem = Ecosystem.NPM.value
+    package_name = factory.Sequence(lambda n: f"package-{n}")
+
+
+class DependencyOccurrenceFactory(factory.django.DjangoModelFactory):
+    """A scanned occurrence with every signal at its benign value.
+
+    Every test that wants a *finding* overrides exactly the signals it is
+    testing, so what a case is about is visible in the override list rather
+    than buried in a wall of defaults. `staleness_days=0` rather than None on
+    purpose: None means "no publish history", which triggers §5.2's weight
+    redistribution and would silently change the arithmetic of any test that
+    did not mean to ask for it.
+    """
+
+    class Meta:
+        model = DependencyOccurrence
+
+    manifest = factory.SubFactory(ManifestFileFactory)
+    package = factory.SubFactory(PackageFactory)
+    dependency_group = DependencyGroup.RUNTIME.value
+    declared_specifier = "^1.0.0"
+    resolved_version = "1.0.0"
+    resolution = Resolution.LOCKFILE.value
+    latest_version = "1.0.0"
+    staleness_days = 0
+    is_deprecated = False
+    vulnerability_count = 0
+    cvss_max = None

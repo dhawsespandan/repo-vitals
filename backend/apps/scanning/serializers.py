@@ -18,6 +18,8 @@ from __future__ import annotations
 from django.db.models import Count, Q
 from rest_framework import serializers
 
+from apps.scoring.signals import top_contributors
+
 from .models import DependencyOccurrence, ManifestFile, ScanRun
 
 
@@ -56,8 +58,9 @@ class ScanStateSerializer(serializers.ModelSerializer):
     errorMessage = serializers.CharField(source="error_message", read_only=True)
     createdAt = serializers.DateTimeField(source="created_at", read_only=True)
 
-    # Phase 4 fills these; until then they are null and the UI shows no score
-    # rather than a placeholder number (see `RepoCard`'s hollow ring).
+    # Null until the scan completes and is scored. The UI shows no number
+    # rather than a placeholder while they are (see `ScoreBadge`'s hollow ring):
+    # a running scan has not measured anything yet, and a failed one never will.
     riskScore = serializers.DecimalField(
         source="risk_score", max_digits=5, decimal_places=2, read_only=True
     )
@@ -117,11 +120,18 @@ class ManifestSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+#: How many occurrences the detail page names as the reason for the score.
+#: §10 Phase 4 says three. It is a strip, not a list — the full accounting is
+#: the dependency table directly beneath it, and Phase 5's breakdown after that.
+TOP_CONTRIBUTOR_COUNT = 3
+
+
 class ScanDetailSerializer(ScanStateSerializer):
     manifests = serializers.SerializerMethodField()
+    topContributors = serializers.SerializerMethodField()
 
     class Meta(ScanStateSerializer.Meta):
-        fields = [*ScanStateSerializer.Meta.fields, "manifests"]
+        fields = [*ScanStateSerializer.Meta.fields, "manifests", "topContributors"]
         read_only_fields = fields
 
     def get_manifests(self, scan: ScanRun) -> list[dict]:
@@ -129,6 +139,32 @@ class ScanDetailSerializer(ScanStateSerializer):
             dependency_count=Count("occurrences")
         ).order_by("manifest_path")
         return ManifestSerializer(manifests, many=True).data
+
+    def get_topContributors(self, scan: ScanRun) -> list[dict]:
+        """Which occurrences cost this repository the most, and by how much.
+
+        Computed here rather than in the browser even though the detail page
+        already holds every dependency row. The roll-up's rank decay (§5.3) is
+        the definition of the score, and a second implementation of it in
+        TypeScript would be a second definition — free to drift from the one
+        that produced the number on the badge beside it.
+
+        Empty while the scan is unscored, and empty for a repository where
+        nothing deducted anything: a strip naming three packages that each cost
+        zero points would be an explanation of a score that needs none.
+        """
+        if scan.risk_score is None:
+            return []
+        return [
+            {
+                "dependencyId": contributor.dependency_id,
+                "packageName": contributor.package_name,
+                "manifestPath": contributor.manifest_path,
+                "penalty": str(contributor.penalty),
+                "points": str(contributor.points),
+            }
+            for contributor in top_contributors(scan, limit=TOP_CONTRIBUTOR_COUNT)
+        ]
 
 
 class DependencyOccurrenceSerializer(serializers.ModelSerializer):
@@ -172,6 +208,13 @@ class DependencyOccurrenceSerializer(serializers.ModelSerializer):
     riskComponentScore = serializers.DecimalField(
         source="risk_component_score", max_digits=5, decimal_places=2, read_only=True
     )
+    #: True when this row's severity term rests on §5.2's 5.0 placeholder
+    #: because the advisory carried no CVSS anywhere. Surfaced rather than
+    #: absorbed: the score is real, and the fact that part of it was assumed
+    #: travels with it.
+    cvssReducedConfidence = serializers.BooleanField(
+        source="cvss_reduced_confidence", read_only=True
+    )
 
     class Meta:
         model = DependencyOccurrence
@@ -198,6 +241,7 @@ class DependencyOccurrenceSerializer(serializers.ModelSerializer):
             "cvssMax",
             "isFlagged",
             "riskComponentScore",
+            "cvssReducedConfidence",
         ]
         read_only_fields = fields
 

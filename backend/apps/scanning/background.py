@@ -38,11 +38,15 @@ import threading
 from collections.abc import Callable
 from datetime import timedelta
 
-from django.conf import settings
-from django.db import close_old_connections
+from django.db import close_old_connections, transaction
 from django.utils import timezone
 
+from apps.research.history import record_scan
+from apps.scoring.signals import score_scan
+from apps.scoring.weights import active_weights
+
 from .models import ScanRun, ScanStatus, TriggerType
+from .retention import prune_prior_scans
 from .scanner import ScanFailed, run_scan
 
 logger = logging.getLogger(__name__)
@@ -152,7 +156,11 @@ def start_scan(repository, user, trigger_type: str = TriggerType.MANUAL.value) -
             triggered_by=user,
             trigger_type=trigger_type,
             status=ScanStatus.QUEUED.value,
-            scoring_formula_version=settings.WEIGHTS_VERSION,
+            # The version active when the row was created. `score_scan`
+            # re-stamps it with the file that actually produced the number, so
+            # a queued or failed scan still names a real formula and a
+            # completed one names the formula it was scored under.
+            scoring_formula_version=active_weights().version,
         )
 
     spawn(execute, scan.pk)
@@ -208,15 +216,56 @@ def execute(scan_id) -> None:
     except ScanFailed as failure:
         _finish(scan, ScanStatus.FAILED.value, str(failure))
         logger.info("Scan %s failed: %s", scan.pk, failure)
+        return
     except Exception:
         logger.exception("Scan %s raised an unexpected error.", scan.pk)
         _finish(scan, ScanStatus.FAILED.value, GENERIC_FAILURE)
-    else:
-        _finish(scan, ScanStatus.COMPLETED.value, None)
+        return
+
+    # The measurement succeeded. Stamped now so `scan_history.scanned_at` and
+    # `scan_runs.completed_at` name the same instant rather than two instants a
+    # few hundred milliseconds apart.
+    scan.completed_at = timezone.now()
+    try:
+        finalize(scan)
+    except Exception:
+        logger.exception("Scan %s could not be finalized.", scan.pk)
+        _finish(scan, ScanStatus.FAILED.value, GENERIC_FAILURE)
+        return
+
+    _finish(scan, ScanStatus.COMPLETED.value, None)
+
+
+def finalize(scan: ScanRun) -> None:
+    """Score the scan, record it permanently, then retire the one it replaces.
+
+    §10 Phase 4's completion pipeline, and the order is §5.7's: history rows
+    are written *before* the previous scan is deleted, so the permanent copy
+    exists before the disposable one is destroyed.
+
+    History and retention share one transaction; scoring gets its own. That
+    split is deliberate. Scoring only rewrites derived columns on rows that
+    already exist, so it is safe to have committed on its own — and if the
+    write-then-delete pair fails, the scan is marked failed with its signals
+    scored and its previous scan intact, which is a recoverable state. Rolling
+    the score back too would buy nothing and lose the diagnosis.
+
+    A failure anywhere here fails the scan. A scan that measured a repository
+    but could not score it has no number to show, and a completed row with a
+    null `risk_score` would render as a blank badge with no explanation — the
+    silent-miscount shape this product exists to avoid. Better a visible
+    failure with a Try again beside it.
+    """
+    score_scan(scan)
+    with transaction.atomic():
+        record_scan(scan)
+        prune_prior_scans(scan)
 
 
 def _finish(scan: ScanRun, status: str, error_message: str | None) -> None:
     scan.status = status
     scan.error_message = error_message
-    scan.completed_at = timezone.now()
+    # Preserved when the completion path already stamped it, so the timestamp
+    # in `scan_history` and the one on the scan row agree exactly.
+    scan.completed_at = scan.completed_at or timezone.now()
     scan.save(update_fields=["status", "error_message", "completed_at"])

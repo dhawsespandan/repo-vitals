@@ -621,3 +621,84 @@ class TestDependencyFilters:
             "clean-dep",
             "skipped-dep",
         }
+
+
+@pytest.mark.django_db
+class TestScoreOnTheScanSurface:
+    """What the score looks like once it leaves the engine (§10 Phase 4)."""
+
+    @pytest.fixture
+    def scored(self, user):
+        from apps.scanning.background import finalize
+        from tests.factories import DependencyOccurrenceFactory, ManifestFileFactory
+
+        manifest = ManifestFileFactory(
+            scan__repository__user=user, scan__status=ScanStatus.RUNNING.value
+        )
+        DependencyOccurrenceFactory(
+            manifest=manifest,
+            package__package_name="request",
+            is_deprecated=True,
+            staleness_days=4000,
+        )
+        DependencyOccurrenceFactory(
+            manifest=manifest, package__package_name="express", staleness_days=0
+        )
+        finalize(manifest.scan)
+        manifest.scan.status = ScanStatus.COMPLETED.value
+        manifest.scan.save(update_fields=["status"])
+        return manifest.scan
+
+    def test_the_detail_route_carries_the_score_and_its_top_contributors(
+        self, auth_client, scored
+    ):
+        response = auth_client.get(f"/api/scans/{scored.pk}/")
+
+        assert response.status_code == 200
+        assert response.data["riskScore"] == "44.00"
+        assert response.data["classification"] == "high_alert"
+        assert response.data["scoringFormulaVersion"] == "v1"
+        assert response.data["flaggedCount"] == 1
+        assert response.data["topContributors"] == [
+            {
+                "dependencyId": str(
+                    scored.manifests.get()
+                    .occurrences.get(package__package_name="request")
+                    .pk
+                ),
+                "packageName": "request",
+                "manifestPath": "package.json",
+                "penalty": "56.00",
+                "points": "56.00",
+            }
+        ]
+
+    def test_the_repository_list_carries_the_score_for_its_card(
+        self, auth_client, scored
+    ):
+        response = auth_client.get(LIST_URL)
+
+        card = response.data[0]["latestScan"]
+        assert card["riskScore"] == "44.00"
+        assert card["classification"] == "high_alert"
+
+    def test_an_unscored_scan_names_no_contributors(self, auth_client, user):
+        from tests.factories import ManifestFileFactory
+
+        running = ManifestFileFactory(
+            scan__repository__user=user, scan__status=ScanStatus.RUNNING.value
+        ).scan
+        running.risk_score = None
+        running.classification = None
+        running.save(update_fields=["risk_score", "classification"])
+
+        response = auth_client.get(f"/api/scans/{running.pk}/")
+
+        assert response.data["riskScore"] is None
+        assert response.data["topContributors"] == []
+
+    def test_the_flagged_filter_now_selects_the_flagged_rows(self, auth_client, scored):
+        response = auth_client.get(f"/api/scans/{scored.pk}/dependencies/?flagged=true")
+
+        assert [row["packageName"] for row in response.data["results"]] == ["request"]
+        assert response.data["results"][0]["riskComponentScore"] == "44.00"
