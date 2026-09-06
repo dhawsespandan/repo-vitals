@@ -607,6 +607,64 @@ anything before Phase 5 supplies a real route. It runs on a `setTimeout`
 rather than `requestAnimationFrame` because browsers throttle frame callbacks
 in undisplayed tabs, and this must not depend on frames ticking.
 
+### 2.6 GitHub's `size` is not evidence a repository is empty
+
+Found on prod during Phase 5's acceptance run, on the very first fixture
+repository built for it. A repo with `package.json` and `package-lock.json`
+committed on `main` was rejected at validation with §5.6's `repo_empty` —
+"This repository appears to be empty — there's nothing to scan."
+
+Querying the GitHub API for the same repository, six minutes after the push:
+
+```
+size:           0
+default_branch: 'main'
+pushed_at:      2026-09-06T05:24:06Z
+```
+
+The guard read:
+
+```python
+if not default_branch or repo.get("size") == 0:
+```
+
+with a comment claiming `size == 0` was "the same state reported differently,
+and catching it here saves a doomed tree call". That claim was the error.
+`size` is the repository's size in **kilobytes**, rounded, written by a
+background job that lags a push. A small repository reports 0 for a while
+after it is populated, and a very small one can report it indefinitely. It is
+a metric about bytes; emptiness is a statement about commits.
+
+Worse than being wrong, the shortcut made the rejection **unfalsifiable**: it
+skipped the tree call, so the one piece of evidence that would have settled the
+question was never fetched. The check saved a request by declining to look.
+
+The two authoritative signals were already in the function and are now the
+only ones consulted — a missing `default_branch`, and GitHub's own 409 on the
+tree call. Both keep the tests they already had, and neither moved.
+
+**The population this hurt is the one the product is demoed on.** A small, new
+repository created to try the thing out is exactly the case that reports
+`size: 0`; the older, larger repositories already registered had grown past a
+kilobyte and sailed through. Both outcomes sitting beyond this check —
+`ecosystem_unsupported` and a successful registration — were reachable only by
+getting past it, so a whole branch of §5.6's matrix was unreachable for the
+repositories most likely to be pointed at it first.
+
+**Why no test caught it.** Every §5.6 outcome has one, and they all pass. They
+are built on a recorded `repo_public.json` fixture — a real payload from a real
+repository, which is to say a repository large enough to report a non-zero
+size. The fixture encoded an incidental property of the recording as though it
+were a property of all repositories. The regression test now pins a populated
+repository reporting `size: 0`; run against the old guard it fails with the
+same `ApiError` the browser showed.
+
+This is a Phase 2 rule fixed during Phase 5, and `v0.2.0` is already tagged.
+Recorded here rather than under Phase 5 because §5.6 is where the rule lives —
+and it is the clearest argument in the project so far for §4.5's insistence
+that acceptance passes *on prod*: no amount of green CI on recorded fixtures
+was going to produce a repository whose size had not been computed yet.
+
 ---
 
 ## Phase 3 — Scanner core, npm adapter, background scans
