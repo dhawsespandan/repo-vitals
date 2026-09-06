@@ -166,6 +166,37 @@ class DependencyAdapter(ABC):
     def manifest_patterns(self) -> frozenset[str]:
         """Basenames that identify a manifest this adapter owns."""
 
+    def owns(self, path: str) -> bool:
+        """Whether `path` is a manifest this adapter parses.
+
+        Membership of `manifest_patterns()` by default, which is the whole rule
+        for an ecosystem whose manifest has one name. Overridden where the
+        manifests are a *family* rather than a list: PyPI's requirements files
+        are conventionally named, not standardised (`requirements.txt`,
+        `requirements-dev.txt`, `requirements/prod.txt`), and enumerating the
+        names people happen to use would miss the next one.
+        """
+        return path.rsplit("/", 1)[-1] in self.manifest_patterns()
+
+    def for_path(self, path: str) -> DependencyAdapter:
+        """The adapter instance that will parse `path`.
+
+        `self` by default. It exists because `parse` receives bytes and no
+        path, and one ecosystem cannot recover the path from the bytes: PyPI
+        has five manifest formats, and `setup.py` and `requirements.txt` are
+        genuinely indistinguishable by content -- `django==2.2` is a valid
+        Python expression as well as a valid requirement line, so a sniffer
+        would have to guess on exactly the files where guessing wrong changes
+        the answer.
+
+        Binding the path here, rather than adding a parameter to `parse`, is
+        what keeps the change inside this package: `scanner.py` goes on calling
+        `adapter.parse(manifest_bytes, lockfile_bytes)` on whatever
+        `adapter_for_path` handed it, unchanged (see
+        `docs/adapter_soundness.md`).
+        """
+        return self
+
     def lockfile_names(self, manifest_path: str) -> tuple[str, ...]:
         """Sibling filenames that may resolve this manifest's ranges.
 
@@ -274,12 +305,15 @@ def all_adapters() -> tuple[DependencyAdapter, ...]:
 
 
 def supported_manifest_names() -> frozenset[str]:
-    """Every manifest basename any registered adapter claims.
+    """Every fixed manifest basename any registered adapter claims.
 
     §5.6's `ecosystem_unsupported` check is exactly "does the tree contain one
-    of these", so pre-scan validation reads it from here rather than keeping a
-    second list that could drift out of step with what the scanner can
-    actually parse.
+    of these", so pre-scan validation reads it from the adapter registry rather
+    than keeping a second list that could drift out of step with what the
+    scanner can actually parse. It asks `adapter_for_path`, though, not this
+    function: an adapter may own names beyond its fixed set
+    (`DependencyAdapter.owns`), and only `adapter_for_path` consults that.
+    This one remains the canonical *list*, for documentation and diagnostics.
     """
     names: set[str] = set()
     for adapter in _ADAPTERS.values():
@@ -288,14 +322,18 @@ def supported_manifest_names() -> frozenset[str]:
 
 
 def adapter_for_path(path: str) -> DependencyAdapter | None:
-    """The adapter owning `path`, or None — including None for vendored paths."""
+    """The adapter owning `path`, or None — including None for vendored paths.
+
+    The returned adapter is bound to this path (`DependencyAdapter.for_path`),
+    so the caller may parse with it directly. For every ecosystem but PyPI that
+    is the registered singleton itself.
+    """
     segments = path.split("/")
     if VENDOR_DIRS.intersection(segments[:-1]):
         return None
-    basename = segments[-1]
     for adapter in _ADAPTERS.values():
-        if basename in adapter.manifest_patterns():
-            return adapter
+        if adapter.owns(path):
+            return adapter.for_path(path)
     return None
 
 
