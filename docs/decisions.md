@@ -1596,3 +1596,283 @@ would otherwise mark, and the acceptance run was performed against a
 deployment that includes both. `v0.5.0` therefore points at the fixed head
 rather than at the phase's last feature commit — the tag records what passed,
 not what was written first.
+
+
+## Phase 6 — PyPI adapter: the soundness proof
+
+The phase's headline evidence lives in `docs/adapter_soundness.md`: the diff,
+the touched-path list, and the untouched-core assertion. What follows is the
+reasoning behind the choices that diff does not explain on its face.
+
+### 6.1 The adapter is bound to a path, because the bytes cannot say which parser to use
+
+`DependencyAdapter.parse` receives manifest bytes and an optional lockfile, and
+no path. npm never needed one: it has a single manifest, `package.json`, so
+whatever arrives is that. PyPI has five formats and the signature does not say
+which arrived.
+
+Three ways out, and two of them are worse.
+
+**Sniff the content.** It nearly works. `pyproject.toml` and `Pipfile` are both
+TOML but never carry each other's tables, so those two separate cleanly. The
+pair that does not separate is `setup.py` and `requirements.txt`: `django==2.2`
+is a valid requirement line *and* a valid Python comparison expression, and
+`ast.parse` accepts a whole requirements file without complaint. Distinguishing
+them means looking for a `setup()` call — which is the very thing that may be
+dynamic, so the sniffer would guess on exactly the files where guessing wrong
+changes the answer.
+
+**Add a path parameter to `parse`.** Honest and obvious, and it changes the
+base class, `npm.py` *and* `scanner.py` — the one file §10 Phase 6's guardrail
+names first. The phase's whole claim would have been weaker for the sake of a
+slightly more legible signature.
+
+**Bind the path when the adapter is chosen.** `adapter_for_path` already
+resolves a path to an adapter; it now returns `adapter.for_path(path)`, which
+is `self` for every ecosystem but PyPI. `scanner.py` goes on calling
+`plan.adapter.parse(manifest_bytes, lockfile_bytes)`, unchanged and unaware.
+
+The third one also paid for something unrelated. A path-bound instance knows
+which of the five formats it is, so `parser_name` became
+`pypi/requirements@1`, `pypi/pyproject@1`, `pypi/setup_py@1` and so on.
+`manifest_files.parser_name` exists so a stored row says which code read it,
+and until now PyPI would have answered that question with one word for five
+different parsers.
+
+The second hook, `owns(path)`, is a smaller story with the same shape:
+requirements files are a *convention*, not a standard, and a fixed set of
+basenames could not express "`requirements.txt`, or `requirements-*.txt`, or
+anything `.txt` in a directory called `requirements`".
+
+### 6.2 `setup.py` is read with `ast` and never executed
+
+Every other manifest in this project is data. `setup.py` is a program, and it
+is the one file where the difference is not academic: it runs with the
+privileges of whoever installs the package, and a repository under scan is by
+definition somebody else's input. A scanner that imported it to read
+`install_requires` would be a remote code execution service with a dependency
+table attached.
+
+So it is parsed to a syntax tree and read for literals. `ast.literal_eval`
+builds constants, tuples, lists, dicts and sets and does nothing else — no
+call, no import, no attribute access — so a hostile `setup.py` gets exactly
+what a friendly one gets.
+
+Two refinements were worth making inside that constraint.
+
+**Module-level bindings are resolved.** `install_requires=REQUIREMENTS` with
+`REQUIREMENTS = [...]` above it is the commonest shape a real `setup.py` takes
+that is not a bare literal, and it is entirely static. Walking the top-level
+assignments and `literal_eval`-ing each one turns a large slice of the long
+tail from "unassessable" into a real answer, at no cost to the rule above.
+
+**The `setup()` call is found anywhere in the file**, not only at the top
+level, because a great many of these files put it inside
+`if __name__ == "__main__":`. A top-level-only search would have read those as
+declaring nothing at all — which is the silent-miscount failure, wearing a
+different hat.
+
+`test_a_setup_py_is_never_executed` is deliberately unsubtle about all of this:
+the fixture writes a file on import *and* on call, and the test asserts neither
+file exists.
+
+### 6.3 A dynamic argument becomes a row, and the row needs a name it cannot have
+
+§10 Phase 6 asks for `dynamic_setup_py` as an unassessable reason — "a
+documented gap, not a miscount". Writing it exposed a small collision with the
+schema: `dependency_occurrences.package_id` is NOT NULL, and a dynamic
+`install_requires` names no package. That is the entire point of the reason.
+
+Raising `ManifestParseError` instead was tempting and wrong. It would mark the
+manifest *skipped*, and the notice a skipped manifest produces says "too large,
+unreadable, or past the per-scan limit" — three explanations, none of them
+this one, for a file that was read perfectly well.
+
+So the row carries a synthetic name: `setup.py:<keyword>`. A colon is not legal
+in a PEP 503 project name, so the marker can never merge with a genuine
+`packages` row, and it can never be produced by the parser that produces every
+other name. The `declared_specifier` quotes the expression we declined to
+evaluate — `read_extra()` — rather than describing it, for the same reason a
+deprecation reason is stored verbatim: the reader is being told what their own
+file says.
+
+One consequence reaches the UI and had to be handled there. The generic
+sentence — "This dependency could not be assessed (`dynamic_setup_py`)" — is
+actively misleading, because there is no package called
+`setup.py:extras_require` and a reader taking the row at face value would go
+looking for one on PyPI. So the panel branches: it says that `setup.py` builds
+its list when the package is installed, that RepoVitals reads it without
+running it, and quotes the line.
+
+### 6.4 PyPI's deprecation is a composite, and its two halves are different claims
+
+D2 fixed this before the phase started; implementing it made the asymmetry
+concrete. npm has one field: a per-version `deprecated` string. PyPI has
+neither the field nor the concept, and two things that carry the sentence:
+
+* **A yanked release (PEP 592).** A claim about *this version* — the maintainer
+  withdrew it, usually within hours, and the reason often names the CVE or the
+  regression it was withdrawn for. Django 4.2.12's is *"Release files have
+  Windows end-of-line characters and are missing executable bits."*; requests
+  2.32.0's names a CVE mitigation conflict.
+* **The trove classifier `Development Status :: 7 - Inactive`.** A claim about
+  the *project* — nobody is maintaining any version of it. `oauth2client` has
+  said so since 2018.
+
+Either sets `is_deprecated`, because both mean "do not depend on this". The
+reason follows D2 literally (`yanked_reason or classifier`), so a yank with no
+stated reason falls through to the classifier where there is one and stays an
+empty string where there is not. That empty string is a real answer — the exact
+analogue of npm's `"deprecated": true`, which is a deprecation carrying no
+text rather than the absence of one — and it survives to the UI as such,
+because the information content of this text is S3's independent variable.
+
+Two smaller rulings inside the composite:
+
+**A release is yanked only when every one of its files is**, which is pip's
+own rule. A release with one withdrawn wheel and a good sdist is still
+installable, and flagging it would put a dependency in front of a reader that
+needs no action.
+
+**The yank is read from the resolved version, not the latest.** Django 4.2.12
+is yanked; 4.2.11 and the current release are not. Which one the lockfile
+installed is what decides — the same reading `NpmRegistryClient` gives the
+per-version `deprecated` field, and the same reason.
+
+### 6.5 One cap, no abbreviated fallback, and the measurement that decided it
+
+npm's registry client has two size caps and a fallback path, because a
+packument is unbounded: `vite` is 38.9 MB on the wire and 79.3 MB parsed
+(§3.14). The obvious move was to mirror that structure for PyPI. Measuring
+first said not to.
+
+PyPI documents, recorded 2026-09-06:
+
+| package | wire | parsed peak | releases |
+|---|---|---|---|
+| numpy | 3.45 MB | 14.90 MB | 150 |
+| boto3 | 3.12 MB | 10.60 MB | 2,113 |
+| setuptools | 1.12 MB | ~4 MB | 625 |
+| django | 0.59 MB | 2.02 MB | 442 |
+| requests | 0.18 MB | 0.80 MB | 163 |
+
+The parsed-to-wire ratio is npm's, 3 to 4x. The absolute sizes are an order of
+magnitude smaller, and the reason is structural rather than incidental: PyPI
+publishes release *files* carrying a handful of scalars each, where an npm
+packument embeds every version's entire `package.json`. Even boto3, with
+2,113 releases, is a third of what `vite` costs.
+
+So one 8 MiB cap covers the ecosystem with headroom, and a second fetch path
+existing only to be untested was not worth adding. Past the cap the row is
+recorded `registry_unavailable` — unassessable, never clean — and the rest of
+the scan proceeds. `scanner.py` already fails the whole scan only when *every*
+lookup came back that way, which is the right line: one giant package is a fact
+about that package, and a registry answering nothing is a fact about the
+afternoon.
+
+### 6.6 Names are normalized, specifiers are not
+
+PEP 503 says `Zope.Interface`, `zope-interface` and `zope_interface` are one
+project. Three systems in this application have to agree on which spelling that
+is — `packages` is `UNIQUE(ecosystem, package_name)`, the in-run registry cache
+is keyed by name, and OSV answers only to the normalized form — so the
+normalization happens once, in the parser, and everything downstream sees one
+name.
+
+Left un-normalized, `Django` in one manifest and `django` in another would be
+two `packages` rows, two registry lookups against the user's own bandwidth, two
+independent sets of advisories, and two independent terms in §5.3's roll-up for
+one dependency. The last of those is the expensive one: the roll-up counts
+distinct occurrences on purpose, so a spelling difference would inflate a
+repository's penalty.
+
+The declared specifier is deliberately *not* normalized. It is what the reader
+will see in their own file, and `== 2.2` with a space is what they wrote.
+
+### 6.7 A sentence that passed every assertion and read wrong on the page
+
+The `dynamic_setup_py` panel text is assembled from two halves: a branch that
+explains the specific situation, and a shared tail that states the consequence
+(§5.2 excluded this row from the score). The branch was written as two
+sentences, the second beginning "So the packages...", and the tail begins "so
+§5.2 excluded it". The page rendered:
+
+> ...RepoVitals reads setup.py without running it**. So** the packages behind
+> this line were never named to us**, so** §5.2 excluded it from the score...
+
+-- two connectives doing one job, in the middle of the one sentence on the
+page whose whole purpose is to be read carefully.
+
+Every assertion passed. They checked that the notice contained "without running
+it", that it contained the quoted expression, and that the shared half still
+said "excluded it from the score" — three substrings, all present, in a
+sentence no one had read end to end. This is the sixth defect in this project
+of exactly that family (§2.5, §2.6, §4.7, §4.11, §5.10, §5.12): correct code,
+worded or placed so the reader cannot use it, invisible to every test that
+asserts a mechanism.
+
+The regression test now asserts the **whole** `textContent` of the notice
+rather than substrings of it, which is the only form of the assertion that
+could have failed. Run against the previous build, it does.
+
+The general rule this adds to the two already in `MEMORY.md`: **when a
+user-facing sentence is assembled from more than one source, assert the
+finished sentence.** Substring assertions cannot see a join, and a join is
+where assembled prose breaks.
+
+### 6.8 What the phase found in the code it was forbidden to change: nothing
+
+The guardrail exists to make the soundness claim falsifiable, so the honest
+report is what it cost. It cost nothing — no point in the phase was there a
+change to `scanner.py`, `scoring/`, `models.py` or the API that would have been
+the right fix and had to be worked around instead.
+
+Three things carried the phase, and all three were decisions made earlier
+against a PyPI that did not exist yet:
+
+* **The schema had `ecosystem TEXT CHECK IN ('npm','pypi')` from Phase 3**
+  (D1), so the phase needed no migration at all.
+* **Validation asked `adapter_for_path` rather than keeping its own filename
+  list** (§2.3), so it learned five new manifest formats without a line of its
+  own.
+* **Both weights files already carried a `pypi:` vector** (§4.8), and
+  `for_ecosystem` raises rather than falling back to npm's — so a missing one
+  would have been a loud failure rather than a silent mis-score. It was not
+  missing.
+
+The mixed-repository case is where this is most visible: one scan, one
+rank-decayed roll-up, npm rows scored under `{dep .46, sev .28, cnt .16,
+stl .10}` and PyPI rows under `{dep .32, sev .35, cnt .16, stl .17}`, with no
+branch anywhere on an ecosystem name. `signals.py` reads
+`occurrence.manifest.ecosystem` and hands it to `weights.for_ecosystem`; that
+is Phase 4 code, over a Phase 3 schema, running against an ecosystem neither of
+them had ever seen.
+
+### 6.9 Documented gaps
+
+Named here rather than discovered later. Each is a case where an honest "we did
+not read this" was chosen over a guess:
+
+* **`uv.lock` and `pdm.lock` are not read.** `npm.py`'s reasoning about yarn
+  and pnpm applies unchanged (§3.4): a half-understood lockfile parse is worse
+  than an honest range approximation, because it produces confident wrong
+  versions rather than visibly weaker ones. A `pyproject.toml` managed by
+  either tool resolves as `range_latest_approx`, which the UI labels
+  "approximated".
+* **PEP 735 `[dependency-groups]` is not read.** Newer than the two schemas the
+  plan names, and rarer; the same treatment as the two lockfiles above.
+* **A `setup.py` whose `install_requires` cannot be resolved from literals or
+  module-level bindings** yields one `dynamic_setup_py` row per keyword rather
+  than a package list. §6.3.
+* **A repository declaring the same dependency in both `requirements.txt` and
+  `pyproject.toml` counts it twice.** This is §5.1's rule, not an oversight —
+  duplicates across manifests are independent rows, because each is an
+  independent installation needing its own remediation — but it lands harder on
+  Python than on npm, where two manifests declaring one package usually means
+  two real installs. A reader seeing `django` twice on a Python repository is
+  seeing two declarations, and the manifest path on each row says which.
+* **`-e .` and bare local paths are skipped, not recorded.** A project
+  installing itself is not one of its own dependencies. An editable install
+  that *does* name a distribution (`-e git+https://…#egg=widget`) is recorded
+  unassessable with its reason, like every other reference no registry can
+  describe.
