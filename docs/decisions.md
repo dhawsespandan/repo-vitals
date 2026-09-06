@@ -1068,6 +1068,72 @@ rediscovered.
 
 ---
 
+### 3.19 "Hasn't been scanned yet", on a repository that had
+
+Found on prod during the Phase 6 acceptance run, in Phase 3 code. Not a
+Phase 6 regression -- this phase added a chip and one boolean to
+`RepoDetail.tsx` -- but a real defect, measured and fixed before `v0.6.0` on
+§2.6's precedent.
+
+The detail page makes two calls in sequence. `GET /api/repositories/{id}/`
+answers first and carries `latestScan` and `latestCompletedScanId`;
+`GET /api/scans/{id}/` answers second and carries the results. Everything
+between them is a state the page has to render, and it rendered this:
+
+```
+0ms      (blank)
+2985ms   "Loading this repository..."
+5976ms   "This repository hasn't been scanned yet."   <- + Run the first scan
+8982ms   the real page
+```
+
+Three seconds, timed on Render's free tier against `rv-accept-pypi`. During
+them the header pill read **Scanned**, the metric row read **LAST SCAN
+never**, and the body offered a primary button to run a first scan -- on a
+repository whose completed scan the page was, at that moment, downloading.
+
+**Two lines, one mistake made twice.** `lastScanLabel` fell through to
+`return "never"` whenever the scan *detail* was null, and the render branch
+tested `!scan` without asking whether a completed scan existed. Both conflated
+"we have not measured this repository" with "we have not finished loading what
+we measured". The value that separates them was already in state:
+`latestCompletedScanId` non-null with `scan === null` means loading, not
+absent.
+
+**Why it mattered more than a wrong word.** The button under the sentence
+starts a scan, and §5.7's retention deletes the scan it replaces on
+completion. Today that costs a redundant scan and some free-tier quota. From
+Phase 7 the cascade also destroys the cached `combined` report for that scan --
+an LLM call already paid for -- which is exactly the destruction Phase 9's
+rescan-confirmation guard exists to prevent, reached here by a button the user
+was invited to press.
+
+The fix says "Loading this scan's results..." and reports the last scan as
+`—`. The em dash rather than a word, because the four metrics beside it
+already say `—` while the detail loads; a fifth reading "never" is not a
+quieter version of the same statement but a different and false one. That is
+§2.5's rule about placement, applied to a row of five siblings.
+
+**This is the second time this exact sentence has been wrong.** Phase 3 found
+"Last scan: never" beside a failure message from four minutes ago, and fixed
+it by reading the metric from the newest scan rather than the completed one.
+That fix was right and incomplete: it never asked what the function should say
+when there *is* a completed scan whose detail has not arrived. A null check
+was left returning the same false answer by a different route.
+
+**The reason no test saw it.** `stubFetch` answered both calls in the same
+tick, so the window did not exist in jsdom -- not "was not asserted", *did not
+exist*. Every state between the two responses was unreachable by construction.
+The harness now takes `scanDelayMs`, the three regression tests run inside the
+window, and all three fail against the previous build.
+
+The general lesson, and it is not about this page: **a test harness that
+answers every request instantly deletes the states a real one produces.**
+Sequential fetches have a gap; a mock without latency has none, and whatever
+the product renders in that gap is untested by construction rather than by
+oversight. Anywhere the UI makes call B only after call A resolves, the
+interval is a state, and it needs a slow mock to exist at all.
+
 ## Phase 4 — Scoring engine + weights v1
 
 ### 4.1 Rounding is part of the formula, not of the display

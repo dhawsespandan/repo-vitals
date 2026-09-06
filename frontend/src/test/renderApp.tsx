@@ -241,6 +241,16 @@ interface StubOptions {
   scanStatus?: () => { scan: ScanState | null; latestCompletedScanId: string | null };
   /** Answer to GET /api/scans/{id}/. */
   scan?: ScanDetail;
+  /**
+   * Hold `GET /api/scans/{id}/` for this long before answering.
+   *
+   * The detail page makes two calls in sequence — the repository row, then
+   * the scan behind it — and everything it renders between them was
+   * untestable while the second resolved as fast as the first. That gap is
+   * where §3.19 lived: a real backend takes seconds over it, and the page
+   * spent them claiming the repository had never been scanned.
+   */
+  scanDelayMs?: number;
   /** Rows returned by GET /api/scans/{id}/dependencies/, paginated like the API. */
   dependencies?: DependencyOccurrence[];
   /**
@@ -308,6 +318,7 @@ export function stubFetch({
   repository: detailRow,
   scanStatus,
   scan,
+  scanDelayMs = 0,
   dependencies = [],
   breakdowns = {},
   pageSize = 50,
@@ -383,6 +394,9 @@ export function stubFetch({
       );
     }
     if (url.includes("/api/scans/") && method === "GET") {
+      if (scanDelayMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, scanDelayMs));
+      }
       return scan
         ? json(scan, 200)
         : json({ code: "not_found", message: "no" }, 404);

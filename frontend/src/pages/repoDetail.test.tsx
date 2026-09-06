@@ -748,3 +748,98 @@ describe("the score on the detail page", () => {
     expect(flagged.parentElement).toHaveTextContent("2");
   });
 });
+
+
+/**
+ * The window between the two calls the detail page makes.
+ *
+ * `getRepository` answers first and says a completed scan exists;
+ * `getScan` answers second and says what it found. Everything rendered in
+ * between was never asserted, because the harness used to answer both in the
+ * same tick. A real backend takes seconds over it — measured at ~3.0 s on
+ * Render's free tier during the Phase 6 acceptance run — and the page spent
+ * them stating the opposite of what the header pill beside it said.
+ *
+ * `docs/decisions.md` §3.19.
+ */
+describe("while the scan results are still loading", () => {
+  function scannedButHeld() {
+    stubFetch({
+      session: SIGNED_IN,
+      repository: repository({
+        latestScan: scanState(),
+        latestCompletedScanId: SCAN_ID,
+      }),
+      scanStatus: () => ({
+        scan: scanState(),
+        latestCompletedScanId: SCAN_ID,
+      }),
+      scan: ROWS_SCAN,
+      dependencies: ROWS,
+      // Long enough that every assertion below runs inside the window.
+      scanDelayMs: 4000,
+    });
+  }
+
+  it("does not claim the repository has never been scanned", async () => {
+    scannedButHeld();
+
+    renderApp(DETAIL_ROUTE);
+
+    expect(await screen.findByTestId("results-loading")).toBeInTheDocument();
+    expect(
+      screen.queryByText(/hasn't been scanned yet/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not offer a first-scan button over results that already exist", async () => {
+    /**
+     * The consequence, not the wording. Pressing it starts a rescan nobody
+     * asked for, and §5.7's cascade deletes the scan it replaces — which from
+     * Phase 7 means discarding a generated report that cost an LLM call.
+     */
+    scannedButHeld();
+
+    renderApp(DETAIL_ROUTE);
+
+    await screen.findByTestId("results-loading");
+    expect(screen.queryByTestId("first-scan")).not.toBeInTheDocument();
+  });
+
+  it("says the last scan is unknown, not that there was none", async () => {
+    /**
+     * Consistency of placement: the four metrics beside this one already read
+     * "—" while the detail loads. A fifth reading "never" is not a quieter
+     * version of the same statement, it is a different and false one — and it
+     * sat directly under a pill reading "Scanned".
+     */
+    scannedButHeld();
+
+    renderApp(DETAIL_ROUTE);
+
+    await screen.findByTestId("results-loading");
+    const metric = screen.getByText("Last scan").parentElement;
+    expect(metric).not.toHaveTextContent("never");
+    expect(metric).toHaveTextContent("—");
+  });
+
+  it("still offers the first scan when there genuinely has not been one", async () => {
+    /**
+     * The other direction. The fix distinguishes "no completed scan" from
+     * "completed scan still loading", so it has to keep answering the first
+     * one the way it always did.
+     */
+    stubFetch({
+      session: SIGNED_IN,
+      repository: repository({ latestScan: null, latestCompletedScanId: null }),
+      scanStatus: () => ({ scan: null, latestCompletedScanId: null }),
+    });
+
+    renderApp(DETAIL_ROUTE);
+
+    expect(await screen.findByTestId("first-scan")).toBeInTheDocument();
+    expect(screen.getByText("Last scan").parentElement).toHaveTextContent(
+      "never",
+    );
+  });
+});

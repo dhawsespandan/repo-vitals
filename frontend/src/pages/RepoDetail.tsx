@@ -301,7 +301,10 @@ export function RepoDetail() {
                   "Last scan: never" beside a failure message from four
                   minutes ago is not a true sentence, and it was the first
                   thing a real page made obvious. */}
-              <Metric label="Last scan" value={lastScanLabel(current, scan)} />
+              <Metric
+                label="Last scan"
+                value={lastScanLabel(current, scan, completedScanId !== null)}
+              />
             </div>
           </div>
 
@@ -438,7 +441,23 @@ export function RepoDetail() {
           </p>
         </Panel>
       ) : !scan ? (
-        current?.status === "failed" ? null : (
+        completedScanId ? (
+          /* Results exist and are on their way. This branch is the difference
+             between "we have not measured this repository" and "we have not
+             finished loading what we measured", and the page used to say the
+             first while meaning the second — beside a pill reading "Scanned"
+             (§3.19). The button that sat here started a rescan nobody asked
+             for, and §5.7's cascade destroys what it replaces. */
+          <Panel>
+            <p
+              style={{ margin: 0, fontSize: 13.5 }}
+              className="text-muted"
+              data-testid="results-loading"
+            >
+              Loading this scan&apos;s results…
+            </p>
+          </Panel>
+        ) : current?.status === "failed" ? null : (
           <Panel>
             <p style={{ margin: "0 0 12px", fontSize: 13.5 }}>
               This repository hasn&apos;t been scanned yet.
@@ -733,6 +752,7 @@ function EmptyTab({
 function lastScanLabel(
   current: ScanState | null,
   results: ScanDetail | null,
+  hasCompletedScan: boolean,
 ): string {
   if (current && (current.status === "queued" || current.status === "running")) {
     return "in progress";
@@ -741,6 +761,12 @@ function lastScanLabel(
     return `failed ${relativeTime(current.completedAt ?? current.createdAt)}`;
   }
   if (results) return relativeTime(results.completedAt);
+  // A completed scan exists and its detail is still in flight. "never" would
+  // be a false statement about the repository where the honest answer is
+  // "we do not know yet" — and the four metrics beside this one already say
+  // that with an em dash, so saying it differently here reads as a
+  // measurement rather than as a gap (`docs/decisions.md` §3.19).
+  if (hasCompletedScan) return "—";
   return "never";
 }
 
