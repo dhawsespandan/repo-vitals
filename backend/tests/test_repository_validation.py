@@ -219,9 +219,11 @@ class TestOutcomeMatrix:
 
         assert caught.value.code == "ecosystem_unsupported"
         assert caught.value.status_code == 422
+        # §5.6 specifies this sentence changes with the second ecosystem, and
+        # Phase 6 is when it did.
         assert caught.value.message == (
             "This repository's dependency ecosystem isn't supported yet. "
-            "We currently support Node.js/npm projects."
+            "We currently support Node.js/npm and Python/PyPI projects."
         )
 
     @responses.activate
@@ -456,3 +458,66 @@ class TestUpstreamFailures:
 
         assert caught.value.code == "repo_inaccessible"
         assert len(responses.calls) == 0
+
+
+@pytest.mark.django_db
+class TestPypiEcosystemAdmission:
+    """§5.6's manifest-presence check, now that a second adapter is registered.
+
+    The check itself did not change in Phase 6 -- it asks `adapter_for_path`,
+    which asks each registered adapter. What changed is what the answer is for
+    a Python repository, and the sentence a repository is rejected with.
+    """
+
+    @responses.activate
+    def test_a_python_repository_now_registers(self, owner_user):
+        """The same tree that was `ecosystem_unsupported` in Phase 5."""
+        mock_github(repo_payload(default_branch="main"), tree="tree_pypi_repo.json")
+
+        described = validate_and_describe(owner_user, "github.com/expressjs/express")
+
+        assert described.default_branch == "main"
+
+    @responses.activate
+    def test_a_repository_with_both_ecosystems_registers(self, owner_user):
+        mock_github(repo_payload(default_branch="main"), tree="tree_mixed_ecosystem.json")
+
+        assert validate_and_describe(owner_user, "github.com/expressjs/express")
+
+    @responses.activate
+    def test_a_docs_only_repository_is_still_rejected(self, owner_user):
+        """The rule that matters most about the requirements-file family: a
+        `.txt` anywhere in a tree must not make a documentation repository look
+        like a Python project. `tree_no_manifest.json` is that repository.
+        """
+        mock_github(repo_payload(), tree="tree_no_manifest.json")
+
+        with pytest.raises(ApiError) as caught:
+            validate_and_describe(owner_user, "github.com/expressjs/express")
+
+        assert caught.value.code == "ecosystem_unsupported"
+
+    @responses.activate
+    def test_a_committed_virtualenv_does_not_make_a_python_project(self, owner_user):
+        """§2.3's rule, in PyPI's spelling: a vendored `site-packages` is other
+        people's code. A repository whose only Python manifest is inside one
+        has nothing of its own to scan."""
+        tree = {
+            "sha": "t",
+            "truncated": False,
+            "tree": [
+                {
+                    "path": ".venv/lib/site-packages/six/setup.py",
+                    "type": "blob",
+                    "sha": "vendored",
+                    "size": 400,
+                },
+                {"path": "README.md", "type": "blob", "sha": "readme", "size": 10},
+            ],
+        }
+        mock_github(repo_payload(), tree=tree)
+
+        with pytest.raises(ApiError) as caught:
+            validate_and_describe(owner_user, "github.com/expressjs/express")
+
+        assert caught.value.code == "ecosystem_unsupported"

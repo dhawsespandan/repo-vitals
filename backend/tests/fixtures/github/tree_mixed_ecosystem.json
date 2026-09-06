@@ -1,0 +1,40 @@
+{
+  "sha": "treesha",
+  "truncated": false,
+  "tree": [
+    {
+      "path": "README.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "readme",
+      "size": 900
+    },
+    {
+      "path": "package.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "root-manifest",
+      "size": 612
+    },
+    {
+      "path": "package-lock.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "root-lock",
+      "size": 48211
+    },
+    {
+      "path": "api",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "apidir"
+    },
+    {
+      "path": "api/requirements.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "py-requirements",
+      "size": 520
+    }
+  ]
+}

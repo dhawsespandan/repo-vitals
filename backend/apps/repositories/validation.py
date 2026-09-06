@@ -61,15 +61,18 @@ _SSH_RE = re.compile(r"^git@github\.com:(?P<path>.+)$", re.IGNORECASE)
 # (Phase 3, `docs/decisions.md` §2.3): validation's question — "is there
 # anything here we could scan?" — must be answered by the same list the
 # scanner will actually parse, or the two drift and a repository registers
-# only to find nothing. Phase 6 adds the PyPI filenames by registering an
-# adapter, at which point `ECOSYSTEM_SUPPORT_MESSAGE` below changes with it,
-# as §5.6 specifies.
+# only to find nothing. Phase 6 added the PyPI filenames by registering an
+# adapter and changed nothing here but the sentence below, which §5.6 specifies
+# changes with the second ecosystem.
 #
-# Matching is on the basename anywhere in the tree: root-only checks silently
-# miss split-by-functionality repositories (§5.6).
+# Matching is on the filename anywhere in the tree: root-only checks silently
+# miss split-by-functionality repositories (§5.6). `adapter_for_path` is the
+# authority rather than a list of names, because an adapter may own a *family*
+# of filenames — PyPI's `requirements-dev.txt` and `requirements/prod.txt` are
+# conventions, not standards, and only the adapter knows the rule.
 ECOSYSTEM_SUPPORT_MESSAGE = (
     "This repository's dependency ecosystem isn't supported yet. "
-    "We currently support Node.js/npm projects."
+    "We currently support Node.js/npm and Python/PyPI projects."
 )
 
 

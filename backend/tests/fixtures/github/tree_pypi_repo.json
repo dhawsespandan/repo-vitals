@@ -1,0 +1,88 @@
+{
+  "sha": "treesha",
+  "truncated": false,
+  "tree": [
+    {
+      "path": "README.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "readme",
+      "size": 1400
+    },
+    {
+      "path": "requirements.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "py-requirements",
+      "size": 520
+    },
+    {
+      "path": "requirements-dev.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "py-requirements-dev",
+      "size": 96
+    },
+    {
+      "path": "Pipfile",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "py-pipfile",
+      "size": 330
+    },
+    {
+      "path": "Pipfile.lock",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "py-pipfile-lock",
+      "size": 1180
+    },
+    {
+      "path": "service",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "servicedir"
+    },
+    {
+      "path": "service/pyproject.toml",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "py-pyproject",
+      "size": 690
+    },
+    {
+      "path": "service/poetry.lock",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "py-poetry-lock",
+      "size": 1520
+    },
+    {
+      "path": "legacy",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "legacydir"
+    },
+    {
+      "path": "legacy/setup.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "py-setup",
+      "size": 740
+    },
+    {
+      "path": ".venv/lib/site-packages/oauth2client/setup.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "py-setup",
+      "size": 740
+    },
+    {
+      "path": "docs/notes.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "notes",
+      "size": 300
+    }
+  ]
+}
