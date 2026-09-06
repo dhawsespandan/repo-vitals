@@ -39,14 +39,19 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-# Hosts this application is permitted to reach. Phase 6 adds pypi.org, Phase 12
-# adds deps.dev, and Phases 7/13 add the LLM providers. Adding a host here is a
-# deliberate, reviewable act — the list is the whole SSRF defence, so a host
-# goes in when the phase that calls it lands and not a phase earlier.
+# Hosts this application is permitted to reach. Phase 12 adds deps.dev, and
+# Phases 7/13 add the LLM providers. Adding a host here is a deliberate,
+# reviewable act — the list is the whole SSRF defence, so a host goes in when
+# the phase that calls it lands and not a phase earlier.
 ALLOWED_HOSTS: frozenset[str] = frozenset(
     {
         "api.github.com",
         "registry.npmjs.org",
+        # Phase 6. The PyPI JSON API is served from the site host rather than
+        # from a separate `api.` name, so this one entry admits the package
+        # documents and nothing else: `_check_host` matches the host exactly,
+        # and every URL is still built server-side from a constant.
+        "pypi.org",
         "api.osv.dev",
     }
 )

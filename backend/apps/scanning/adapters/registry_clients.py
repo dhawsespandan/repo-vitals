@@ -1,4 +1,4 @@
-"""Package-registry clients. One per ecosystem; npm is the only one until Phase 6.
+"""Package-registry clients. One per ecosystem: npm, and PyPI from Phase 6.
 
 **The full package document, with a measured escape hatch.**
 `registry.npmjs.org/{name}` served with the abbreviated
@@ -29,10 +29,20 @@ answer this product needs. Each scan is therefore a fresh, self-consistent
 observation of the registry, which is also what makes two scans of the same
 repository comparable as measurements (D17).
 
-**Nothing here is authenticated.** The npm registry is open, so these calls
+**Nothing here is authenticated.** Both registries are open, so these calls
 spend no GitHub quota and carry no token. They still go through
 `common/http.py` like everything else: it is the allowlist choke point, and an
 unauthenticated call to an unexpected host is no less an SSRF (§5.6).
+
+**The two clients answer the same question and share no code path.** Both
+return `PackageFacts`, and every field in it means the same thing whichever
+registry filled it -- which is what lets `scanner.py` enrich a mixed monorepo
+without knowing there is more than one ecosystem. Underneath, almost nothing is
+common: npm's deprecation is a per-version string, PyPI's is a composite of a
+per-release yank and a project-wide trove classifier (D2); npm's release dates
+live in one `time` map, PyPI's are per-file inside each release. Factoring the
+two into one parameterised client would mean a body of branches on `ecosystem`,
+which is the shape the adapter seam exists to keep out of the codebase.
 """
 
 from __future__ import annotations
@@ -45,7 +55,7 @@ from django.utils import timezone
 
 from apps.common import http
 
-from . import semver
+from . import pep440, semver
 from .base import PackageFacts
 
 logger = logging.getLogger(__name__)
@@ -55,6 +65,11 @@ NPM_REGISTRY = "https://registry.npmjs.org"
 #: exists to be linked from the UI. The API URL above is reconstructible from
 #: the name at any time and would be useless to click.
 NPM_PACKAGE_PAGE = "https://www.npmjs.com/package"
+
+PYPI_API = "https://pypi.org/pypi"
+#: The human-facing project page, stored in `packages.registry_url` for the
+#: same reason npm's is: the API URL is reconstructible and unclickable.
+PYPI_PROJECT_PAGE = "https://pypi.org/project"
 
 # The npm registry serves JSON and ignores GitHub's vendor accept header, but
 # sending the right one keeps the call self-describing.
@@ -303,5 +318,239 @@ class NpmRegistryClient:
             versions_behind_patch=behind[2],
             is_deprecated=is_deprecated,
             deprecation_reason=deprecations.get(assessed) if is_deprecated else None,
+            registry_url=page_url,
+        )
+
+
+# ── PyPI ───────────────────────────────────────────────────────────────────
+
+#: Ceiling on a PyPI package document, measured against the live API on
+#: 2026-09-06 rather than guessed -- wire size, then the peak cost of turning it
+#: into Python objects, which is what actually threatens the 512 MB tier (§8):
+#:
+#:     package      wire      parsed peak   releases
+#:     numpy        3.45 MB     14.90 MB       150
+#:     boto3        3.12 MB     10.60 MB     2,113
+#:     setuptools   1.12 MB      ~4    MB       625
+#:     django       0.59 MB      2.02 MB       442
+#:     requests     0.18 MB      0.80 MB       163
+#:
+#: The parsed-to-wire ratio is npm's (3 to 4x), but the documents are an order
+#: of magnitude smaller: PyPI publishes release *files* with a handful of
+#: scalars each, where an npm packument embeds every version's whole
+#: `package.json`. The worst realistic case here costs ~15 MB against the
+#: ~237 MB §1.13 measured free, so one cap covers the ecosystem and no
+#: abbreviated fallback is needed -- npm has one because `vite` at 79 MB parsed
+#: leaves no choice.
+#:
+#: 8 MiB is therefore headroom rather than a squeeze: it sits above every
+#: package measured, and a document past it is an outlier this tier should
+#: refuse to hold. Refusing costs that one occurrence its assessment (recorded
+#: `registry_unavailable`, never clean) and leaves the rest of the scan intact.
+MAX_PYPI_DOCUMENT_BYTES = 8 * 1024 * 1024
+
+#: PyPI's own words for "nobody is maintaining this" (D2). Half of the
+#: deprecation composite, and stored verbatim as the reason when no yank
+#: reason outranks it.
+INACTIVE_CLASSIFIER = "Development Status :: 7 - Inactive"
+
+
+def _release_yank(files: list) -> tuple[bool, str]:
+    """Whether a release is yanked (PEP 592), and the reason it gave.
+
+    A release is a set of files, and pip treats it as yanked when *every* file
+    is -- a release with one yanked wheel and a good sdist is still installable.
+    The reason is the first non-empty one; an empty string is a real answer,
+    not a missing one, and it survives to the UI as such (D2).
+    """
+    usable = [entry for entry in files if isinstance(entry, dict)]
+    if not usable or not all(entry.get("yanked") for entry in usable):
+        return (False, "")
+    for entry in usable:
+        reason = entry.get("yanked_reason")
+        if isinstance(reason, str) and reason:
+            return (True, reason)
+    return (True, "")
+
+
+def _release_uploaded_at(files: list) -> datetime | None:
+    """The newest upload time among a release's files.
+
+    Newest rather than first: a release is often completed over minutes as
+    wheels for each platform arrive, and "when was this published" is the last
+    of those. A release with no files -- yanked to nothing, or metadata-only --
+    has no date, which is an honest unknown.
+    """
+    stamps = [
+        stamp
+        for entry in files
+        if isinstance(entry, dict)
+        and (
+            stamp := _parse_timestamp(
+                entry.get("upload_time_iso_8601") or entry.get("upload_time")
+            )
+        )
+    ]
+    return max(stamps) if stamps else None
+
+
+class PypiRegistryClient:
+    """`GET pypi.org/pypi/{name}/json`, with an in-run cache keyed by name.
+
+    The same contract as `NpmRegistryClient` and, deliberately, the same
+    caching discipline: the extracted summary is what is held, the document
+    itself is garbage as soon as `_document` returns, and nothing survives the
+    scan (§12 defers a TTL layer, so each scan stays one self-consistent
+    observation of the registry).
+    """
+
+    ecosystem = "pypi"
+
+    def __init__(self) -> None:
+        self._documents: dict[str, dict] = {}
+
+    # ── network ────────────────────────────────────────────────────────────
+    def _document(self, name: str) -> dict:
+        # The normalized name is what PyPI serves and what OSV answers to. The
+        # adapter normalized it already; doing it again here means a direct
+        # caller cannot reach the registry under a spelling this cache would
+        # treat as a second package.
+        normalized = pep440.normalize_name(name)
+        if normalized in self._documents:
+            return self._documents[normalized]
+
+        url = f"{PYPI_API}/{quote(normalized, safe='')}/json"
+        summary: dict
+        try:
+            response = http.get_json(
+                url,
+                accept=JSON_ACCEPT,
+                timeout=REGISTRY_TIMEOUT,
+                max_bytes=MAX_PYPI_DOCUMENT_BYTES,
+            )
+        except http.UpstreamNotFound:
+            # A definite answer: PyPI has never published this name.
+            summary = {"not_found": True}
+        except http.UpstreamError:
+            # Includes a document over the cap. Either way this is a fact about
+            # the scan rather than about the package, and the scanner records
+            # the row unassessable instead of clean.
+            logger.warning("PyPI lookup failed for a package.")
+            summary = {"unavailable": True}
+        else:
+            summary = self._summarize(response.data)
+
+        self._documents[normalized] = summary
+        return summary
+
+    @staticmethod
+    def _summarize(document: object) -> dict:
+        if not isinstance(document, dict):
+            return {"unavailable": True}
+
+        info = document.get("info")
+        info = info if isinstance(info, dict) else {}
+
+        releases = document.get("releases")
+        releases = releases if isinstance(releases, dict) else {}
+
+        released: list[str] = []
+        times: dict[str, datetime] = {}
+        yanked: dict[str, str] = {}
+        for version, files in releases.items():
+            if not isinstance(version, str) or not isinstance(files, list):
+                continue
+            released.append(version)
+            uploaded = _release_uploaded_at(files)
+            if uploaded is not None:
+                times[version] = uploaded
+            is_yanked, reason = _release_yank(files)
+            if is_yanked:
+                yanked[version] = reason
+
+        latest = info.get("version")
+        if not isinstance(latest, str) or not latest:
+            latest = pep440.latest_of(released)
+
+        classifiers = info.get("classifiers")
+        classifiers = classifiers if isinstance(classifiers, list) else []
+
+        return {
+            "latest": latest,
+            "released": released,
+            "times": times,
+            "yanked": yanked,
+            # D2's second half: a project-wide declaration that nobody is
+            # maintaining this, which applies to every version of it.
+            "inactive": INACTIVE_CLASSIFIER in classifiers,
+        }
+
+    # ── public API ─────────────────────────────────────────────────────────
+    def facts(self, name: str, resolved_version: str | None = None) -> PackageFacts:
+        """Everything §5.1 records about one PyPI package at this moment.
+
+        **The deprecation signal is a composite (D2)**, and its two halves are
+        different claims. A yank is about *this release*: PEP 592 says the
+        maintainer withdrew it, usually within hours of shipping it, and the
+        reason often names the CVE or the regression it was withdrawn for. The
+        `Development Status :: 7 - Inactive` classifier is about the *project*:
+        nobody is maintaining any version of it. Either one sets
+        `is_deprecated`, because both mean "do not depend on this", and the
+        reason travels verbatim -- including when it is empty, which is itself
+        the measurement S3 is about.
+        """
+        summary = self._document(name)
+        normalized = pep440.normalize_name(name)
+        page_url = f"{PYPI_PROJECT_PAGE}/{normalized}/"
+
+        if summary.get("not_found"):
+            return PackageFacts(name=name, registry_url=page_url, not_found=True)
+        if summary.get("unavailable"):
+            return PackageFacts(name=name, registry_url=page_url, unavailable=True)
+
+        latest = summary["latest"]
+        released: list[str] = summary["released"]
+        times: dict[str, datetime] = summary["times"]
+        yanked: dict[str, str] = summary["yanked"]
+
+        assessed = resolved_version or latest
+
+        # §5.1's wording, and the same reading `NpmRegistryClient` gives it:
+        # days since the *package's* latest release. An old pin of a package
+        # that still ships monthly is a different problem (`versions_behind_*`)
+        # with a different remedy, and conflating the two would report a
+        # maintained package as abandoned on the strength of the caller's pin.
+        latest_release_at = times.get(latest) if latest else None
+        if latest_release_at is None and times:
+            latest_release_at = max(times.values())
+
+        behind = pep440.versions_behind(assessed, released)
+
+        is_yanked = assessed is not None and assessed in yanked
+        inactive: bool = summary["inactive"]
+        is_deprecated = is_yanked or inactive
+
+        # D2 verbatim: "reason = yanked_reason or classifier". A yank with no
+        # stated reason therefore falls through to the classifier where there
+        # is one and stays an empty string where there is not -- the exact
+        # analogue of npm's `"deprecated": true`, which is a deprecation
+        # carrying no text rather than no deprecation.
+        reason: str | None = None
+        if is_deprecated:
+            reason = yanked.get(assessed or "", "") or (
+                INACTIVE_CLASSIFIER if inactive else ""
+            )
+
+        return PackageFacts(
+            name=name,
+            assessed_version=assessed,
+            latest_version=latest,
+            latest_release_at=latest_release_at,
+            staleness_days=_staleness_days(latest_release_at, timezone.now()),
+            versions_behind_major=behind[0],
+            versions_behind_minor=behind[1],
+            versions_behind_patch=behind[2],
+            is_deprecated=is_deprecated,
+            deprecation_reason=reason,
             registry_url=page_url,
         )
