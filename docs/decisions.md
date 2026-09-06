@@ -1534,3 +1534,65 @@ What the test added for it pins is the part that is ours. Under a double mount
 the effect makes one request per mount and no more, and the `live` flag means
 the discarded mount's response cannot overwrite the surviving one's — which is
 the actual hazard, and the one a request count alone would not have shown.
+
+### 5.12 A 404 that answered with Django's sentence about the ORM
+
+Found on prod during this phase's acceptance run, while checking §11's BOLA
+rule. Requesting an unknown dependency id returned the right status and the
+right code, and this message:
+
+```json
+{"code": "not_found", "message": "No DependencyOccurrence matches the given query."}
+```
+
+The security property held — 404, empty body, no package name — so the check
+passed. The wording is the finding.
+
+**The curated message already existed and was unreachable.**
+`_STATUS_DEFAULTS` in `apps/common/errors.py` has carried
+`"We couldn't find that."` for 404 since Phase 1. The handler overwrote it
+with DRF's `detail` whenever one was present, and for `get_object_or_404`
+that detail is Django's auto-generated string. So the default was dead code in
+exactly the case it was written for — a defence that had never once fired.
+
+**A person reads this one.** It would be tempting to file it as cosmetic: who
+types a UUID into an address bar? But `WhyFlaggedPanel` renders the message
+verbatim, and the route is reachable with nothing broken at all:
+
+1. A detail page is open in a tab.
+2. A rescan completes somewhere else — another tab, another device.
+3. Retention (§5.7) deletes the previous scan's occurrences.
+4. The first tab is not polling, because polling stops on a terminal state, so
+   it still holds rows from the scan that has been replaced.
+5. Expanding one of them requests a `dependency_id` that no longer exists.
+
+The reader gets a sentence about the ORM where the arithmetic belongs. That is
+the same family as §2.5 and §2.6 — correct behaviour, worded or placed so the
+person it reaches cannot act on it — and the third time in this project that a
+message was written for whoever wrote the code rather than whoever hit it.
+
+**The fix is two changes, because the status and the wording are different
+problems.** The handler keeps the curated message for 404 and discards DRF's
+detail; the panel branches on 404 and says what actually happened.
+
+Scoping the handler change to 404 rather than to every status was checked
+rather than assumed: every deliberate 404 in this codebase goes through
+`ApiError`, which returns before this branch, and there is no hand-raised
+`NotFound` or `Http404` anywhere under `apps/`. The only 404s reaching the
+override are therefore auto-generated, and the curated default is strictly
+better. Other statuses keep DRF's detail, which is usually deliberate — a
+throttle's wait time, a permission class's own reason.
+
+`"We couldn't find that."` would have been an improvement and still not
+something a reader can act on, so the panel does not stop there. A 404 says
+the scan behind these results has been replaced, and a Reload control sits
+beside it. Every other failure keeps the backend's wording and gets no button,
+because reloading does not fix a 500 — an offered remedy that cannot work is
+worse than none, which is the lesson the revoked-token message left behind in
+Phase 2.
+
+**A note on the tag.** This fix and §2.6's landed after the commits `v0.5.0`
+would otherwise mark, and the acceptance run was performed against a
+deployment that includes both. `v0.5.0` therefore points at the fixed head
+rather than at the phase's last feature commit — the tag records what passed,
+not what was written first.
