@@ -1,0 +1,46 @@
+{
+  "info": {
+    "name": "urllib3",
+    "version": "2.7.0",
+    "package_url": "https://pypi.org/project/urllib3/",
+    "classifiers": [
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only",
+      "Programming Language :: Python :: 3.10"
+    ]
+  },
+  "releases": {
+    "1.25": [
+      {
+        "filename": "urllib3-1.25.tar.gz",
+        "upload_time_iso_8601": "2019-04-22T14:06:46.595819Z",
+        "yanked": true,
+        "yanked_reason": "Broken release"
+      }
+    ],
+    "1.26.18": [
+      {
+        "filename": "urllib3-1.26.18.tar.gz",
+        "upload_time_iso_8601": "2023-10-17T17:47:03.986854Z",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2.0.7": [
+      {
+        "filename": "urllib3-2.0.7.tar.gz",
+        "upload_time_iso_8601": "2023-10-17T17:46:50.542277Z",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2.7.0": [
+      {
+        "filename": "urllib3-2.7.0.tar.gz",
+        "upload_time_iso_8601": "2026-05-07T16:13:18.596909Z",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  }
+}

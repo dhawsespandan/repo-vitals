@@ -1,0 +1,54 @@
+{
+  "info": {
+    "name": "requests",
+    "version": "2.34.2",
+    "package_url": "https://pypi.org/project/requests/",
+    "classifiers": [
+      "Development Status :: 5 - Production/Stable",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only"
+    ]
+  },
+  "releases": {
+    "2.25.1": [
+      {
+        "filename": "requests-2.25.1.tar.gz",
+        "upload_time_iso_8601": "2020-12-16T19:38:36.779257Z",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2.31.0": [
+      {
+        "filename": "requests-2.31.0.tar.gz",
+        "upload_time_iso_8601": "2023-05-22T15:12:44.175995Z",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2.32.0": [
+      {
+        "filename": "requests-2.32.0.tar.gz",
+        "upload_time_iso_8601": "2024-05-20T16:11:48.306524Z",
+        "yanked": true,
+        "yanked_reason": "Yanked due to conflicts with CVE-2024-35195 mitigation"
+      }
+    ],
+    "2.32.3": [
+      {
+        "filename": "requests-2.32.3.tar.gz",
+        "upload_time_iso_8601": "2024-05-29T15:37:49.536140Z",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2.34.2": [
+      {
+        "filename": "requests-2.34.2.tar.gz",
+        "upload_time_iso_8601": "2026-05-14T19:25:27.735762Z",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  }
+}

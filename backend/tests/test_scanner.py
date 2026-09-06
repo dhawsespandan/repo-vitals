@@ -803,3 +803,301 @@ class TestSkippedManifestsAreCounted:
         scan.refresh_from_db()
         assert ManifestFile.objects.filter(scan=scan).count() == 2
         assert scan.skipped_manifest_count == 1
+
+
+# ── Phase 6: the same orchestrator, a second ecosystem ─────────────────────
+# Nothing below calls a different function, passes a flag, or reaches a branch
+# `scanner.py` grew for PyPI -- there is none. These tests run `run_scan`
+# exactly as the npm ones above do, against a Python repository, and that is
+# the soundness claim `docs/adapter_soundness.md` states in prose.
+
+PYPI_BLOBS: tuple[tuple[str, str], ...] = (
+    ("py-requirements", "manifests/pypi_requirements.txt"),
+    ("py-requirements-dev", "manifests/pypi_requirements_dev.txt"),
+    ("py-pipfile", "manifests/pypi_pipfile.toml"),
+    ("py-pipfile-lock", "manifests/pypi_pipfile_lock.json"),
+    ("py-pyproject", "manifests/pypi_pyproject.toml"),
+    ("py-poetry-lock", "manifests/pypi_poetry.lock"),
+    ("py-setup", "manifests/pypi_setup_py.txt"),
+)
+
+
+def mock_pypi_github(tree_name: str = "github/tree_pypi_repo.json") -> None:
+    responses.add(responses.GET, TREE_API, json=load(tree_name), status=200)
+    for sha, rel in PYPI_BLOBS:
+        responses.add(
+            responses.GET,
+            f"{REPO_API}/git/blobs/{sha}",
+            json=blob_response(rel),
+            status=200,
+        )
+
+
+def mock_pypi_registry() -> None:
+    for name in ("django", "flask", "requests", "urllib3", "oauth2client"):
+        responses.add(
+            responses.GET,
+            f"https://pypi.org/pypi/{name}/json",
+            json=load(f"pypi/{name}.json"),
+            status=200,
+        )
+
+
+@pytest.mark.django_db
+class TestPypiRepository:
+    """A Python repository through the unchanged pipeline (§10 Phase 6)."""
+
+    @responses.activate
+    def test_all_five_manifest_formats_are_read_in_one_scan(self, scan):
+        mock_pypi_github()
+        mock_pypi_registry()
+        mock_osv({})
+
+        scanner.run_scan(scan)
+
+        rows = ManifestFile.objects.filter(scan=scan)
+        assert sorted(rows.values_list("manifest_path", flat=True)) == [
+            "Pipfile",
+            "legacy/setup.py",
+            "requirements-dev.txt",
+            "requirements.txt",
+            "service/pyproject.toml",
+        ]
+        # Every row is PyPI, and each says which of the five parsers read it.
+        assert set(rows.values_list("ecosystem", flat=True)) == {"pypi"}
+        assert sorted(rows.values_list("parser_name", flat=True)) == [
+            "pypi/pipfile@1",
+            "pypi/pyproject@1",
+            "pypi/requirements@1",
+            "pypi/requirements@1",
+            "pypi/setup_py@1",
+        ]
+
+    @responses.activate
+    def test_a_vendored_virtualenv_is_not_a_manifest(self, scan):
+        """`.venv/lib/site-packages/**/setup.py` is other people's packages.
+
+        The npm equivalent is a checked-in `node_modules`; a Python repository
+        that committed its virtualenv would otherwise report every installed
+        package's own dependencies as its own.
+        """
+        mock_pypi_github()
+        mock_pypi_registry()
+        mock_osv({})
+
+        scanner.run_scan(scan)
+
+        paths = ManifestFile.objects.filter(scan=scan).values_list(
+            "manifest_path", flat=True
+        )
+        assert not any(".venv" in path for path in paths)
+
+    @responses.activate
+    def test_the_lockfile_beats_the_range_and_that_is_what_finds_the_yank(self, scan):
+        """PyPI's version of the finding the npm suite turns on.
+
+        `pyproject.toml` allows `Django>=4.2`, which the newest release
+        satisfies. `poetry.lock` installs 4.2.12, which PyPI yanked. Resolve
+        the range against the registry instead and this repository reports
+        clean -- with every row looking perfectly well-formed.
+        """
+        mock_pypi_github()
+        mock_pypi_registry()
+        mock_osv({})
+
+        scanner.run_scan(scan)
+
+        row = occurrences(scan).get(
+            manifest__manifest_path="service/pyproject.toml",
+            package__package_name="django",
+        )
+        assert row.resolved_version == "4.2.12"
+        assert row.resolution == Resolution.LOCKFILE.value
+        assert row.is_deprecated
+        assert "Windows end-of-line characters" in row.deprecation_reason
+
+    @responses.activate
+    def test_an_inactive_project_is_deprecated_at_every_version(self, scan):
+        """D2's second half, and the reason the composite exists: PyPI has no
+        per-version deprecation string, so a project that has stopped says so
+        through a trove classifier instead."""
+        mock_pypi_github()
+        mock_pypi_registry()
+        mock_osv({})
+
+        scanner.run_scan(scan)
+
+        rows = occurrences(scan).filter(package__package_name="oauth2client")
+        assert rows.exists()
+        for row in rows:
+            assert row.is_deprecated
+            assert row.deprecation_reason == "Development Status :: 7 - Inactive"
+            # And it is stale by the same measurement npm uses.
+            assert row.staleness_days > 730
+
+    @responses.activate
+    def test_every_unassessable_row_survives_with_its_reason(self, scan):
+        """Three specifier families no registry can describe, and one `setup.py`
+        argument we declined to evaluate. Four rows, four reasons, none of them
+        counted as clean."""
+        mock_pypi_github()
+        mock_pypi_registry()
+        mock_osv({})
+
+        scanner.run_scan(scan)
+
+        reasons = dict(
+            occurrences(scan)
+            .filter(is_unassessable=True)
+            .values_list("package__package_name", "unassessable_reason")
+        )
+        assert reasons["widget"] == "vcs_specifier"
+        assert reasons["shared"] == "local_path_specifier"
+        assert reasons["local-thing"] == "local_path_specifier"
+        assert reasons["setup.py:extras_require"] == "dynamic_setup_py"
+
+    @responses.activate
+    def test_one_package_in_four_manifests_is_four_occurrences(self, scan):
+        """§5.1: duplicates across manifests are independent rows, because each
+        is an independent installation needing its own remediation. `django` is
+        declared in the requirements file, the Pipfile, the pyproject and the
+        setup.py -- at three different resolved versions.
+        """
+        mock_pypi_github()
+        mock_pypi_registry()
+        mock_osv({})
+
+        scanner.run_scan(scan)
+
+        rows = occurrences(scan).filter(package__package_name="django")
+        assert rows.count() == 4
+        assert {row.resolved_version for row in rows} == {"2.2", "2.2.28", "4.2.12"}
+
+    @responses.activate
+    def test_a_scan_of_an_unchanged_repository_repeats_itself(self, scan, repository):
+        """§4.4's determinism suite, extended to the second ecosystem."""
+        mock_pypi_github()
+        mock_pypi_registry()
+        mock_osv({})
+        scanner.run_scan(scan)
+        first = sorted(
+            occurrences(scan).values_list(
+                "manifest__manifest_path",
+                "package__package_name",
+                "resolved_version",
+                "resolution",
+                "is_unassessable",
+            )
+        )
+
+        second_scan = ScanRun.objects.create(
+            repository=repository,
+            triggered_by=repository.user,
+            trigger_type="manual",
+            scoring_formula_version="unscored",
+        )
+        scanner.run_scan(second_scan)
+        second = sorted(
+            occurrences(second_scan).values_list(
+                "manifest__manifest_path",
+                "package__package_name",
+                "resolved_version",
+                "resolution",
+                "is_unassessable",
+            )
+        )
+
+        assert first == second
+
+
+@pytest.mark.django_db
+class TestMixedEcosystemRepository:
+    """One repository, two ecosystems, one scan and one roll-up (§10 Phase 6).
+
+    The pooling rule does not know there are two: `scanner.py` groups by
+    `occurrence.ecosystem` when it asks a registry, because each adapter names
+    its own client, and does nothing else differently. The scoring engine picks
+    a weight vector per occurrence from the same field (§5.4), so a mixed
+    repository gets npm's vector on its npm rows and PyPI's on its PyPI rows
+    without either layer branching on an ecosystem name.
+    """
+
+    @responses.activate
+    def test_both_ecosystems_land_in_one_scan(self, scan):
+        mock_github(load("github/tree_mixed_ecosystem.json"))
+        responses.add(
+            responses.GET,
+            f"{REPO_API}/git/blobs/py-requirements",
+            json=blob_response("manifests/pypi_requirements.txt"),
+            status=200,
+        )
+        mock_registry()
+        mock_pypi_registry()
+        mock_osv()
+
+        scanner.run_scan(scan)
+
+        by_path = dict(
+            ManifestFile.objects.filter(scan=scan).values_list(
+                "manifest_path", "ecosystem"
+            )
+        )
+        assert by_path == {"package.json": "npm", "api/requirements.txt": "pypi"}
+
+    @responses.activate
+    def test_each_registry_is_asked_only_about_its_own_packages(self, scan):
+        """A cross-ecosystem lookup would be silently wrong rather than loud:
+        npm has a `requests` and PyPI has a `flask`, and asking the wrong one
+        returns a real document about a different package."""
+        mock_github(load("github/tree_mixed_ecosystem.json"))
+        responses.add(
+            responses.GET,
+            f"{REPO_API}/git/blobs/py-requirements",
+            json=blob_response("manifests/pypi_requirements.txt"),
+            status=200,
+        )
+        mock_registry()
+        mock_pypi_registry()
+        mock_osv()
+
+        scanner.run_scan(scan)
+
+        asked_npm = {
+            call.request.url.rsplit("/", 1)[-1]
+            for call in responses.calls
+            if "registry.npmjs.org" in call.request.url
+        }
+        asked_pypi = {
+            call.request.url.rsplit("/", 2)[-2]
+            for call in responses.calls
+            if "pypi.org" in call.request.url
+        }
+
+        # The root `package.json`'s four registry packages; its `file:` and
+        # `git+` entries are unassessable and never reach a registry.
+        assert asked_npm == {"express", "lodash", "left-pad", "typescript"}
+        assert asked_pypi == {"django", "flask", "requests", "urllib3", "oauth2client"}
+
+    @responses.activate
+    def test_osv_is_asked_under_each_ecosystems_own_name(self, scan):
+        """`npm` and `PyPI`. One batch per ecosystem, each spelled OSV's way."""
+        mock_github(load("github/tree_mixed_ecosystem.json"))
+        responses.add(
+            responses.GET,
+            f"{REPO_API}/git/blobs/py-requirements",
+            json=blob_response("manifests/pypi_requirements.txt"),
+            status=200,
+        )
+        mock_registry()
+        mock_pypi_registry()
+        mock_osv()
+
+        scanner.run_scan(scan)
+
+        ecosystems = set()
+        for call in responses.calls:
+            if "querybatch" not in call.request.url:
+                continue
+            for query in json.loads(call.request.body)["queries"]:
+                ecosystems.add(query["package"]["ecosystem"])
+        assert ecosystems == {"npm", "PyPI"}

@@ -18,15 +18,23 @@ import responses
 
 from apps.common import http
 from apps.scanning import osv
-from apps.scanning.adapters.registry_clients import NpmRegistryClient
+from apps.scanning.adapters.registry_clients import (
+    NpmRegistryClient,
+    PypiRegistryClient,
+)
 from apps.scanning.models import Severity
 
 NPM_FIXTURES = pathlib.Path(__file__).parent / "fixtures" / "npm"
+PYPI_FIXTURES = pathlib.Path(__file__).parent / "fixtures" / "pypi"
 OSV_FIXTURES = pathlib.Path(__file__).parent / "fixtures" / "osv"
 
 
 def npm_doc(name: str) -> dict:
     return json.loads((NPM_FIXTURES / f"{name}.json").read_text(encoding="utf-8"))
+
+
+def pypi_doc(name: str) -> dict:
+    return json.loads((PYPI_FIXTURES / f"{name}.json").read_text(encoding="utf-8"))
 
 
 def osv_doc(name: str) -> dict:
@@ -49,6 +57,15 @@ def register(name: str) -> None:
         responses.GET,
         f"https://registry.npmjs.org/{name}",
         json=npm_doc(name),
+        status=200,
+    )
+
+
+def register_pypi(name: str) -> None:
+    responses.add(
+        responses.GET,
+        f"https://pypi.org/pypi/{name}/json",
+        json=pypi_doc(name),
         status=200,
     )
 
@@ -475,3 +492,240 @@ class TestPackumentSizeFallback:
         from apps.scanning.adapters import registry_clients
 
         assert registry_clients.MAX_ABBREVIATED_BYTES > 9 * 1024 * 1024
+
+
+class TestPypiRegistryClient:
+    """PyPI's answers, and the deprecation composite D2 builds out of two of them.
+
+    The npm client reads one field for deprecation. This one reads two that
+    make different claims -- a per-release yank (PEP 592) and a project-wide
+    `Development Status :: 7 - Inactive` classifier -- and the tests keep them
+    apart, because the whole point of D2 is that npm and PyPI carry different
+    *information content* rather than different amounts of signal.
+    """
+
+    @responses.activate
+    def test_the_document_is_fetched_once_per_package_per_run(self):
+        register_pypi("django")
+        client = PypiRegistryClient()
+
+        for _ in range(9):
+            client.facts("django", "4.2.11")
+
+        assert len(responses.calls) == 1
+
+    @responses.activate
+    def test_three_spellings_of_one_project_are_one_lookup(self):
+        """PEP 503 again, this time as a quota question.
+
+        A monorepo writing `Django`, `django` and `DJANGO` in three manifests
+        is one project. Caching under the spelling would fetch it three times
+        and, worse, produce three `packages` rows for one dependency.
+        """
+        register_pypi("django")
+        client = PypiRegistryClient()
+
+        for spelling in ("Django", "django", "DJANGO"):
+            client.facts(spelling, "4.2.11")
+
+        assert len(responses.calls) == 1
+        assert responses.calls[0].request.url.endswith("/pypi/django/json")
+
+    @responses.activate
+    def test_a_yanked_release_is_deprecated_with_its_reason_verbatim(self):
+        """PyPI yanked Django 4.2.12 hours after shipping it. The reason is
+        stored exactly as PyPI wrote it -- it is S3's information-content
+        variable, so normalizing or shortening it would destroy the
+        measurement (D2)."""
+        register_pypi("django")
+
+        facts = PypiRegistryClient().facts("django", "4.2.12")
+
+        assert facts.is_deprecated
+        assert facts.deprecation_reason == (
+            "Release files have Windows end-of-line characters and are "
+            "missing executable bits."
+        )
+
+    @responses.activate
+    def test_the_yank_is_read_from_the_resolved_version_not_the_latest(self):
+        """4.2.12 is yanked; 4.2.11 and the current release are not. Which
+        version the lockfile resolved is what decides."""
+        register_pypi("django")
+        client = PypiRegistryClient()
+
+        yanked = client.facts("django", "4.2.12")
+        fine = client.facts("django", "4.2.11")
+
+        assert yanked.is_deprecated
+        assert not fine.is_deprecated
+        assert fine.deprecation_reason is None
+
+    @responses.activate
+    def test_the_inactive_classifier_deprecates_every_version(self):
+        """The other half of D2, and a different claim from a yank: nobody is
+        maintaining this project at all. `oauth2client` has said so since 2018.
+        """
+        register_pypi("oauth2client")
+        client = PypiRegistryClient()
+
+        old = client.facts("oauth2client", "3.0.0")
+        newest = client.facts("oauth2client", "4.1.3")
+
+        assert old.is_deprecated and newest.is_deprecated
+        assert old.deprecation_reason == "Development Status :: 7 - Inactive"
+
+    @responses.activate
+    def test_a_yank_with_no_stated_reason_stays_a_deprecation(self):
+        """PEP 592 allows an empty `yanked_reason`, and npm's `"deprecated":
+        true` is the same statement: a withdrawal carrying no text. Empty and
+        absent are different answers, and only one of them means "not
+        deprecated"."""
+        document = pypi_doc("flask")
+        latest = document["info"]["version"]
+        document["releases"][latest][0]["yanked"] = True
+        document["releases"][latest][0]["yanked_reason"] = None
+        responses.add(
+            responses.GET, "https://pypi.org/pypi/flask/json", json=document, status=200
+        )
+
+        facts = PypiRegistryClient().facts("flask", latest)
+
+        assert facts.is_deprecated
+        assert facts.deprecation_reason == ""
+
+    @responses.activate
+    def test_a_release_is_only_yanked_when_all_of_its_files_are(self):
+        """pip's rule. A release with one withdrawn wheel and a good sdist is
+        still installable, and calling it deprecated would flag a dependency
+        nobody needs to act on."""
+        document = pypi_doc("flask")
+        latest = document["info"]["version"]
+        good = dict(document["releases"][latest][0])
+        withdrawn = {**good, "filename": "other.whl", "yanked": True}
+        document["releases"][latest] = [good, withdrawn]
+        responses.add(
+            responses.GET, "https://pypi.org/pypi/flask/json", json=document, status=200
+        )
+
+        assert not PypiRegistryClient().facts("flask", latest).is_deprecated
+
+    @responses.activate
+    def test_staleness_is_measured_from_the_packages_latest_release(self):
+        """The same reading `NpmRegistryClient` gives §5.1: an old pin of a
+        maintained package is `versions_behind_*`, not staleness."""
+        register_pypi("django")
+        register_pypi("oauth2client")
+        client = PypiRegistryClient()
+
+        maintained = client.facts("django", "2.2")
+        abandoned = client.facts("oauth2client", "4.1.3")
+
+        # Django's newest release is days old even when the pin is from 2019.
+        assert maintained.latest_release_at.year >= 2026
+        assert maintained.staleness_days < 365
+        # oauth2client last shipped in 2018 -- past §5.2's 1095-day cap and
+        # well past the 730-day flag threshold.
+        assert abandoned.latest_release_at.year == 2018
+        assert abandoned.staleness_days > 1095
+
+    @responses.activate
+    def test_versions_behind_is_counted_against_the_assessed_version(self):
+        register_pypi("django")
+
+        facts = PypiRegistryClient().facts("django", "2.2")
+
+        # Majors above 2 in the recorded releases: 3, 4 and 6. Within 2.2, one
+        # patch above `2.2`: 2.2.28.
+        assert facts.versions_behind_major == 3
+        assert facts.versions_behind_patch == 1
+
+    @responses.activate
+    def test_a_range_is_assessed_against_the_latest_release(self):
+        """`resolved_version=None` is the `range_latest_approx` path, and the
+        client applies it because what counts as latest is an ecosystem
+        question -- PyPI's answer involves yanked releases, npm's does not."""
+        register_pypi("flask")
+
+        facts = PypiRegistryClient().facts("flask", None)
+
+        assert facts.assessed_version == facts.latest_version
+
+    @responses.activate
+    def test_a_package_pypi_never_published_is_not_found(self):
+        """A definite answer about the package, and different from an outage:
+        the scanner records `not_in_registry` rather than failing the scan."""
+        responses.add(
+            responses.GET,
+            "https://pypi.org/pypi/nosuchpackage/json",
+            json={"message": "Not Found"},
+            status=404,
+        )
+
+        facts = PypiRegistryClient().facts("NoSuchPackage")
+
+        assert facts.not_found
+        assert not facts.unavailable
+
+    @responses.activate
+    def test_a_document_over_the_cap_is_an_outage_not_a_clean_package(self):
+        """Measured headroom, not a squeeze: the largest document recorded was
+        numpy at 3.45 MB. Past 8 MiB the row is unassessable -- never clean."""
+        from apps.scanning.adapters import registry_clients
+
+        responses.add(
+            responses.GET,
+            "https://pypi.org/pypi/enormous/json",
+            body="x" * (registry_clients.MAX_PYPI_DOCUMENT_BYTES + 1),
+            status=200,
+            content_type="application/json",
+        )
+
+        facts = PypiRegistryClient().facts("enormous", "1.0.0")
+
+        assert facts.unavailable
+        assert not facts.not_found
+
+    @responses.activate
+    def test_the_stored_url_is_the_page_a_reader_can_open(self):
+        register_pypi("django")
+
+        facts = PypiRegistryClient().facts("Django", "4.2.11")
+
+        assert facts.registry_url == "https://pypi.org/project/django/"
+
+
+class TestOsvEcosystemNames:
+    """OSV spells ecosystems its own way, and only one spelling answers."""
+
+    @responses.activate
+    def test_a_pypi_batch_is_sent_under_osvs_own_spelling(self):
+        """`PyPI`, not `pypi`. OSV matches the string exactly and answers an
+        unknown ecosystem with no vulnerabilities -- which is
+        indistinguishable, downstream, from a clean repository."""
+        responses.add(
+            responses.POST,
+            "https://api.osv.dev/v1/querybatch",
+            json={"results": [{"vulns": [{"id": "GHSA-xxxx"}]}]},
+            status=200,
+        )
+
+        found = osv.OsvClient().query_batch("pypi", [("django", "2.2")])
+
+        sent = json.loads(responses.calls[0].request.body)
+        assert sent["queries"][0]["package"]["ecosystem"] == "PyPI"
+        assert found[("django", "2.2")] == ["GHSA-xxxx"]
+
+    @responses.activate
+    def test_an_npm_batch_is_unchanged_by_the_second_ecosystem(self):
+        responses.add(
+            responses.POST,
+            "https://api.osv.dev/v1/querybatch",
+            json={"results": [{}]},
+            status=200,
+        )
+
+        osv.OsvClient().query_batch("npm", [("lodash", "4.17.19")])
+
+        sent = json.loads(responses.calls[0].request.body)
+        assert sent["queries"][0]["package"]["ecosystem"] == "npm"

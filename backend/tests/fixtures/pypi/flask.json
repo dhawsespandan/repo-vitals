@@ -1,0 +1,44 @@
+{
+  "info": {
+    "name": "Flask",
+    "version": "3.1.3",
+    "package_url": "https://pypi.org/project/Flask/",
+    "classifiers": [
+      "Development Status :: 5 - Production/Stable"
+    ]
+  },
+  "releases": {
+    "1.1.4": [
+      {
+        "filename": "Flask-1.1.4.tar.gz",
+        "upload_time_iso_8601": "2021-05-14T01:45:58.328834Z",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2.0.3": [
+      {
+        "filename": "Flask-2.0.3.tar.gz",
+        "upload_time_iso_8601": "2022-02-14T20:01:09.281713Z",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "3.0.0": [
+      {
+        "filename": "flask-3.0.0.tar.gz",
+        "upload_time_iso_8601": "2023-09-30T14:36:12.918335Z",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "3.1.3": [
+      {
+        "filename": "flask-3.1.3.tar.gz",
+        "upload_time_iso_8601": "2026-02-19T05:00:57.678803Z",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  }
+}

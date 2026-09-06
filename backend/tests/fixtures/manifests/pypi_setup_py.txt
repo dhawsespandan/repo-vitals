@@ -1,0 +1,31 @@
+"""A legacy setup.py, in the shape they actually take.
+
+Saved with a `.txt` extension so the repository's own linters and test
+collector leave it alone: it is data under test, not code this project runs.
+Nothing in RepoVitals ever executes it -- `adapters/pypi.py` reads it with
+`ast` and evaluates literals only.
+"""
+
+import os
+
+from setuptools import find_packages, setup
+
+REQUIREMENTS = [
+    "Django==2.2",
+    "oauth2client",
+]
+
+
+def read_extra():
+    with open(os.path.join("requirements", "extra.txt")) as handle:
+        return {"extra": handle.read().splitlines()}
+
+
+setup(
+    name="legacy",
+    version="1.0.0",
+    packages=find_packages(),
+    install_requires=REQUIREMENTS,
+    tests_require=["Flask>=3.0"],
+    extras_require=read_extra(),
+)

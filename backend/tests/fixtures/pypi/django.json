@@ -1,0 +1,62 @@
+{
+  "info": {
+    "name": "Django",
+    "version": "6.1.1",
+    "package_url": "https://pypi.org/project/Django/",
+    "classifiers": [
+      "Development Status :: 5 - Production/Stable",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3 :: Only"
+    ]
+  },
+  "releases": {
+    "2.2": [
+      {
+        "filename": "Django-2.2.tar.gz",
+        "upload_time_iso_8601": "2019-04-01T12:47:42.240453Z",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2.2.28": [
+      {
+        "filename": "Django-2.2.28.tar.gz",
+        "upload_time_iso_8601": "2022-04-11T07:53:05.463179Z",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "3.2.25": [
+      {
+        "filename": "Django-3.2.25.tar.gz",
+        "upload_time_iso_8601": "2024-03-04T08:57:02.257730Z",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "4.2.11": [
+      {
+        "filename": "Django-4.2.11.tar.gz",
+        "upload_time_iso_8601": "2024-03-04T08:57:07.628886Z",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "4.2.12": [
+      {
+        "filename": "Django-4.2.12.tar.gz",
+        "upload_time_iso_8601": "2024-05-06T16:41:21.084668Z",
+        "yanked": true,
+        "yanked_reason": "Release files have Windows end-of-line characters and are missing executable bits."
+      }
+    ],
+    "6.1.1": [
+      {
+        "filename": "django-6.1.1.tar.gz",
+        "upload_time_iso_8601": "2026-09-02T17:20:45.621516Z",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  }
+}

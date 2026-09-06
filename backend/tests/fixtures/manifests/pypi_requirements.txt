@@ -1,0 +1,14 @@
+# Runtime dependencies for the service.
+--index-url https://pypi.org/simple
+
+Django==2.2
+Flask>=2.0
+requests[security]==2.31.0 ; python_version >= "3.8"
+urllib3==1.25 \
+    --hash=sha256:0000000000000000000000000000000000000000000000000000000000000000
+oauth2client  # no constraint at all
+
+-r constraints.txt
+-e .
+-e git+https://github.com/example/widget.git@v1#egg=widget
+local-thing @ file:///opt/wheels/local_thing-1.0-py3-none-any.whl
