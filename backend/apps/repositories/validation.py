@@ -316,9 +316,20 @@ def validate_and_describe(user, raw_url: str) -> ValidatedRepository:
 
     # (6) manifest presence
     default_branch = repo.get("default_branch") or ""
-    if not default_branch or repo.get("size") == 0:
-        # No default branch means no commits. `size == 0` is the same state
-        # reported differently, and catching it here saves a doomed tree call.
+    if not default_branch:
+        # No default branch means no commits.
+        #
+        # `size == 0` used to be treated as the same state "reported
+        # differently", and it is not. GitHub's `size` is the repository's
+        # size in **kilobytes**, rounded, and written by a background job that
+        # lags a push — so a small repository reports 0 for a while after it is
+        # populated, and a very small one can report 0 indefinitely. Rejecting
+        # on it turned "this repository is new and tiny" into "this repository
+        # is empty", which is exactly the population this product is demoed on.
+        #
+        # The authoritative signals are the two below: a missing default
+        # branch, and GitHub's own 409 on the tree call. Both are statements
+        # about commits rather than about bytes.
         raise ApiError(
             "repo_empty",
             "This repository appears to be empty — there's nothing to scan.",

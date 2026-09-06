@@ -251,6 +251,27 @@ class TestOutcomeMatrix:
         assert len(responses.calls) == 1
 
     @responses.activate
+    def test_a_populated_repository_reporting_size_zero_is_not_empty(self, owner_user):
+        """GitHub's `size` is lagging, rounded kilobytes — never evidence.
+
+        Found on prod: a freshly pushed fixture repository with a package.json
+        and a package-lock.json on `main` was rejected as empty, because the
+        API still reported `size: 0` six minutes after the push. `size` is
+        written by a background job and rounds to whole kilobytes, so a small
+        repository reports 0 for a while and a tiny one can report it forever.
+
+        The two authoritative signals — a missing default branch, and GitHub's
+        409 on the tree call — are asserted by the tests either side of this
+        one, and neither of them moved.
+        """
+        mock_github(repo_payload(size=0))
+
+        result = validate_and_describe(owner_user, "github.com/expressjs/express")
+
+        assert result.github_repo_id == repo_payload()["id"]
+        assert result.default_branch == "master"
+
+    @responses.activate
     def test_githubs_409_for_an_empty_repository_is_repo_empty(self, owner_user):
         responses.add(responses.GET, REPO_URL, json=repo_payload(), status=200)
         responses.add(responses.GET, TREE_URL, json={}, status=409)
