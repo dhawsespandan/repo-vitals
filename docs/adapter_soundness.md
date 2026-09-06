@@ -8,15 +8,28 @@ That is a design claim, and a design claim is cheap. This document is the
 attempt to make it falsifiable: the whole diff of Phase 6, the list of paths it
 touched, and the list of paths it did not — measured, not asserted.
 
-Everything below is `v0.5.0..v0.6.0` and excludes this file, which is written
-after the phase's code and describes it.
+**Scope of the numbers below.** They are the phase's five *code* commits —
+`git diff --stat v0.5.0..efd79f1` — and exclude three commits that `v0.6.0`
+also carries:
+
+* two documentation commits (this file, and `decisions.md` §6.1–6.9), which
+  describe the phase rather than being it;
+* one unrelated fix, `docs/decisions.md` §3.19 — a false empty state in
+  `RepoDetail.tsx`, Phase 3 code, found on prod by this phase's own acceptance
+  run and repaired before the tag on §2.6's precedent. It touches
+  `RepoDetail.tsx`, its test and the test harness; it has nothing to do with
+  PyPI, and folding it into the table would overstate what the second
+  ecosystem cost.
+
+The untouched-core assertion in §3 is *not* scoped that way. It is verified
+across the whole tag range, `v0.5.0..v0.6.0`, fix and documentation included.
 
 ---
 
 ## 1. The diff
 
 ```
-$ git diff --stat v0.5.0..v0.6.0
+$ git diff --stat v0.5.0..efd79f1        # the phase's five code commits
 
  backend/apps/common/http.py                          |  13 +-
  backend/apps/repositories/validation.py              |  15 +-
@@ -166,7 +179,7 @@ start (D1).
 ## 3. What was not touched
 
 Verified, not asserted — `git diff --name-only v0.5.0..v0.6.0 -- <path>` is
-empty for every row:
+empty for every row, across the entire tag range and not only the code commits:
 
 | Path | Role |
 |---|---|
