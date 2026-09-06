@@ -64,9 +64,26 @@ def exception_handler(exc, context):
     )
     detail = response.data
     if isinstance(detail, dict) and "detail" in detail:
-        message = str(detail["detail"])
         drf_code = getattr(detail["detail"], "code", None)
         if drf_code:
             code = str(drf_code)
+        # A 404 from `get_object_or_404` carries Django's own "No <Model>
+        # matches the given query" — a sentence about the ORM, written for
+        # whoever wrote the query rather than for the person who hit the URL,
+        # and it names an internal class on the way out.
+        #
+        # Found on prod during Phase 5's acceptance run, where it is not merely
+        # untidy: `WhyFlaggedPanel` renders `error.message` verbatim, and a
+        # stale tab whose scan has since been replaced by retention (§5.7) hits
+        # exactly this path. The reader gets "No DependencyOccurrence matches
+        # the given query" where an explanation belongs.
+        #
+        # Every 404 this API raises deliberately goes through `ApiError` above
+        # and never reaches here, so the only ones left are auto-generated and
+        # the curated default is strictly better. Other statuses keep DRF's
+        # detail, which is usually deliberate — a throttle's wait time, a
+        # permission class's own reason.
+        if response.status_code != status.HTTP_404_NOT_FOUND:
+            message = str(detail["detail"])
     response.data = {"code": code, "message": message}
     return response

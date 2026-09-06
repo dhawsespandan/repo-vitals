@@ -411,6 +411,28 @@ class TestObjectLevelAuthorization:
 
         assert response.status_code == 404
 
+    def test_the_404_is_written_for_a_person_not_for_the_ORM(self, auth_client):
+        """Found on prod during this phase's acceptance run.
+
+        `get_object_or_404` supplies Django's own "No DependencyOccurrence
+        matches the given query", and the exception handler was preferring it
+        over the curated message that already existed for 404s. That string
+        names an internal model class, and it is not hypothetical that a person
+        reads it: `WhyFlaggedPanel` renders the message verbatim, and a tab
+        holding rows from a scan that retention has since replaced (§5.7) hits
+        this exact route.
+        """
+        response = auth_client.get(
+            "/api/dependencies/00000000-0000-4000-8000-000000000000/"
+        )
+        body = response.json()
+
+        assert body["code"] == "not_found"
+        assert body["message"] == "We couldn't find that."
+        # The class name must not travel to a browser under any casing.
+        assert "DependencyOccurrence" not in response.content.decode()
+        assert "given query" not in response.content.decode()
+
     def test_an_anonymous_caller_gets_nothing(self, api_client, manifest):
         occurrence = DependencyOccurrenceFactory(manifest=manifest)
 

@@ -433,23 +433,39 @@ interface WhyFlaggedPanelProps {
 
 export function WhyFlaggedPanel({ row }: WhyFlaggedPanelProps) {
   const [detail, setDetail] = useState<DependencyBreakdown | null>(null);
-  const [error, setError] = useState("");
+  /** `stale` distinguishes "this row is gone" from "we couldn't fetch it". */
+  const [error, setError] = useState<{ text: string; stale: boolean } | null>(null);
 
   useEffect(() => {
     let live = true;
     setDetail(null);
-    setError("");
+    setError(null);
     getDependency(row.id)
       .then((value) => {
         if (live) setDetail(value);
       })
       .catch((failure) => {
         if (!live) return;
-        setError(
-          failure instanceof ApiError
-            ? failure.message
-            : "We couldn't load the breakdown for this dependency.",
-        );
+        /**
+         * A 404 here has one overwhelmingly likely cause, and it is not that
+         * something broke: retention (§5.7) deleted this occurrence when a
+         * newer scan completed. A tab that was open at the time still holds
+         * rows from the scan that has been replaced — polling stops on a
+         * terminal state, so it has no way to know.
+         *
+         * Saying so, and naming the remedy, is the difference between an error
+         * a reader can act on and one they can only stare at. The generic
+         * branch keeps the backend's own sentence for everything else.
+         */
+        const gone = failure instanceof ApiError && failure.status === 404;
+        setError({
+          stale: gone,
+          text: gone
+            ? "This dependency was part of a scan that has since been replaced, so these results are out of date."
+            : failure instanceof ApiError
+              ? failure.message
+              : "We couldn't load the breakdown for this dependency.",
+        });
       });
     return () => {
       live = false;
@@ -458,8 +474,21 @@ export function WhyFlaggedPanel({ row }: WhyFlaggedPanelProps) {
 
   if (error) {
     return (
-      <div data-testid="why-error" style={{ fontSize: 13 }}>
-        {error}
+      <div
+        data-testid="why-error"
+        style={{ fontSize: 13, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}
+      >
+        <span>{error.text}</span>
+        {error.stale && (
+          <button
+            type="button"
+            className="btn btn-secondary"
+            style={{ height: 28, fontSize: 12.5, padding: "0 11px" }}
+            onClick={() => window.location.reload()}
+          >
+            Reload for the current scan
+          </button>
+        )}
       </div>
     );
   }

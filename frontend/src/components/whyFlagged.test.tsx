@@ -510,12 +510,51 @@ describe("opening and closing a breakdown", () => {
     expect(new Set(breakdownCalls).size).toBe(1);
   });
 
-  it("reports a breakdown it could not load, rather than spinning forever", async () => {
+  it("explains a row whose scan has been replaced, and offers the remedy", async () => {
+    /**
+     * The stub answers 404 for an id it does not know, which is exactly what
+     * the real route answers for an occurrence retention has deleted (§5.7).
+     *
+     * Found on prod: the panel used to render the backend's message verbatim,
+     * and the backend was passing through Django's "No DependencyOccurrence
+     * matches the given query". Correct, and unusable — a sentence about the
+     * ORM where an explanation belongs.
+     */
     show([LODASH], {});
 
     renderApp(DETAIL_ROUTE);
     await userEvent.click(await screen.findByRole("button", { name: /^Why\? lodash/ }));
 
-    expect(await screen.findByTestId("why-error")).toBeInTheDocument();
+    const error = await screen.findByTestId("why-error");
+    expect(error).toHaveTextContent(/scan that has since been replaced/i);
+    expect(error).not.toHaveTextContent(/DependencyOccurrence/);
+    // An error a reader can act on names the action.
+    expect(
+      within(error).getByRole("button", { name: /reload/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the backend's own wording for a failure that is not a 404", async () => {
+    const { fetchMock } = show([LODASH], {});
+    fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/dependencies/")) {
+        return new Response(
+          JSON.stringify({ code: "server_error", message: "Something went wrong on our side." }),
+          { status: 500, headers: { "Content-Type": "application/json" } },
+        );
+      }
+      return new Response(JSON.stringify({ code: "not_found", message: "no" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
+    });
+
+    render(<WhyFlaggedPanel row={LODASH} />);
+
+    const error = await screen.findByTestId("why-error");
+    expect(error).toHaveTextContent("Something went wrong on our side.");
+    // No reload button: reloading does not fix a server error.
+    expect(within(error).queryByRole("button")).not.toBeInTheDocument();
   });
 });
