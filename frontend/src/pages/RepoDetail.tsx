@@ -11,6 +11,7 @@ import {
 } from "../api/client";
 import { BlueprintCorners } from "../components/Blueprint";
 import { DependencyTable } from "../components/DependencyTable";
+import { ScanEcosystemChip } from "../components/EcosystemChip";
 import { CheckIcon, FolderIcon, LockIcon } from "../components/Icons";
 import { ClassificationTag, ScoreBadge } from "../components/ScoreBadge";
 import { ScoreContributors } from "../components/ScoreContributors";
@@ -47,6 +48,11 @@ import { isScanActive } from "../types";
  * three tab labels, because the interesting repository is the one where the
  * third number is not zero — and a reader who never opens that tab should
  * still know the score did not cover those rows.
+ *
+ * Phase 6 adds one word beside the repository name. Everything else on this
+ * page is identical for a Python repository — the same ring, the same
+ * partition, the same arithmetic — which is the phase's claim and also the
+ * reason the claim needs a label to be checkable at all.
  */
 export function RepoDetail() {
   const { repositoryId = "" } = useParams();
@@ -270,6 +276,11 @@ export function RepoDetail() {
                   Private
                 </span>
               )}
+              {/* From the completed scan's manifests: what the ecosystem *is*
+                  is a measurement, not a property of the registration. A
+                  repository that added a `pyproject.toml` last week says npm
+                  here until the scan that found it. */}
+              {scan && <ScanEcosystemChip manifests={scan.manifests} />}
               <StatusPill scan={current} />
             </div>
             <div className="text-muted" style={{ fontSize: 13, marginTop: 5 }}>
@@ -606,9 +617,16 @@ function TabContents({
     return <EmptyTab scan={scan} tab={tab} onChangeTab={onChangeTab} />;
   }
 
+  // Decided from the scan, not from `visible`: a Flagged tab holding only npm
+  // rows is still a tab of a mixed repository, and a chip that came and went
+  // between tabs would read as a property of the tab.
+  const mixed =
+    new Set(scan.manifests.map((manifest) => manifest.ecosystem)).size > 1;
+
   return (
     <DependencyTable
       rows={visible}
+      showEcosystem={mixed}
       caption={
         total > visible.length
           ? `Showing ${visible.length} of ${total}.`

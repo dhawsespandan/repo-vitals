@@ -1,6 +1,7 @@
 import { useId, useState } from "react";
 
 import type { DependencyOccurrence, Resolution } from "../types";
+import { EcosystemChip } from "./EcosystemChip";
 import { WhyFlaggedPanel } from "./WhyFlaggedPanel";
 
 /**
@@ -26,6 +27,16 @@ import { WhyFlaggedPanel } from "./WhyFlaggedPanel";
  * carry their reason, because the alternative — omitting them — is the
  * silent miscount this product exists to avoid.
  *
+ * **The ecosystem chip appears only where it disambiguates.** Phase 6 pools
+ * npm and PyPI occurrences into one table, and the two registries publish
+ * different packages under the same names — `requests`, `flask` and `six` all
+ * exist on both. In a mixed repository two rows reading `requests` are not one
+ * dependency, and nothing else on the row says so. In a single-ecosystem
+ * repository the same chip on every row is a column of one repeated word, so
+ * the caller decides, from the *scan's* manifests rather than from the rows
+ * this tab happens to show — otherwise the chip would appear and disappear
+ * between tabs of the same repository.
+ *
  * **Every row opens.** Phase 5 adds a Why? control to each one, including the
  * clean ones and the unassessable ones. Putting it only on flagged rows would
  * make "no explanation available" and "nothing to explain" look identical, and
@@ -48,6 +59,12 @@ const UNASSESSABLE_LABEL: Record<string, string> = {
   github_specifier: "installed from GitHub",
   url_specifier: "installed from a URL",
   alias_specifier: "registry alias",
+  // Phase 6, PyPI. `url_specifier` above is shared: a PEP 508 direct
+  // reference and an npm URL dependency are the same claim about the same
+  // impossibility.
+  vcs_specifier: "installed from version control",
+  local_path_specifier: "local path",
+  dynamic_setup_py: "computed when the package is built",
   not_in_registry: "not published to the registry",
   registry_unavailable: "registry unreachable during this scan",
 };
@@ -140,9 +157,18 @@ interface DependencyTableProps {
   rows: DependencyOccurrence[];
   /** Shown above the table; the caller knows the manifest count. */
   caption?: string;
+  /**
+   * Tag each row with its ecosystem. True when the repository holds more than
+   * one — see the note at the top of this file on why the caller decides.
+   */
+  showEcosystem?: boolean;
 }
 
-export function DependencyTable({ rows, caption }: DependencyTableProps) {
+export function DependencyTable({
+  rows,
+  caption,
+  showEcosystem = false,
+}: DependencyTableProps) {
   /**
    * One row open at a time.
    *
@@ -196,7 +222,17 @@ export function DependencyTable({ rows, caption }: DependencyTableProps) {
               >
                 <td>
                   <code style={{ fontSize: 13 }}>{row.packageName}</code>
-                  <div className="text-muted" style={{ fontSize: 11 }}>
+                  <div
+                    className="text-muted"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      fontSize: 11,
+                      marginTop: 2,
+                    }}
+                  >
+                    {showEcosystem && <EcosystemChip ecosystem={row.ecosystem} />}
                     {row.group}
                   </div>
                 </td>

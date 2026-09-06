@@ -84,6 +84,40 @@ const SEVERITY_TONE: Record<string, { background: string; color: string }> = {
 const number = (value: string | number) => Number(value).toLocaleString("en-US");
 
 /**
+ * The one unassessable reason that is not about a *dependency* (Phase 6).
+ *
+ * Every other reason names a package we could not look up. This one names an
+ * argument we could not read: `setup.py` is a program, and
+ * `install_requires=parse_requirements("reqs.txt")` computes its answer when
+ * the package is built. RepoVitals reads `setup.py` with a syntax-tree parser
+ * and evaluates literals only — running it would make every scan an arbitrary
+ * code execution on behalf of whoever wrote the repository.
+ *
+ * So the generic sentence would be actively misleading here: there is no
+ * package called `setup.py:extras_require`, and a reader who took the row at
+ * face value would go looking for one. It gets its own words, and they quote
+ * the expression rather than describing it.
+ */
+const DYNAMIC_SETUP_PY = "dynamic_setup_py";
+
+function DynamicSetupPy({ specifier }: { specifier: string }) {
+  return (
+    <span data-testid="why-dynamic-setup-py">
+      This <code>setup.py</code> builds its dependency list when the package is
+      installed
+      {specifier ? (
+        <>
+          {" "}
+          (<code>{specifier}</code>)
+        </>
+      ) : null}
+      , and RepoVitals reads <code>setup.py</code> without running it &mdash; the
+      packages behind this line were never named to us,{" "}
+    </span>
+  );
+}
+
+/**
  * What the scanner measured, in words — the first link of the chain.
  *
  * Phrased here rather than sent from the backend because it is display, and
@@ -507,14 +541,21 @@ export function WhyFlaggedPanel({ row }: WhyFlaggedPanelProps) {
 
       {detail.isUnassessable ? (
         <Notice testId="why-unassessable">
-          This dependency could not be assessed
-          {detail.unassessableReason ? (
+          {detail.unassessableReason === DYNAMIC_SETUP_PY ? (
+            <DynamicSetupPy specifier={detail.declaredSpecifier} />
+          ) : (
             <>
-              {" "}
-              (<code>{detail.unassessableReason}</code>)
+              This dependency could not be assessed
+              {detail.unassessableReason ? (
+                <>
+                  {" "}
+                  (<code>{detail.unassessableReason}</code>)
+                </>
+              ) : null}
+              ,{" "}
             </>
-          ) : null}
-          , so §5.2 excluded it from the score and from every denominator. It
+          )}
+          so §5.2 excluded it from the score and from every denominator. It
           neither raised nor lowered this repository&apos;s number — and nothing
           here is a claim that it is safe.
         </Notice>
