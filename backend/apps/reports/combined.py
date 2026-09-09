@@ -109,13 +109,21 @@ def build_input(scan: ScanRun) -> CombinedInput:
     return CombinedInput(scan_summary=summary, rows=rows)
 
 
-def generate(scan: ScanRun, *, complete=complete_json) -> GeneratedCombined:
+def generate(scan: ScanRun, *, complete=None) -> GeneratedCombined:
     """Run one generation for `scan`. Raises `GenerationFailed` or `LlmError`.
 
     `complete` is injectable so the test suite can drive every branch — the
     schema violation, the invented package, the repair that succeeds and the
     repair that does not — without a network or an API key.
+
+    The default is resolved here rather than in the signature, and that is not
+    a style choice: `complete=complete_json` binds the function object once, at
+    import, so patching this module's `complete_json` would have no effect on a
+    caller that did not pass the argument — which is every production caller,
+    including `services.run_combined`. A test that patched it would silently
+    reach the real endpoint.
     """
+    complete = complete or complete_json
     prepared = build_input(scan)
     user_prompt = build_combined_user_prompt(prepared.scan_summary, prepared.rows)
 
