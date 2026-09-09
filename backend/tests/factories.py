@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from apps.accounts.crypto import encrypt_token
 from apps.accounts.models import User
+from apps.reports.models import Report, ReportStatus, ReportType
 from apps.repositories.models import AccessLevel, Repository, Visibility
 from apps.scanning.models import (
     DependencyGroup,
@@ -113,3 +114,21 @@ class DependencyOccurrenceFactory(factory.django.DjangoModelFactory):
     is_deprecated = False
     vulnerability_count = 0
     cvss_max = None
+
+
+class ReportFactory(factory.django.DjangoModelFactory):
+    """A completed combined report. Tests that care about a generation in
+    flight override `status` (and clear `generated_at`, which a queued row has
+    no business carrying)."""
+
+    class Meta:
+        model = Report
+
+    scan = factory.SubFactory(ScanRunFactory)
+    dependency = None
+    report_type = ReportType.COMBINED.value
+    status = ReportStatus.COMPLETED.value
+    summary_text = "Two dependencies need attention."
+    fixes_json = factory.LazyFunction(list)
+    model_name = "llama-3.3-70b-versatile"
+    generated_at = factory.LazyFunction(timezone.now)

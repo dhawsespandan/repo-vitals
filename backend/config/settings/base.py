@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "apps.repositories",
     "apps.scanning",
     "apps.scoring",
+    "apps.reports",
     "apps.research",
 ]
 
