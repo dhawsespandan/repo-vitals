@@ -2163,12 +2163,51 @@ The corrected geometry was re-measured in the browser: the backdrop is
 0,0 x viewport, the panel 480 wide, flush right, full height, with no overflow
 at 1280 or at the narrowest width the pane allows.
 
-Two things to carry forward. `Dashboard` renders `ConfirmDialog` and
-`AddRepoDialog` inside its own animated `<main>` and has the same defect — a
-centered dialog on a long page centers in the page, not the viewport. And the
-general rule: `position: fixed` means "relative to the viewport" only while no
-ancestor carries a transform, a filter or `will-change`. An overlay that
-depends on that should not depend on where it is mounted.
+The general rule this leaves: `position: fixed` means "relative to the
+viewport" only while no ancestor carries a transform, a filter, a
+`backdrop-filter`, `perspective`, `contain`, or a `will-change` naming one of
+them. An overlay that depends on that should not depend on where it is
+mounted.
+
+### 7.9.1 The same defect in Dashboard's two dialogs, and what it actually looked like
+
+`Dashboard` renders `AddRepoDialog` and `ConfirmDialog` inside its own animated
+`<main>`, so both carried the defect above. It was noted when §7.9 was written
+and left alone as Phase 2 code out of Phase 7's scope; it is fixed here.
+
+Measured first, because the severity was not obvious. At 1280x900 the dashboard
+fits the viewport and the damage is mild: both backdrops resolve to `<main>`'s
+box — 50, 58.8, 1180 x 825.85 rather than 0,0 x 1280x900 — so the dim overlay
+leaves a 50 px gutter down each side and an undimmed strip under the nav, and
+the dialog sits about 22 px below the optical centre. Easy to miss.
+
+The real case is a page that scrolls. At 1000x520, scrolled to the bottom of a
+1071 px dashboard, the confirmation's backdrop starts at **top -481** and the
+dialog itself at **top -72.6** with a height of 184 — so 39% of it, including
+the title asking which repository you are about to stop monitoring, is above
+the top of the screen. The buttons are reachable and the question is not
+visible. That is the shape this project keeps finding: not a crash, a correct
+component placed so the reader draws a conclusion it does not support.
+
+The fix is `createPortal` in `ConfirmDialog` and `AddRepoDialog` themselves,
+not a fragment at the Dashboard call site — the same choice as §7.9 and for
+the same reason. It costs nothing extra and it fixes `LogoutFlow`'s
+`ConfirmDialog` too, which sits outside any `<main>` today and would have
+acquired the bug the first time anyone moved it. `Dashboard.tsx` is not touched
+at all, so there is no re-indentation in the diff.
+
+Re-measured after: both backdrops 0,0 x viewport, `dialogFullyOnScreen` true,
+and a centre offset of exactly 0 while the page is scrolled to its end.
+
+A full audit followed, at runtime rather than by grep, because "does this
+element establish a containing block" is a computed-style question. Every
+element on the signed-in pages that creates one was enumerated with its fixed
+descendants: `<nav>` (`backdrop-filter: blur(8px)`), each page's `<main>`
+(`dsup`), and the ScoreBadge ring's `<circle>` elements (a rotation transform).
+All three now report zero fixed descendants, and the only `position: fixed`
+rules in the codebase are `.dialog-backdrop` and `ReportPanel`'s inline one —
+all three components portal themselves. `dsspin` and the unused `dsbar` also
+animate `transform`, but neither is applied to an element with descendants.
 
 ### 7.10 What the panel has to say about itself
 

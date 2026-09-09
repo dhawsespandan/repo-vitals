@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 
 import { BlueprintCorners } from "./Blueprint";
 
@@ -42,7 +43,20 @@ export function ConfirmDialog({
 
   if (!open) return null;
 
-  return (
+  // Portalled to document.body rather than rendered where it is written. A
+  // modal is viewport-relative by definition, and `position: fixed` means
+  // that only while no ancestor carries a transform, a filter or
+  // `will-change` — any of which makes that ancestor the containing block
+  // instead. Both pages' `<main>` does: `animation: dsup .3s ease both`
+  // leaves a computed `transform: matrix(...)` permanently, because
+  // fill-mode `both` holds the 100% keyframe as an animated value and an
+  // animated transform never computes back to the keyword `none`. Rendered
+  // in place, this backdrop resolved to `<main>`'s box — measured on a
+  // scrolled dashboard at 1000x520 as top -481, with 39% of the dialog
+  // including its title above the top of the screen
+  // (`docs/decisions.md` §7.9). The portal makes the component correct
+  // wherever a caller mounts it.
+  return createPortal(
     <div
       className="dialog-backdrop"
       style={{ zIndex: 60 }}
@@ -74,6 +88,7 @@ export function ConfirmDialog({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
