@@ -1942,3 +1942,274 @@ not read this" was chosen over a guess:
   that *does* name a distribution (`-e git+https://…#egg=widget`) is recorded
   unassessable with its reason, like every other reference no registry can
   describe.
+
+
+## Phase 7 — COMBINED report: the first LLM call
+
+The phase adds one model call to a product that has so far only measured
+things, and almost every decision below is about keeping the boundary between
+the two visible. §5.9 already draws it — COMBINED bypasses the retrieval graph
+entirely, "deliberately a lighter triage surface so the grounded-generation
+thesis stays concentrated in PER_DEPENDENCY" — and the work here was making
+that sentence true in the data, in the prompt, in the schema and on the page,
+rather than only in the plan.
+
+### 7.1 The model is never the source of a fact we already measured
+
+§5.8 gives a fix ten fields. Seven are decisions — which dependency, upgrade or
+replace, to what version or what package, in what order. Three are
+measurements: `current_version`, `cves` and `severity`. The scanner already
+knows all three, to the row.
+
+The prompt therefore asks for the seven and fills in the three from the matched
+scan row, discarding whatever the model said about them. The emitted payload is
+still exactly §5.8's, so a download and a database row conform to the spec
+whatever the answer contained.
+
+This is the same rule as §5.1's raw/derived split and §5.1's recomputed
+breakdown, applied to a new source of values: one source of truth per number.
+It buys three things. A shorter prompt, so more of the budget is signal. A
+whole class of on-screen wrongness that becomes unreachable rather than
+unlikely — no amount of prompting stops a model from writing `4.17.15` where
+the lockfile says `4.17.19`, and no test would catch it because the number is
+plausible. And a page where the claim "every number here traces to a stored
+signal", which Phase 5 established for the drill-down, survives contact with a
+generative surface.
+
+The one thing on the panel the model wrote is the summary paragraph, and the
+panel says so.
+
+### 7.2 No upstream prose reaches the prompt, which makes an approximate claim exact
+
+§10 Phase 7 says the input is "structured signal rows only (no fetched text =>
+injection surface ~ 0)". Taken literally that excludes two fields this project
+stores and would like to send: OSV's advisory `summary`, and the deprecation
+reason — npm's deprecation message or PyPI's `yanked_reason`, stored verbatim
+however terse because that asymmetry is S3's variable.
+
+Both are useful. The deprecation message is often where a successor is named
+("use axios instead"), which is exactly what a triage list wants. Both are also
+text written by a package author and publishable by a stranger: anyone can
+publish a package whose deprecation message is a paragraph of instructions
+addressed to a language model.
+
+So neither is sent. What goes is versions, day counts, CVSS numbers,
+severities, OSV and CVE identifiers, booleans, enum values and manifest paths.
+The claim in the plan stops being approximate and becomes a property a test
+asserts — `test_no_upstream_prose_reaches_the_prompt` sends a scan whose
+deprecation reason is a sentence and checks the sentence is absent while the
+boolean is present.
+
+What is left is honest rather than zero. Package names and manifest paths are
+strings, and a repository's own tree can contain a path chosen to read like an
+instruction. That is a user acting on their own report; the system prompt
+frames the block as data and forbids following anything inside it; and §7.3's
+cross-check bounds the worst outcome to a fix naming a row that was already in
+the scan.
+
+Phase 8 does quote changelog and README text — under retrieval discipline,
+beside the source it came from, with a grounding check in front of it. A
+quoted sentence belongs there, not here.
+
+### 7.3 A fix that names a package this scan never found is not a shorter list, it is a wrong one
+
+The acceptance criterion is "every fix references a real scanned row (validator
+cross-checks)", and the reason it is a criterion rather than a nicety is what
+an invented row looks like on the page: identical to a real one. A reader has
+no way to tell `left-pad@1.3.0 · package.json` from the three rows above it,
+and the whole product is an argument that its numbers are checkable.
+
+So every fix is matched against the rows the prompt was built from, on
+(ecosystem, package, manifest_path). The name is matched case-insensitively —
+npm names are lowercase by rule and PyPI's are case-insensitive under PEP 503,
+so a title-cased name is not a different package — and the path exactly, because
+`Src/package.json` and `src/package.json` are two files.
+
+The repair policy has three steps and each one is a different judgment:
+
+1. **A schema violation or an invented row buys one repair call**, carrying a
+   plain account of what was wrong. §10 Phase 7 allows exactly one.
+2. **After that, invented rows are dropped rather than argued with.** A model
+   that reinvents a package after being told which one it invented is not going
+   to be talked round by a third call, and a shorter list of real dependencies
+   beats a plausible list containing packages this repository does not have.
+3. **Unless every fix was invented, in which case the generation fails.** A
+   summary paragraph above an empty fixes list, on a repository with three
+   flagged dependencies, reads as "nothing to do here". That is §4.7 and §5.10's
+   shape exactly — correct output whose scope is missing — and a visible failure
+   with a Try again beside it is better than a confident silence.
+
+A repository with nothing flagged may legitimately produce no fixes; the guard
+is on inventing, not on emptiness.
+
+### 7.4 The retry budget is spent in the client, because the transport's is the wrong one
+
+`common/http.py` says in as many words that its retry policy is safe only
+because the one POST it carries is OSV's read-only `querybatch`, and that a
+state-changing POST needs `retries=0` plus a comment saying why.
+
+A Groq call is that POST. It is metered, and a read timeout can mean "the
+provider generated an answer and we did not hear it" — a retry then bills a
+second generation for one click. So the transport retries nothing and
+`groq_client` retries once, on a 5xx or a 429, which is what §10 Phase 7
+specifies.
+
+The whole budget, stated once so it can be checked: one logical call, plus one
+repair call if the answer violates §5.8, each of which may be re-sent once.
+Four HTTP requests worst case, two accepted generations worst case.
+`LlmCall.requests` carries the count out so a test asserts the first number
+rather than a docstring claiming it.
+
+### 7.5 The cache is three layers, and a failed report is not one of them
+
+The layers are `apps.scanning.background`'s, unchanged: the in-process lock
+closes the millisecond race a status check cannot, the row's own status makes
+the answer correct across processes, and §5.1's partial unique refuses whatever
+got past both. An `IntegrityError` on that unique is caught and answered with
+the row that won.
+
+Two things differ from a scan, and both follow from what is being protected.
+
+**A failed report is retried in place.** A failed scan leaves nothing worth
+keeping and a rescan is cheap. A failed report is one unlucky HTTP call away
+from a rescan that would destroy the scan's results under §5.7 — trading a
+measurement for a report is the wrong way round. A `completed` report is never
+regenerated: that is the cache, and Phase 9's confirmation exists precisely
+because clearing it is destructive.
+
+**A generation presumed dead is presumed dead in five minutes, not fifteen.**
+A scan's fifteen accommodates a slow upstream tree walk; a generation is
+bounded by its own 60 s read timeout and a four-request ceiling. A killed
+worker must not strand the button behind its own 409 for a quarter of an hour.
+
+### 7.6 A missing key is a deployment fault and is answered as one
+
+`GROQ_API_KEY` unset is a valid configuration: every phase before this one runs
+without it and CI has none. The request path therefore checks before writing
+anything and answers 503 `reports_unavailable`, rather than creating a report
+row, failing it, and inviting the reader to retry something that cannot
+succeed.
+
+The message does not name the setting. Which environment variable is missing is
+a log line for whoever deployed it, not an explanation owed to the person who
+pressed a button.
+
+### 7.7 API additions to §5.5
+
+Two routes, exactly as §5.5 specifies:
+
+```
+POST /api/scans/{id}/reports/combined/   200 cached | 202 started | 409 generating
+GET  /api/reports/{id}/
+```
+
+Plus one addition, to an existing payload rather than as a new route:
+`GET /api/scans/{id}/` grows `combinedReport` — `{id, status, generatedAt}` or
+null.
+
+It is an addition because the alternative is worse. The only endpoint that
+answers "does this scan have a report?" is the POST that *generates* one, so a
+page that asked on load would bill a model call for opening a tab. Three fields
+rather than the report itself: §5.5 gives the body its own route, and a scan
+payload carrying a whole generation would make the detail page pay for
+something nobody has asked to see.
+
+Two response details worth recording. The 409 carries `reportId`, so a client
+whose request lost the race polls the winner instead of guessing. And `fixes`
+is served in §5.8's own snake_case while every other field on the surface is
+camelCase — deliberate, because §5.8 is binding and is *also* Phase 9's
+`?fmt=json` download: one payload serving both, per §5.8's own sentence.
+Renaming the keys for the browser would give the panel one shape and the
+download another, free to drift.
+
+### 7.8 A drawer, not a fourth tab
+
+§10 Phase 7 says "Reports tab"; the wireframe draws a right-hand drawer opened
+by a Combined report button beside Run scan (`combinedOpen`), and the drawer is
+what shipped.
+
+The wireframe is the binding visual specification, and here it is also right on
+the merits. The three tabs already on the page — Flagged, All, Unassessable —
+are three views of one partition, and the sentence beneath them says so:
+flagged + clean + unassessable is every dependency exactly once. A fourth tab
+would sit in that row claiming to be a fourth slice of the same set. A report
+is not a slice of the dependency list; it is a reading of it.
+
+### 7.9 A fixed overlay inside an animated element is not fixed
+
+The drawer was first rendered inside `<main>`, and in a real browser it was
+clipped at the top, sat 58 px short of the right edge, and scrolled with the
+page. Every jsdom assertion passed, because jsdom has no layout.
+
+The cause is one line of Phase 1 styling. `<main>` carries
+`animation: dsup .3s ease both`; `dsup`'s 100% keyframe is `transform: none`,
+and `animation-fill-mode: both` holds that keyframe as an *animated value*
+forever. An animated `transform` computes to a matrix, never to the keyword
+`none` — measured as `matrix(1, 0, 0, 1, 0, 0)` long after the animation
+finished. A transformed element is the containing block for every
+`position: fixed` descendant, so `inset: 0` resolved to `<main>`'s box (1180 x
+954 at top -31) instead of the viewport.
+
+The fix is a `createPortal` to `document.body` inside `ReportPanel` itself,
+rather than moving the element up one level in `RepoDetail`. Both work here;
+the portal is better for the same reason `OwnedQuerySetMixin` beats a
+permission check in each view. Moving the call site fixes this one call site
+and leaves the next caller to rediscover the defect; the portal makes the panel
+viewport-relative wherever anyone mounts it, and a drawer is viewport-relative
+by definition. It also keeps `<main>` untouched, so the phase's diff on that
+file is the change and not a re-indentation of it.
+
+The corrected geometry was re-measured in the browser: the backdrop is
+0,0 x viewport, the panel 480 wide, flush right, full height, with no overflow
+at 1280 or at the narrowest width the pane allows.
+
+Two things to carry forward. `Dashboard` renders `ConfirmDialog` and
+`AddRepoDialog` inside its own animated `<main>` and has the same defect — a
+centered dialog on a long page centers in the page, not the viewport. And the
+general rule: `position: fixed` means "relative to the viewport" only while no
+ancestor carries a transform, a filter or `will-change`. An overlay that
+depends on that should not depend on where it is mounted.
+
+### 7.10 What the panel has to say about itself
+
+§5.9 makes COMBINED the ungrounded half of the product, and a reader who does
+not know that will weigh it exactly like the cited per-dependency plan Phase 8
+produces. The distinction is not visible in the output — a prioritized list of
+real packages with real CVE ids looks equally authoritative either way — so it
+is stated on the panel, in the wireframe's own quiet paragraph: one model call
+over signals already stored, no source documents retrieved, and the cited
+surface is elsewhere.
+
+Beneath the fixes, a second line says the answer is stored against this scan,
+names the model that wrote it, and says a fresh report needs a new scan. That
+sentence is doing two jobs: it is the cache made visible, and it is the warning
+Phase 9's rescan confirmation will act on.
+
+The summary is the only model-written string on the page. It is rendered by a
+small paragraph-and-bullet reader that unwraps `**` and backticks and never
+touches `dangerouslySetInnerHTML` — a renderer that turned this text into HTML
+would be a renderer that could be talked into producing a link. Each fix's
+action sentence is assembled from the structured fix instead, because §5.8 has
+no field for per-fix prose and inventing one would put an unvalidated sentence
+beside a validated row. Per §6.7, `fixAction` is exported and its finished
+sentences are asserted whole rather than by substring.
+
+### 7.11 Two seams that were not seams
+
+Both were found by tests behaving oddly rather than failing, which is the
+§3.13 family again.
+
+`generate(scan, *, complete=complete_json)` binds the client at import. Every
+production caller omits the argument, so patching the module attribute changed
+nothing about the path under test — a test that believed it had stubbed the
+model was reaching the live endpoint. The default is resolved inside the
+function now.
+
+`from apps.scanning.background import spawn` did the same to the suite's
+`no_background_threads` fixture, which patches `background.spawn`. The
+double-click test spawned a real thread that deadlocked SQLite. `background` is
+imported as a module.
+
+Neither is a Python subtlety worth a paragraph on its own. What they share is
+the shape: a test that passes while doing something entirely different from
+what it claims to do.
