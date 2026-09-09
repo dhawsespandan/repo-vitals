@@ -122,3 +122,28 @@ export function TrashIcon(props: IconProps) {
     </Icon>
   );
 }
+
+/** Phase 7: the drawer's dismiss control. */
+export function CloseIcon(props: IconProps) {
+  return (
+    <Icon strokeWidth={1.7} {...props}>
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </Icon>
+  );
+}
+
+/** Phase 7: the wireframe's mark on the Combined report button — a list, for
+ * a surface whose whole output is a prioritized list. */
+export function ListIcon(props: IconProps) {
+  return (
+    <Icon strokeWidth={1.6} {...props}>
+      <path d="M8 6h13" />
+      <path d="M8 12h13" />
+      <path d="M8 18h13" />
+      <path d="M3 6h.01" />
+      <path d="M3 12h.01" />
+      <path d="M3 18h.01" />
+    </Icon>
+  );
+}

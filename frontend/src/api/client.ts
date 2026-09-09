@@ -14,6 +14,7 @@ import type {
   DependencyOccurrence,
   Paginated,
   RegisterResult,
+  Report,
   Repository,
   ScanDetail,
   ScanStatusResponse,
@@ -44,10 +45,24 @@ function readCookie(name: string): string {
   return match?.[1] ? decodeURIComponent(match[1]) : "";
 }
 
-async function request<T>(
+/**
+ * A response plus the status code that carried it.
+ *
+ * Almost every caller wants only the body, and `request` below is that. The
+ * exception is a route whose *success* codes mean different things — Phase 7's
+ * generation endpoint answers 200 for "already on disk, nothing was billed"
+ * and 202 for "a model is running now", and collapsing those to one value
+ * would throw away the distinction the whole phase exists to make.
+ */
+interface ResponseWithStatus<T> {
+  status: number;
+  body: T;
+}
+
+async function requestWithStatus<T>(
   path: string,
   init: RequestInit = {},
-): Promise<T> {
+): Promise<ResponseWithStatus<T>> {
   const method = (init.method ?? "GET").toUpperCase();
   const headers = new Headers(init.headers);
   headers.set("Accept", "application/json");
@@ -69,7 +84,7 @@ async function request<T>(
   });
 
   if (response.status === 204) {
-    return undefined as T;
+    return { status: 204, body: undefined as T };
   }
 
   const text = await response.text();
@@ -90,7 +105,11 @@ async function request<T>(
     throw new ApiError(response.status, body);
   }
 
-  return payload as T;
+  return { status: response.status, body: payload as T };
+}
+
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  return (await requestWithStatus<T>(path, init)).body;
 }
 
 export const api = {
@@ -240,3 +259,48 @@ export async function listAllScanDependencies(
 
   return { rows, total: first.count };
 }
+
+/**
+ * `POST /api/scans/{id}/reports/combined/` — the only call that can spend money.
+ *
+ * Three successful-enough outcomes, distinguished here rather than at the call
+ * site because they mean different things to the panel:
+ *
+ * * **cached** — 200. The report was already on disk and no model ran. This is
+ *   the phase's whole claim, so it is a named outcome rather than something
+ *   inferred from a status code somewhere up the stack.
+ * * **started** — 202. A generation is queued; poll `getReport`.
+ * * **generating** — 409. Someone else's request got there first. Not an error:
+ *   the answer the user wants is on its way, and the id to poll is in the body.
+ *
+ * Everything else (503 `reports_unavailable`, 409 `scan_not_reportable`) is a
+ * real failure and throws.
+ */
+export type GenerateResult =
+  | { outcome: "cached"; report: Report }
+  | { outcome: "started"; report: Report }
+  | { outcome: "generating"; reportId: string };
+
+export async function generateCombinedReport(
+  scanId: string,
+): Promise<GenerateResult> {
+  try {
+    const { status, body } = await requestWithStatus<Report>(
+      `/scans/${scanId}/reports/combined/`,
+      { method: "POST" },
+    );
+    return { outcome: status === 200 ? "cached" : "started", report: body };
+  } catch (error) {
+    if (error instanceof ApiError && error.code === "report_generating") {
+      return {
+        outcome: "generating",
+        reportId: String(error.body.reportId ?? ""),
+      };
+    }
+    throw error;
+  }
+}
+
+/** `GET /api/reports/{id}/` — the stored row. Polled while a generation runs. */
+export const getReport = (reportId: string) =>
+  api.get<Report>(`/reports/${reportId}/`);

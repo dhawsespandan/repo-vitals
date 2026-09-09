@@ -130,6 +130,16 @@ export interface ScanDetail extends ScanState {
   manifests: ManifestFile[];
   /** Worst first, at most three. Empty when the scan is unscored or clean. */
   topContributors: ScoreContributor[];
+  /**
+   * Whether this scan already has a combined report, and what state it is in.
+   * Null when none has ever been requested.
+   *
+   * Three fields rather than the report itself, and here rather than behind a
+   * route of its own, because the only endpoint that answers "is there a
+   * report?" is the POST that *generates* one — so a page that asked on load
+   * would bill an LLM call for opening a tab (`docs/decisions.md` §7.7).
+   */
+  combinedReport: ReportState | null;
 }
 
 export type DependencyGroup =
@@ -300,3 +310,64 @@ export interface Paginated<T> {
 export type RegisterResult =
   | { outcome: "created"; repository: Repository }
   | { outcome: "duplicate"; repository: Repository; message: string };
+
+/** A report generation, mirroring `apps/reports/models.py::ReportStatus`. */
+export type ReportStatus = "queued" | "running" | "completed" | "failed";
+
+/** `queued` and `running` both mean "come back in a moment". */
+export function isReportActive(report: Report | ReportState | null): boolean {
+  return report !== null && (report.status === "queued" || report.status === "running");
+}
+
+/** What a scan's payload carries about its report. */
+export interface ReportState {
+  id: string;
+  status: ReportStatus;
+  /** When the generation finished. Null until it does. */
+  generatedAt: string | null;
+}
+
+/**
+ * One recommended fix — §5.8, verbatim.
+ *
+ * snake_case where the rest of this file is camelCase, and deliberately so:
+ * §5.8 is the binding schema for Phase 9's `?fmt=json` download as well as for
+ * this panel, and one generation produces one payload serving both. Renaming
+ * the keys for the browser would give the reader one shape and the download
+ * another, free to drift apart.
+ *
+ * `current_version`, `cves` and `severity` are copied from the scanned row by
+ * the backend, never from the model's answer: the generator is never the
+ * source of a fact the scanner already measured.
+ */
+export interface ReportFix {
+  package: string;
+  manifest_path: string;
+  ecosystem: "npm" | "pypi";
+  current_version: string;
+  fix_type: "upgrade" | "replace" | "remove" | "investigate";
+  target_version: string | null;
+  replacement_package: string | null;
+  cves: string[];
+  severity: string;
+  /** 1 is most urgent. Contiguous: the backend renumbers after ranking. */
+  priority: number;
+}
+
+/** `GET /api/reports/{id}/` — the stored row, whatever state it is in. */
+export interface Report {
+  id: string;
+  scanId: string;
+  dependencyId: string | null;
+  type: "combined" | "per_dependency";
+  status: ReportStatus;
+  /** Null until the generation completes. */
+  summaryMd: string | null;
+  fixes: ReportFix[] | null;
+  /** The model that actually answered, which may not be the one configured. */
+  modelName: string | null;
+  /** Written for a person: every one of them names what to do next. */
+  errorMessage: string | null;
+  generatedAt: string | null;
+  createdAt: string;
+}

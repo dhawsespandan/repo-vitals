@@ -3,6 +3,8 @@ import { Link, useParams } from "react-router-dom";
 
 import {
   ApiError,
+  generateCombinedReport,
+  getReport,
   getRepository,
   getScan,
   getScanStatus,
@@ -12,19 +14,21 @@ import {
 import { BlueprintCorners } from "../components/Blueprint";
 import { DependencyTable } from "../components/DependencyTable";
 import { ScanEcosystemChip } from "../components/EcosystemChip";
-import { CheckIcon, FolderIcon, LockIcon } from "../components/Icons";
+import { CheckIcon, FolderIcon, ListIcon, LockIcon } from "../components/Icons";
+import { ReportPanel } from "../components/ReportPanel";
 import { ClassificationTag, ScoreBadge } from "../components/ScoreBadge";
 import { ScoreContributors } from "../components/ScoreContributors";
 import { StatusPill, relativeTime } from "../components/StatusPill";
 import { usePolling } from "../hooks/usePolling";
 import type {
   DependencyOccurrence,
+  Report,
   Repository,
   ScanDetail,
   ScanState,
   ScanStatusResponse,
 } from "../types";
-import { isScanActive } from "../types";
+import { isReportActive, isScanActive } from "../types";
 
 /**
  * RepoDetail (wireframe artboard `isDrilldown`).
@@ -72,6 +76,12 @@ export function RepoDetail() {
   // default to All on a clean repository would move the answer to a different
   // place depending on what the answer was.
   const [tab, setTab] = useState<Tab>("flagged");
+  // The report drawer. `report` is the stored row and nothing else: a
+  // generation lives in the database, so closing the drawer or reloading the
+  // page never loses one (§5.1, "the UI always reads stored rows").
+  const [reportOpen, setReportOpen] = useState(false);
+  const [report, setReport] = useState<Report | null>(null);
+  const [reportStarting, setReportStarting] = useState(false);
 
   useEffect(() => {
     let live = true;
@@ -106,6 +116,10 @@ export function RepoDetail() {
    * what makes the table swap to the new results exactly once.
    */
   useEffect(() => {
+    // A report belongs to one scan and cascades with it (§5.7). Clearing the
+    // panel's copy when the displayed scan changes identity is what keeps a
+    // rescan from leaving last scan's triage on screen beside new results.
+    setReport(null);
     if (!completedScanId) {
       setScan(null);
       setRows([]);
@@ -120,6 +134,18 @@ export function RepoDetail() {
         if (!live) return;
         setScan(detail);
         setRows(dependencies.rows);
+        // A stored report is fetched here rather than when the drawer opens,
+        // so opening it is instant — which is the phase's whole claim, and a
+        // spinner over an answer already on disk would undercut it. A failure
+        // is not fatal: the drawer's Generate button answers 200 with the
+        // cached row, so the worst case is one extra request.
+        if (detail.combinedReport) {
+          getReport(detail.combinedReport.id)
+            .then((row) => {
+              if (live) setReport(row);
+            })
+            .catch(() => undefined);
+        }
       })
       .catch(() => {
         if (live) setLoadError(true);
@@ -139,6 +165,52 @@ export function RepoDetail() {
     enabled: !loading && !notFound && active,
     onResult: setState,
   });
+
+  /**
+   * The report the panel is showing, and whether a generation is under way.
+   *
+   * `report` (the full row) wins over `scan.combinedReport` (three fields from
+   * the scan payload) because it is newer: the scan detail was fetched once,
+   * and the polling loop below keeps `report` current.
+   */
+  const storedReport = report ?? scan?.combinedReport ?? null;
+  const reportId = storedReport?.id ?? null;
+  const reportBusy = isReportActive(storedReport);
+
+  usePolling<Report>({
+    fetcher: useCallback(() => getReport(reportId ?? ""), [reportId]),
+    shouldContinue: (value) => isReportActive(value),
+    // Polled whether or not the drawer is open: a generation started before a
+    // reload is still running on the server, and the button has to stop
+    // offering to start a second one.
+    enabled: reportId !== null && reportBusy,
+    onResult: setReport,
+  });
+
+  const generateReport = async () => {
+    if (reportBusy || reportStarting) return;
+    setNotice("");
+    setReportStarting(true);
+    try {
+      const result = await generateCombinedReport(scan?.id ?? "");
+      if (result.outcome === "generating") {
+        // Someone else's request got there first — including this tab's own,
+        // replayed. Read the row it created rather than reporting a conflict.
+        setReport(await getReport(result.reportId));
+        return;
+      }
+      setReport(result.report);
+    } catch (error) {
+      setNotice(
+        error instanceof ApiError
+          ? error.message
+          : "We couldn't generate a report. Please try again.",
+      );
+      setReportOpen(false);
+    } finally {
+      setReportStarting(false);
+    }
+  };
 
   /**
    * The scan is running, or a request to start one is in flight.
@@ -367,6 +439,35 @@ export function RepoDetail() {
           >
             {active ? "Scanning…" : starting ? "Starting…" : "Run scan"}
           </button>
+          {/* The wireframe puts this beside Run scan, and the placement is the
+              point: a report is a reading of the scan the page is showing, so
+              it belongs with the action that produced it rather than in a
+              fourth tab over the dependency table (`docs/decisions.md` §7.8).
+              Absent until there is a completed scan to report on — the button
+              would otherwise offer to triage nothing. */}
+          {scan && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              style={{
+                height: 36,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 7,
+              }}
+              data-testid="open-combined-report"
+              onClick={() => setReportOpen(true)}
+            >
+              <ListIcon size={15} />
+              {/* The label changes only while something is happening. It does
+                  not say "View report" for a cached one: the drawer is the
+                  same drawer either way, and a label that changed with the
+                  cache would make the reader guess whether pressing it costs
+                  anything. The panel says that, where there is room to say it
+                  properly. */}
+              {reportBusy ? "Report — writing…" : "Combined report"}
+            </button>
+          )}
           <span
             className="text-muted"
             style={{
@@ -539,6 +640,23 @@ export function RepoDetail() {
           <TabContents scan={scan} tab={tab} rows={rows} onChangeTab={setTab} />
         </div>
       )}
+
+      {/* Written here, mounted on document.body: the panel portals itself out.
+          <main> carries `animation: dsup .3s ease both`, which leaves it with a
+          computed `transform: matrix(...)` permanently, and a transformed
+          element is the containing block for every `position: fixed`
+          descendant — a drawer rendered into this subtree is confined to the
+          article column rather than the viewport (`docs/decisions.md` §7.9). */}
+      <ReportPanel
+        open={reportOpen && scan !== null}
+        repositoryName={repository.name}
+        report={report}
+        generating={reportBusy}
+        starting={reportStarting}
+        flaggedCount={scan?.flaggedCount ?? 0}
+        onGenerate={() => void generateReport()}
+        onClose={() => setReportOpen(false)}
+      />
     </main>
   );
 }

@@ -7,6 +7,7 @@ import { AuthProvider } from "../auth/AuthContext";
 import type {
   DependencyBreakdown,
   DependencyOccurrence,
+  Report,
   Repository,
   ScanDetail,
   ScanState,
@@ -265,6 +266,16 @@ interface StubOptions {
   startScanStatus?: number;
   /** Body returned by POST /api/repositories/{id}/scan/ when it is not 202. */
   startScanBody?: unknown;
+  /**
+   * Answer to GET /api/reports/{id}/. A function so a test can change what a
+   * poll sees between requests — a generation that finishes is the only way to
+   * exercise the panel's queued -> completed transition.
+   */
+  report?: () => Report | null;
+  /** Status returned by POST /api/scans/{id}/reports/combined/. */
+  generateStatus?: number;
+  /** Body returned by that POST. Defaults to whatever `report` answers. */
+  generateBody?: unknown;
 }
 
 export function scanDetail(overrides: Partial<ScanDetail> = {}): ScanDetail {
@@ -297,6 +308,10 @@ export function scanDetail(overrides: Partial<ScanDetail> = {}): ScanDetail {
         dependencyCount: 1,
       },
     ],
+    // No report has been asked for. Tests that want one pass it explicitly;
+    // the default has to be a real null rather than an absence, because the
+    // panel branches on it.
+    combinedReport: null,
     ...overrides,
   };
 }
@@ -324,6 +339,9 @@ export function stubFetch({
   pageSize = 50,
   startScanStatus = 202,
   startScanBody,
+  report,
+  generateStatus = 202,
+  generateBody,
 }: StubOptions) {
   const calls: string[] = [];
 
@@ -364,6 +382,13 @@ export function stubFetch({
           scanStatus?.() ?? { scan: null, latestCompletedScanId: null },
         startScanStatus,
       );
+    }
+    if (url.includes("/reports/combined/") && method === "POST") {
+      return json(generateBody ?? report?.() ?? null, generateStatus);
+    }
+    if (url.includes("/api/reports/") && method === "GET") {
+      const row = report?.() ?? null;
+      return row ? json(row, 200) : json({ code: "not_found", message: "no" }, 404);
     }
     // Before the list route below: `/api/scans/{id}/dependencies/` and
     // `/api/dependencies/{id}/` both contain "/dependencies/".
