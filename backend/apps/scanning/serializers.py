@@ -20,6 +20,8 @@ from decimal import Decimal
 from django.db.models import Count, Q
 from rest_framework import serializers
 
+from apps.reports.serializers import ReportStateSerializer
+from apps.reports.services import combined_for as combined_report_state
 from apps.scoring.signals import OccurrenceBreakdown, breakdown_for, top_contributors
 
 from .models import (
@@ -163,9 +165,15 @@ TOP_CONTRIBUTOR_COUNT = 3
 class ScanDetailSerializer(ScanStateSerializer):
     manifests = serializers.SerializerMethodField()
     topContributors = serializers.SerializerMethodField()
+    combinedReport = serializers.SerializerMethodField()
 
     class Meta(ScanStateSerializer.Meta):
-        fields = [*ScanStateSerializer.Meta.fields, "manifests", "topContributors"]
+        fields = [
+            *ScanStateSerializer.Meta.fields,
+            "manifests",
+            "topContributors",
+            "combinedReport",
+        ]
         read_only_fields = fields
 
     def get_manifests(self, scan: ScanRun) -> list[dict]:
@@ -199,6 +207,23 @@ class ScanDetailSerializer(ScanStateSerializer):
             }
             for contributor in top_contributors(scan, limit=TOP_CONTRIBUTOR_COUNT)
         ]
+
+    def get_combinedReport(self, scan: ScanRun) -> dict | None:
+        """Whether this scan already has a report, and what state it is in.
+
+        Three fields, not the report itself: §5.5 gives the body its own route
+        (`GET /api/reports/{id}/`), and a scan payload that carried a whole
+        generation would make the detail page pay for something nobody has
+        asked to see.
+
+        It is here — an addition to §5.5's scan payload, logged in
+        `docs/decisions.md` §7.7 — because the alternative was worse. The only
+        route that answers "is there a report for this scan?" is the POST that
+        *generates* one, so a page that asked on load would bill a generation
+        for opening a tab.
+        """
+        report = combined_report_state(scan)
+        return ReportStateSerializer(report).data if report is not None else None
 
 
 class DependencyOccurrenceSerializer(serializers.ModelSerializer):

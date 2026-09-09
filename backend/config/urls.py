@@ -21,6 +21,7 @@ from django.urls import path
 from apps.accounts.oauth import RepoVitalsGitHubOAuth2Adapter
 from apps.accounts.views import LogoutView, SessionView
 from apps.common.views import HealthView
+from apps.reports.views import ReportDetailView, ScanCombinedReportView
 from apps.repositories.views import RepositoryDetailView, RepositoryListCreateView
 from apps.scanning.views import (
     DependencyDetailView,
@@ -72,5 +73,15 @@ urlpatterns = [
         "api/dependencies/<uuid:dependency_id>/",
         DependencyDetailView.as_view(),
         name="dependency-detail",
+    ),
+    path(
+        "api/scans/<uuid:scan_id>/reports/combined/",
+        ScanCombinedReportView.as_view(),
+        name="scan-combined-report",
+    ),
+    path(
+        "api/reports/<uuid:report_id>/",
+        ReportDetailView.as_view(),
+        name="report-detail",
     ),
 ]
