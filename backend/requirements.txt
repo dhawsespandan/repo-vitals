@@ -17,6 +17,12 @@ requests>=2.32,<3.0
 # deploy.
 PyYAML>=6.0,<7.0
 
+# §5.8's report payload is validated with pydantic before it reaches the
+# database (§10 Phase 7): an LLM answer is untrusted input like any other, and
+# the schema is the only thing standing between a malformed generation and a
+# page that renders whatever came back.
+pydantic>=2.9,<3.0
+
 # Observability for the Phase 1 memory smoke test (§10 Phase 1).
 psutil>=6.0
 

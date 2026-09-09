@@ -40,7 +40,7 @@ import requests
 logger = logging.getLogger(__name__)
 
 # Hosts this application is permitted to reach. Phase 12 adds deps.dev, and
-# Phases 7/13 add the LLM providers. Adding a host here is a deliberate,
+# Phase 13 adds the judge provider. Adding a host here is a deliberate,
 # reviewable act — the list is the whole SSRF defence, so a host goes in when
 # the phase that calls it lands and not a phase earlier.
 ALLOWED_HOSTS: frozenset[str] = frozenset(
@@ -53,6 +53,9 @@ ALLOWED_HOSTS: frozenset[str] = frozenset(
         # and every URL is still built server-side from a constant.
         "pypi.org",
         "api.osv.dev",
+        # Phase 7. The generator LLM (D11). Reached only by
+        # `apps.reports.llm.groq_client`, whose URL is a module constant.
+        "api.groq.com",
     }
 )
 

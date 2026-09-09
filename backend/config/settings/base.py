@@ -160,6 +160,17 @@ LOGIN_URL = f"{FRONTEND_URL}/login"
 # registry permanently as the naive baseline WP-6 measures against.
 WEIGHTS_VERSION = env("WEIGHTS_VERSION", default="v1")
 
+# The generator LLM (D11, §6). Temperature 0 and JSON mode are set at the call
+# site rather than here: they are properties of the *contract* with the model,
+# not deployment knobs, and a deployment that could turn temperature up would
+# be a deployment that could make two loads of one report disagree.
+#
+# An empty key is a valid configuration and not a crash: every phase before 7
+# runs without one, and CI has none. `apps.reports` answers a generation
+# request with a plain "not configured" rather than a 500 (§7.6).
+GROQ_API_KEY = env("GROQ_API_KEY", default="")
+GROQ_MODEL = env("GROQ_MODEL", default="llama-3.3-70b-versatile")
+
 # Fernet key for app_users.encrypted_github_token. Rotating it invalidates
 # every stored token — users simply re-login (§6).
 TOKEN_ENCRYPTION_KEY = env("TOKEN_ENCRYPTION_KEY")
