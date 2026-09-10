@@ -222,9 +222,21 @@ def _row(occurrence: DependencyOccurrence, weights) -> dict:
 
     # §5.8's `cves` for this row, filled into every fix that names it rather
     # than copied from the model's answer (see `schema._merge`).
-    row["cves"] = [
-        vulnerability.cve_id or vulnerability.osv_id for vulnerability in advisories
-    ]
+    #
+    # Deduplicated, because advisories and CVEs are not one to one. OSV
+    # routinely returns several records for one underlying vulnerability — a
+    # GHSA and a PYSEC advisory for the same CVE is the normal case, not an
+    # edge — and `UNIQUE(dependency_id, osv_id)` admits them all, correctly:
+    # they are different advisories. Mapping them straight to `cve_id` is what
+    # produced "Fixes CVE-2026-25645, CVE-2024-47081, CVE-2024-47081,
+    # CVE-2026-25645" on the first live report this project ever generated
+    # (§7.13). Order is the advisories' own — worst CVSS first — so the most
+    # serious identifier still leads.
+    row["cves"] = list(
+        dict.fromkeys(
+            vulnerability.cve_id or vulnerability.osv_id for vulnerability in advisories
+        )
+    )
     return row
 
 

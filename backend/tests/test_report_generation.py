@@ -30,7 +30,7 @@ from apps.reports.llm.groq_client import (
 )
 from apps.reports.llm.prompts import COMBINED_SYSTEM_PROMPT, build_combined_user_prompt
 from apps.reports.schema import PayloadInvalid, drop_unmatched, validate_payload
-from apps.scanning.models import Severity
+from apps.scanning.models import DependencyVulnerability, Severity
 from tests.factories import (
     DependencyOccurrenceFactory,
     ManifestFileFactory,
@@ -247,6 +247,67 @@ def test_no_upstream_prose_reaches_the_prompt():
     assert "deprecated" in text  # the boolean signal is there
     assert "see #3142" not in text  # the registry's sentence is not
     assert all("deprecation_reason" not in row for row in prepared.rows)
+
+
+def test_two_advisories_for_one_cve_list_it_once():
+    """Advisories and CVEs are not one to one, and OSV says so constantly.
+
+    A GHSA record and a PYSEC record for the same underlying vulnerability is
+    the normal case; `UNIQUE(dependency_id, osv_id)` admits both, correctly.
+    Mapping them straight to `cve_id` put "Fixes CVE-2026-25645,
+    CVE-2024-47081, CVE-2024-47081, CVE-2026-25645" on the first live report
+    this project generated (§7.13) - every identifier real, the sentence
+    nonsense. No fixture had two advisories sharing a CVE until prod did.
+    """
+    scan = ScanRunFactory()
+    occurrence = DependencyOccurrenceFactory(
+        manifest=ManifestFileFactory(scan=scan),
+        package=PackageFactory(package_name="requests"),
+        vulnerability_count=4,
+        highest_severity=Severity.MEDIUM.value,
+        cvss_max=Decimal("5.5"),
+        is_flagged=True,
+        risk_component_score=Decimal("50.00"),
+    )
+    for osv_id, cve_id, cvss in [
+        ("PYSEC-2026-2275", "CVE-2026-25645", "5.5"),
+        ("GHSA-9hjg-9r4m-mvj7", "CVE-2024-47081", "5.3"),
+        ("PYSEC-2026-1872", "CVE-2024-47081", "5.3"),
+        ("GHSA-gc5v-m9x4-r6x2", "CVE-2026-25645", "5.5"),
+    ]:
+        DependencyVulnerability.objects.create(
+            dependency=occurrence,
+            osv_id=osv_id,
+            cve_id=cve_id,
+            severity=Severity.MEDIUM.value,
+            cvss_score=Decimal(cvss),
+        )
+
+    row = build_input(scan).rows[0]
+
+    # Each CVE once, worst first, and the advisory count still says four.
+    assert row["cves"] == ["CVE-2026-25645", "CVE-2024-47081"]
+    assert row["advisory_count"] == 4
+    assert len(row["advisories"]) == 4
+
+
+def test_an_advisory_with_no_cve_id_falls_back_to_its_osv_id():
+    """A GHSA with no CVE assigned is still an identifier a reader can look up."""
+    scan = ScanRunFactory()
+    occurrence = DependencyOccurrenceFactory(
+        manifest=ManifestFileFactory(scan=scan),
+        vulnerability_count=1,
+        is_flagged=True,
+        risk_component_score=Decimal("60.00"),
+    )
+    DependencyVulnerability.objects.create(
+        dependency=occurrence,
+        osv_id="GHSA-only-no-cve",
+        cve_id=None,
+        severity=Severity.LOW.value,
+    )
+
+    assert build_input(scan).rows[0]["cves"] == ["GHSA-only-no-cve"]
 
 
 def test_an_unmeasured_signal_is_absent_rather_than_zero():

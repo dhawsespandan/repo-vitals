@@ -2302,3 +2302,42 @@ One detail is worth keeping, because it is §7.2's trade-off made visible.
 and deliberately not npm's deprecation message, so the model had no successor to
 name and declined to invent one. The successor suggestion is exactly what
 Phase 8 recovers, quoting the changelog beside the claim.
+
+### 7.13 Advisories are not CVEs, and the first live report said so out loud
+
+The first COMBINED report generated on production read:
+
+> Fixes CVE-2026-25645, CVE-2024-47081, CVE-2024-47081, CVE-2026-25645.
+
+Every identifier real, the sentence nonsense. `rv-accept-mixed`'s PyPI
+`requests` carries four OSV advisories covering two underlying vulnerabilities
+— `PYSEC-2026-2275` and `GHSA-gc5v-m9x4-r6x2` both for CVE-2026-25645,
+`GHSA-9hjg-9r4m-mvj7` and `PYSEC-2026-1872` both for CVE-2024-47081. OSV
+returning several records for one vulnerability is the normal case rather than
+an edge, and `UNIQUE(dependency_id, osv_id)` admits them all, correctly: they
+*are* different advisories. `_row` then mapped advisories straight to `cve_id`
+with no dedup, and §5.8's `cves` inherited the duplicates — so Phase 9's JSON
+download would have carried them too.
+
+Deduplicated at the source, order-preserving, so the worst-CVSS identifier
+still leads. The advisory *count* is untouched: four advisories is the true
+number and `advisory_count` still says four, because that is what the drill-down
+shows and what the scanner measured. The two facts are different and the fix
+keeps them different.
+
+Why no test caught it: every fixture in the suite gave each advisory its own
+CVE, which is the shape a hand-written fixture naturally takes. The real world
+produced the collision on the first try. There is now a test built from the
+exact prod rows.
+
+This is §6.7's family again — a sentence assembled from correct parts that no
+assertion reads end to end — and it is the first time the project has hit it in
+generated output rather than in template prose. The general lesson stands
+unchanged: **assert the finished sentence, and read it once with your own
+eyes.**
+
+One related label is left alone deliberately. The dependency table's finding
+chip says "4 CVEs" where four advisories cover two CVEs, so it has the same
+conflation in Phase 3/5 code. It is out of this phase's scope; noted here so
+whoever touches `DependencyTable` next can decide whether the chip should count
+advisories and say so.
