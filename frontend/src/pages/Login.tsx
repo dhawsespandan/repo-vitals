@@ -325,9 +325,13 @@ export function Login() {
                 bg="#efddda"
                 fg="#6a2a23"
               />
+              {/* The specimen mirrors the real findings chip, which counts
+                  advisories rather than CVEs (`docs/decisions.md` §7.13). A
+                  landing page that used the old word would teach a vocabulary
+                  the product no longer speaks. */}
               <SpecimenRow
                 label="lodash@4.17.15"
-                tag="2 CVEs"
+                tag="2 advisories"
                 bg="#efddda"
                 fg="#6a2a23"
               />

@@ -117,7 +117,23 @@ function FindingsCell({ row }: { row: DependencyOccurrence }) {
         data-testid="cve-badge"
         style={{ ...tone, whiteSpace: "nowrap" }}
       >
-        {row.vulnerabilityCount} CVE{row.vulnerabilityCount === 1 ? "" : "s"}
+        {/* "advisories", not "CVEs", and the difference is not pedantry:
+            `vulnerabilityCount` counts `dependency_vulnerabilities` rows, and
+            OSV routinely returns several of them for one underlying
+            vulnerability — a GHSA record and a PYSEC record for the same CVE
+            is the normal case. rv-accept-mixed's PyPI `requests` carries four
+            advisories over two CVEs, so this chip said "4 CVEs" about two
+            (`docs/decisions.md` §7.13).
+
+            The number is deliberately unchanged. It is the number §5.2's count
+            signal scores, and the WhyFlaggedPanel one click below already says
+            "4 advisories, counted as 4" — a chip that counted distinct CVEs
+            would disagree with the arithmetic explaining it, which is §4.11's
+            defect wearing a different label. The wireframe's word was "CVEs";
+            its sample data gives every advisory its own CVE, so it never had
+            to choose. */}
+        {row.vulnerabilityCount} advisor
+        {row.vulnerabilityCount === 1 ? "y" : "ies"}
         {row.cvssMax ? ` · ${row.cvssMax}` : ""}
       </span>,
     );

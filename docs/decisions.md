@@ -2336,8 +2336,23 @@ generated output rather than in template prose. The general lesson stands
 unchanged: **assert the finished sentence, and read it once with your own
 eyes.**
 
-One related label is left alone deliberately. The dependency table's finding
-chip says "4 CVEs" where four advisories cover two CVEs, so it has the same
-conflation in Phase 3/5 code. It is out of this phase's scope; noted here so
-whoever touches `DependencyTable` next can decide whether the chip should count
-advisories and say so.
+The same conflation was in the dependency table's finding chip, which said
+"4 CVEs" about four advisories over two CVEs, and in the login page's specimen
+row that mirrors it. Both now say "advisories".
+
+Two details of that choice are worth recording, because the obvious fix is the
+wrong one.
+
+**The number did not change, only the word.** A chip counting *distinct CVEs*
+would read "2" above a WhyFlaggedPanel that says "4 advisories, counted as 4" —
+§5.2's count signal scores advisories, so the panel is explaining the number
+the formula used. A chip that disagreed with the arithmetic one click below it
+is §4.11's defect wearing a different label. "Advisories" is both the truthful
+word and the one that keeps the two surfaces consistent; every other place in
+the UI that counts these already said it.
+
+**The wireframe says "CVEs", and this departs from it.** That is a departure
+from the wireframe's *word*, not its design — the chip keeps its position,
+severity colour and CVSS suffix. The wireframe's sample data gives every
+advisory its own CVE, so it never had to distinguish the two, and a binding
+visual specification does not settle a question about data it did not model.

@@ -199,8 +199,11 @@ describe("dependency table", () => {
       (row) => row.dataset.package === "lodash",
     );
 
+    // "advisories", not "CVEs": the count is `dependency_vulnerabilities`
+    // rows, and OSV returns several of those per underlying vulnerability
+    // (`docs/decisions.md` §7.13).
     expect(within(vulnerable!).getByTestId("cve-badge")).toHaveTextContent(
-      /2 CVEs · 9\.8/,
+      /2 advisories · 9\.8/,
     );
     expect(within(vulnerable!).getByTestId("deprecated-badge")).toBeInTheDocument();
     expect(within(clean!).queryByTestId("cve-badge")).not.toBeInTheDocument();
