@@ -37,6 +37,7 @@ from dataclasses import dataclass
 from django.conf import settings
 
 from apps.common.http import (
+    UpstreamNotFound,
     UpstreamRateLimited,
     UpstreamUnauthorized,
     UpstreamUnavailable,
@@ -50,7 +51,7 @@ logger = logging.getLogger(__name__)
 GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 #: (connect, read). The read half is far longer than `common/http.py`'s default
-#: 15 s because a 70B model writing a few hundred tokens legitimately takes
+#: 15 s because a large model writing a few hundred tokens legitimately takes
 #: tens of seconds. Affordable only because generation runs on a background
 #: thread (§2) and never inside a request — Render's ~100 s request ceiling is
 #: not in play here.
@@ -76,6 +77,19 @@ class LlmNotConfigured(LlmError):
 
 class LlmRefused(LlmError):
     """The credential was rejected. No amount of retrying fixes it."""
+
+
+class LlmModelUnavailable(LlmError):
+    """`GROQ_MODEL` names a model this provider will not serve.
+
+    Groq answers 404 for a model that has been decommissioned, and models are
+    retired on a rolling schedule — `llama-3.3-70b-versatile`, the default this
+    project shipped with, was gone by the time the first live call was made
+    (`docs/decisions.md` §7.12). That is an operational condition with a
+    specific remedy, so it gets its own class rather than arriving as an
+    unexpected exception with a traceback: the log line names the model, which
+    is the one fact whoever fixes it needs.
+    """
 
 
 class LlmUnavailable(LlmError):
@@ -163,6 +177,15 @@ def complete_json(
             )
         except UpstreamUnauthorized as exc:
             raise LlmRefused("The generator API key was rejected.") from exc
+        except UpstreamNotFound as exc:
+            logger.error(
+                "The generator refused model %r as unknown. It has most likely "
+                "been decommissioned; set GROQ_MODEL to a current one.",
+                active_model(),
+            )
+            raise LlmModelUnavailable(
+                f"The generator does not serve model {active_model()!r}."
+            ) from exc
         except (UpstreamUnavailable, UpstreamRateLimited) as exc:
             if attempt <= MAX_TRANSIENT_RETRIES:
                 logger.info("Generator call failed transiently; retrying once.")

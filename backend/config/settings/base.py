@@ -169,7 +169,13 @@ WEIGHTS_VERSION = env("WEIGHTS_VERSION", default="v1")
 # runs without one, and CI has none. `apps.reports` answers a generation
 # request with a plain "not configured" rather than a 500 (§7.6).
 GROQ_API_KEY = env("GROQ_API_KEY", default="")
-GROQ_MODEL = env("GROQ_MODEL", default="llama-3.3-70b-versatile")
+# §6 and D11 name `llama-3.3-70b-versatile`. Groq had decommissioned it before
+# this project made its first live call, and answers 404 for it — models are
+# retired there on a rolling schedule. `openai/gpt-oss-120b` is the strongest
+# general-purpose chat model the account can currently reach, and it satisfies
+# what D11 actually requires: temperature 0 and JSON mode. Verified end to end
+# (`docs/decisions.md` §7.12).
+GROQ_MODEL = env("GROQ_MODEL", default="openai/gpt-oss-120b")
 
 # Fernet key for app_users.encrypted_github_token. Rotating it invalidates
 # every stored token — users simply re-login (§6).

@@ -69,7 +69,7 @@ function report(overrides: Partial<Report> = {}): Report {
     status: "completed",
     summaryMd: "Two dependencies carry active advisories. Start with lodash.",
     fixes: [fix()],
-    modelName: "llama-3.3-70b-versatile",
+    modelName: "openai/gpt-oss-120b",
     errorMessage: null,
     generatedAt: new Date().toISOString(),
     createdAt: new Date().toISOString(),
@@ -168,7 +168,7 @@ it("names the model that answered and says the answer is stored", () => {
   renderPanel();
 
   const cached = screen.getByTestId("report-cached");
-  expect(cached).toHaveTextContent("llama-3.3-70b-versatile");
+  expect(cached).toHaveTextContent("openai/gpt-oss-120b");
   expect(cached).toHaveTextContent(/never calls the model again/i);
   expect(cached).toHaveTextContent(/a fresh report needs a new scan/i);
 });

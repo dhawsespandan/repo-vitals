@@ -21,6 +21,7 @@ from apps.reports.llm import groq_client
 from apps.reports.llm.groq_client import (
     GROQ_CHAT_URL,
     LlmCall,
+    LlmModelUnavailable,
     LlmNotConfigured,
     LlmRefused,
     LlmTruncated,
@@ -113,6 +114,25 @@ def test_a_rejected_key_is_not_retried():
     with pytest.raises(LlmRefused):
         complete_json("system", "user")
 
+    assert len(responses.calls) == 1
+
+
+@WITH_KEY
+@responses.activate
+def test_a_decommissioned_model_is_named_rather_than_crashing():
+    """Groq answers 404 for a model it has retired, and it retires them on a
+    rolling schedule — the default this project shipped with was already gone
+    when the first live call was made (§7.12). Without its own class it arrives
+    as an unexpected exception, logs a traceback, and tells the reader nothing.
+    """
+    responses.add(responses.POST, GROQ_CHAT_URL, status=404, json={})
+
+    with pytest.raises(LlmModelUnavailable) as raised:
+        complete_json("system", "user")
+
+    # The model name is the one fact whoever fixes this needs.
+    assert "test-model" in str(raised.value)
+    # And it is not retried: a retired model stays retired.
     assert len(responses.calls) == 1
 
 

@@ -130,5 +130,5 @@ class ReportFactory(factory.django.DjangoModelFactory):
     status = ReportStatus.COMPLETED.value
     summary_text = "Two dependencies need attention."
     fixes_json = factory.LazyFunction(list)
-    model_name = "llama-3.3-70b-versatile"
+    model_name = "openai/gpt-oss-120b"
     generated_at = factory.LazyFunction(timezone.now)

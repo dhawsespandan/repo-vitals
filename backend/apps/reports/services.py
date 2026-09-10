@@ -51,6 +51,7 @@ from apps.scanning.models import ScanRun, ScanStatus
 
 from .combined import GenerationFailed, generate
 from .llm.groq_client import (
+    LlmModelUnavailable,
     LlmNotConfigured,
     LlmRefused,
     LlmTruncated,
@@ -89,7 +90,10 @@ FAILURE_MESSAGES: tuple[tuple[type[Exception], str], ...] = (
         "The report came back incomplete. Please try again.",
     ),
     (
-        (LlmRefused, LlmNotConfigured),  # type: ignore[arg-type]
+        # All three are deployment faults - a bad key, no key, or a model that
+        # no longer exists - and none of them is something to explain to the
+        # person who pressed the button. The log line carries the detail.
+        (LlmRefused, LlmNotConfigured, LlmModelUnavailable),  # type: ignore[arg-type]
         "Report generation isn't available right now. Please try again later.",
     ),
     (

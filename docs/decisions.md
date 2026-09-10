@@ -2252,3 +2252,53 @@ imported as a module.
 Neither is a Python subtlety worth a paragraph on its own. What they share is
 the shape: a test that passes while doing something entirely different from
 what it claims to do.
+
+### 7.12 The model D11 names no longer exists
+
+The first live call this project ever made returned 404. Not a bug in the
+client: Groq had decommissioned `llama-3.3-70b-versatile`, which §6's
+configuration registry and D11 both name as the default. Asking the account's
+`/openai/v1/models` for what it can actually reach returned no Llama chat model
+at all — the general-purpose options were `openai/gpt-oss-120b`,
+`openai/gpt-oss-20b` and two Qwen 27Bs, alongside Whisper, prompt-guard and TTS
+models that are not chat models.
+
+The code default is now `openai/gpt-oss-120b`. That satisfies what D11 actually
+requires — a Groq-hosted generator at temperature 0 in JSON mode — and D11's
+substance is the *provider* and the determinism settings, not the checkpoint:
+the reason the judge in Phase 13 must be Gemini is that self-judging is a
+reviewer attack, and that argument is unaffected by which Groq model generates.
+`plan/` is not edited here; §6's table names a model that no longer exists and
+that is the plan's to correct.
+
+Two things follow, and the second is the more important one.
+
+**A retired model is now its own failure.** Groq answers 404, which arrived as
+`UpstreamNotFound`, which nothing mapped — so the report failed with "Something
+went wrong while writing this report" and a traceback logged as an unexpected
+error. The reader was told nothing and the operator was told the wrong thing.
+`LlmModelUnavailable` now carries it: the user still sees the deployment-fault
+message, because which model is configured is not their problem, and the log
+line names the model, which is the one fact whoever fixes it needs. It is not
+retried — a retired model stays retired.
+
+**Models are retired on a rolling schedule, so this will happen again.**
+`.env.example` says so and points at Groq's model list. Any redeploy after a
+long gap should check it before assuming a failed report is a code fault.
+
+The generation was then verified end to end against the live provider, which is
+the first time any of Phase 7 ran outside a mock. On the seeded
+`checkout-service` fixture — lodash 4.17.19 with CVE-2021-23337, a deprecated
+request 2.88.2, a stale moment 2.24.0 — one request produced three fixes, all
+naming real scanned rows, with `current_version`, `cves` and `severity` matching
+the stored signals exactly because §7.1 copies them rather than reading them
+back from the answer. The second request served the stored row with no call, so
+the phase's headline claim holds against the real provider and not only against
+a fake.
+
+One detail is worth keeping, because it is §7.2's trade-off made visible.
+`request` came back as `investigate` with no replacement named — not as
+`replace` with "axios". That is correct: the prompt carries `deprecated: true`
+and deliberately not npm's deprecation message, so the model had no successor to
+name and declined to invent one. The successor suggestion is exactly what
+Phase 8 recovers, quoting the changelog beside the claim.
