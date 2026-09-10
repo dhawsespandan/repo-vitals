@@ -14,8 +14,8 @@ import {
 import { BlueprintCorners } from "../components/Blueprint";
 import { DependencyTable } from "../components/DependencyTable";
 import { ScanEcosystemChip } from "../components/EcosystemChip";
-import { CheckIcon, FolderIcon, ListIcon, LockIcon } from "../components/Icons";
-import { ReportPanel } from "../components/ReportPanel";
+import { CheckIcon, FolderIcon, LockIcon } from "../components/Icons";
+import { ReportsTab } from "../components/ReportsTab";
 import { ClassificationTag, ScoreBadge } from "../components/ScoreBadge";
 import { ScoreContributors } from "../components/ScoreContributors";
 import { StatusPill, relativeTime } from "../components/StatusPill";
@@ -76,10 +76,9 @@ export function RepoDetail() {
   // default to All on a clean repository would move the answer to a different
   // place depending on what the answer was.
   const [tab, setTab] = useState<Tab>("flagged");
-  // The report drawer. `report` is the stored row and nothing else: a
-  // generation lives in the database, so closing the drawer or reloading the
-  // page never loses one (§5.1, "the UI always reads stored rows").
-  const [reportOpen, setReportOpen] = useState(false);
+  // `report` is the stored row and nothing else: a generation lives in the
+  // database, so leaving the tab or reloading the page never loses one
+  // (§5.1, "the UI always reads stored rows").
   const [report, setReport] = useState<Report | null>(null);
   const [reportStarting, setReportStarting] = useState(false);
 
@@ -206,7 +205,6 @@ export function RepoDetail() {
           ? error.message
           : "We couldn't generate a report. Please try again.",
       );
-      setReportOpen(false);
     } finally {
       setReportStarting(false);
     }
@@ -439,35 +437,6 @@ export function RepoDetail() {
           >
             {active ? "Scanning…" : starting ? "Starting…" : "Run scan"}
           </button>
-          {/* The wireframe puts this beside Run scan, and the placement is the
-              point: a report is a reading of the scan the page is showing, so
-              it belongs with the action that produced it rather than in a
-              fourth tab over the dependency table (`docs/decisions.md` §7.8).
-              Absent until there is a completed scan to report on — the button
-              would otherwise offer to triage nothing. */}
-          {scan && (
-            <button
-              type="button"
-              className="btn btn-secondary"
-              style={{
-                height: 36,
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 7,
-              }}
-              data-testid="open-combined-report"
-              onClick={() => setReportOpen(true)}
-            >
-              <ListIcon size={15} />
-              {/* The label changes only while something is happening. It does
-                  not say "View report" for a cached one: the drawer is the
-                  same drawer either way, and a label that changed with the
-                  cache would make the reader guess whether pressing it costs
-                  anything. The panel says that, where there is room to say it
-                  properly. */}
-              {reportBusy ? "Report — writing…" : "Combined report"}
-            </button>
-          )}
           <span
             className="text-muted"
             style={{
@@ -637,44 +606,45 @@ export function RepoDetail() {
             </div>
           )}
 
-          <TabContents scan={scan} tab={tab} rows={rows} onChangeTab={setTab} />
+          <TabContents
+            scan={scan}
+            tab={tab}
+            rows={rows}
+            onChangeTab={setTab}
+            report={report}
+            reportBusy={reportBusy}
+            reportStarting={reportStarting}
+            onGenerateReport={() => void generateReport()}
+          />
         </div>
       )}
-
-      {/* Written here, mounted on document.body: the panel portals itself out.
-          <main> carries `animation: dsup .3s ease both`, which leaves it with a
-          computed `transform: matrix(...)` permanently, and a transformed
-          element is the containing block for every `position: fixed`
-          descendant — a drawer rendered into this subtree is confined to the
-          article column rather than the viewport (`docs/decisions.md` §7.9). */}
-      <ReportPanel
-        open={reportOpen && scan !== null}
-        repositoryName={repository.name}
-        report={report}
-        generating={reportBusy}
-        starting={reportStarting}
-        flaggedCount={scan?.flaggedCount ?? 0}
-        onGenerate={() => void generateReport()}
-        onClose={() => setReportOpen(false)}
-      />
     </main>
   );
 }
 
 /** Which slice of the dependency table is on screen. */
-type Tab = "flagged" | "all" | "unassessable";
+type Tab = "flagged" | "all" | "unassessable" | "reports";
 
 const TAB_LABEL: Record<Tab, string> = {
   flagged: "Flagged",
   all: "All",
   unassessable: "Unassessable",
+  reports: "Reports",
 };
 
-/** How many rows the *scan* has in each slice, from the server's own counts. */
-function serverCount(scan: ScanDetail, tab: Tab): number {
+// Flagged / All / Unassessable are three views of one partition of the
+// dependency list, and the sentence under the strip says so. Reports is not a
+// fourth slice of that set — it is a reading of it — so it carries no count
+// and stays out of the partition sentence. §10 Phase 7 puts it in this strip
+// all the same, and File A is the guide (`docs/decisions.md` §7.8).
+
+/** How many rows the *scan* has in each slice, from the server's own counts.
+ * Null for Reports, which counts nothing. */
+function serverCount(scan: ScanDetail, tab: Tab): number | null {
   if (tab === "flagged") return scan.flaggedCount;
   if (tab === "unassessable") return scan.unassessableCount;
-  return scan.dependencyCount;
+  if (tab === "all") return scan.dependencyCount;
+  return null;
 }
 
 function matches(row: DependencyOccurrence, tab: Tab): boolean {
@@ -703,20 +673,24 @@ function DependencyTabs({
 }) {
   return (
     <div style={{ marginBottom: 12 }}>
-      <div className="seg" role="radiogroup" aria-label="Which dependencies to show">
-        {(Object.keys(TAB_LABEL) as Tab[]).map((tab) => (
-          <label key={tab} className="seg-opt" data-testid={`tab-${tab}`}>
-            <input
-              type="radio"
-              name="dependency-tab"
-              checked={value === tab}
-              onChange={() => onChange(tab)}
-            />
-            <span>
-              {TAB_LABEL[tab]} ({serverCount(scan, tab)})
-            </span>
-          </label>
-        ))}
+      <div className="seg" role="radiogroup" aria-label="Which view to show">
+        {(Object.keys(TAB_LABEL) as Tab[]).map((tab) => {
+          const count = serverCount(scan, tab);
+          return (
+            <label key={tab} className="seg-opt" data-testid={`tab-${tab}`}>
+              <input
+                type="radio"
+                name="dependency-tab"
+                checked={value === tab}
+                onChange={() => onChange(tab)}
+              />
+              <span>
+                {TAB_LABEL[tab]}
+                {count === null ? "" : ` (${count})`}
+              </span>
+            </label>
+          );
+        })}
       </div>
 
       {/* Stated, not inferred. The three counts add to the whole, and the
@@ -741,14 +715,34 @@ function TabContents({
   tab,
   rows,
   onChangeTab,
+  report,
+  reportBusy,
+  reportStarting,
+  onGenerateReport,
 }: {
   scan: ScanDetail;
   tab: Tab;
   rows: DependencyOccurrence[];
   onChangeTab: (tab: Tab) => void;
+  report: Report | null;
+  reportBusy: boolean;
+  reportStarting: boolean;
+  onGenerateReport: () => void;
 }) {
+  if (tab === "reports") {
+    return (
+      <ReportsTab
+        report={report}
+        generating={reportBusy}
+        starting={reportStarting}
+        flaggedCount={scan.flaggedCount}
+        onGenerate={onGenerateReport}
+      />
+    );
+  }
+
   const visible = rows.filter((row) => matches(row, tab));
-  const total = serverCount(scan, tab);
+  const total = serverCount(scan, tab) ?? 0;
 
   if (visible.length === 0) {
     return <EmptyTab scan={scan} tab={tab} onChangeTab={onChangeTab} />;

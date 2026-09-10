@@ -1,11 +1,11 @@
 /**
- * The COMBINED report drawer (§10 Phase 7).
+ * The COMBINED report tab (§10 Phase 7).
  *
  * Three things are worth testing here and one of them is a count.
  *
  * **The cache.** "Second click serves instantly with a zero-LLM-call
  * assertion" is a backend property, but the browser has its own half of it: a
- * page whose panel re-POSTed on every open would bill a generation per click
+ * page whose tab re-POSTed on every visit would bill a generation per click
  * however good the server's cache was. So the requests are counted, the way
  * §3.13's two-polling-loops defect had to be found.
  *
@@ -14,8 +14,8 @@
  * action line is assembled from `fix_type`, `target_version`,
  * `replacement_package` and the CVE list, so it is asserted whole.
  *
- * **What the panel claims.** The one string here a model wrote is the summary,
- * and the panel has to say which half of the product this is — §5.9 makes
+ * **What the tab claims.** The one string here a model wrote is the summary,
+ * and the tab has to say which half of the product this is — §5.9 makes
  * COMBINED the ungrounded surface, and a reader who does not know that would
  * weigh it like a cited plan.
  */
@@ -35,7 +35,7 @@ import {
   stubFetch,
 } from "../test/renderApp";
 import type { Report, ReportFix } from "../types";
-import { ReportPanel, fixAction } from "./ReportPanel";
+import { ReportsTab, fixAction } from "./ReportsTab";
 
 beforeEach(() => {
   vi.unstubAllGlobals();
@@ -79,17 +79,14 @@ function report(overrides: Partial<Report> = {}): Report {
 
 const NOOP = () => undefined;
 
-function renderPanel(overrides: Partial<Parameters<typeof ReportPanel>[0]> = {}) {
+function renderTab(overrides: Partial<Parameters<typeof ReportsTab>[0]> = {}) {
   return render(
-    <ReportPanel
-      open
-      repositoryName="checkout-service"
+    <ReportsTab
       report={report()}
       generating={false}
       starting={false}
       flaggedCount={2}
       onGenerate={NOOP}
-      onClose={NOOP}
       {...overrides}
     />,
   );
@@ -97,8 +94,8 @@ function renderPanel(overrides: Partial<Parameters<typeof ReportPanel>[0]> = {})
 
 // ── The action sentence, read whole ────────────────────────────────────────
 
-it("an upgrade with a target version and a CVE reads as one sentence", () => {
-  expect(fixAction(fix())).toBe("Upgrade to 4.17.21. Fixes CVE-2021-23337.");
+it("an upgrade names the version to move to", () => {
+  expect(fixAction(fix())).toBe("Upgrade to 4.17.21.");
 });
 
 it("an upgrade with no target version says so rather than trailing off", () => {
@@ -134,16 +131,19 @@ it("an investigate entry admits the signals do not decide", () => {
   ).toBe("Investigate: the scan's signals don't point to a single fix.");
 });
 
-it("two CVEs are listed in one clause, not two sentences", () => {
-  expect(
-    fixAction(fix({ cves: ["CVE-2021-23337", "CVE-2020-8203"] })),
-  ).toBe("Upgrade to 4.17.21. Fixes CVE-2021-23337, CVE-2020-8203.");
+it("the action sentence carries no CVEs — the table has a column for them", () => {
+  // They moved out of the sentence when the cards became a table (§10 Phase 7
+  // says "prioritized fixes table"), so the sentence is asserted whole here
+  // and the column is asserted in the render test below.
+  expect(fixAction(fix({ cves: ["CVE-2021-23337", "CVE-2020-8203"] }))).toBe(
+    "Upgrade to 4.17.21.",
+  );
 });
 
-// ── What the panel shows ───────────────────────────────────────────────────
+// ── What the tab shows ─────────────────────────────────────────────────────
 
 it("shows the summary, the fixes, and what the surface is not", () => {
-  renderPanel();
+  renderTab();
 
   expect(screen.getByTestId("report-summary")).toHaveTextContent(
     "Start with lodash",
@@ -152,8 +152,15 @@ it("shows the summary, the fixes, and what the surface is not", () => {
     "report-fix",
   );
   expect(fixes).toHaveLength(1);
-  expect(fixes[0]).toHaveTextContent("lodash@4.17.19");
-  expect(fixes[0]).toHaveTextContent("Upgrade to 4.17.21. Fixes CVE-2021-23337.");
+  // One table row carrying every §5.8 field the reader needs: which package,
+  // where, what it is on now, what to do, and what that fixes.
+  const cells = within(fixes[0]!).getAllByRole("cell").map((c) => c.textContent);
+  expect(cells[0]).toBe("1");
+  expect(cells[1]).toContain("lodash");
+  expect(cells[1]).toContain("package.json");
+  expect(cells[2]).toBe("4.17.19");
+  expect(cells[3]).toBe("Upgrade to 4.17.21.");
+  expect(cells[4]).toBe("CVE-2021-23337");
 
   // §5.9's distinction, stated on the page rather than left to be inferred.
   expect(screen.getByTestId("report-disclaimer")).toHaveTextContent(
@@ -164,17 +171,35 @@ it("shows the summary, the fixes, and what the surface is not", () => {
   );
 });
 
-it("names the model that answered and says the answer is stored", () => {
-  renderPanel();
+it("gives the fixes table the columns §5.8 fills", () => {
+  renderTab();
 
+  const headers = screen
+    .getAllByRole("columnheader")
+    .map((h) => h.textContent);
+  expect(headers).toEqual([
+    "Priority",
+    "Package",
+    "Current",
+    "Recommended action",
+    "Fixes",
+  ]);
+});
+
+it("names the model that answered and says the answer is stored", () => {
+  renderTab();
+
+  // §10 Phase 7's "cached banner with generated_at" plus the "regenerate
+  // requires a rescan" hint it belongs with.
   const cached = screen.getByTestId("report-cached");
+  expect(cached).toHaveTextContent(/generated/i);
   expect(cached).toHaveTextContent("openai/gpt-oss-120b");
   expect(cached).toHaveTextContent(/never calls the model again/i);
   expect(cached).toHaveTextContent(/a fresh report needs a new scan/i);
 });
 
 it("renders the summary's markdown as text, never as markup", () => {
-  renderPanel({
+  renderTab({
     report: report({
       summaryMd:
         "**Two** advisories are open.\n\n- Upgrade `lodash`\n- Replace *request*",
@@ -192,7 +217,7 @@ it("renders the summary's markdown as text, never as markup", () => {
 });
 
 it("a summary carrying a link is shown as the text it is, not a link", () => {
-  renderPanel({
+  renderTab({
     report: report({ summaryMd: "See <a href='https://evil.example'>here</a>." }),
   });
 
@@ -202,7 +227,7 @@ it("a summary carrying a link is shown as the text it is, not a link", () => {
 });
 
 it("offers to generate when nothing has been asked for yet", () => {
-  renderPanel({ report: null });
+  renderTab({ report: null });
 
   expect(screen.getByTestId("report-empty")).toHaveTextContent(
     "2 flagged dependencies",
@@ -211,7 +236,7 @@ it("offers to generate when nothing has been asked for yet", () => {
 });
 
 it("a scan with nothing flagged says so before the button", () => {
-  renderPanel({ report: null, flaggedCount: 0 });
+  renderTab({ report: null, flaggedCount: 0 });
 
   expect(screen.getByTestId("report-empty")).toHaveTextContent(
     /nothing is flagged/i,
@@ -219,7 +244,7 @@ it("a scan with nothing flagged says so before the button", () => {
 });
 
 it("a failed generation shows the backend's own sentence and a retry", () => {
-  renderPanel({
+  renderTab({
     report: report({
       status: "failed",
       summaryMd: null,
@@ -237,7 +262,7 @@ it("a failed generation shows the backend's own sentence and a retry", () => {
 });
 
 it("a critical fix is marked differently from an advisory one", () => {
-  renderPanel({
+  renderTab({
     report: report({
       fixes: [
         fix({ severity: "critical" }),
@@ -255,8 +280,8 @@ it("a critical fix is marked differently from an advisory one", () => {
   });
 
   const [urgent, advisory] = screen.getAllByTestId("report-fix");
-  expect(urgent).toHaveTextContent("Upgrade · 1");
-  expect(advisory).toHaveTextContent("Replace · 2");
+  expect(urgent).toHaveTextContent("Upgrade to 4.17.21.");
+  expect(advisory).toHaveTextContent("Replace with date-fns.");
   expect(urgent!.querySelector(".tag")).not.toHaveClass("tag-neutral");
   expect(advisory!.querySelector(".tag")).toHaveClass("tag-neutral");
 });
@@ -264,20 +289,11 @@ it("a critical fix is marked differently from an advisory one", () => {
 it("a fix with no measured severity is not painted urgent", () => {
   // A colour is a claim. Red on a row whose severity was never measured is a
   // claim the scan cannot support — §4.7's shape, in a swatch.
-  renderPanel({ report: report({ fixes: [fix({ severity: "", cves: [] })] }) });
+  renderTab({ report: report({ fixes: [fix({ severity: "", cves: [] })] }) });
 
   expect(screen.getByTestId("report-fix").querySelector(".tag")).toHaveClass(
     "tag-neutral",
   );
-});
-
-it("closes on Escape", async () => {
-  const onClose = vi.fn();
-  renderPanel({ onClose });
-
-  await userEvent.keyboard("{Escape}");
-
-  expect(onClose).toHaveBeenCalled();
 });
 
 // ── The page's half: opening, generating, and the request count ────────────
@@ -308,18 +324,18 @@ function countGenerations(calls: string[]): number {
     .length;
 }
 
-it("opening the panel on a scan with no report asks the server for nothing", async () => {
+it("opening the tab on a scan with no report asks the server for nothing", async () => {
   const { calls } = detailStubs();
   renderApp(DETAIL_ROUTE);
 
-  await userEvent.click(await screen.findByTestId("open-combined-report"));
+  await userEvent.click(await screen.findByTestId("tab-reports"));
 
   expect(await screen.findByTestId("report-empty")).toBeInTheDocument();
-  // The drawer is a drawer, not a generation. Nothing is billed by looking.
+  // A tab is a view, not a generation. Nothing is billed by looking.
   expect(countGenerations(calls)).toBe(0);
 });
 
-it("a cached report opens without generating anything", async () => {
+it("a cached report shows without generating anything", async () => {
   const stored = report();
   const { calls } = detailStubs({
     scan: scanDetail({
@@ -334,7 +350,7 @@ it("a cached report opens without generating anything", async () => {
   });
   renderApp(DETAIL_ROUTE);
 
-  await userEvent.click(await screen.findByTestId("open-combined-report"));
+  await userEvent.click(await screen.findByTestId("tab-reports"));
 
   expect(await screen.findByTestId("report-summary")).toHaveTextContent(
     "Start with lodash",
@@ -342,19 +358,19 @@ it("a cached report opens without generating anything", async () => {
   expect(countGenerations(calls)).toBe(0);
 });
 
-it("reopening a generated report does not generate a second one", async () => {
+it("leaving the tab and returning does not generate a second report", async () => {
   // The generation answers 200 straight away — the shape of a report that was
   // already on disk when the request landed. What is under test is the reopen,
   // not the wait.
   const { calls } = detailStubs({ report: () => report(), generateStatus: 200 });
   renderApp(DETAIL_ROUTE);
 
-  await userEvent.click(await screen.findByTestId("open-combined-report"));
+  await userEvent.click(await screen.findByTestId("tab-reports"));
   await userEvent.click(await screen.findByTestId("report-generate"));
   expect(await screen.findByTestId("report-summary")).toBeInTheDocument();
 
-  await userEvent.click(screen.getByTestId("report-close"));
-  await userEvent.click(screen.getByTestId("open-combined-report"));
+  await userEvent.click(screen.getByTestId("tab-flagged"));
+  await userEvent.click(screen.getByTestId("tab-reports"));
 
   expect(screen.getByTestId("report-summary")).toBeInTheDocument();
   expect(countGenerations(calls)).toBe(1);
@@ -370,7 +386,7 @@ it("a running generation becomes a report without another request", async () => 
   const { calls } = detailStubs({ report: () => stored });
   renderApp(DETAIL_ROUTE);
 
-  await userEvent.click(await screen.findByTestId("open-combined-report"));
+  await userEvent.click(await screen.findByTestId("tab-reports"));
   await userEvent.click(await screen.findByTestId("report-generate"));
   expect(await screen.findByTestId("report-generating")).toBeInTheDocument();
 
@@ -396,18 +412,20 @@ it("a second press while a generation runs sends nothing", async () => {
   const { calls } = detailStubs({ report: () => queued });
   renderApp(DETAIL_ROUTE);
 
-  await userEvent.click(await screen.findByTestId("open-combined-report"));
+  await userEvent.click(await screen.findByTestId("tab-reports"));
   await userEvent.click(await screen.findByTestId("report-generate"));
   await screen.findByTestId("report-generating");
 
-  // The generate button is gone while it runs, so the only way to press again
-  // is the header button — which opens the drawer and must not re-POST.
-  await userEvent.click(screen.getByTestId("open-combined-report"));
+  // The generate button is gone while it runs, so the only way to ask again is
+  // to re-select the tab — which must not re-POST.
+  await userEvent.click(screen.getByTestId("tab-reports"));
 
   expect(countGenerations(calls)).toBe(1);
 });
 
-it("the button says a generation is under way", async () => {
+it("a generation already running is picked up on load", async () => {
+  // Started in another tab, or before a reload. The surface has to show the
+  // work in flight rather than offering to start a second one.
   detailStubs({
     scan: scanDetail({
       flaggedCount: 1,
@@ -418,7 +436,19 @@ it("the button says a generation is under way", async () => {
   });
   renderApp(DETAIL_ROUTE);
 
-  expect(await screen.findByTestId("open-combined-report")).toHaveTextContent(
-    "writing",
-  );
+  await userEvent.click(await screen.findByTestId("tab-reports"));
+
+  expect(await screen.findByTestId("report-generating")).toBeInTheDocument();
+  expect(screen.queryByTestId("report-generate")).not.toBeInTheDocument();
+});
+
+it("the Reports tab carries no count, because it counts nothing", async () => {
+  // Flagged / All / Unassessable are three views of one partition and say how
+  // many rows each holds. Reports is a reading of that list, not a slice of
+  // it, so a number beside it would be a number about nothing.
+  detailStubs();
+  renderApp(DETAIL_ROUTE);
+
+  expect(await screen.findByTestId("tab-reports")).toHaveTextContent(/^Reports$/);
+  expect(screen.getByTestId("tab-flagged")).toHaveTextContent("Flagged (1)");
 });

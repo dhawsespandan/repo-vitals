@@ -2122,20 +2122,49 @@ camelCase — deliberate, because §5.8 is binding and is *also* Phase 9's
 Renaming the keys for the browser would give the panel one shape and the
 download another, free to drift.
 
-### 7.8 A drawer, not a fourth tab
+### 7.8 A Reports tab, because File A says so — and what that overruled
 
-§10 Phase 7 says "Reports tab"; the wireframe draws a right-hand drawer opened
-by a Combined report button beside Run scan (`combinedOpen`), and the drawer is
-what shipped.
+§10 Phase 7 is explicit: "Reports tab: Generate → generating (poll) → summary
+markdown + prioritized fixes **table**". The surface shipped first as a
+right-hand drawer with fix *cards*, following the wireframe's `combinedOpen`
+artboard, and was rebuilt as a tab with a table when that was noticed.
 
-The wireframe is the binding visual specification, and here it is also right on
-the merits. The three tabs already on the page — Flagged, All, Unassessable —
-are three views of one partition, and the sentence beneath them says so:
-flagged + clean + unassessable is every dependency exactly once. A fourth tab
-would sit in that row claiming to be a fourth slice of the same set. A report
-is not a slice of the dependency list; it is a reading of it.
+The argument for the drawer was not bad, and it is worth recording because it
+lost. The three tabs already on the page — Flagged, All, Unassessable — are
+three views of one partition, and the sentence beneath them says so: flagged +
+clean + unassessable is every dependency exactly once. A fourth tab sits in
+that row looking like a fourth slice of the same set, and a report is not a
+slice of the dependency list, it is a reading of it.
+
+What settles it is authority, not taste. §2 of this project's own charter makes
+File A "the only guide for the codebase", and File A's text never mentions
+`wireframe.html` at all — the wireframe's binding status was an assumption
+carried in from elsewhere, and it does not outrank the document that does
+govern. Where the two disagree on structure, File A wins.
+
+Two smaller things fell out of the same reading, and both are improvements:
+
+* **The tab carries no count.** Flagged, All and Unassessable each show how
+  many rows they hold; Reports shows nothing, because it counts nothing. That
+  keeps the partition sentence honest — it still describes three views of one
+  set — while §10's fourth tab sits beside them.
+* **The component could not have kept its name.** §10 Phase 8 reserves
+  `ReportPanel` for the per-dependency *drawer*, so a Phase 7 combined-report
+  component called `ReportPanel` would have collided with the next phase. It is
+  `ReportsTab` now, which is also what §10 Phase 7's own commit list calls the
+  work: `feat(frontend): reports tab, fixes table, cached indicator`.
+
+The lesson is narrower than "follow the plan". It is that a deviation argued on
+the merits still needs to name which document it is deviating *from*, and check
+that document actually outranks the one being followed. §7.8 originally cited a
+binding specification that File A does not cite.
 
 ### 7.9 A fixed overlay inside an animated element is not fixed
+
+Found on the combined-report drawer, which §7.8 has since replaced with a tab.
+The drawer is gone; the defect it exposed is not, and it is the reason
+`ConfirmDialog` and `AddRepoDialog` are portalled today (§7.9.1). Recorded
+here in the terms it was found in.
 
 The drawer was first rendered inside `<main>`, and in a real browser it was
 clipped at the top, sat 58 px short of the right edge, and scrolled with the
@@ -2150,18 +2179,18 @@ finished. A transformed element is the containing block for every
 `position: fixed` descendant, so `inset: 0` resolved to `<main>`'s box (1180 x
 954 at top -31) instead of the viewport.
 
-The fix is a `createPortal` to `document.body` inside `ReportPanel` itself,
-rather than moving the element up one level in `RepoDetail`. Both work here;
+The fix was a `createPortal` to `document.body` inside the drawer component
+itself, rather than moving the element up one level in `RepoDetail`. Both work;
 the portal is better for the same reason `OwnedQuerySetMixin` beats a
-permission check in each view. Moving the call site fixes this one call site
-and leaves the next caller to rediscover the defect; the portal makes the panel
-viewport-relative wherever anyone mounts it, and a drawer is viewport-relative
-by definition. It also keeps `<main>` untouched, so the phase's diff on that
-file is the change and not a re-indentation of it.
+permission check in each view. Moving the call site fixes that one call site
+and leaves the next caller to rediscover the defect; the portal makes a
+component viewport-relative wherever anyone mounts it, and an overlay is
+viewport-relative by definition. It also keeps `<main>` untouched, so the
+diff on that file is the change and not a re-indentation of it.
 
-The corrected geometry was re-measured in the browser: the backdrop is
-0,0 x viewport, the panel 480 wide, flush right, full height, with no overflow
-at 1280 or at the narrowest width the pane allows.
+The corrected geometry was re-measured in the browser before the drawer was
+retired: backdrop 0,0 x viewport, panel 480 wide, flush right, full height, no
+overflow at 1280 or at the narrowest width the pane allows.
 
 The general rule this leaves: `position: fixed` means "relative to the
 viewport" only while no ancestor carries a transform, a filter, a
@@ -2205,24 +2234,27 @@ element on the signed-in pages that creates one was enumerated with its fixed
 descendants: `<nav>` (`backdrop-filter: blur(8px)`), each page's `<main>`
 (`dsup`), and the ScoreBadge ring's `<circle>` elements (a rotation transform).
 All three now report zero fixed descendants, and the only `position: fixed`
-rules in the codebase are `.dialog-backdrop` and `ReportPanel`'s inline one —
-all three components portal themselves. `dsspin` and the unused `dsbar` also
+rules in the codebase were `.dialog-backdrop` and the combined-report drawer's
+inline one — all of them portalled themselves. (The drawer has since become a
+tab, §7.8, so `.dialog-backdrop` is the only one left.) `dsspin` and the unused `dsbar` also
 animate `transform`, but neither is applied to an element with descendants.
 
-### 7.10 What the panel has to say about itself
+### 7.10 What the tab has to say about itself
 
 §5.9 makes COMBINED the ungrounded half of the product, and a reader who does
 not know that will weigh it exactly like the cited per-dependency plan Phase 8
 produces. The distinction is not visible in the output — a prioritized list of
 real packages with real CVE ids looks equally authoritative either way — so it
-is stated on the panel, in the wireframe's own quiet paragraph: one model call
+is stated on the tab, in the wireframe's own quiet paragraph: one model call
 over signals already stored, no source documents retrieved, and the cited
 surface is elsewhere.
 
-Beneath the fixes, a second line says the answer is stored against this scan,
-names the model that wrote it, and says a fresh report needs a new scan. That
-sentence is doing two jobs: it is the cache made visible, and it is the warning
-Phase 9's rescan confirmation will act on.
+Above the summary sits §10 Phase 7's "cached banner with `generated_at`",
+carrying the "regenerate requires a rescan" hint it belongs with: it names the
+model that wrote the report, says the answer is stored against this scan, and
+says a fresh one needs a new scan. That banner is doing two jobs — it is the
+cache made visible, and it is the warning Phase 9's rescan confirmation will
+act on.
 
 The summary is the only model-written string on the page. It is rendered by a
 small paragraph-and-bullet reader that unwraps `**` and backticks and never
@@ -2231,7 +2263,9 @@ would be a renderer that could be talked into producing a link. Each fix's
 action sentence is assembled from the structured fix instead, because §5.8 has
 no field for per-fix prose and inventing one would put an unvalidated sentence
 beside a validated row. Per §6.7, `fixAction` is exported and its finished
-sentences are asserted whole rather than by substring.
+sentences are asserted whole rather than by substring — and now that the fixes
+are a table, the CVE list has a column of its own rather than a clause tacked
+onto that sentence.
 
 ### 7.11 Two seams that were not seams
 
