@@ -177,6 +177,30 @@ GROQ_API_KEY = env("GROQ_API_KEY", default="")
 # (`docs/decisions.md` §7.12).
 GROQ_MODEL = env("GROQ_MODEL", default="openai/gpt-oss-120b")
 
+# ── Retrieval (§6, Phase 8) ────────────────────────────────────────────────
+# Where the embedded Chroma collections live. A *cache*, not storage: §5.9
+# deletes a dependency's chunks the moment its report is persisted, and
+# everything of value is in Postgres by then. Render's free disk is ephemeral
+# and that is fine — an empty directory after a deploy costs one re-fetch of a
+# changelog, not a lost report.
+CHROMA_DIR = env("CHROMA_DIR", default=str(BASE_DIR / ".chroma"))
+
+# D7's model, and the one §1.13's memory smoke test measured. Changing it
+# changes the vector dimension, which `apps.reports.rag.embeddings` asserts
+# rather than discovers: a mismatch would otherwise surface as an unrelated
+# Chroma index error several frames from the cause.
+EMBED_MODEL = env("EMBED_MODEL", default="sentence-transformers/all-MiniLM-L6-v2")
+
+# §5.9's deterministic grounding gate — no LLM involved. The top chunk must be
+# at least this similar to the query AND the retrieved text must be at least
+# this long; below either, the generation is told to say it has insufficient
+# information rather than to fill the gap. §6 fixes both defaults.
+#
+# Similarity, not distance: the store converts Chroma's cosine distance once,
+# at its own boundary, so nothing downstream can compare the wrong sense.
+GROUNDING_MIN_SIM = env.float("GROUNDING_MIN_SIM", default=0.30)
+GROUNDING_MIN_CHARS = env.int("GROUNDING_MIN_CHARS", default=400)
+
 # Fernet key for app_users.encrypted_github_token. Rotating it invalidates
 # every stored token — users simply re-login (§6).
 TOKEN_ENCRYPTION_KEY = env("TOKEN_ENCRYPTION_KEY")

@@ -31,3 +31,15 @@ psutil>=6.0
 # production worker footprint on the 512 MB tier. Never sentence-transformers
 # or torch: torch alone is ~700 MB installed.
 fastembed>=0.5,<1.0
+
+# Phase 8 (§5.9). The vector store and the agent framework, both named in the
+# binding spec rather than chosen here.
+#
+# Both are imported lazily, inside the functions that use them, and that is a
+# memory decision rather than a style one: chromadb costs ~51 MB resident on
+# import and langgraph ~23 MB, against a 512 MB tier already holding Django,
+# a connection pool, the scan threads and — once a report is generated —
+# fastembed's ~180 MB ONNX model. A web worker that has never produced a
+# per-dependency report holds none of it. Measured in `docs/decisions.md` §8.9.
+chromadb>=1.0,<2.0
+langgraph>=0.6,<0.7
