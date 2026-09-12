@@ -186,6 +186,35 @@ export function RepoDetail() {
     onResult: setReport,
   });
 
+  /**
+   * A remediation report was generated for one row. Phase 8.
+   *
+   * Written back onto the row rather than held in a map beside the table, so
+   * there is one place a row's report state lives and the `Remediate` button
+   * reads it the same way whether it came from the list request or from a
+   * generation that just finished. `latestScan` guards nothing here — the
+   * rows are already keyed to the completed scan.
+   */
+  const rememberDependencyReport = useCallback(
+    (dependencyId: string, value: Report) => {
+      setRows((current) =>
+        current.map((row) =>
+          row.id === dependencyId
+            ? {
+                ...row,
+                report: {
+                  id: value.id,
+                  status: value.status,
+                  generatedAt: value.generatedAt,
+                },
+              }
+            : row,
+        ),
+      );
+    },
+    [],
+  );
+
   const generateReport = async () => {
     if (reportBusy || reportStarting) return;
     setNotice("");
@@ -615,6 +644,7 @@ export function RepoDetail() {
             reportBusy={reportBusy}
             reportStarting={reportStarting}
             onGenerateReport={() => void generateReport()}
+            onDependencyReportChange={rememberDependencyReport}
           />
         </div>
       )}
@@ -719,6 +749,7 @@ function TabContents({
   reportBusy,
   reportStarting,
   onGenerateReport,
+  onDependencyReportChange,
 }: {
   scan: ScanDetail;
   tab: Tab;
@@ -728,6 +759,7 @@ function TabContents({
   reportBusy: boolean;
   reportStarting: boolean;
   onGenerateReport: () => void;
+  onDependencyReportChange: (dependencyId: string, report: Report) => void;
 }) {
   if (tab === "reports") {
     return (
@@ -758,6 +790,7 @@ function TabContents({
     <DependencyTable
       rows={visible}
       showEcosystem={mixed}
+      onReportChange={onDependencyReportChange}
       caption={
         total > visible.length
           ? `Showing ${visible.length} of ${total}.`

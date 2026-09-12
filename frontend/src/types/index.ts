@@ -181,6 +181,16 @@ export interface DependencyOccurrence {
   riskComponentScore: string | null;
   /** True when the severity term rested on §5.2's 5.0 CVSS placeholder. */
   cvssReducedConfidence: boolean;
+  /**
+   * Whether this occurrence already has a remediation report (Phase 8), and
+   * what state it is in. Null when none has ever been requested.
+   *
+   * On the row rather than behind a route of its own for §7.7's reason one
+   * level down: the only endpoint that answers "is there a report for this
+   * dependency?" is the POST that generates one, so a drawer that asked on
+   * open would start a generation to find out whether it needed to.
+   */
+  report: ReportState | null;
 }
 
 /** The four Tier-1 signals (D3), plus the fifth §5.4 can enable. */
@@ -354,6 +364,38 @@ export interface ReportFix {
   priority: number;
 }
 
+/**
+ * One passage the agent retrieved, as §5.9's graph recorded it (Phase 8).
+ *
+ * Every chunk that came back is here, not only the cited ones — §5.1 requires
+ * that of the trace and the panel shows the same set, because a pane that
+ * displayed only what was cited could not show a reader that the agent had
+ * read something and chosen not to lean on it.
+ *
+ * `similarity` is cosine similarity in [0, 1]. The backend converts Chroma's
+ * distance at its own boundary, so nothing on this side can compare the wrong
+ * sense of the number.
+ */
+export interface RetrievedChunk {
+  chunk_id: string;
+  text: string;
+  similarity: number;
+  source_path: string;
+  source_sha: string;
+  source_kind: string;
+  heading: string;
+  index: number;
+}
+
+/**
+ * §5.9's deterministic verdict on whether retrieval supported the answer.
+ *
+ * Null means the question does not apply — a combined report retrieved
+ * nothing to be confident about — which is a different statement from `low`,
+ * where retrieval ran and did not clear the threshold.
+ */
+export type GroundingConfidence = "sufficient" | "low";
+
 /** `GET /api/reports/{id}/` — the stored row, whatever state it is in. */
 export interface Report {
   id: string;
@@ -364,6 +406,14 @@ export interface Report {
   /** Null until the generation completes. */
   summaryMd: string | null;
   fixes: ReportFix[] | null;
+  /**
+   * Chunk ids the generation leaned on, resolved by the backend against what
+   * was actually retrieved. An id the model invented never reaches here.
+   */
+  citations: string[] | null;
+  /** Everything retrieved, cited or not. Null on a combined report. */
+  retrievedChunks: RetrievedChunk[] | null;
+  groundingConfidence: GroundingConfidence | null;
   /** The model that actually answered, which may not be the one configured. */
   modelName: string | null;
   /** Written for a person: every one of them names what to do next. */

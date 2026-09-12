@@ -23,9 +23,8 @@
  * an unvalidated sentence beside a validated row.
  */
 
-import { useMemo } from "react";
-
 import type { Report, ReportFix } from "../types";
+import { Markdown } from "./Markdown";
 import { relativeTime } from "./StatusPill";
 
 interface ReportsTabProps {
@@ -338,94 +337,3 @@ export function fixAction(fix: ReportFix): string {
  * reads as advisory: a colour is a claim, and red on a row whose severity was
  * never measured is a claim the scan cannot support. */
 const URGENT_SEVERITIES = new Set(["critical", "high"]);
-
-/**
- * The smallest markdown that a triage summary actually uses: paragraphs,
- * bullet lines, and `code`.
- *
- * Deliberately not a markdown library and never `dangerouslySetInnerHTML`.
- * This is the one string on the page a language model wrote, so it is rendered
- * as text by React's own escaping — a renderer that turned it into HTML would
- * be a renderer that could be talked into producing a link.
- */
-function Markdown({ text }: { text: string }) {
-  const blocks = useMemo(() => parseBlocks(text), [text]);
-
-  return (
-    <>
-      {blocks.map((block, index) =>
-        block.kind === "list" ? (
-          <ul
-            key={index}
-            style={{
-              fontSize: 13.5,
-              lineHeight: 1.6,
-              margin: "0 0 10px",
-              paddingLeft: 18,
-            }}
-          >
-            {block.items.map((item, itemIndex) => (
-              <li key={itemIndex}>{stripEmphasis(item)}</li>
-            ))}
-          </ul>
-        ) : (
-          <p
-            key={index}
-            style={{ fontSize: 13.5, lineHeight: 1.6, margin: "0 0 10px" }}
-          >
-            {stripEmphasis(block.text)}
-          </p>
-        ),
-      )}
-    </>
-  );
-}
-
-type Block = { kind: "paragraph"; text: string } | { kind: "list"; items: string[] };
-
-function parseBlocks(text: string): Block[] {
-  const blocks: Block[] = [];
-  let paragraph: string[] = [];
-  let items: string[] = [];
-
-  const flush = () => {
-    if (items.length > 0) {
-      blocks.push({ kind: "list", items });
-      items = [];
-    }
-    if (paragraph.length > 0) {
-      blocks.push({ kind: "paragraph", text: paragraph.join(" ") });
-      paragraph = [];
-    }
-  };
-
-  for (const raw of text.split("\n")) {
-    const line = raw.trim();
-    if (line === "") {
-      flush();
-      continue;
-    }
-    const bullet = /^[-*]\s+(.*)$/.exec(line);
-    if (bullet) {
-      if (paragraph.length > 0) flush();
-      items.push(bullet[1] ?? "");
-      continue;
-    }
-    if (items.length > 0) flush();
-    // A heading marker is dropped rather than rendered: the prompt asks for no
-    // headings, and a stray `##` mid-paragraph is noise either way.
-    paragraph.push(line.replace(/^#{1,6}\s*/, ""));
-  }
-  flush();
-  return blocks;
-}
-
-/** `**bold**`, `*italic*` and backticks are unwrapped rather than styled. The
- * page's typography is already set; what matters is that the reader never sees
- * the asterisks. */
-function stripEmphasis(text: string): string {
-  return text
-    .replace(/\*\*(.+?)\*\*/g, "$1")
-    .replace(/(^|[^*])\*([^*]+?)\*/g, "$1$2")
-    .replace(/`([^`]+?)`/g, "$1");
-}

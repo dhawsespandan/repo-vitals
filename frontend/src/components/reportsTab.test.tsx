@@ -69,6 +69,11 @@ function report(overrides: Partial<Report> = {}): Report {
     status: "completed",
     summaryMd: "Two dependencies carry active advisories. Start with lodash.",
     fixes: [fix()],
+    // Null on a combined report: §5.9 gives it no retrieval to be confident
+    // about, and the tab's own paragraph says so.
+    citations: null,
+    retrievedChunks: null,
+    groundingConfidence: null,
     modelName: "openai/gpt-oss-120b",
     errorMessage: null,
     generatedAt: new Date().toISOString(),

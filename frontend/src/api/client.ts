@@ -301,6 +301,38 @@ export async function generateCombinedReport(
   }
 }
 
+/**
+ * `POST /api/dependencies/{id}/report/` — §5.5's Phase 8 route.
+ *
+ * The same three outcomes as the combined generation and deliberately so:
+ * §10 Phase 8 puts this endpoint "on the shared cache/lock/polling pattern",
+ * so the drawer and the tab implement one flow rather than two.
+ *
+ * `dependency_not_reportable` (409) throws like any other refusal. It cannot
+ * be reached from the UI — the control only exists on flagged rows — and that
+ * is precisely why it is not given a named outcome here: an outcome the client
+ * cannot produce is dead code that reads like a supported path.
+ */
+export async function generateDependencyReport(
+  dependencyId: string,
+): Promise<GenerateResult> {
+  try {
+    const { status, body } = await requestWithStatus<Report>(
+      `/dependencies/${dependencyId}/report/`,
+      { method: "POST" },
+    );
+    return { outcome: status === 200 ? "cached" : "started", report: body };
+  } catch (error) {
+    if (error instanceof ApiError && error.code === "report_generating") {
+      return {
+        outcome: "generating",
+        reportId: String(error.body.reportId ?? ""),
+      };
+    }
+    throw error;
+  }
+}
+
 /** `GET /api/reports/{id}/` — the stored row. Polled while a generation runs. */
 export const getReport = (reportId: string) =>
   api.get<Report>(`/reports/${reportId}/`);

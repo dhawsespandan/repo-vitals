@@ -287,6 +287,47 @@ textarea.input { min-height: 90px; resize: vertical; }
 .dialog-body { font-size: 14px; opacity: 0.85; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-2); }
 
+/* — drawer (Phase 8: the per-dependency remediation panel) —
+     A right-hand sheet rather than a centred modal: the reader is in the
+     middle of a table and the panel is about one of its rows, so it arrives
+     from the side and leaves the page behind it visible. Wide enough that the
+     answer and the retrieved passages sit side by side, which §10 Phase 8
+     asks for and a centred dialog cannot do. */
+.drawer-backdrop {
+  position: fixed; inset: 0; z-index: 60;
+  display: flex; justify-content: flex-end;
+  background: color-mix(in srgb, var(--color-neutral-900) 45%, transparent);
+}
+.drawer {
+  width: min(1080px, 96vw); height: 100%;
+  display: flex; flex-direction: column;
+  padding: var(--space-4);
+  background: var(--color-bg);
+  border-left: 1px solid var(--color-divider);
+  box-shadow: var(--shadow-lg);
+  animation: dsslide .22s ease both;
+}
+.drawer-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3); margin-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-divider);
+}
+/* The body scrolls, the header does not: the package name has to stay
+   readable while the reader is deep in a changelog passage. */
+.drawer-body { flex: 1; min-height: 0; overflow-y: auto; }
+.drawer-columns {
+  display: grid; gap: var(--space-4);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+}
+/* Below this the two columns are narrower than a line of changelog, so they
+   stack: the answer first, the evidence under it. */
+@media (max-width: 900px) {
+  .drawer-columns { grid-template-columns: minmax(0, 1fr); }
+}
+@keyframes dsslide { from { transform: translateX(18px); opacity: 0; } to { transform: none; opacity: 1; } }
+
 /* — blueprint frame: components are wireframe objects (see .blueprint
      and .corner above) — square, transparent, hairline-bordered — */
 .card, .btn, .input, .tag, .seg, .dialog { border-radius: 0; }

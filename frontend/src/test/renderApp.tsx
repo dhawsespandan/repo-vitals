@@ -118,6 +118,10 @@ export function dependency(
     isFlagged: false,
     riskComponentScore: "100.00",
     cvssReducedConfidence: false,
+    // No remediation report until a test asks for one. The backend sends null
+    // for every row that has never had one generated, which is every row of
+    // every fresh scan.
+    report: null,
     ...overrides,
   };
 }
@@ -276,6 +280,10 @@ interface StubOptions {
   generateStatus?: number;
   /** Body returned by that POST. Defaults to whatever `report` answers. */
   generateBody?: unknown;
+  /** Status returned by POST /api/dependencies/{id}/report/ (Phase 8). */
+  generateDependencyStatus?: number;
+  /** Body returned by that POST. Defaults to whatever `report` answers. */
+  generateDependencyBody?: unknown;
 }
 
 export function scanDetail(overrides: Partial<ScanDetail> = {}): ScanDetail {
@@ -342,6 +350,8 @@ export function stubFetch({
   report,
   generateStatus = 202,
   generateBody,
+  generateDependencyStatus = 202,
+  generateDependencyBody,
 }: StubOptions) {
   const calls: string[] = [];
 
@@ -389,6 +399,16 @@ export function stubFetch({
     if (url.includes("/api/reports/") && method === "GET") {
       const row = report?.() ?? null;
       return row ? json(row, 200) : json({ code: "not_found", message: "no" }, 404);
+    }
+    // Phase 8's generation route, ahead of the breakdown GET that shares its
+    // prefix. A POST is the only way to reach it, which is the whole point:
+    // opening the drawer must not be able to spend a model call by accident,
+    // and a stub that answered GETs here would hide it if it did.
+    if (url.includes("/api/dependencies/") && url.endsWith("/report/")) {
+      return json(
+        generateDependencyBody ?? report?.() ?? null,
+        generateDependencyStatus,
+      );
     }
     // Before the list route below: `/api/scans/{id}/dependencies/` and
     // `/api/dependencies/{id}/` both contain "/dependencies/".

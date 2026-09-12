@@ -1,7 +1,8 @@
-import { useId, useState } from "react";
+import { useCallback, useId, useState } from "react";
 
-import type { DependencyOccurrence, Resolution } from "../types";
+import type { DependencyOccurrence, Report, Resolution } from "../types";
 import { EcosystemChip } from "./EcosystemChip";
+import { ReportPanel } from "./ReportPanel";
 import { WhyFlaggedPanel } from "./WhyFlaggedPanel";
 
 /**
@@ -42,6 +43,13 @@ import { WhyFlaggedPanel } from "./WhyFlaggedPanel";
  * make "no explanation available" and "nothing to explain" look identical, and
  * the two most interesting questions a reader has are about the other kinds:
  * why is this one *not* flagged, and what exactly could we not assess?
+ *
+ * **The wireframe's "Remediate" button arrives in Phase 8**, on flagged rows
+ * only — which is the one control here that is deliberately *not* on every
+ * row. Why? explains a measurement and every row has one; a remediation plan
+ * is advice about a problem, and a row with no problem has none. The backend
+ * enforces the same rule (`services.DependencyNotReportable`), so the button
+ * agrees with the endpoint rather than defining it.
  */
 
 const RESOLUTION_LABEL: Record<Resolution, string> = {
@@ -178,12 +186,19 @@ interface DependencyTableProps {
    * one — see the note at the top of this file on why the caller decides.
    */
   showEcosystem?: boolean;
+  /**
+   * A remediation report was generated or refreshed. The page owns the rows,
+   * so it is the page that updates the one this happened to — which is what
+   * makes the button read "View remediation" after the drawer is closed.
+   */
+  onReportChange?: (dependencyId: string, report: Report) => void;
 }
 
 export function DependencyTable({
   rows,
   caption,
   showEcosystem = false,
+  onReportChange,
 }: DependencyTableProps) {
   /**
    * One row open at a time.
@@ -195,7 +210,19 @@ export function DependencyTable({
    * §3.13).
    */
   const [openId, setOpenId] = useState<string | null>(null);
+  /**
+   * Which row's remediation drawer is open, by id rather than by row.
+   *
+   * By id because the row object is replaced whenever the page reloads the
+   * dependency list — a rescan, or `onReportChange` writing a fresh `report`
+   * onto it — and a drawer holding the *old* object would keep rendering the
+   * state the panel was opened with. Looking the row up on each render means
+   * the open drawer always shows the current one.
+   */
+  const [remediatingId, setRemediatingId] = useState<string | null>(null);
   const panelPrefix = useId();
+  const remediating = rows.find((row) => row.id === remediatingId) ?? null;
+  const closeRemediation = useCallback(() => setRemediatingId(null), []);
 
   return (
     <div style={{ overflowX: "auto" }}>
@@ -281,7 +308,33 @@ export function DependencyTable({
                 <td>
                   <FindingsCell row={row} />
                 </td>
-                <td style={{ textAlign: "right" }}>
+                <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                  {/* Flagged rows only — see the note at the top of this file.
+                      The label states what pressing it does: a row that
+                      already has a plan opens it and spends nothing, and a row
+                      that does not is about to spend a model call. Two
+                      different actions behind one word would be the §2.6 kind
+                      of defect, where the button that destroys and the button
+                      that reads look identical. */}
+                  {row.isFlagged && !row.isUnassessable && (
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      style={{
+                        height: 30,
+                        fontSize: 12.5,
+                        padding: "0 11px",
+                        marginRight: 6,
+                      }}
+                      aria-label={`${
+                        row.report ? "View remediation for" : "Generate remediation for"
+                      } ${row.packageName} in ${row.manifestPath}`}
+                      data-testid="remediate"
+                      onClick={() => setRemediatingId(row.id)}
+                    >
+                      {row.report ? "Remediation" : "Remediate"}
+                    </button>
+                  )}
                   <button
                     type="button"
                     className="btn btn-secondary"
@@ -317,6 +370,19 @@ export function DependencyTable({
           })}
         </tbody>
       </table>
+
+      {remediating && (
+        <ReportPanel
+          // Keyed on the row so switching from one package's drawer to
+          // another's remounts it. Without the key React would reuse the
+          // component and its `report` state, and the second package would
+          // render the first one's plan until its own fetch landed.
+          key={remediating.id}
+          row={remediating}
+          onClose={closeRemediation}
+          onReportChange={onReportChange}
+        />
+      )}
     </div>
   );
 }
