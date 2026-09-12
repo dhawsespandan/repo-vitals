@@ -2840,3 +2840,90 @@ not be skipped.
 So: **a verdict reads the number the failure mode acts on.** `smoke_memory`
 prints both columns now and gates on the peak, and its 80%-of-budget warning
 would have fired at 403 MB had it been applied to the right one.
+
+### 8.16 What the production acceptance run established, and the one criterion it did not
+
+After §8.15's fix, two generations ran on production against the acceptance
+fixtures with `/api/health/` polled every five seconds throughout. Neither took
+the instance down, where the unbounded configuration had killed it on its first
+attempt.
+
+One bonus observation from the wreckage of that first attempt: the report row it
+stranded on `running` was reaped five minutes later by `expire_stale` into "This
+report stopped before it finished. Please generate it again", with a Try again
+beside it, and the retry then succeeded. That path had only ever been exercised
+by a unit test; an OOM kill is the condition it was written for and it behaved
+exactly as designed.
+
+**`request@2.88.2`** (`rv-accept-monorepo`) — retrieved five chunks of the real
+`CHANGELOG.md`, cited one, `grounding: sufficient`, one Groq call,
+`openai/gpt-oss-120b`. The repeat request answered 200 with a byte-identical
+body and an unchanged `generated_at`, which is §10's determinism criterion in
+its observable form.
+
+And it came back `fix_type: investigate`, `replacement_package: null` — **not**
+the "replacement-framed cited plan" §10's acceptance names for this package.
+That is worth being precise about, because the code did what it should.
+
+`request`'s changelog is 69 KB, reverse-chronological, and was chunked whole —
+nothing was truncated, which was the first thing suspected and the wrong answer.
+The five nearest chunks to the query scored 0.5596, 0.5564, 0.5502, 0.5338 and
+0.5329, and all five are release notes from 2014-2015: lists of PR links and
+terse bug fixes. The spread across ~60 chunks is about two hundredths. The model
+read them and said so in its own summary: "The changelog excerpts (e.g. v2.54.0)
+only list bug fixes and do not mention a successor or migration guide, so the
+documentation provides no direct replacement recommendation."
+
+It is right. `request`'s changelog never names a successor. npm's deprecation
+message points at **issue #3142**, and issue and discussion retrieval is
+condition D of S3 — D13, deliberately management-command-only and provably
+unreachable over HTTP, which is to say explicitly not Phase 8. So §10's example
+was chosen on the assumption that this package's changelog carries its own
+migration advice, and it does not. §7.12 recorded the same shape one phase
+earlier and concluded "recovering that suggestion, with a citation, is Phase 8's
+job". Phase 8 recovered the changelog, with a citation, and the suggestion was
+never in it.
+
+That is a finding about where the information lives, which is the thing S3
+exists to measure, rather than a defect to fix here.
+
+**The harder half of the same observation.** Those similarities are the real
+result: **0.55 against a 0.30 threshold, for passages that answer nothing.**
+§5.9's gate measures whether retrieval found text of the right *kind* — this is
+a changelog, the query is about a package — and at that it succeeded. It cannot
+measure whether the text bears on the question, because a cosine similarity
+between an embedded question and an embedded paragraph is not an entailment
+check. Homogeneous corpora are where that gap is widest: sixty chunks of
+near-identical release notes are all equally close to everything.
+
+§8.14's banner catches the case where the model cites nothing. It cannot catch
+this one, where the model cites a passage that does not support the claim, and
+nothing short of a second model judging the first could. What stands in for it
+here is the generation's own prose, and on this run that prose was honest
+without being asked twice. That is not a guarantee, and it should not be
+presented as one.
+
+**`left-pad@1.3.0`** (`rv-accept-mixed`) — the nearest available case to §10's
+"unresolvable repo". Its repository has no changelog under any name the fetcher
+tries, so retrieval fell back to `README.md` and returned three short passages
+at 0.44, 0.34 and 0.32. `grounding: sufficient` on the thresholds, **zero
+citations**, and §8.14's *Nothing cited* banner rendered above the summary with
+all three passages listed as Retrieved in the pane. The fix came back
+`fix_type: replace` with `replacement_package: null`, which is correct: the
+registry's deprecation reason is "use String.prototype.padStart()", and a
+language built-in is not a package.
+
+So the honest scoreboard for §10's six acceptance criteria:
+
+| criterion | where it stands |
+|---|---|
+| deprecated-with-successor -> replacement-framed cited plan | cited plan from real changelog text, yes; replacement framing, no, for the reason above |
+| unresolvable repo -> insufficient information, fully traced | no fixture package lacks a repository URL; suite-verified, and `left-pad` reached the same answer through the README fallback |
+| trace survives a rescan | suite-verified; `agent_execution_traces` has no HTTP surface until Phase 10 and the free tier has no shell |
+| Chroma chunk count 0 after persist | suite-verified against a real embedded Chroma |
+| repeat request -> byte-identical output | **passes on production** |
+| RSS re-recorded < 512 MB | the failure, now fixed; demonstrated by two generations with health at 200 throughout, but **no number recorded from the instance** - Render's free tier has no shell |
+
+Three of those are verifiable only in the suite on this tier, and saying so is
+better than implying a prod run covered them. The two that could be checked on
+production were checked there.
