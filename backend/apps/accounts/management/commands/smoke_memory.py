@@ -2,10 +2,15 @@
 
 RepoVitals must fit a 512 MB Render instance while holding, in one process:
 Django + DRF, a Postgres connection pool, background scan threads, and — from
-Phase 8 — a fastembed ONNX embedding model. That last item is the genuine
-risk (D7: torch alone would be ~700 MB installed), and it is far cheaper to
-find out in week one than in week twenty. So this command runs *now*, before
-any of the machinery that depends on the answer exists.
+Phase 8 — a fastembed ONNX embedding model, an embedded Chroma store and the
+LangGraph runtime. The embedding model was the genuine risk (D7: torch alone
+would be ~700 MB installed), and it was far cheaper to find out in week one
+than in week twenty. So this command ran in Phase 1, before any of the
+machinery that depends on the answer existed.
+
+§10 Phase 8's last commit re-runs it "with chroma + fastembed loaded", which is
+why steps 5 and 6 exist: the Phase 1 number was a floor, not a forecast, and
+the two libraries Phase 8 adds are not free.
 
 It reproduces the shape of the production worker rather than a synthetic
 benchmark:
@@ -15,10 +20,18 @@ benchmark:
   3. a background thread doing an outbound registry fetch with its own
      database connection, closed on the way out — the exact hygiene every
      Phase 3+ scan thread will need,
-  4. one fastembed embedding, which is where the memory actually goes.
+  4. one fastembed embedding, which is where the memory actually goes,
+  5. the LangGraph runtime, imported and a graph compiled,
+  6. an embedded Chroma collection written to and queried.
 
-Record the peak into `docs/decisions.md` (Phase 1 acceptance). On Render, read
-the same number from the service's logs after triggering this via a shell.
+The last three are what a *generation thread* holds. A web worker that has
+never produced a per-dependency report holds none of them — every one of those
+imports is inside the function that needs it (§8.9) — so the peak here is the
+worst case rather than the resting state.
+
+Record the peak into `docs/decisions.md` (Phase 1 acceptance, re-recorded in
+Phase 8). On Render, read the same number from the service's logs after
+triggering this via a shell.
 """
 
 from __future__ import annotations
@@ -40,6 +53,25 @@ def _rss_mb() -> float:
     return psutil.Process().memory_info().rss / (1024 * 1024)
 
 
+class _SmokeChunk:
+    """The three attributes `chroma_store.add_chunks` reads off a chunk.
+
+    A local stand-in rather than `rag.chunker.Chunk`, so this command measures
+    the store without pulling the chunker's module graph into the process — the
+    point of the measurement is the two heavy libraries, and anything else
+    imported here inflates the number with something production would not hold.
+    """
+
+    def __init__(self, chunk_id: str, text: str, index: int) -> None:
+        self.chunk_id = chunk_id
+        self.text = text
+        self.index = index
+        self.heading = "## 1.0.0"
+        self.source_path = "CHANGELOG.md"
+        self.source_sha = "smoke"
+        self.source_kind = "changelog"
+
+
 class Command(BaseCommand):
     help = (
         "Measure worker RSS through a representative request + background-thread cycle."
@@ -55,6 +87,11 @@ class Command(BaseCommand):
             "--embed-model",
             default="sentence-transformers/all-MiniLM-L6-v2",
             help="fastembed model id (D7 pins all-MiniLM-L6-v2).",
+        )
+        parser.add_argument(
+            "--skip-agent",
+            action="store_true",
+            help="Skip the Phase 8 langgraph + chroma steps.",
         )
         parser.add_argument(
             "--json",
@@ -156,6 +193,53 @@ class Command(BaseCommand):
                 )
             except Exception as exc:
                 self.stdout.write(self.style.WARNING(f"  embedding failed: {exc}"))
+
+        # ── 5. The agent runtime (Phase 8) ────────────────────────────────
+        if options["skip_agent"]:
+            self.stdout.write(self.style.WARNING("  agent runtime step skipped"))
+        else:
+            try:
+                from apps.reports.agent.graph import build_graph
+
+                build_graph()
+                mark("after langgraph compile")
+            except Exception as exc:
+                self.stdout.write(self.style.WARNING(f"  langgraph failed: {exc}"))
+
+            try:
+                from apps.reports.rag import chroma_store
+
+                # A throwaway collection under a name no scan can produce, so a
+                # smoke run on prod cannot collide with a real one.
+                scan_id = "00000000-0000-4000-8000-0000smoketest"
+                chroma_store.add_chunks(
+                    scan_id=scan_id,
+                    ecosystem="npm",
+                    package_name="repovitals-smoke-test",
+                    resolved_version="0.0.0",
+                    chunks=[
+                        _SmokeChunk(
+                            f"chunk{index}",
+                            "RepoVitals memory smoke test: one short chunk of "
+                            "changelog-shaped text to embed and store.",
+                            index,
+                        )
+                        for index in range(8)
+                    ],
+                    vectors=[[0.01 * (index + 1)] * 384 for index in range(8)],
+                )
+                found = chroma_store.query(
+                    scan_id=scan_id,
+                    ecosystem="npm",
+                    package_name="repovitals-smoke-test",
+                    resolved_version="0.0.0",
+                    vector=[0.01] * 384,
+                )
+                self.stdout.write(f"  chroma round-trip -> {len(found)} chunk(s)")
+                mark("after chroma round-trip")
+                chroma_store.drop_scan(scan_id)
+            except Exception as exc:
+                self.stdout.write(self.style.WARNING(f"  chroma failed: {exc}"))
 
         peak = max(marks.values()) if marks else -1.0
         budget = 512.0
