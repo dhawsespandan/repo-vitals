@@ -1215,7 +1215,7 @@ impossible.
 
 ### 4.4 The history tables live in `apps/research/`
 
-§3's tree lists `apps/research/` with corpus, backfill and validation modules
+§3's tree lists `apps/research/` with corpus, validation and experiment modules
 and no `models.py`, and lists `apps/scanning/` without one either — the layout
 omits standard Django files throughout, so it does not settle where
 `scan_history` and `dependency_history` belong.
@@ -1227,8 +1227,7 @@ history endpoint reads. D9's rule that these tables never cascade on any
 trigger becomes an app boundary rather than a comment: there is no foreign key
 out of the app, so no cascade can reach in, and the way one would get added by
 accident (an FK to `repositories`) is not available. And Phases 11-13 write
-these same tables heavily from corpus and backfill code that already lives
-there.
+these same tables heavily from the corpus code that already lives there.
 
 Two files §3 does not list: `apps/research/models.py` and
 `apps/research/history.py`. `apps/scanning/retention.py` is listed and is
@@ -2584,6 +2583,15 @@ So Phase 8's two new libraries cost ~49 MB on top of the embedding model's
 around 320 MB — comfortable, and worth re-reading from a Render shell before
 the tag.
 
+> **That conclusion was wrong, and the table above is the evidence of how.**
+> The first per-dependency generation on production was killed: "Ran out of
+> memory (used over 512MB)". Every number here is a *settled* RSS measured
+> between steps, the embedding step embedded one short sentence rather than a
+> changelog, and the real peak for the real workload was 403 MB before the
+> platform's own overhead. **§8.15 has the corrected measurements and the fix.**
+> The reasoning in the rest of this section about lazy imports still holds and
+> is what keeps the idle worker at 80.6 MB.
+
 The number that matters more is the one this table does not show. **A web
 worker that has never generated a per-dependency report holds none of it.**
 `chromadb`, `langgraph` and `fastembed` are imported inside the functions that
@@ -2740,3 +2748,95 @@ first time. The same override is needed for any future check of a polled
 surface in that pane. Recognising a familiar shape is not the same as
 establishing a cause (§5.11), so this was confirmed by changing one thing and
 re-running rather than by assuming.
+
+### 8.15 The free tier killed the worker, and the instrument that was meant to catch it was measuring the wrong number
+
+Phase 8's first generation on production — `request@2.88.2` in
+`rv-accept-monorepo`, which is the case §10's acceptance names — took the
+instance down. Render's event log is unambiguous:
+
+> **Instance failed: cr82h — Ran out of memory (used over 512MB) while running
+> your code.**
+
+The application log shows why it left no traceback: fastembed logs "Loading
+embedding model", the five model files download from HuggingFace, one more
+request is served, and then the process simply stops and Render starts a new
+one. An OOM kill is delivered by the kernel, so nothing in Python gets to say
+anything about it. The report row was left on `running`, which `expire_stale`
+reaped five minutes later into "This report stopped before it finished" with a
+Try again beside it — the recovery path behaved exactly as designed, and retrying
+would have killed the worker again.
+
+**Why §8.9 missed it.** Two faults, and the second is worse than the first.
+
+*`smoke_memory` measured settled RSS, not peak.* It marked RSS **between**
+steps, so it reported the footprint after each step had finished allocating. A
+memory cap does not act on settled footprint; it acts on the highest instant.
+Sampling RSS on a background thread every 5 ms through the same sequence gives
+403 MB where the marks said 281.5 MB — a 122 MB spike that happened between two
+marks with nothing watching.
+
+*And the workload was not the workload.* The embedding step embedded one short
+sentence. What `ensure_corpus` actually does is embed every chunk of a
+changelog, and forty 1,200-character chunks is an ordinary one. One sentence
+allocates almost nothing, so even a correct sampler would have reported a
+comfortable number for a sequence that dies.
+
+**Where the memory went**, on the same 40-chunk corpus:
+
+| configuration | peak | settled after embedding |
+|---|---|---|
+| ONNX defaults, one batch of 40 — *what was deployed* | **403.0 MB** | 374.6 MB |
+| `enable_cpu_mem_arena=False`, `threads=1` | 334.4 MB | 247.0 MB |
+| both, plus batches of 8 | **266.9 MB** | 245.9 MB |
+| both, plus batches of 4 | 257.3 MB | 246.7 MB |
+
+Two independent levers, and they fix different things.
+
+**ONNX Runtime's CPU memory arena is the larger one.** It reserves a block far
+bigger than a 22 MB MiniLM needs and then keeps it for the life of the process:
+127 MB of the resting footprint of a worker that has generated once and may
+never generate again. `fastembed` 0.8 exposes it (`EXPOSED_SESSION_OPTIONS`), so
+turning it off is a constructor argument rather than a fork. `threads=1` goes
+with it — this process has one gunicorn worker and generation already runs off
+the request path, so intra-op parallelism inside one embedding buys latency
+nobody is waiting on and costs a thread pool's worth of allocators.
+
+**Batching is the second.** Forty chunks in one `embed` call allocates ~160 MB
+transiently. Eight at a time caps that at ~20 MB for identical total work.
+Eight rather than four because the two are within 10 MB of each other and eight
+is half the ORT invocations.
+
+Neither lever changes a vector. The same text produces the same embedding with
+the arena off and in any batch size, which is asserted rather than assumed —
+§10's determinism acceptance would otherwise be in question, and "we made it
+fit by changing the answers" is not a fix.
+
+After both, the corrected `smoke_memory` — now sampling peak, now embedding a
+real corpus, now going through `rag.embeddings` so it measures the
+configuration production loads rather than one of its own — reports **279.3 MB
+peak** locally. That leaves ~233 MB for the platform delta (Render runs Python
+3.14 where this machine runs 3.11, under gunicorn with eight threads, in a
+worker that has already served requests). The configuration that died had only
+109 MB of room for the same delta.
+
+One further guard that is cheap and not strictly required by the measurements:
+embedding is serialized across threads by a module-level lock. Two generations
+embedding at once would stack their transients, and on this tier the one thing
+the process must never do is exceed 512 MB. Generation is already a background
+thread, so the cost is latency on a second concurrent report rather than a
+blocked request.
+
+**The lesson is about instruments, not about memory.** §8.9's table was not a
+lie; every number in it was real, and the conclusion drawn from it was still
+wrong, because the numbers answered a different question from the one being
+asked. A measurement that is accurate about the wrong quantity is more
+dangerous than no measurement, because it ends the investigation. §8 of File A
+named this risk and asked for exactly this command to be re-run in Phase 8 —
+the control existed, was run, and passed. What it needed was to be run **on
+production**, which is what §10's acceptance says and the one step that could
+not be skipped.
+
+So: **a verdict reads the number the failure mode acts on.** `smoke_memory`
+prints both columns now and gates on the peak, and its 80%-of-budget warning
+would have fired at 403 MB had it been applied to the right one.
