@@ -2927,3 +2927,402 @@ So the honest scoreboard for §10's six acceptance criteria:
 Three of those are verifiable only in the suite on this tier, and saying so is
 better than implying a prod run covered them. The two that could be checked on
 production were checked there.
+
+---
+
+## Phase 9 — Retention guards, downloads, hardening
+
+### 9.1 The rescan guard is on value, not on time
+
+§10 Phase 9 asks for a confirmation "when the latest scan has >=1 report", and
+adds the constraint that decides the implementation: **"value-based guard — no
+cooldown timers."**
+
+The distinction is not stylistic. A cooldown refuses a rescan for being *soon*,
+which is the wrong quantity twice over: it refuses a cheap rescan of a
+repository that has generated nothing, and it permits an expensive one a minute
+later. What a rescan actually destroys is the scan's reports (§5.7 deletes the
+prior scan and everything cascading from it, this table included), and
+regenerating one is a fresh model call. So the guard asks how much would be
+lost, refuses only when the answer is more than nothing, and refuses it once.
+
+`reports_at_risk` lives in `apps/scanning/retention.py` rather than in the view,
+because it is the price of that module's rule rather than a separate feature —
+the same file that documents why the cascade exists is the file that can say
+what it costs.
+
+Two decisions are inside the query.
+
+**It counts every scan of the repository, not "the latest scan".** Normally
+those are the same set: retention leaves one scan standing. Not always — a scan
+that *fails* prunes nothing, so a repository can hold a completed scan with two
+reports plus a newer failed one. "The latest scan" answers zero there, about a
+rescan that is about to destroy two reports.
+
+**It counts only completed reports.** A queued row holds nothing; a failed one
+holds an error message. "This scan has 1 generated report" is a false sentence
+about a generation that failed, and the number is what the dialog claims it is:
+the count of answers that exist.
+
+### 9.2 `1 == True`, and a guard that accepted a value nobody had agreed meant yes
+
+The first version of `_confirmed` read:
+
+```python
+_CONFIRMATIONS = (True, "true", "True")
+...
+return value in _CONFIRMATIONS
+```
+
+which accepts `confirm: 1`. Python's `in` compares with `==`, `True` is an
+`int` subclass, and `1 == True`. A client sending an integer — a stale
+serializer, a form library coercing a checkbox, anything at all — would have
+destroyed generated reports on the strength of a value this codebase had never
+defined as consent.
+
+It is `value is True` plus an explicit string comparison now. The parametrized
+test that found it covers `false`, `0`, `1`, `"yes"`, `"on"`, `"maybe"`, `None`
+and `""`, and it was written before the fix.
+
+The general shape is worth stating because the same file argues *against*
+strictness forty lines earlier. `_boolean_param` deliberately reads `1`, `yes`
+and `on` as true, because a query-string filter that guessed wrong shows the
+wrong rows and the reader can see that it did. A confirmation that guesses
+wrong destroys work and the reader finds out later. **The right amount of
+leniency is a function of what being wrong costs**, which is also why
+`?fmt=MD ` is accepted on the download route and `confirm: 1` is not.
+
+### 9.3 Two downloads, one stored row, and one sentence rendered twice
+
+§5.8 is binding on this: "One generation produces one payload serving both
+downloads (no second LLM call)." Both formats are re-renderings of columns that
+were written once and validated then, so a download of a report generated three
+weeks ago costs a SELECT.
+
+The split between them is by *reader*, not by fidelity:
+
+* **Markdown is for a person**, and must stand alone. A file read in a
+  downloads folder has no citation pane beside it and no banner above it, so the
+  confidence note, the fixes and the cited passages all travel inside the
+  document.
+* **JSON is §5.8's "machine-parseable task handoff for external coding
+  agents"**, so `summary_md` and `fixes` are the stored values in §5.8's own
+  snake_case, unrewritten — the same argument `apps/reports/serializers.py`
+  makes for passing `fixes` through to the browser unchanged. Everything above
+  them is provenance: repository, scan, scoring formula version, grounding
+  verdict. An agent handed a bare fixes array knows what to do and not *to
+  what*.
+
+Citations in the JSON carry their source path, sha, similarity and text rather
+than only a chunk id, because a chunk id is a content digest and means nothing
+outside this product. The detail route already returns every retrieved chunk in
+full, so this exposes nothing new; it makes the file checkable by whoever
+receives it.
+
+**One deliberate duplication.** The fix sentence ("Upgrade to 4.17.21",
+"Replace — this package is no longer maintained") is assembled from §5.8's
+structured fields in two places: `download._fix_action` and
+`frontend/src/components/ReportsTab.tsx::fixAction`. Neither generates it —
+§5.8 has no field for per-fix prose, and inventing one would put an unvalidated
+sentence beside a validated row (§7.1). Two renderings of one set of structured
+facts, worded for two media, is not the drift risk §6.7 warns about: that one is
+about a *single* sentence assembled from two sources, where the join is
+invisible. Here each rendering is whole, and each is asserted whole.
+
+### 9.4 The caveat has to be inside the file
+
+§8.14 and §8.16 record the shape this product keeps rediscovering: a plan that
+reads authoritative with the caveat somewhere else, or nowhere. The drawer
+learned it against a real `django` row — retrieval cleared §5.9's gate at 0.51,
+the model cited none of it, and the page showed a remediation plan with no
+caveat on it, because the only caveat it had was keyed on the grounding flag.
+
+A downloaded file is that failure with the banner removed by construction. So
+`download.confidence_note` branches over the same two stored facts the drawer
+branches on, and emits one of four paragraphs:
+
+| what happened | what the file says |
+|---|---|
+| combined report | "Not grounded, by design" — §5.9 keeps COMBINED out of the retrieval graph, so this is a property of the surface rather than a disappointment |
+| low confidence, nothing retrieved | "No source material" — a statement about the *package*: its documentation could not be found at all |
+| low confidence, weak passages | "Not enough source material" — a statement about *retrieval*: documentation was found and did not bear on the question |
+| gate cleared, nothing cited | "Nothing cited" — §8.14's case, and the one a reader cannot detect for themselves |
+
+When the plan cited nothing, the retrieved passages are printed anyway, under a
+heading that says so. A caveat claiming that passages were found and none
+supported the answer, with the passages withheld, is a caveat the reader cannot
+check.
+
+The wording differs from the drawer's deliberately — a file is read without the
+pane to point at — and that is a second rendering over one rule, as in §9.3.
+
+### 9.5 Structured logging, and why a thread does not inherit a request
+
+§10 asks for "structured logging (request id, user id, scan id)". The problem it
+solves is specific: one gunicorn worker, eight threads, plus background scan and
+generation threads, all writing to one stream (§3). A `WARNING` about a rate
+limit and an `INFO` about a failed report are interleaved with everybody else's,
+and nothing in the line says whose request or which scan produced it. Render's
+free tier has no log search beyond the browser's find-in-page, so correlation is
+by timestamp, and timestamps collide.
+
+The transport is `contextvars`, and the property that makes it right is one most
+people meet as a surprise: **a `threading.Thread` starts with an empty context,
+not a copy of its parent's.** A scan thread therefore cannot inherit the request
+id of whoever pressed the button — which is the correct answer, because it is no
+longer serving that request and will outlive the response by minutes.
+`background.spawn` binds `scan_id` explicitly instead, in the same place it does
+its connection hygiene, because establishing a thread's context is exactly that
+kind of concern.
+
+Two smaller decisions:
+
+* **An inbound `X-Request-ID` is ignored.** Honouring it is a common convenience
+  and puts a client-controlled string into every log line the request writes; a
+  newline in it forges an entry. There is no tracing system upstream of this
+  service whose id would be worth adopting.
+* **The context renders as one preformatted field**, empty outside a request.
+  A format string with three placeholders cannot omit them conditionally, and
+  `[- - -]` on every library message at startup is how structured logging
+  becomes noise nobody reads.
+
+The filter order in `settings.LOGGING` is load-bearing: `request_context` runs
+before `redact_secrets` because the formatter references the attribute the first
+one sets, and a formatter referencing a missing attribute raises *inside*
+logging — where the symptom is the line silently not appearing.
+
+### 9.6 What the throttles bound, and what they must not
+
+§10 asks for "DRF throttles on auth + generation endpoints". Scoped, at
+20/min for generation and 60/min for auth.
+
+**It is not a spend limit.** The cache already bills a generation at most once
+per `(scan, dependency)`, forever (§7.5). What the throttle bounds is the
+*request rate* on the two routes that can reach a model at all — the 200-cached
+path is cheap but not free, and it is reachable in a loop by anyone with a
+session cookie. Both generation routes share one scope, because they share one
+wallet: two scopes would hand an abuser two budgets for the same resource.
+
+**The read routes are deliberately unthrottled**, and there is no default
+throttle class. The product's own polling loops are the heaviest callers of
+those routes — a report panel polls `GET /api/reports/{id}/` every few seconds
+while a generation runs — so a blanket throttle would eventually throttle the
+product rather than an abuser.
+
+`auth` is 60/min rather than something tighter because `/api/auth/session/` is
+reachable unauthenticated, which means DRF keys the bucket on the client IP, and
+one office behind one NAT is one bucket. The OAuth entry and callback are not
+throttled and cannot be here: they are allauth views wired outside DRF's
+dispatch.
+
+**The trap, which is the part worth keeping.** `override_settings(REST_FRAMEWORK=...)`
+does not reach these rates, and fails silently. DRF binds
+`SimpleRateThrottle.THROTTLE_RATES = api_settings.DEFAULT_THROTTLE_RATES` as a
+*class attribute at import time*; `api_settings.reload()` on `setting_changed`
+rebinds the settings object and leaves the class attribute pointing at the
+original dict. Measured directly while writing these tests: with `generation`
+overridden to "3/min", the class still read "20/min" and five POSTs produced no
+429 at all. A throttle test written that way runs at the production rate and
+asserts nothing — §8.15's shape exactly, a control that was run and could not
+have failed. The suite patches the dict the throttle actually reads.
+
+Throttles stay **on** in the test suite, with the cache cleared per test, for
+the same reason: a rate limit that exists only in production is a rate limit
+nobody has run.
+
+### 9.7 There is no admin, which is the stronger form of the requirement
+
+§10 Phase 9 lists "admin read-only for research tables". This codebase has no
+Django admin at all, and after building one and reading what it would cost, that
+is where it stayed.
+
+The requirement exists to stop one thing: the permanent tables (D9 —
+`scan_history`, `dependency_history`, `agent_execution_traces`, never deleted by
+any trigger) being mutated through an admin. `apps/research/models.py` already
+defends them against *cascades* structurally, by having no foreign key anything
+can reach. An admin with its usual powers would be the one path left — a change
+form, a delete button, and a "delete selected" action over the study's raw data.
+
+A read-only `ModelAdmin` was written, and then found to be unusable. `User`
+extends `AbstractBaseUser` with no `is_staff` and no `has_perm`, because GitHub
+owns identity and nobody in this product has a usable password (§2).
+`AdminSite.has_permission` reads `is_active and is_staff` and raises
+`AttributeError` for any authenticated user; every `ModelAdmin` permission check
+calls `has_perm`. Making it work means adding `PermissionsMixin` — two join
+tables beyond §5.1's twelve — plus a password login to a product whose entire
+identity story is that it has none. `apps/research/admin.py` cannot even be
+*imported* without the app installed: `admin.site` resolves through
+`apps.get_app_config("admin")`.
+
+So the ModelAdmin was deleted and four assertions stand in its place
+(`tests/test_hardening.py`), each of which fails the moment the reasoning above
+stops holding: the admin app is not installed; no route reaches the research
+tables; the `User` model has neither `is_staff` nor `has_perm` and arrives with
+an unusable password; and no relation anywhere in the project points at a
+permanent table.
+
+If a later phase wants the admin, this section is the thing to re-read first.
+
+### 9.8 "No write call anywhere", checked three ways
+
+§11 lists the OAuth token risk with the mitigation "**no write call anywhere**
+(grep-audit Phase 9)". The scope is `repo` because GitHub OAuth Apps offer no
+read-only private scope; a token with it can push commits and open pull requests
+in every repository its owner can write to. What makes holding one safe is a
+single claim, and a grep only answers it about today.
+
+`tests/test_no_write_calls.py` checks it three ways, none sufficient alone:
+
+1. **Structural.** `common/http.py` now refuses a non-GET to a read-only host
+   (`api.github.com`), per hop, before the socket is opened. This is the only
+   check that binds code nobody has written yet. Per *hop* matters: 307 and 308
+   preserve the method, so an open redirect on an allowlisted host could
+   otherwise land a POST on GitHub having passed a check made once on the
+   original URL. `api.osv.dev` and `api.groq.com` are not read-only hosts
+   because both need a POST to ask a question, and neither changes anything at
+   the far end.
+2. **Topological.** `requests` is imported in exactly one module, so there is no
+   second client whose rules the audit does not know.
+3. **Textual.** The grep §11 asks for, narrowed to the modules that build GitHub
+   URLs at all: none posts, and none names a write verb.
+
+**The audit's first version was wrong, and the way it was wrong is the point.**
+It listed "write endpoints" by path — `/pulls`, `/git/refs`, `/git/blobs` — and
+flagged `apps/scanning/scanner.py` on its first run. That was a fault in the
+test: `GET /repos/{o}/{r}/git/blobs/{sha}` is how every manifest in this product
+is *read*. Almost every GitHub endpoint answers both a read and a write
+depending on the verb, so a list of paths cannot express the rule. The verb can.
+
+### 9.9 The audit found a second outbound path, in the instrument
+
+`smoke_memory` fetched `https://registry.npmjs.org/left-pad` through a bare
+`urllib.request` — no allowlist, no size cap, no retry policy — in the step that
+exists to reproduce "a background thread shaped like a Phase 3 scan worker".
+§5.6 calls `common/http.py` "the single choke point all outbound HTTP in the
+entire project must pass through", and this was a second one.
+
+It is routed through the client now, which fixes two things at once. The SSRF
+discipline becomes true again as stated. And the measurement becomes honest in
+§8.15's sense: a real worker holds `requests` and a pooled session, so a smoke
+test that avoided them was measuring the footprint of a process production never
+runs. That is a smaller error than §8.15's — the delta is a library that was
+already imported elsewhere — but it is the same error.
+
+### 9.10 The BOLA suite's coverage guard is the part that lasts
+
+§11 says BOLA is verified by a "structural mixin + suite covering **every
+route** by Phase 9". Every phase so far added cases for the routes it
+introduced, which is the right habit and a weaker claim: a per-phase suite
+covers every route somebody remembered.
+
+`test_every_id_route_is_covered` reads `config.urls`, finds every top-level
+pattern that takes a resource id, and fails if one is missing from the suite's
+table. A Phase 10 route added without a BOLA case turns this red at the commit
+that adds it. It was run against a table missing `report-download` before
+landing, and failed there — a guard that cannot fail is decoration (§3.13).
+
+Every case asserts **both halves**: a foreign id 404s, *and* the same request
+from the owner does not. Without the second, the suite passes identically
+against a typo in the URL, a route that no longer exists, or a view that 404s
+for everyone. The owner's half asserts "not 404" rather than "200", because
+several of these legitimately answer something else for reasons that are not
+about ownership — `scan-combined-report` answers 503 where CI has no
+`GROQ_API_KEY`, and `repository-scan` answers 409 `confirm_required`, since the
+fixture graph holds a generated report and §9.1 refuses to destroy one silently.
+
+### 9.11 API additions to §5.5
+
+One new route and one new answer on an existing one.
+
+```
+GET  /api/reports/{id}/download/?fmt=md|json      200 | 400 | 409 | 404
+POST /api/repositories/{id}/scan/                 + 409 confirm_required
+```
+
+`?fmt` has no default. §10 names both formats and no default, and choosing one
+for a caller who did not say is the same invention `_boolean_param` refuses when
+asked what `?flagged=maybe` means. Only a *completed* report can be downloaded:
+a queued row has no content and a failed one has an error message, and answering
+either with an empty document hands the reader a file that looks like an answer.
+
+The 409's body carries `reportsCount` in camelCase, like every other `extra` on
+this surface (§7.7, §8.13). §10 writes it `reports_count`; that is the plan
+naming a quantity, not specifying a wire format, and one convention across the
+API is what keeps the client from having two to remember.
+
+Two implementation notes that are invisible until they bite:
+
+* **`DownloadRenderer` matches any `Accept` header.** The route is followed by a
+  *browser*, and DRF negotiates against `DEFAULT_RENDERER_CLASSES`, which is
+  JSON alone. Every browser in practice sends `*/*;q=0.8` somewhere in a
+  navigation header, so it works — on a wildcard nobody promised. A client that
+  tightened its header would get a 406 instead of a file. `JSONRenderer` stays
+  first in the list so an `ApiError` on this route still renders in the standard
+  envelope.
+* **Table cells escape `|`.** A pipe in a manifest path ends the cell early and
+  shifts every column after it. The table still renders — with the wrong values
+  under the wrong headings, which is the failure mode this product exists to
+  avoid.
+
+### 9.12 Error taxonomy
+
+Every `code` this API can return, what it means, and what the reader can do
+about it. The frontend branches on `code` and never on message text (§5.6), so
+this table is the contract; the messages are free to be reworded and the codes
+are not.
+
+| `code` | HTTP | Where | What it means, and what follows |
+|---|---|---|---|
+| `repo_inaccessible` | 404 | register, scan | GitHub cannot see it with this user's token. Check the URL, or make it public. |
+| `no_write_access` | 403 | register | Read-only or fork-and-PR access. §5.6 requires write: the user must be able to act on findings. |
+| `private_repo_not_owned` | 403 | register | A private repository belonging to someone else. |
+| `already_registered` | **200** | register | Not an error. The body carries the existing repository id and the frontend redirects to it (§2.5). |
+| `ecosystem_unsupported` | 422 | register | No npm or PyPI manifest anywhere in the tree. |
+| `repo_empty` | 422 | register | No commits. |
+| `github_rate_limited` | 503 | register, scan | Upstream limit. Retrying later works; retrying now does not. |
+| `github_unavailable` | 503 | register, scan | GitHub is failing or unreachable. Transient by assumption. |
+| `github_reauth_required` | 401 | register, scan | The stored token was revoked or expired. **Only a fresh login fixes it** — §2's lesson: a revoked token reported as a temporary outage advises a retry that can never succeed. |
+| `scan_in_progress` | 409 | scan | A scan is already running. Not a failure: the client re-reads the status instead of showing one. Body carries `scanId`. |
+| `confirm_required` | 409 | scan | **Phase 9.** This repository holds generated reports a rescan would destroy. Body carries `reportsCount`; re-send with `{"confirm": true}`. |
+| `scan_not_reportable` | 409 | generate | The scan never completed, so there is nothing to report on. |
+| `dependency_not_reportable` | 409 | generate | The occurrence is clean or unassessable — nothing to remediate (§8.7). The UI cannot reach this; the endpoint states the rule anyway. |
+| `report_generating` | 409 | generate | Someone else's request got there first. Not a failure: body carries `reportId` to poll. |
+| `reports_unavailable` | 503 | generate | Deployment fault — no generator configured. Not the reader's problem, and the log line carries which setting (§7.6). |
+| `report_not_downloadable` | 409 | download | **Phase 9.** The report has not finished. |
+| `invalid_format` | 400 | download | **Phase 9.** `fmt` was missing or unrecognised. No default is guessed. |
+| `throttled` | 429 | auth, generate | **Phase 9.** DRF's own code and detail, kept because the detail names the wait — the one actionable thing a throttled caller can be told. |
+| `not_found` | 404 | every resource route | Either it does not exist or it belongs to someone else, and the answer is deliberately the same (§11 BOLA): a 403 on a foreign id confirms the id exists. |
+| `not_authenticated` | 403 | every resource route | No session. 403 rather than 401 because DRF answers 401 only when an auth class advertises a `WWW-Authenticate` scheme, and a session cookie does not. |
+| `server_error` | 500 | anywhere | A bug. The traceback stays in the logs; the reader gets one sentence. |
+
+Three families, and the shape is deliberate: **4xx the reader can act on**
+(fix the URL, get access, confirm), **409 the client can act on without
+bothering the reader** (`scan_in_progress`, `report_generating` — both carry the
+id to poll), and **503 nobody can act on now** (upstream or deployment), which
+is the only family whose advice is "try again later".
+
+### 9.13 What the browser check found
+
+The two new surfaces are overlays, and jsdom has no layout — §7.9 and §7.9.1 are
+what that costs. Both were measured in a real browser against a seeded
+repository, at 1000x520 scrolled to the bottom, which is the viewport that
+turned Phase 7's "cosmetic" defect into 39% of a dialog above the top of the
+screen.
+
+The dialog and the toast both sat fully inside the viewport, with the backdrop
+covering it and the toast's Dismiss button reachable. Both downloads were
+fetched end to end through the dev proxy: correct content types, the specified
+filenames, `Cache-Control: private, no-store`, and the per-dependency markdown
+carrying its cited passage.
+
+One defect, and it is §6.7's family again. The toast read *"The 2 reports on the
+previous scan will be cleared when it finishes"* — where "it" can attach to
+either scan, and the one it grammatically prefers is the wrong one. It names the
+new scan now. Every substring assertion would have passed; reading the finished
+sentence is what caught it.
+
+And one note for the next local check: **a JS-written session cookie cannot
+overwrite the HttpOnly one the server has already set** — the browser refuses
+silently, and the page bounces to `/login` looking like a broken session. The
+seed script pins its session key and repository id so a re-seed keeps working
+with the cookie the browser is already holding.
