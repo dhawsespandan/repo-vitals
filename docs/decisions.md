@@ -3396,3 +3396,58 @@ a second look at code the suite already pins.
 
 One defect found, fixed inside the tag (§9.14), and re-verified on production
 after redeploy: the drawer now opens straight onto the stored plan.
+
+### 9.16 The cascade, executed on production
+
+§9.15 recorded the destructive half of §10's first criterion as deliberately
+not executed, to preserve two demo artifacts. That reason expired — the mentor
+demo is Phase 14's — so it was run on `rv-accept-mixed` on 2026-09-13.
+
+Before: scan `1a1192fb`, combined report `dec57cfb` (Phase 7), `left-pad` plan
+`4ba34728` (Phase 8), four occurrences.
+
+Run scan -> the dialog, naming both reports -> **Rescan anyway**. The toast
+stated the consequence that had not happened yet, the previous results stayed
+on screen while the new scan ran, and the scan completed as `605dceee` scoring
+9.97 against the old 10.01 — the same four dependencies, four days staler.
+
+After:
+
+| probe | answer |
+|---|---|
+| `GET /api/scans/1a1192fb/` | 404 |
+| `GET /api/reports/dec57cfb/` | 404 |
+| `GET /api/reports/4ba34728/` | 404 |
+| `GET /api/reports/dec57cfb/download/?fmt=md` | 404 |
+| new scan's `combinedReport` | null |
+| new scan's occurrences | 4, none carrying a report |
+
+And the page says it without being asked: every flagged row's control reads
+**Remediate** rather than **Remediation** (§8.6's distinction, which is the one
+piece of the UI that knows whether a plan exists), and the Reports tab is back
+to its empty state offering **Generate report**. The guard's sentence —
+"regenerating will need new model calls" — is now literally what the surface
+offers.
+
+**What this does and does not establish about the permanent tables.** The
+reports are observably gone. `scan_history` and `dependency_history` have no
+HTTP surface until Phase 10, so the rows themselves cannot be read from
+production — but the deletion above is evidence the write committed, because
+`finalize` puts `record_scan` and `prune_prior_scans` inside **one**
+`transaction.atomic()`. The cascade could not have been observed unless the
+history write it shares a transaction with had also committed. The agent trace
+for `4ba34728` is a different argument — it survives because no foreign key
+reaches it (D9, §8.11) — and that remains suite-only until a surface exists to
+read it.
+
+So §10 Phase 9's first criterion now reads: **blocks until confirmed, then old
+reports gone — both on production**; history intact by transaction inference on
+production and directly in `test_rescan_guard.py`; traces intact in
+`test_agent_graph.py`. `v0.9.0`'s tag message predates this run and records the
+criterion as not executed; this section supersedes that row rather than the tag
+being moved.
+
+`rv-accept-mixed` now holds a scan with no reports, which is the right state to
+leave it in: it is what a repository looks like the moment before somebody
+presses Generate, and Phase 10's sibling-notice work will want to generate into
+a fresh scan anyway.
