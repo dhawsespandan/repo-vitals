@@ -1,6 +1,7 @@
 """Scan endpoints — §5.5.
 
-    POST /api/repositories/{id}/scan/          202, or 409 `scan_in_progress`
+    POST /api/repositories/{id}/scan/          202 | 409 in-progress
+                                               | 409 confirm-required (Phase 9)
     GET  /api/repositories/{id}/scan-status/   the small, pollable state
     GET  /api/scans/{id}/                      one scan and its manifests
     GET  /api/scans/{id}/dependencies/         paginated occurrences
@@ -34,6 +35,7 @@ from apps.repositories.models import Repository
 
 from .background import ScanInProgress, expire_stale, start_scan
 from .models import DependencyOccurrence, ScanRun, ScanStatus, TriggerType
+from .retention import reports_at_risk
 from .serializers import (
     DependencyBreakdownSerializer,
     DependencyOccurrenceSerializer,
@@ -140,6 +142,74 @@ def _boolean_param(raw: str | None) -> bool | None:
     return None
 
 
+#: The two spellings of "yes" this guard accepts, and no others.
+#:
+#: A destructive confirmation is the one place in the API where guessing is
+#: unacceptable. `_boolean_param` above deliberately treats an unrecognised
+#: value as "said nothing" for query strings, and the same generosity here
+#: would mean a client that sent `confirm: "maybe"` — or a stale client that
+#: sent `confirm: 1` meaning something else entirely — destroyed a report on
+#: the strength of a value nobody defined. The JSON body the frontend sends
+#: is `{"confirm": true}`; the string form is accepted because a form-encoded
+#: client cannot express a JSON boolean.
+_CONFIRMATIONS = (True, "true", "True")
+
+
+def _confirmed(data) -> bool:
+    """Did the caller explicitly confirm a destructive rescan?"""
+    try:
+        value = data.get("confirm")
+    except AttributeError:  # pragma: no cover - a non-mapping body
+        return False
+    return value in _CONFIRMATIONS
+
+
+def guard_destructive_rescan(repository: Repository, *, confirmed: bool) -> None:
+    """Refuse a rescan that would silently destroy generated reports.
+
+    §10 Phase 9: "`POST /scan/` when the latest scan has >=1 report → 409
+    `confirm_required` + `{reports_count}`; proceeds with `{confirm:true}`
+    (value-based guard — no cooldown timers)."
+
+    The guard is on the *value at stake*, not on elapsed time, and that is the
+    whole design. A cooldown would refuse a cheap rescan of a repository with
+    nothing generated and permit an expensive one a minute later; this refuses
+    exactly the rescans that throw work away, and refuses them only once.
+
+    **It runs unconditionally, before `start_scan`'s in-progress check.** The
+    tidier-looking arrangement — skip the confirmation when a scan is already
+    running, since a refused request destroys nothing — has a hole in it. "Is a
+    scan running?" is only answerable after `expire_stale` has reaped the ones
+    presumed dead, and a stalled `running` row that had not been reaped yet
+    would read as active, skip this guard, and then be expired by `start_scan`
+    a moment later — starting the rescan, and destroying the reports, with no
+    confirmation asked. Putting the guard first means there is no state in
+    which a scan starts without passing it.
+
+    What that costs is a stale tab clicking Run scan mid-scan: it is asked to
+    confirm, and then told a scan is already running. Both sentences are true
+    — the running scan will clear those reports when it completes — and the
+    order is the order they became true.
+    """
+    if confirmed:
+        return
+    count = reports_at_risk(repository.pk)
+    if count == 0:
+        return
+    raise ApiError(
+        "confirm_required",
+        f"This repository has {count} generated "
+        f"{'report' if count == 1 else 'reports'}. A new scan replaces these "
+        "results and clears them - regenerating costs a fresh model call.",
+        status_code=status.HTTP_409_CONFLICT,
+        # camelCase like every other `extra` on this API (§7.7, §8.13). §10
+        # writes it `reports_count`; that is the plan naming a quantity, not
+        # the wire format, and one spelling across the surface is what keeps
+        # the client from having two conventions to remember.
+        extra={"reportsCount": count},
+    )
+
+
 def trigger_scan(repository: Repository, user, trigger_type: str):
     """Start a scan, or raise the §5.5 409. Shared by registration and the route."""
     try:
@@ -161,6 +231,10 @@ class RepositoryScanView(OwnedQuerySetMixin, generics.GenericAPIView):
     finished. §8 makes this mandatory rather than stylistic — Render's request
     timeout is about 100 s and a scan can legitimately take longer, so a scan
     has to be a background thread plus polling and can never be inline.
+
+    From Phase 9 it can also answer 409 `confirm_required`, which is not a
+    failure but a question: this scan's generated reports die with it (§5.7),
+    and the caller is asked to say so out loud before they do.
     """
 
     queryset = Repository.objects.all()
@@ -169,6 +243,7 @@ class RepositoryScanView(OwnedQuerySetMixin, generics.GenericAPIView):
 
     def post(self, request, *args, **kwargs):
         repository = self.get_object()
+        guard_destructive_rescan(repository, confirmed=_confirmed(request.data))
         trigger_scan(repository, request.user, TriggerType.MANUAL.value)
         return Response(scan_state(repository.pk), status=status.HTTP_202_ACCEPTED)
 

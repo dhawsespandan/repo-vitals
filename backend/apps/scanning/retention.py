@@ -20,6 +20,13 @@ so with data that is already preserved — in denormalized, research-shaped form
 (D9). They have no foreign key to anything here, so no cascade can reach them
 even by accident.
 
+**And what the cascade costs, which is Phase 9's business.** A report is an
+interpretation of one measurement, so §5.7 destroys it along with the
+measurement — correctly, and expensively, because regenerating one is a model
+call. `reports_at_risk` below is the same question asked *before* the fact, so
+a rescan that would throw away generated work can say so first. It belongs
+here because it is the price of this module's rule, not a separate feature.
+
 **One deliberate widening of the letter of §5.7.** The spec says "delete the
 repo's prior *completed* scan_runs". This deletes prior scans whatever their
 status, because a superseded failure is operational detail too: its
@@ -58,3 +65,37 @@ def prune_prior_scans(scan: ScanRun) -> int:
             deleted,
         )
     return deleted
+
+
+def reports_at_risk(repository_id) -> int:
+    """How many completed reports a rescan of this repository would destroy.
+
+    §10 Phase 9's rescan confirmation is a *value-based* guard — it asks how
+    much would be lost, not how recently the last scan ran — and this is the
+    value. A repository with nothing generated rescans without a dialog,
+    because there is nothing to warn about.
+
+    Two decisions are in the query, and both are deliberate.
+
+    **Every scan of the repository, not just the latest.** §5.7's cascade runs
+    on *completion* and takes every prior scan with it, so the reports at risk
+    are every report this repository holds. Normally that is the same set —
+    retention leaves one scan standing — but not always: a scan that *fails*
+    prunes nothing, so a repository can sit on a completed scan with reports
+    plus a failed newer one. Counting only "the latest scan" there would answer
+    zero about a rescan that is about to destroy two reports.
+
+    **Completed reports only.** A queued, running or failed row has nothing in
+    it for the reader to lose, and "this scan has 1 generated report" is a
+    false sentence about a generation that failed. The count is the number of
+    answers that exist, which is what the dialog claims it is.
+    """
+    # Imported here rather than at module scope: `apps.reports` imports the
+    # scanning models, and this module is imported by `apps.scanning.background`
+    # on the way in. A module-level import would close that loop.
+    from apps.reports.models import Report, ReportStatus
+
+    return Report.objects.filter(
+        scan__repository_id=repository_id,
+        status=ReportStatus.COMPLETED.value,
+    ).count()
