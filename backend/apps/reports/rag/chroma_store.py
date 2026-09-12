@@ -42,6 +42,7 @@ from __future__ import annotations
 
 import logging
 import threading
+import uuid
 from dataclasses import dataclass
 
 from django.conf import settings
@@ -304,6 +305,38 @@ def delete_for(
         _collection(scan_id).delete(
             where=_where(ecosystem, package_name, resolved_version)
         )
+
+
+def list_scan_ids() -> list[str]:
+    """Every scan this store still holds a collection for, as UUID strings.
+
+    Phase 9's `cleanup_chroma` sweep needs to ask the *store* what it is
+    holding, because the orphans it exists to find are precisely the ones
+    Postgres no longer knows about — a scan deleted by §5.7's retention takes
+    its rows with it and leaves the collection behind, so a sweep driven from
+    the database would never see them.
+
+    Names this module did not write are ignored rather than reported: the
+    directory is `CHROMA_DIR` and nothing else is meant to be in it, but a
+    cleanup command that deleted collections it could not identify would be a
+    cleanup command with an unbounded blast radius.
+
+    Chroma has changed what `list_collections` returns across releases — names
+    in some versions, `Collection` objects in others — so both are accepted.
+    Pinning the version would not help: this has to keep working across the
+    upgrade, not refuse to run after it.
+    """
+    scan_ids: list[str] = []
+    for entry in _get_client().list_collections():
+        name = entry if isinstance(entry, str) else getattr(entry, "name", "")
+        if not name.startswith(COLLECTION_PREFIX):
+            continue
+        digits = name[len(COLLECTION_PREFIX) :]
+        try:
+            scan_ids.append(str(uuid.UUID(hex=digits)))
+        except ValueError:
+            logger.debug("Ignoring a collection with an unreadable name: %s.", name)
+    return scan_ids
 
 
 def drop_scan(scan_id) -> None:
