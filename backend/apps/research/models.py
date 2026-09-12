@@ -1,4 +1,5 @@
-"""The two permanent tables — §5.1's `scan_history` and `dependency_history`.
+"""The permanent tables — §5.1's `scan_history`, `dependency_history`, and
+(from Phase 8) `agent_execution_traces`.
 
 They live in their own app, and the app boundary is the point. D9 says these
 rows never cascade on any trigger: not a rescan, not deleting a repository, not
@@ -10,11 +11,14 @@ is safe to throw the operational rows away.
 Three properties follow from that and are enforced structurally rather than by
 convention:
 
-**No foreign keys out of this app.** `scan_history` has none at all, and
-`dependency_history`'s only FK points at `scan_history` with `ON DELETE
-RESTRICT`. A cascade that reached these tables would silently delete the
-evidence, and a cascade is easy to add by accident — an FK to `repositories`
-would do it. There is no FK to add it to.
+**No foreign keys out of this app.** `scan_history` has none at all,
+`agent_execution_traces` has none at all, and `dependency_history`'s only FK
+points at `scan_history` with `ON DELETE RESTRICT`. A cascade that reached
+these tables would silently delete the evidence, and a cascade is easy to add
+by accident — an FK to `repositories` would do it. There is no FK to add it to.
+The trace table is the sharpest case: the `reports` row it records *does*
+cascade with its scan (§5.7), so a foreign key there would delete the agent's
+raw data every time a user pressed Rescan.
 
 **Identifying fields are denormalized snapshots.** `github_username`,
 `repo_full_name`, `package_name` and `manifest_path` are copied in as text at
@@ -215,3 +219,122 @@ class DependencyHistory(models.Model):
 
     def __str__(self) -> str:
         return f"{self.package_name}@{self.resolved_version or self.declared_specifier}"
+
+
+class AgentBranch(models.TextChoices):
+    """§5.1's `branch_taken`, and the only two values §5.9's graph can produce.
+
+    The branch is decided in `frame_query` on one fact: whether the registry
+    gave a reason for deprecating this package. That fact is S3's independent
+    variable — the study is about whether retrieved documentation improves a
+    remediation plan, and a package that came with its own explanation is a
+    materially different starting point from one that did not — so the branch
+    is stored as a column rather than reconstructed later from the query text.
+    """
+
+    REASON_AVAILABLE = "reason_available", "Reason available"
+    NO_REASON = "no_reason", "No reason"
+
+
+class GroundingConfidence(models.TextChoices):
+    """§5.9's deterministic verdict, duplicated here on purpose.
+
+    `apps.reports.models` has the same two values, and the duplication is the
+    point: this app has no foreign key into the operational schema and must not
+    grow one (D9). A trace is readable with `apps.reports` deleted from the
+    project, which is the state Phase 11's research database is actually in.
+    """
+
+    SUFFICIENT = "sufficient", "Sufficient"
+    LOW = "low", "Low"
+
+
+class AgentExecutionTrace(models.Model):
+    """§5.1's `agent_execution_traces` — S3's raw data, kept forever.
+
+    The table the study is actually about. Every other permanent row in this
+    app records a *measurement*; this records a *run of the agent*: which
+    branch it took, what it asked, everything it got back with the score
+    attached, and what it produced.
+
+    **Decoupled from the reports cascade, deliberately.** §10 Phase 8: "trace
+    decoupled from the reports cascade so it survives rescans". A `reports` row
+    dies with its scan under §5.7 because it is an interpretation of one
+    measurement; a trace is an observation of the agent, and the agent's
+    behaviour is not invalidated by the user rescanning their repository
+    afterwards. `source_report_id` and `source_scan_id` are plain UUID columns
+    for exactly that reason — by the time most of these are read, both rows
+    they name are gone.
+
+    **Every retrieved chunk, not only the cited ones.** §5.1 says so in as many
+    words, and it is the difference between a dataset that can measure
+    retrieval quality and one that can only measure the model's citation
+    manners. A chunk that scored 0.31 and was ignored is evidence; a chunk that
+    was never written down is not.
+    """
+
+    trace_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    #: Snapshots, deliberately not ForeignKeys (§5.1). Both rows they name are
+    #: normally already gone: the report cascades with its scan, and the scan
+    #: is deleted by the next one under §5.7.
+    source_report_id = models.UUIDField(null=True, blank=True)
+    source_scan_id = models.UUIDField(null=True, blank=True)
+
+    github_user_id = models.BigIntegerField()
+    repo_full_name = models.TextField()
+
+    #: Denormalized so S3 groups from this table alone — §5.1 says exactly that
+    #: about `ecosystem`, and the same argument carries the other two: the
+    #: `packages` row may be deleted and the occurrence certainly will be.
+    ecosystem = models.TextField(choices=Ecosystem.choices)
+    package_name = models.TextField()
+    resolved_version = models.TextField(null=True, blank=True)  # noqa: DJ001
+
+    branch_taken = models.TextField(choices=AgentBranch.choices)
+
+    #: The text `retrieve` embedded. Null only if the graph failed before
+    #: framing, which `persist` cannot be reached from.
+    retrieval_query = models.TextField(null=True, blank=True)  # noqa: DJ001
+
+    #: ALL retrieved chunks with their similarity scores, not only the cited
+    #: ones (§5.1). NOT NULL: an empty list is a finding — retrieval ran and
+    #: found nothing — and null would make it indistinguishable from a trace
+    #: written by code that forgot to record them.
+    retrieved_chunks_json = models.JSONField(default=list)
+
+    #: The final payload plus prompt and model metadata (§5.1).
+    generation_json = models.JSONField(default=dict)
+
+    grounding_confidence = models.TextField(choices=GroundingConfidence.choices)
+
+    model_name = models.TextField(null=True, blank=True)  # noqa: DJ001
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "agent_execution_traces"
+        ordering = ["-created_at"]
+        indexes = [
+            # S3's two grouping keys: by package across users, and by run date.
+            models.Index(
+                fields=["package_name", "ecosystem"], name="agent_trace_package_idx"
+            ),
+            models.Index(fields=["branch_taken"], name="agent_trace_branch_idx"),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(ecosystem__in=Ecosystem.values),
+                name="agent_trace_ecosystem_valid",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(branch_taken__in=AgentBranch.values),
+                name="agent_trace_branch_valid",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(grounding_confidence__in=GroundingConfidence.values),
+                name="agent_trace_grounding_valid",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.package_name} [{self.branch_taken}/{self.grounding_confidence}]"
