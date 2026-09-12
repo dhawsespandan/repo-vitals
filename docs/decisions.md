@@ -3326,3 +3326,73 @@ overwrite the HttpOnly one the server has already set** — the browser refuses
 silently, and the page bounces to `/login` looking like a broken session. The
 seed script pins its session key and repository id so a re-seed keeps working
 with the cookie the browser is already holding.
+
+### 9.14 A stored plan advertised as an absent one
+
+The production acceptance run opened the remediation drawer on `left-pad` in
+`rv-accept-mixed` — a row whose own button read **"View remediation"**, because
+the list route had told it a completed plan exists (§8.6) — and the drawer
+rendered **"Generate remediation"** for a couple of hundred milliseconds before
+the plan appeared.
+
+It is §3.19 exactly, one surface along. The drawer reads the stored row when it
+opens; until that GET resolves, `report` is null, and the render fell through to
+`EmptyState`. Every assertion in `reportPanel.test.tsx` passed, because the
+harness answered the row and the report in the same tick — **the window did not
+exist in jsdom**, so whatever rendered there was untested by construction rather
+than by oversight.
+
+What kept it cheap is luck rather than design: pressing the button in that
+window POSTs, the cache answers 200, and no model runs. The reader was still
+told something false about their own data, and told it in the one place the
+product's claim is "the answer is already on disk".
+
+`OpeningState` is deliberately not `GeneratingState`. Nothing is being
+generated and no model is running, so the panel does not say one is — the two
+spinners carry different claims and a surface that conflated them would be
+describing a model call that never happened.
+
+**The durable half is the harness.** §3.19's note says a mock without latency
+deletes the state between request and response; that was written about the scan
+routes, and `stubFetch` grew `scanDelayMs` for them. The report route needed the
+same thing and did not have it. It has `reportDelayMs` now, and both regression
+tests were run against the unfixed component first and fail there.
+
+### 9.15 What the production acceptance run established
+
+Against `rv-accept-mixed`, whose current scan carried Phase 7's combined report
+and Phase 8's `left-pad` plan — two real generations, so the guard had something
+real to refuse and the downloads had real content to render.
+
+| §10 Phase 9 criterion | where it stands |
+|---|---|
+| rescan with reports **blocks** until confirmed | **passes on production** — one POST, 409, no scan started; the dialog reads "This scan has 2 generated reports" and the count is right |
+| ...**then old reports gone, history + traces intact** | suite-verified end to end; **not executed on production** — see below |
+| JSON validates against §5.8 | **passes on production** — the downloaded file's three fixes each carry exactly §5.8's ten keys, no more and no fewer |
+| BOLA: every route x foreign user -> 404 | suite-only on this tier: it needs a second GitHub account |
+| logs clean | suite-only on this tier: Render's free plan has no shell and no log export |
+
+Both downloads were taken as real files through the browser, not fetched in
+JavaScript: `repovitals_rv-accept-mixed_combined_<scan>.md` (1,746 bytes) and
+`.json` (2,144 bytes), plus the per-dependency plan (2,576 bytes), all with
+§10's filename shape.
+
+The per-dependency markdown is the one worth reading. It carries §9.4's
+**"Nothing cited"** paragraph — the §8.14 case, on real output — followed by
+`## Sources retrieved (none cited)` and all three README passages in full at
+0.4379, 0.34 and 0.32. A reader holding that file alone can check the claim the
+caveat makes, which is the whole argument of §9.4.
+
+**Why the destructive half was not executed.** Confirming the rescan would
+delete both reports — the artifacts Phase 7's and Phase 8's acceptance runs
+produced, which the mentor demo opens — and regenerating them costs two model
+calls and would not reproduce the same text. The observable half of the guard
+(it refuses, it names the count, it starts nothing) is what production can show
+that the suite cannot; the cascade itself is the same `finalize` path
+`test_rescan_guard.py` walks end to end, asserting the reports gone and
+`scan_history` + `dependency_history` intact, with the trace's survival covered
+by §8.11's own test. Running it on production would trade two demo artifacts for
+a second look at code the suite already pins.
+
+One defect found, fixed inside the tag (§9.14), and re-verified on production
+after redeploy: the drawer now opens straight onto the stored plan.
