@@ -24,6 +24,7 @@ from apps.common.views import HealthView
 from apps.reports.views import (
     DependencyReportView,
     ReportDetailView,
+    ReportDownloadView,
     ScanCombinedReportView,
 )
 from apps.repositories.views import RepositoryDetailView, RepositoryListCreateView
@@ -92,5 +93,10 @@ urlpatterns = [
         "api/reports/<uuid:report_id>/",
         ReportDetailView.as_view(),
         name="report-detail",
+    ),
+    path(
+        "api/reports/<uuid:report_id>/download/",
+        ReportDownloadView.as_view(),
+        name="report-download",
     ),
 ]

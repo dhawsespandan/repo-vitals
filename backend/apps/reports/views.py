@@ -3,8 +3,9 @@
     POST /api/scans/{id}/reports/combined/   200 cached | 202 started | 409 busy
     POST /api/dependencies/{id}/report/      200 cached | 202 started | 409 busy
     GET  /api/reports/{id}/                  the stored row, polled
+    GET  /api/reports/{id}/download/?fmt=    the same row as a file (Phase 9)
 
-All three sit behind `OwnedQuerySetMixin`, each declaring the path back to its
+All four sit behind `OwnedQuerySetMixin`, each declaring the path back to its
 owner — `repository__user` for a scan, `manifest__scan__repository__user` for
 an occurrence, `scan__repository__user` for a report. A foreign id is not in
 the queryset at all and 404s on its own (§11 BOLA).
@@ -34,14 +35,17 @@ from __future__ import annotations
 
 import logging
 
-from rest_framework import generics, status
+from django.http import HttpResponse
+from rest_framework import generics, renderers, status
+from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
 from apps.common.authz import OwnedQuerySetMixin
 from apps.common.errors import ApiError
 from apps.scanning.models import DependencyOccurrence, ScanRun
 
-from .models import Report
+from .download import filename, render_json_bytes, render_markdown
+from .models import Report, ReportStatus
 from .serializers import ReportSerializer
 from .services import (
     DependencyNotReportable,
@@ -160,3 +164,105 @@ class ReportDetailView(OwnedQuerySetMixin, generics.RetrieveAPIView):
     lookup_field = "report_id"
     lookup_url_kwarg = "report_id"
     queryset = Report.objects.select_related("scan", "scan__repository")
+
+
+class DownloadRenderer(renderers.BaseRenderer):
+    """Content negotiation only — the download view builds its own response.
+
+    Without it, `GET /api/reports/{id}/download/` is a route a *browser* visits
+    by following a link, and DRF negotiates against `DEFAULT_RENDERER_CLASSES`,
+    which is JSON alone. Every browser in practice sends `*/*;q=0.8` somewhere
+    in its navigation `Accept` header and so negotiates fine — a download that
+    works because of a wildcard nobody promised is a download that breaks on
+    the first client that tightens its header. This renderer matches anything;
+    `JSONRenderer` stays first in the list so an `ApiError` on this route is
+    still answered in the standard envelope rather than as raw bytes.
+    """
+
+    media_type = "*/*"
+    format = "download"
+    charset = None
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        return data
+
+
+#: `fmt` -> (extension, content type). §10 Phase 9 names both formats and no
+#: default, and none is invented here: choosing one for a caller who did not
+#: say would be guessing which of two genuinely different artifacts they
+#: wanted, the way `_boolean_param` refuses to guess what `?flagged=maybe`
+#: means.
+DOWNLOAD_FORMATS = {
+    "md": ("md", "text/markdown; charset=utf-8"),
+    "json": ("json", "application/json"),
+}
+
+
+class ReportDownloadView(OwnedQuerySetMixin, generics.GenericAPIView):
+    """`GET /api/reports/{id}/download/?fmt=md|json` — §5.5's Phase 9 route.
+
+    A re-rendering of one stored row, so it costs a SELECT and never a model
+    call (§5.8: one generation, one payload, both downloads). The owner rule is
+    `ReportDetailView`'s — a foreign report id is not in the queryset and 404s
+    on its own — which matters more here than on the JSON route, because this
+    is the surface that produces a *file* somebody keeps.
+
+    Only a completed report can be downloaded. A queued row has no content, and
+    a failed one has an error message rather than a plan; answering either with
+    an empty document would hand the reader a file that looks like an answer.
+    """
+
+    owner_field = "scan__repository__user"
+    lookup_field = "report_id"
+    lookup_url_kwarg = "report_id"
+    serializer_class = ReportSerializer
+    renderer_classes = [JSONRenderer, DownloadRenderer]
+    queryset = Report.objects.select_related(
+        "scan",
+        "scan__repository",
+        "dependency",
+        "dependency__manifest",
+        "dependency__package",
+    )
+
+    def get(self, request, *args, **kwargs):
+        requested = (request.query_params.get("fmt") or "").strip().lower()
+        if requested not in DOWNLOAD_FORMATS:
+            raise ApiError(
+                "invalid_format",
+                "Ask for fmt=md or fmt=json.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        report = self.get_object()
+        if report.status != ReportStatus.COMPLETED.value:
+            raise ApiError(
+                "report_not_downloadable",
+                "This report hasn't finished, so there's nothing to download yet.",
+                status_code=status.HTTP_409_CONFLICT,
+            )
+
+        extension, content_type = DOWNLOAD_FORMATS[requested]
+        body = (
+            render_markdown(report).encode("utf-8")
+            if requested == "md"
+            else render_json_bytes(report)
+        )
+
+        response = HttpResponse(body, content_type=content_type)
+        # The filename is ASCII by construction (`download._slug`), so the
+        # plain form is enough and the RFC 5987 `filename*` spelling would add
+        # a second encoding of the same name for no reader.
+        response["Content-Disposition"] = (
+            f'attachment; filename="{filename(report, extension)}"'
+        )
+        # One user's private dependency inventory. Nothing between here and the
+        # browser has any business holding a copy: the Vercel rewrite does not
+        # cache authenticated GETs, and this says so rather than relying on it.
+        response["Cache-Control"] = "private, no-store"
+        logger.info(
+            "Report %s downloaded as %s.",
+            report.pk,
+            requested,
+        )
+        return response
