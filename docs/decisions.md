@@ -2390,3 +2390,353 @@ from the wireframe's *word*, not its design — the chip keeps its position,
 severity colour and CVSS suffix. The wireframe's sample data gives every
 advisory its own CVE, so it never had to distinguish the two, and a binding
 visual specification does not settle a question about data it did not model.
+
+---
+
+## Phase 8 — PER_DEPENDENCY RAG agent: the thesis feature
+
+§5.9 specifies this phase more tightly than any other: eight named nodes, two
+named thresholds, a named chunk size and three paragraphs of discipline about
+the vector store. Most of what follows is therefore not "what we chose" but
+"what the spec's sentences turn into once they are code", and where a decision
+was genuinely open it is marked as such.
+
+### 8.1 The registry's repository URL is mined, never requested
+
+§10 Phase 8 opens the chain with "package -> repo URL (registry metadata) ->
+parse owner/repo (**same SSRF discipline**)". That parenthesis is the whole
+design of `rag/fetch_docs.py`.
+
+A registry's `repository` field is text a package author typed. It arrives here
+as a string that may say anything: a GitLab URL, an internal host, a
+`file:///`, a URL with credentials in it, or `https://github.com@evil.test/o/r`
+— which reads as `github.com` to anything that looks at `netloc` instead of
+`hostname`. **Nothing in this module ever requests that string.** It is parsed
+for an `owner/repo` pair, both halves are matched against
+`^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$`, and the request that goes out is built
+from the `GITHUB_API` constant and those two segments. `_github_repo` returns a
+pair rather than a URL so that there is no code path in which the input string
+could become a request.
+
+That is the same structure §5.6 uses for a pasted repository URL, and the tests
+are shaped the same way: eleven strings that must fail to parse, asserted
+against the parser rather than against the network, because the claim is that
+the network is never reached rather than that it refuses.
+
+Six spellings are accepted because the two registries genuinely serve all of
+them: `https://…`, `git+https://…`, `git://…`, `git@github.com:o/r.git`,
+npm's `github:o/r` shorthand, and a bare `o/r`.
+
+### 8.2 An empty-handed retrieval is a result, not an error
+
+§5.9's graph has no retries and no loops, so every failure in retrieval has to
+resolve to something the next node can carry. `FetchResult` therefore always
+returns, and `reason` names which of five things happened:
+`no_repository_url`, `not_github`, `repository_unreachable`,
+`documents_too_large`, `no_documents`.
+
+The five are a closed set because the *trace* groups on them. "We could not
+find the changelog" and "the changelog said nothing relevant" are different
+findings about a package, and S3 needs to tell them apart; collapsing both into
+"low confidence" would throw away the distinction at the point it was measured.
+
+`repository_unreachable` is worth its own value for the same reason: a rate
+limit clears on its own and a missing changelog does not, so the two are not
+one condition. They are accumulated on a `_RepoReader` instance rather than a
+module-level flag — five or six requests contribute to one verdict, and a
+module-level flag would be shared by every generation thread in the worker, so
+the first per-dependency report to hit a rate limit would make every concurrent
+one claim the same thing.
+
+### 8.3 Chunk ids are content digests, because a trace outlives its collection
+
+§5.9 asks for "stable chunk ids" and §10's acceptance asks for byte-identical
+output on a repeat request. Both are the same requirement seen from two ends.
+
+A positional id (`chunk-7`) is not stable: it changes when the document above
+it changes. A random id is not stable at all. The id here is
+`sha256(blob_sha + path + text)[:12]`, so the same bytes produce the same id on
+any machine, in any process, forever — and two chunks with the same id are the
+same text from the same file, which makes `add_chunks` idempotent and lets
+`ensure_corpus` be re-entered safely after a generation failed halfway.
+
+Twelve hex characters rather than a full digest, and that is a decision about
+the *model*: it is asked to copy these back as citations, and every character
+is a chance to mistype one. 48 bits over the ~120 chunks one dependency can
+have is a collision probability far below the rate at which anything else in
+this pipeline is wrong. The blob sha is inside the digest because the trace's
+claim is that a citation names *the bytes that were read* — the same release
+notes in a rewritten file are not the same chunk.
+
+### 8.4 The store converts distance to similarity at its own boundary
+
+§5.9 names `GROUNDING_MIN_SIM=0.30`, and Chroma returns a *distance*. The two
+are opposite senses of one measurement, so a comparison that read the wrong one
+would pass exactly the retrievals it should refuse — silently, with no error
+anywhere.
+
+The collection is therefore created with `hnsw:space = cosine` (the default is
+squared L2, which is unbounded above and would make a 0.30 threshold
+meaningless), and `chroma_store.query` converts `1 - distance` to a similarity
+in [0, 1] before anything else sees it. One conversion, at one boundary,
+clamped — a cosine distance can come back a hair outside its range and a
+similarity of 1.0000000002 printed beside a chunk reads as a bug.
+
+Everything downstream — the grounding check, the stored report, the trace, the
+citation pane — handles similarities only. The word "distance" does not appear
+in any of them, and that is enforced by there being no way to obtain one.
+
+### 8.5 `version_tag` exists because §5.9 says this bug is silent
+
+§5.9 spends a sentence on it: "the **resolved** version string is used both at
+write-tag time and read-filter time (a manifest-range string on one side causes
+silent empty retrieval -> false low-confidence)".
+
+A row whose `resolution` is `range_latest_approx` has a `declared_specifier` of
+`^4.17.0` and a `resolved_version` of `4.17.21`. Tag with one, filter with the
+other, and the query matches nothing: no exception, no warning, an empty result
+that the grounding check then reports as low confidence. The product would say
+"there is not enough source material to answer this" about a package whose
+changelog it had just downloaded and embedded.
+
+`version_tag()` is the single function both sides call, so the two cannot
+disagree, and it maps `None` to `""` rather than omitting the key — a metadata
+key that is absent on write and filtered on read is the same silent miss by
+another route, and Chroma's `where` cannot express "missing".
+
+There is a test for it, and the test's shape is the point: it asserts an
+**empty list**, which is what this defect looks like from the outside.
+
+### 8.6 The dependency row carries its report state, for §7.7's reason
+
+§7.7 added `combinedReport` to the scan payload because the only route that
+answers "does this scan have a report?" is the POST that *generates* one — so a
+page that asked on load would bill a model call for opening a tab.
+
+Phase 8 has the same problem one level down and answers it the same way:
+`DependencyOccurrenceSerializer` grows `report` — `{id, status, generatedAt}`,
+never the body. Three consequences, all of them the point:
+
+* the drawer opens on a stored plan with **one GET and no POST**;
+* the button can read "Remediation" on a row that has one and "Remediate" on a
+  row that does not, so the control says whether pressing it spends anything;
+* the whole table's worth of that costs **one query**, via a `Prefetch` with
+  `to_attr` and an `only()` — a per-dependency report carries every retrieved
+  chunk in full, and fetching those to render a status pill would pull the
+  corpus of every report on the page across the wire.
+
+`to_attr` rather than a plain prefetch so the serializer can tell "prefetched
+and empty" from "not prefetched", which is the difference between reading a
+list and issuing a query on a route that renders up to 300 rows.
+
+### 8.7 A dependency the scan did not flag has nothing to remediate
+
+`POST /api/dependencies/{id}/report/` refuses two kinds of row with 409
+`dependency_not_reportable`.
+
+The unassessable row is the easy half: §5.2 never measured it, so a remediation
+plan for it would be built on nothing at all.
+
+The **clean** row is the decision worth recording, because a model would
+happily produce something for it and what it produced would read like advice
+about a dependency that has no problem. §10 Phase 8 puts the control on flagged
+rows; the rule is stated in `services.py` where it can be tested, and the
+button agrees with it. An endpoint whose contract is "whatever the button
+sends" is an endpoint with no contract.
+
+### 8.8 The graph is linear, and the branch lives inside a node
+
+§5.9 lists eight nodes and says "single pass, no loops, no retries". It also
+puts the deprecation branch *inside* `frame_query`: the decision changes the
+question that is asked, not the sequence of steps taken.
+
+Modelling that as two nodes with a conditional edge would draw better and would
+be a deviation from the binding spec for the sake of the drawing. The LangGraph
+node ids are §5.9's names exactly, so a reader holding File A can follow a
+trace through the code without a translation table, and the branch is recorded
+in the state and stored on the trace — which is what makes it analysable, since
+S3 groups on `branch_taken` and not on a graph shape.
+
+Cost is bounded by construction rather than by a budget: one generation is one
+Groq call, there is no loop that could make it two, and no tool the model can
+ask to have run. `persist` comes before `cleanup` for the same reason history
+is written before retention deletes (§5.7) — if cleanup fails the cost is a
+stale index Phase 9's sweep collects, where the reverse order would destroy the
+evidence for an answer that had just been given.
+
+### 8.9 Every heavy import is inside the function that needs it
+
+Measured on this machine, `manage.py smoke_memory`:
+
+| step | RSS |
+|---|---|
+| baseline (Django loaded) | 73.3 MB |
+| after a request cycle | 76.3 MB |
+| after a background scan thread | 80.6 MB |
+| after the fastembed model loads | 228.9 MB |
+| after one embedding | 232.9 MB |
+| **after `langgraph` compiles a graph** | **250.4 MB** |
+| **after a Chroma write + query** | **281.5 MB** |
+
+So Phase 8's two new libraries cost ~49 MB on top of the embedding model's
+~150 MB, against a 512 MB tier (§8). Phase 1 measured the same command at
+274.5 MB on Render itself (§1.13), which puts the projected production peak
+around 320 MB — comfortable, and worth re-reading from a Render shell before
+the tag.
+
+The number that matters more is the one this table does not show. **A web
+worker that has never generated a per-dependency report holds none of it.**
+`chromadb`, `langgraph` and `fastembed` are imported inside the functions that
+use them — `chroma_store._get_client`, `graph.build_graph`,
+`embeddings.load_model` — so the resting footprint of a worker serving the
+dashboard is the 80.6 MB row, and the 281.5 MB row is what one background
+generation thread costs while it runs. Moving any of those three imports to
+module scope would turn a peak into a floor.
+
+The embedding model is a process-wide singleton behind a lock, and the lock is
+not decoration: two generations starting together would otherwise each build
+their own ~150 MB model, which on this tier is not a slowdown but an OOM that
+kills the worker for every user.
+
+### 8.10 An invented citation is dropped; an invented package is not
+
+Both are the model naming something that does not exist, and they are answered
+differently on purpose.
+
+A fix naming a package this repository does not have is an instruction a reader
+may act on, and §7.3's argument is that a plausible wrong row is the most
+damaging thing this surface can print. It gets one repair retry and then fails
+the generation.
+
+A citation naming a chunk that was never retrieved **cannot render anything**:
+the pane displays retrieved chunks and highlights the cited ones, so an
+unresolvable id highlights nothing. Dropping it costs the reader a highlight;
+failing the generation over it would cost them the answer.
+
+That asymmetry is why citation resolution is forgiving in the one direction it
+can safely be: an id is matched case-insensitively, stripped of brackets, and
+accepted on an unambiguous prefix of eight or more characters. A model that
+truncated a 12-hex id has not cited a different chunk, and the prefix rule can
+only ever resolve to something that *was* retrieved.
+
+### 8.11 The trace is decoupled from the reports cascade, and that is a schema fact
+
+§10 Phase 8: "trace decoupled from the reports cascade so it survives rescans".
+`agent_execution_traces` lives in `apps/research/` with `scan_history` and
+`dependency_history`, and like them it has **no foreign key out of the app**.
+
+The trace table is the sharpest case for that rule. The `reports` row it
+records *does* cascade with its scan under §5.7, so an FK there would delete
+S3's raw data every time a user pressed Rescan. `source_report_id` and
+`source_scan_id` are plain UUID columns, and by the time most of these are read
+both rows they name are gone. There is a cascade test that asserts exactly
+that: generate, rescan, report gone, trace intact, both ids now dangling.
+
+`retrieved_chunks_json` stores **every** chunk retrieved, not only the cited
+ones, because §5.1 says so and because the difference is what makes the dataset
+able to measure retrieval quality rather than the model's citation manners. A
+chunk that scored 0.31 and was ignored is evidence; a chunk that was never
+written down is not.
+
+### 8.12 The low-confidence path still calls the model
+
+§5.9 says `generate` is "exactly one Groq call" and, separately, that a
+low-confidence run is "instructed to state insufficient information rather than
+guess". The second is an instruction about the *content*, not an instruction to
+skip the call, and the difference matters.
+
+The scan has measured real things about a flagged dependency — advisories, a
+fixed version an advisory names, a deprecation flag. A page that refused to say
+any of them because a changelog could not be found would be withholding
+information it has. So the ungrounded system prompt permits the model to
+restate measurements and forbids it to describe migration steps, breaking
+changes, replacement APIs, or what a release contains.
+
+One detail that is easy to get wrong: on the low path the retrieved chunks are
+**not** put in front of the model. They are still recorded in the trace and
+still shown in the pane — the study needs what was retrieved and rejected, and
+the reader needs to see why the answer is short — but a prompt that says "you
+have insufficient information" above five quoted passages is asking to be
+disbelieved.
+
+### 8.13 API additions to §5.5
+
+One route, exactly as §5.5 specifies:
+
+```
+POST /api/dependencies/{id}/report/   200 cached | 202 started | 409 busy
+```
+
+Plus one field on an existing payload rather than a route of its own:
+`GET /api/scans/{id}/dependencies/` and `GET /api/dependencies/{id}/` grow
+`report` — `{id, status, generatedAt}` or null (§8.6).
+
+`GET /api/reports/{id}/` grows three fields that are null on every combined
+row: `citations`, `retrievedChunks` and `groundingConfidence`. All three travel
+with the answer rather than behind a route of their own, because the citation
+pane is not a detail view of the report — it is the evidence the report is read
+*against*, and a surface that could render the claim before the evidence
+arrived would be rendering an uncheckable claim, however briefly.
+
+The 409 body carries `reportId` for the same reason Phase 7's does, and the
+status-code mapping is shared by both POSTs (`views._report_response`) so the
+two cannot drift.
+
+### 8.14 What the live run found that the suites could not
+
+The suites were green — 618 backend, 157 frontend — before any of this was
+looked at in a browser. Three defects came out of the first real run, and the
+third is the most interesting thing in the phase.
+
+**The pane told the reader the number meant its own opposite.** The citation
+summary read "Similarity is cosine distance to the question the agent searched
+with". §8.4 exists precisely because those are opposite senses, and the
+sentence on screen — the one explaining the evidence — named the wrong one. A
+reader taking it literally would read 0.74 as "far away". Every substring
+assertion around it passed; nothing had read the sentence.
+
+**One banner sentence covered two different findings.** §5.9's gate fails when
+retrieval found nothing *and* when what it found was too weak, and the banner
+said "did not find documentation close enough to the question" in both cases.
+On the nothing-retrieved path that is wrong — there was nothing to be close to
+— and it contradicted the pane one column to its right, which was explaining
+that the repository may not publish a changelog at all. The banner now branches
+on `chunks.length`, and the two sentences agree.
+
+**Retrieval can clear §5.9's gate and the answer still cite nothing.** This one
+was only visible because the run was live. Generating against a real `django`
+row: its repository publishes no `CHANGELOG.md` under any name we try, so the
+fetcher fell back to `README.rst`, and three passages of Django's README
+cleared the gate at 0.51 similarity over 2,573 characters while saying nothing
+whatever about the yanked release the question was about. The model behaved
+correctly and cited none of them, and said so in its summary.
+
+The *page* then showed a plan with no caveat on it, because the only caveat it
+had was keyed on the grounding flag.
+
+The gap is real and it is not a threshold-tuning problem. §5.9's check measures
+whether retrieval **found** something; a citation count measures whether the
+answer **used** it. This phase's claim is "every claim checkable against the
+exact retrieved text", and an uncited answer is not checkable. So there is a
+third banner: *Nothing cited* — retrieval found N passages, the plan rests on
+none of them, read it as built from the scan's own measurements. §5.9's
+threshold is untouched, because it is doing its job correctly; what was missing
+was the page saying what the threshold does not cover.
+
+**A fourth question for any confidence flag: does the flag measure the thing
+the reader is about to rely on?** "We retrieved something relevant" and "the
+answer is grounded in it" are two claims, and a surface that reports only the
+first will eventually show an ungrounded answer under a clean bill of health.
+
+One non-defect is worth recording so the next person does not chase it. In the
+browser pane the drawer appeared frozen on "Reading the changelog…" long after
+the server had finished, and eleven GETs had been made for a report that was
+already `completed`. The cause is the pane, not the product: it reports
+`document.hidden === true` permanently, and `usePolling` stops scheduling ticks
+while the document is hidden (by design — a backgrounded tab must not poll a
+sleeping Render instance all night). Overriding `document.hidden` and
+dispatching `visibilitychange` made the generating -> completed transition work
+first time. The same override is needed for any future check of a polled
+surface in that pane. Recognising a familiar shape is not the same as
+establishing a cause (§5.11), so this was confirmed by changing one thing and
+re-running rather than by assuming.
