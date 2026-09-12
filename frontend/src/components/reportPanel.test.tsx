@@ -602,3 +602,61 @@ it("offers no download for a dependency with no plan yet", async () => {
   await screen.findByTestId("remediation-empty");
   expect(screen.queryByTestId("report-downloads")).not.toBeInTheDocument();
 });
+
+// ── Opening a stored plan, with the latency a real backend has ─────────────
+
+/**
+ * §3.19, one surface along, and found the same way: on production.
+ *
+ * The drawer reads the stored plan when it opens. Until that GET resolves it
+ * has no report, and it used to render the call to action — "Generate
+ * remediation" — for a dependency whose plan already existed, on a row whose
+ * own button said "View remediation". Every assertion in this file passed,
+ * because the harness answered both fetches in the same tick and the window
+ * did not exist in jsdom. `reportDelayMs` is what makes it exist.
+ */
+it("does not offer to generate a plan that is already on its way", async () => {
+  stubFetch({ session: SIGNED_IN, report: () => report(), reportDelayMs: 400 });
+  const user = userEvent.setup();
+  render(<DependencyTable rows={[WITH_REPORT]} />);
+
+  await user.click(screen.getByTestId("remediate"));
+
+  // Inside the window: a stored plan is coming, and the panel says so.
+  expect(await screen.findByTestId("remediation-opening")).toBeInTheDocument();
+  expect(screen.queryByTestId("remediation-generate")).not.toBeInTheDocument();
+  expect(screen.queryByTestId("remediation-empty")).not.toBeInTheDocument();
+
+  // And it still arrives.
+  expect(await screen.findByTestId("remediation-summary")).toBeInTheDocument();
+});
+
+it("does not claim a model is running while it reads a stored plan", async () => {
+  // The distinction the two spinners carry: nothing is being generated here,
+  // and a panel that said so would be describing a model call that never
+  // happened.
+  stubFetch({ session: SIGNED_IN, report: () => report(), reportDelayMs: 400 });
+  const user = userEvent.setup();
+  render(<DependencyTable rows={[WITH_REPORT]} />);
+
+  await user.click(screen.getByTestId("remediate"));
+
+  await screen.findByTestId("remediation-opening");
+  expect(screen.queryByTestId("remediation-generating")).not.toBeInTheDocument();
+  expect(screen.getByTestId("remediation-opening")).toHaveTextContent(
+    "Opening the stored plan…",
+  );
+});
+
+it("still offers to generate when the row genuinely has no plan", async () => {
+  // The other direction: the fix distinguishes "no report" from "report still
+  // loading", so it has to keep answering the first one the way it did.
+  stubFetch({ session: SIGNED_IN, report: () => null, reportDelayMs: 400 });
+  const user = userEvent.setup();
+  render(<DependencyTable rows={[FLAGGED]} />);
+
+  await user.click(screen.getByTestId("remediate"));
+
+  expect(await screen.findByTestId("remediation-empty")).toBeInTheDocument();
+  expect(screen.queryByTestId("remediation-opening")).not.toBeInTheDocument();
+});

@@ -283,6 +283,18 @@ interface StubOptions {
    * exercise the panel's queued -> completed transition.
    */
   report?: () => Report | null;
+  /**
+   * Milliseconds before GET /api/reports/{id}/ answers.
+   *
+   * §3.19's lesson, applied to the second surface that needed it: a mock
+   * without latency deletes the state between the request and the response,
+   * and whatever renders there is untested *by construction*. The Phase 9
+   * acceptance run found the drawer offering to generate a plan that already
+   * existed, in exactly that window, on a row whose button said "View
+   * remediation" — and every jsdom assertion passed, because both fetches
+   * resolved in the same tick.
+   */
+  reportDelayMs?: number;
   /** Status returned by POST /api/scans/{id}/reports/combined/. */
   generateStatus?: number;
   /** Body returned by that POST. Defaults to whatever `report` answers. */
@@ -355,6 +367,7 @@ export function stubFetch({
   startScanStatus = 202,
   startScanBody,
   report,
+  reportDelayMs = 0,
   generateStatus = 202,
   generateBody,
   generateDependencyStatus = 202,
@@ -407,6 +420,9 @@ export function stubFetch({
       return json(generateBody ?? report?.() ?? null, generateStatus);
     }
     if (url.includes("/api/reports/") && method === "GET") {
+      if (reportDelayMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, reportDelayMs));
+      }
       const row = report?.() ?? null;
       return row ? json(row, 200) : json({ code: "not_found", message: "no" }, 404);
     }

@@ -52,6 +52,8 @@ export function ReportPanel({ row, onClose, onReportChange }: ReportPanelProps) 
   const [report, setReport] = useState<Report | null>(null);
   const [starting, setStarting] = useState(false);
   const [notice, setNotice] = useState("");
+  // The stored plan is on its way. See the effect below, and §9.14.
+  const [opening, setOpening] = useState(false);
 
   const remember = useCallback(
     (value: Report) => {
@@ -64,18 +66,31 @@ export function ReportPanel({ row, onClose, onReportChange }: ReportPanelProps) 
   // The stored row, read once on open. The id comes from the table row, so
   // there is no request that asks whether a report exists — the answer arrived
   // with the dependency list.
+  //
+  // `opening` is what that request *costs the reader*, and it was missing.
+  // Until the GET resolves, `report` is null, and the render below used to fall
+  // through to `EmptyState` — offering to generate a plan that already exists,
+  // on a row whose own button said "View remediation". Found on the Phase 9
+  // production acceptance run (§9.14); it is §3.19 exactly, one surface along.
   useEffect(() => {
     const stored = row.report;
     if (!stored) {
       setReport(null);
+      setOpening(false);
       return;
     }
     let live = true;
+    setOpening(true);
     getReport(stored.id)
       .then((value) => {
         if (live) setReport(value);
       })
-      .catch(() => undefined);
+      // A failed read falls through to the call to action, which is the honest
+      // fallback: pressing it answers 200 from the cache and costs nothing.
+      .catch(() => undefined)
+      .finally(() => {
+        if (live) setOpening(false);
+      });
     return () => {
       live = false;
     };
@@ -202,6 +217,8 @@ export function ReportPanel({ row, onClose, onReportChange }: ReportPanelProps) 
             />
           ) : report?.status === "completed" ? (
             <ReadyState report={report} row={row} />
+          ) : opening ? (
+            <OpeningState />
           ) : (
             <EmptyState row={row} onGenerate={() => void generate()} />
           )}
@@ -257,6 +274,47 @@ function EmptyState({
         It runs once for this dependency and the answer is stored against this
         scan, so reopening this panel costs nothing. Re-running it needs a new
         scan.
+      </p>
+    </div>
+  );
+}
+
+/**
+ * The stored plan is being read back.
+ *
+ * Distinct from `GeneratingState` in the one way that matters: nothing is being
+ * generated and no model is running, so it does not say so. It exists because
+ * the alternative — rendering the call to action for a couple of hundred
+ * milliseconds — tells the reader this dependency has no plan, which is both
+ * false and an invitation to press a button that spends nothing but reads as
+ * though it might.
+ */
+function OpeningState() {
+  return (
+    <div
+      data-testid="remediation-opening"
+      style={{
+        padding: "40px 0",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 12,
+        textAlign: "center",
+      }}
+    >
+      <div
+        aria-hidden="true"
+        style={{
+          width: 30,
+          height: 30,
+          border: "3px solid var(--color-divider)",
+          borderTopColor: "var(--color-accent)",
+          borderRadius: "50%",
+          animation: "dsspin .9s linear infinite",
+        }}
+      />
+      <p className="text-muted" style={{ fontSize: 12.5, margin: 0, maxWidth: 320 }}>
+        Opening the stored plan…
       </p>
     </div>
   );
