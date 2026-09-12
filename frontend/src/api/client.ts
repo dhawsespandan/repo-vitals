@@ -192,14 +192,48 @@ export const getScanStatus = (id: string) =>
   api.get<ScanStatusResponse>(`/repositories/${id}/scan-status/`);
 
 /**
- * `POST /api/repositories/{id}/scan/` — 202, or 409 `scan_in_progress`.
+ * `POST /api/repositories/{id}/scan/` — 202, 409 `scan_in_progress`, or, from
+ * Phase 9, 409 `confirm_required`.
  *
- * The 409 is not an error the user needs to see as one: it means the scan they
- * asked for is already happening. Callers catch the code and re-read the
- * status rather than showing a failure.
+ * `scan_in_progress` still throws: it is not an error the user needs to see as
+ * one — the scan they asked for is already happening — and callers catch the
+ * code and re-read the status rather than showing a failure. That is unchanged.
+ *
+ * `confirm_required` is different in kind and gets a named outcome, for the
+ * same reason `generateCombinedReport`'s "cached" does: it is a *question*, and
+ * the answer changes what the product does next. §5.7's cascade destroys this
+ * scan's generated reports when the new one completes, and the count of what
+ * would be lost travels with the refusal so the dialog can name it. Re-send
+ * with `confirm` to proceed.
  */
-export const startScan = (id: string) =>
-  api.post<ScanStatusResponse>(`/repositories/${id}/scan/`);
+export type ScanStartResult =
+  | { outcome: "started"; state: ScanStatusResponse }
+  | { outcome: "confirm-required"; reportsCount: number };
+
+export async function startScan(
+  id: string,
+  confirm = false,
+): Promise<ScanStartResult> {
+  try {
+    const state = await api.post<ScanStatusResponse>(
+      `/repositories/${id}/scan/`,
+      // The body is sent only when confirming. An unconditional
+      // `{confirm: false}` would be a client that always answers the question
+      // before it is asked, and the guard is the one place in this API where
+      // a value means "yes, destroy it".
+      confirm ? { confirm: true } : undefined,
+    );
+    return { outcome: "started", state };
+  } catch (error) {
+    if (error instanceof ApiError && error.code === "confirm_required") {
+      return {
+        outcome: "confirm-required",
+        reportsCount: Number(error.body.reportsCount ?? 0),
+      };
+    }
+    throw error;
+  }
+}
 
 /** `GET /api/scans/{id}/` — one scan, its counts and its manifests. */
 export const getScan = (scanId: string) =>
@@ -336,3 +370,18 @@ export async function generateDependencyReport(
 /** `GET /api/reports/{id}/` — the stored row. Polled while a generation runs. */
 export const getReport = (reportId: string) =>
   api.get<Report>(`/reports/${reportId}/`);
+
+
+/**
+ * `GET /api/reports/{id}/download/?fmt=md|json` — §5.5's Phase 9 route.
+ *
+ * A URL rather than a fetch, and deliberately. The response carries
+ * `Content-Disposition: attachment`, so a plain link lets the browser do the
+ * saving: the session cookie travels on its own (same origin), the filename the
+ * server chose is the filename on disk, and nothing has to be held in memory as
+ * a blob or revoked afterwards. Fetching it into JavaScript to re-offer it as
+ * an object URL would be more code, a worse filename, and a copy of a private
+ * dependency inventory sitting in the tab until the page unloads.
+ */
+export const reportDownloadUrl = (reportId: string, format: "md" | "json") =>
+  `/api/reports/${reportId}/download/?fmt=${format}`;

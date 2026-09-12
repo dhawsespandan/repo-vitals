@@ -24,6 +24,7 @@
  */
 
 import type { Report, ReportFix } from "../types";
+import { DownloadLinks } from "./DownloadLinks";
 import { Markdown } from "./Markdown";
 import { relativeTime } from "./StatusPill";
 
@@ -232,6 +233,11 @@ function ReadyState({
             : "No fixes were recommended for this scan."}
         </div>
       )}
+
+      {/* Below the table rather than beside the heading: the file contains
+          what the reader has just read, so the offer to keep it belongs after
+          they have read it. */}
+      <DownloadLinks reportId={report.id} label="Download this report" />
     </div>
   );
 }

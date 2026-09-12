@@ -36,6 +36,7 @@ import type { DependencyOccurrence, Report } from "../types";
 import { isReportActive } from "../types";
 import { BlueprintCorners } from "./Blueprint";
 import { CitationPane } from "./CitationPane";
+import { DownloadLinks } from "./DownloadLinks";
 import { Markdown } from "./Markdown";
 import { fixAction } from "./ReportsTab";
 import { relativeTime } from "./StatusPill";
@@ -494,6 +495,11 @@ function ReadyState({ report, row }: { report: Report; row: DependencyOccurrence
             No specific action was recommended for this dependency.
           </p>
         )}
+
+        {/* In the answer column, not spanning both: the markdown download
+            carries the cited passages with it, so it is an export *of this
+            plan* rather than of the pane beside it. */}
+        <DownloadLinks reportId={report.id} label="Download this plan" />
       </div>
 
       <CitationPane

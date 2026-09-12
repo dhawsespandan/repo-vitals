@@ -12,6 +12,7 @@ import {
   startScan,
 } from "../api/client";
 import { BlueprintCorners } from "../components/Blueprint";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 import { DependencyTable } from "../components/DependencyTable";
 import { ScanEcosystemChip } from "../components/EcosystemChip";
 import { CheckIcon, FolderIcon, LockIcon } from "../components/Icons";
@@ -19,6 +20,7 @@ import { ReportsTab } from "../components/ReportsTab";
 import { ClassificationTag, ScoreBadge } from "../components/ScoreBadge";
 import { ScoreContributors } from "../components/ScoreContributors";
 import { StatusPill, relativeTime } from "../components/StatusPill";
+import { Toast } from "../components/Toast";
 import { usePolling } from "../hooks/usePolling";
 import type {
   DependencyOccurrence,
@@ -81,6 +83,11 @@ export function RepoDetail() {
   // (§5.1, "the UI always reads stored rows").
   const [report, setReport] = useState<Report | null>(null);
   const [reportStarting, setReportStarting] = useState(false);
+  // How many generated reports a rescan would destroy, once the server has
+  // told us. Null means the question has not been asked — not "zero", which is
+  // a different statement and the one that would skip the dialog.
+  const [rescanCost, setRescanCost] = useState<number | null>(null);
+  const [toast, setToast] = useState("");
 
   useEffect(() => {
     let live = true;
@@ -252,7 +259,21 @@ export function RepoDetail() {
    */
   const busy = active || starting;
 
-  const runScan = async () => {
+  // Zero until the server has answered the question, which is also the value
+  // the dialog never renders with: it only opens on a refusal, and a refusal
+  // only happens when the count is at least one.
+  const reportsAtRisk = rescanCost ?? 0;
+
+  /**
+   * Start a scan, or stop and ask first.
+   *
+   * `confirmed` is passed on to the server rather than checked here. The guard
+   * is the server's (§10 Phase 9: a value-based guard on the report count), and
+   * a client that decided for itself whether a confirmation was needed would be
+   * a second implementation of the rule — one that a stale tab, a second
+   * browser or a replayed request walks straight past.
+   */
+  const runScan = async (confirmed = false) => {
     // A guard as well as a disabled attribute: `disabled` covers the pointer,
     // and this covers the keyboard repeat, the second tab, and the replayed
     // request. The lock that actually decides is the server's either way.
@@ -260,7 +281,22 @@ export function RepoDetail() {
     setNotice("");
     setStarting(true);
     try {
-      setState(await startScan(repositoryId));
+      const result = await startScan(repositoryId, confirmed);
+      if (result.outcome === "confirm-required") {
+        setRescanCost(result.reportsCount);
+        return;
+      }
+      setRescanCost(null);
+      setState(result.state);
+      if (confirmed) {
+        // The only thing here the page cannot show for itself. §5.7 clears the
+        // reports when the *new* scan completes, so right now the Reports tab
+        // still holds the old one and nothing on screen has changed — the
+        // reader agreed to something that happens later.
+        setToast(
+          `Rescan started. The ${plural(reportsAtRisk, "report")} on the previous scan will be cleared when the new scan finishes.`,
+        );
+      }
     } catch (error) {
       if (error instanceof ApiError && error.code === "scan_in_progress") {
         // Not a failure: the scan they asked for is already running. Re-read
@@ -278,6 +314,7 @@ export function RepoDetail() {
       setStarting(false);
     }
   };
+
 
   if (loading) {
     return (
@@ -482,6 +519,26 @@ export function RepoDetail() {
         </div>
       </div>
 
+      {/* §10 Phase 9's rescan ConfirmDialog. It names the number, because
+          "some reports" is not something a reader can weigh — and the sentence
+          says what regenerating costs, since that is the part that is not
+          obvious: the reports are cached precisely so a model never runs twice
+          for one scan (§10 Phase 7). */}
+      <ConfirmDialog
+        open={rescanCost !== null}
+        title="Rescan and clear this scan's reports?"
+        body={`This scan has ${plural(reportsAtRisk, "generated report")}. Rescanning replaces this scan's results and clears ${reportsAtRisk === 1 ? "it" : "them"}, and regenerating will need new model calls. Your scan history and any saved remediation traces are kept.`}
+        cancelLabel="Keep this scan"
+        confirmLabel="Rescan anyway"
+        onCancel={() => setRescanCost(null)}
+        onConfirm={() => {
+          setRescanCost(null);
+          void runScan(true);
+        }}
+      />
+
+      {toast && <Toast message={toast} onDismiss={() => setToast("")} />}
+
       {notice && (
         <div
           role="status"
@@ -547,15 +604,7 @@ export function RepoDetail() {
              first while meaning the second — beside a pill reading "Scanned"
              (§3.19). The button that sat here started a rescan nobody asked
              for, and §5.7's cascade destroys what it replaces. */
-          <Panel>
-            <p
-              style={{ margin: 0, fontSize: 13.5 }}
-              className="text-muted"
-              data-testid="results-loading"
-            >
-              Loading this scan&apos;s results…
-            </p>
-          </Panel>
+          <ResultsSkeleton />
         ) : current?.status === "failed" ? null : (
           <Panel>
             <p style={{ margin: "0 0 12px", fontSize: 13.5 }}>
@@ -987,6 +1036,77 @@ function ScanningSkeleton({ name }: { name: string }) {
         lockfiles, and batching vulnerability queries to OSV. This page polls
         until it finishes — you can leave and come back.
       </p>
+    </div>
+  );
+}
+
+
+/** "1 report" / "3 reports" — the s, decided in one place. */
+function plural(count: number, noun: string): string {
+  return `${count} ${noun}${count === 1 ? "" : "s"}`;
+}
+
+/**
+ * The gap between "a completed scan exists" and "its rows have arrived".
+ *
+ * It was a line of text, and a line of text in an empty frame reads as the
+ * answer — which on this page it emphatically is not (§3.19: the page spent
+ * three seconds telling a scanned repository it had never been scanned). A
+ * skeleton is the shape of the thing that is coming, so the reader waits for a
+ * table instead of reading an absence.
+ *
+ * The `data-testid` stays `results-loading`: it is the same state, and the
+ * tests that assert this window exists are asserting the state rather than the
+ * markup.
+ */
+function ResultsSkeleton() {
+  return (
+    <div
+      className="blueprint"
+      data-testid="results-loading"
+      style={{
+        border: "1px solid var(--color-divider)",
+        background: "color-mix(in srgb, var(--color-bg) 55%, transparent)",
+        padding: "18px 20px",
+      }}
+    >
+      <BlueprintCorners />
+      <div
+        className="text-muted"
+        style={{ fontSize: 13.5, marginBottom: 14 }}
+      >
+        Loading this scan&apos;s results…
+      </div>
+      {[0, 1, 2, 3, 4].map((row) => (
+        <div
+          key={row}
+          aria-hidden="true"
+          style={{
+            display: "flex",
+            gap: 14,
+            alignItems: "center",
+            padding: "11px 0",
+            borderTop: "1px solid var(--color-divider)",
+          }}
+        >
+          {[220, 90, 120, 64].map((width, cell) => (
+            <div
+              key={cell}
+              style={{
+                height: 10,
+                width,
+                maxWidth: `${width / 6}%`,
+                flex: cell === 0 ? "0 1 auto" : "0 0 auto",
+                background: "var(--color-divider)",
+                // Staggered so it reads as a loading surface rather than a
+                // row of identical bars. Frozen in a hidden document, which is
+                // fine: what it renders at rest is still the shape of a table.
+                animation: `dspulse 1.4s ease-in-out ${row * 0.12}s infinite`,
+              }}
+            />
+          ))}
+        </div>
+      ))}
     </div>
   );
 }
