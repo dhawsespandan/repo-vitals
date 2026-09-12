@@ -142,26 +142,30 @@ def _boolean_param(raw: str | None) -> bool | None:
     return None
 
 
-#: The two spellings of "yes" this guard accepts, and no others.
-#:
-#: A destructive confirmation is the one place in the API where guessing is
-#: unacceptable. `_boolean_param` above deliberately treats an unrecognised
-#: value as "said nothing" for query strings, and the same generosity here
-#: would mean a client that sent `confirm: "maybe"` — or a stale client that
-#: sent `confirm: 1` meaning something else entirely — destroyed a report on
-#: the strength of a value nobody defined. The JSON body the frontend sends
-#: is `{"confirm": true}`; the string form is accepted because a form-encoded
-#: client cannot express a JSON boolean.
-_CONFIRMATIONS = (True, "true", "True")
-
-
 def _confirmed(data) -> bool:
-    """Did the caller explicitly confirm a destructive rescan?"""
+    """Did the caller explicitly confirm a destructive rescan?
+
+    A destructive confirmation is the one place in this API where guessing is
+    unacceptable. `_boolean_param` above deliberately treats an unrecognised
+    value as "said nothing" for query strings, and the same generosity here
+    would mean a stale client sending `confirm: 1` — meaning something else
+    entirely — destroying a report on the strength of a value nobody defined.
+
+    Accepted: the JSON boolean the frontend sends, and the string `"true"` in
+    any case, because a form-encoded client cannot express a JSON boolean.
+    Nothing else, and the first version of this got it wrong in a way worth
+    keeping a note about: it compared with `value in (True, "true", "True")`,
+    and `1 == True` in Python, so `confirm: 1` — a value nobody had agreed
+    meant yes — sailed through. The test for it is what found it.
+    """
     try:
         value = data.get("confirm")
     except AttributeError:  # pragma: no cover - a non-mapping body
         return False
-    return value in _CONFIRMATIONS
+    # `is True` rather than `== True`: identity excludes 1, 1.0 and Decimal(1).
+    if value is True:
+        return True
+    return isinstance(value, str) and value.strip().lower() == "true"
 
 
 def guard_destructive_rescan(repository: Repository, *, confirmed: bool) -> None:

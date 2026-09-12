@@ -266,10 +266,17 @@ interface StubOptions {
   breakdowns?: Record<string, DependencyBreakdown>;
   /** Page size the stubbed paginator uses. Defaults to the backend's 50. */
   pageSize?: number;
-  /** Status returned by POST /api/repositories/{id}/scan/. */
-  startScanStatus?: number;
+  /**
+   * Status returned by POST /api/repositories/{id}/scan/.
+   *
+   * A function when the answer has to *change* between calls, which Phase 9's
+   * confirmation needs: the first POST is refused with 409 `confirm_required`
+   * and the second, carrying `{confirm: true}`, is accepted. A fixed status
+   * could only ever test one half of that exchange.
+   */
+  startScanStatus?: number | ((request?: RequestInit) => number);
   /** Body returned by POST /api/repositories/{id}/scan/ when it is not 202. */
-  startScanBody?: unknown;
+  startScanBody?: unknown | ((request?: RequestInit) => unknown);
   /**
    * Answer to GET /api/reports/{id}/. A function so a test can change what a
    * poll sees between requests — a generation that finishes is the only way to
@@ -387,10 +394,13 @@ export function stubFetch({
       return json(scanStatus?.() ?? { scan: null, latestCompletedScanId: null }, 200);
     }
     if (url.endsWith("/scan/") && method === "POST") {
+      const status =
+        typeof startScanStatus === "function" ? startScanStatus(init) : startScanStatus;
+      const body =
+        typeof startScanBody === "function" ? startScanBody(init) : startScanBody;
       return json(
-        startScanBody ??
-          scanStatus?.() ?? { scan: null, latestCompletedScanId: null },
-        startScanStatus,
+        body ?? scanStatus?.() ?? { scan: null, latestCompletedScanId: null },
+        status,
       );
     }
     if (url.includes("/reports/combined/") && method === "POST") {

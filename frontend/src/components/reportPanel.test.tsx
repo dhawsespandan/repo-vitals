@@ -554,3 +554,51 @@ it("opens the drawer without an id from the table, given a row directly", async 
     "request is deprecated. Its changelog points at got as the successor.",
   );
 });
+
+// ── Downloads (§10 Phase 9) ────────────────────────────────────────────────
+
+it("offers the plan as both files, named for this report", async () => {
+  stubFetch({ session: SIGNED_IN, report: () => report() });
+  const user = userEvent.setup();
+  render(<DependencyTable rows={[WITH_REPORT]} />);
+
+  await user.click(screen.getByTestId("remediate"));
+  await screen.findByTestId("remediation-summary");
+
+  expect(screen.getByTestId("download-md")).toHaveAttribute(
+    "href",
+    `/api/reports/${REPORT_ID}/download/?fmt=md`,
+  );
+  expect(screen.getByTestId("download-json")).toHaveAttribute(
+    "href",
+    `/api/reports/${REPORT_ID}/download/?fmt=json`,
+  );
+});
+
+it("puts the download beside the answer, not beside the evidence", async () => {
+  /**
+   * The markdown carries the cited passages inside it, so the file is an
+   * export of the *plan*. Rendering it under the citation pane would read as
+   * an export of the retrieved text.
+   */
+  stubFetch({ session: SIGNED_IN, report: () => report() });
+  const user = userEvent.setup();
+  render(<DependencyTable rows={[WITH_REPORT]} />);
+
+  await user.click(screen.getByTestId("remediate"));
+  await screen.findByTestId("remediation-summary");
+
+  const answerColumn = screen.getByTestId("remediation-summary").parentElement;
+  expect(answerColumn).toContainElement(screen.getByTestId("report-downloads"));
+});
+
+it("offers no download for a dependency with no plan yet", async () => {
+  stubFetch({ session: SIGNED_IN, report: () => null });
+  const user = userEvent.setup();
+  render(<DependencyTable rows={[FLAGGED]} />);
+
+  await user.click(screen.getByTestId("remediate"));
+
+  await screen.findByTestId("remediation-empty");
+  expect(screen.queryByTestId("report-downloads")).not.toBeInTheDocument();
+});

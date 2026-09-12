@@ -846,3 +846,165 @@ describe("while the scan results are still loading", () => {
     );
   });
 });
+
+/**
+ * §10 Phase 9's rescan confirmation.
+ *
+ * The dialog's *placement* was checked in a real browser at 1000x520 scrolled
+ * to the bottom — jsdom has no layout, and §7.9.1 is the record of what that
+ * costs. What is asserted here is the exchange: the page asks, and only a
+ * deliberate answer sends the second request.
+ */
+describe("rescanning a repository that has generated reports", () => {
+  function guarded(reportsCount = 2) {
+    const posts: (RequestInit | undefined)[] = [];
+    const stub = stubFetch({
+      session: SIGNED_IN,
+      repository: repository({
+        latestScan: scanState(),
+        latestCompletedScanId: SCAN_ID,
+      }),
+      scanStatus: () => ({ scan: scanState(), latestCompletedScanId: SCAN_ID }),
+      scan: ROWS_SCAN,
+      dependencies: ROWS,
+      // The first POST is refused; the second, carrying the confirmation, is
+      // accepted. One fixed status could only test half the exchange.
+      startScanStatus: (init) => {
+        posts.push(init);
+        return posts.length === 1 ? 409 : 202;
+      },
+      startScanBody: () =>
+        posts.length === 1
+          ? {
+              code: "confirm_required",
+              message: `This repository has ${reportsCount} generated reports.`,
+              reportsCount,
+            }
+          : { scan: scanState({ status: "queued" }), latestCompletedScanId: SCAN_ID },
+    });
+    return { ...stub, posts };
+  }
+
+  it("asks before destroying them, and names how many", async () => {
+    guarded(2);
+
+    renderApp(DETAIL_ROUTE);
+    const user = userEvent.setup();
+    await user.click(await screen.findByTestId("run-scan"));
+
+    const dialog = await screen.findByRole("dialog");
+    // The finished sentence, not substrings of it (§6.7). A reader cannot
+    // weigh "some reports".
+    expect(dialog).toHaveTextContent(
+      "This scan has 2 generated reports. Rescanning replaces this scan's " +
+        "results and clears them, and regenerating will need new model calls. " +
+        "Your scan history and any saved remediation traces are kept.",
+    );
+  });
+
+  it("does not start the scan while the question is open", async () => {
+    const { posts } = guarded();
+
+    renderApp(DETAIL_ROUTE);
+    const user = userEvent.setup();
+    await user.click(await screen.findByTestId("run-scan"));
+    await screen.findByRole("dialog");
+
+    // One POST — the refused one. A dialog that appears *after* the work has
+    // started is asking permission for something already happening.
+    expect(posts).toHaveLength(1);
+    expect(screen.getByTestId("run-scan")).toHaveTextContent("Run scan");
+  });
+
+  it("sends the confirmation when the reader agrees", async () => {
+    const { posts } = guarded();
+
+    renderApp(DETAIL_ROUTE);
+    const user = userEvent.setup();
+    await user.click(await screen.findByTestId("run-scan"));
+    await user.click(await screen.findByRole("button", { name: /rescan anyway/i }));
+
+    await waitFor(() => expect(posts).toHaveLength(2));
+    expect(JSON.parse(String(posts[1]?.body))).toEqual({ confirm: true });
+    expect(posts[0]?.body).toBeUndefined();
+  });
+
+  it("keeps the reports when the reader declines", async () => {
+    const { posts } = guarded();
+
+    renderApp(DETAIL_ROUTE);
+    const user = userEvent.setup();
+    await user.click(await screen.findByTestId("run-scan"));
+    await user.click(await screen.findByRole("button", { name: /keep this scan/i }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(posts).toHaveLength(1);
+  });
+
+  it("says what will happen later, because nothing on screen changes now", async () => {
+    /**
+     * §5.7 clears the reports when the *new* scan completes, so at the moment
+     * of the click the Reports tab still holds the old one. The toast is the
+     * only place that consequence is stated, which is the whole bar for using
+     * one (§2.5).
+     */
+    guarded(2);
+
+    renderApp(DETAIL_ROUTE);
+    const user = userEvent.setup();
+    await user.click(await screen.findByTestId("run-scan"));
+    await user.click(await screen.findByRole("button", { name: /rescan anyway/i }));
+
+    const toast = await screen.findByTestId("toast");
+    expect(toast).toHaveTextContent(
+      "Rescan started. The 2 reports on the previous scan will be cleared " +
+        "when the new scan finishes.",
+    );
+    // "it finishes" would have been ambiguous between the two scans.
+    expect(toast).not.toHaveTextContent("when it finishes");
+  });
+
+  it("counts one report in the singular, in both sentences", async () => {
+    guarded(1);
+
+    renderApp(DETAIL_ROUTE);
+    const user = userEvent.setup();
+    await user.click(await screen.findByTestId("run-scan"));
+    expect(await screen.findByRole("dialog")).toHaveTextContent(
+      "This scan has 1 generated report. Rescanning replaces this scan's " +
+        "results and clears it,",
+    );
+
+    await userEvent.setup().click(screen.getByRole("button", { name: /rescan anyway/i }));
+
+    expect(await screen.findByTestId("toast")).toHaveTextContent(
+      "The 1 report on the previous scan",
+    );
+  });
+
+  it("goes straight through when there is nothing to lose", async () => {
+    const posts: (RequestInit | undefined)[] = [];
+    stubFetch({
+      session: SIGNED_IN,
+      repository: repository({
+        latestScan: scanState(),
+        latestCompletedScanId: SCAN_ID,
+      }),
+      scanStatus: () => ({ scan: scanState(), latestCompletedScanId: SCAN_ID }),
+      scan: ROWS_SCAN,
+      dependencies: ROWS,
+      startScanStatus: (init) => {
+        posts.push(init);
+        return 202;
+      },
+    });
+
+    renderApp(DETAIL_ROUTE);
+    const user = userEvent.setup();
+    await user.click(await screen.findByTestId("run-scan"));
+
+    await waitFor(() => expect(posts).toHaveLength(1));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("toast")).not.toBeInTheDocument();
+  });
+});

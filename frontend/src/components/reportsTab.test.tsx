@@ -457,3 +457,61 @@ it("the Reports tab carries no count, because it counts nothing", async () => {
   expect(await screen.findByTestId("tab-reports")).toHaveTextContent(/^Reports$/);
   expect(screen.getByTestId("tab-flagged")).toHaveTextContent("Flagged (1)");
 });
+
+// ── Downloads (§10 Phase 9) ────────────────────────────────────────────────
+
+it("offers both formats, as links the browser can save", () => {
+  renderTab();
+
+  const md = screen.getByTestId("download-md");
+  const json = screen.getByTestId("download-json");
+
+  // Anchors, not buttons: the response carries Content-Disposition, so the
+  // browser does the saving with the server's own filename — no blob to build
+  // and revoke, and "Save link as…" works.
+  expect(md.tagName).toBe("A");
+  expect(json.tagName).toBe("A");
+  expect(md).toHaveAttribute(
+    "href",
+    `/api/reports/${REPORT_ID}/download/?fmt=md`,
+  );
+  expect(json).toHaveAttribute(
+    "href",
+    `/api/reports/${REPORT_ID}/download/?fmt=json`,
+  );
+});
+
+it("says which file is for whom, and what neither of them does", () => {
+  /**
+   * The JSON is not a worse markdown — §5.8 makes it a task handoff for an
+   * external coding agent — and a reader choosing between two buttons labelled
+   * only by file extension has no way to know that. The last clause is the
+   * product's posture, and it belongs wherever a file leaves the product.
+   */
+  renderTab();
+
+  expect(screen.getByTestId("report-downloads")).toHaveTextContent(
+    "Markdown to read or keep; JSON as a task list for a coding agent. " +
+      "Either way these are suggestions — RepoVitals never changes your repository.",
+  );
+});
+
+it("offers nothing to download before a report exists", () => {
+  renderTab({ report: null });
+
+  expect(screen.queryByTestId("report-downloads")).not.toBeInTheDocument();
+});
+
+it("offers nothing to download while one is being written", () => {
+  renderTab({ generating: true });
+
+  expect(screen.queryByTestId("report-downloads")).not.toBeInTheDocument();
+});
+
+it("offers nothing to download when the generation failed", () => {
+  // A failed row holds an error message, not a plan. A file built from it
+  // would look like an answer.
+  renderTab({ report: report({ status: "failed", errorMessage: "It didn't." }) });
+
+  expect(screen.queryByTestId("report-downloads")).not.toBeInTheDocument();
+});
