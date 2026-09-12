@@ -240,7 +240,7 @@ def request_combined(scan: ScanRun) -> tuple[Report, bool]:
     )
     if cached:
         return report, True
-    background.spawn(run_combined, report.pk)
+    background.spawn(run_combined, report.pk, scan_id=scan.pk)
     return report, False
 
 
@@ -275,7 +275,7 @@ def request_per_dependency(
     )
     if cached:
         return report, True
-    background.spawn(run_per_dependency, report.pk)
+    background.spawn(run_per_dependency, report.pk, scan_id=scan.pk)
     return report, False
 
 

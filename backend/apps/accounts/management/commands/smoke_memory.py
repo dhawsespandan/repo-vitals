@@ -39,10 +39,11 @@ from __future__ import annotations
 import json
 import threading
 import time
-import urllib.request
 
 from django.core.management.base import BaseCommand
 from django.db import connection
+
+from apps.common import http
 
 
 def _rss_mb() -> float:
@@ -165,14 +166,20 @@ class Command(BaseCommand):
 
         def worker() -> None:
             try:
-                request = urllib.request.Request(
+                # Through `common/http.py`, like every other outbound call in
+                # the project (§5.6: "the single choke point all outbound HTTP
+                # in the entire project must pass through"). This used to be a
+                # bare `urllib.request`, which was a second outbound path with
+                # its own rules — no allowlist, no cap, no retry — and Phase
+                # 9's audit is what found it (`docs/decisions.md` §9.9). It
+                # also makes the measurement honest in §8.15's sense: a worker
+                # that matters holds `requests` and a pooled session, and a
+                # smoke test that avoided them was measuring a process
+                # production never runs.
+                payload = http.get_json(
                     "https://registry.npmjs.org/left-pad",
-                    headers={"User-Agent": "repovitals-smoke-test"},
-                )
-                # Hard-coded https URL, no user input: the schemes this rule
-                # guards against cannot reach it.
-                with urllib.request.urlopen(request, timeout=20) as fh:  # noqa: S310
-                    payload = json.loads(fh.read().decode("utf-8"))
+                    accept="application/json",
+                ).data
                 self.stdout.write(
                     f"  registry fetch -> left-pad@{payload.get('dist-tags', {}).get('latest')}"
                 )

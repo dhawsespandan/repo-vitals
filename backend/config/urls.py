@@ -5,6 +5,11 @@ service through the Vercel rewrite `/api/* -> Render` (§2). The API surface is
 specified in full in §5.5 and is built up phase by phase; this file carries
 Phase 1's slice.
 
+There is no `/admin/`, and that is §10 Phase 9's "admin read-only for research
+tables" answered in its stronger form: the permanent tables have no write
+surface at all. `docs/decisions.md` §9.7 has the reasoning, including why
+building one would have meant adding two join tables to §5.1's schema.
+
 The two GitHub OAuth views are wired explicitly rather than by including
 `allauth.urls`, for two reasons: it pins the callback path to the §5.5 spelling
 (`/api/auth/github/callback/`, not allauth's default `.../login/callback/`),

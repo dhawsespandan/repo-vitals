@@ -18,17 +18,29 @@ from io import StringIO
 import pytest
 from django.core.management import call_command
 
+from apps.common.http import UpstreamUnavailable
+
+
+def offline(monkeypatch) -> None:
+    """Keep CI off the network.
+
+    Patched at `smoke_memory`'s own reference to the client rather than inside
+    `apps.common.http`: the command reaches the registry through that module
+    from Phase 9 (§9.9), and patching the shared client would silence every
+    other test in the process that expects `responses` to be the thing
+    refusing.
+    """
+    import apps.accounts.management.commands.smoke_memory as smoke
+
+    def refuse(*args, **kwargs):
+        raise UpstreamUnavailable("network disabled in tests")
+
+    monkeypatch.setattr(smoke.http, "get_json", refuse)
+
 
 @pytest.mark.django_db
 def test_smoke_memory_runs_and_reports_a_peak(monkeypatch):
-    # Keep CI offline: neuter the registry fetch, skip the embedding step.
-    import apps.accounts.management.commands.smoke_memory as smoke
-
-    monkeypatch.setattr(
-        smoke.urllib.request,
-        "urlopen",
-        lambda *a, **k: (_ for _ in ()).throw(OSError("network disabled in tests")),
-    )
+    offline(monkeypatch)
 
     out = StringIO()
     call_command("smoke_memory", "--skip-embedding", stdout=out)
@@ -48,13 +60,7 @@ def test_smoke_memory_runs_and_reports_a_peak(monkeypatch):
 def test_smoke_memory_emits_machine_readable_marks(monkeypatch):
     import json
 
-    import apps.accounts.management.commands.smoke_memory as smoke
-
-    monkeypatch.setattr(
-        smoke.urllib.request,
-        "urlopen",
-        lambda *a, **k: (_ for _ in ()).throw(OSError("network disabled in tests")),
-    )
+    offline(monkeypatch)
 
     out = StringIO()
     call_command("smoke_memory", "--skip-embedding", "--json", stdout=out)

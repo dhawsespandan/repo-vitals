@@ -41,6 +41,7 @@ from datetime import timedelta
 from django.db import close_old_connections, transaction
 from django.utils import timezone
 
+from apps.common.logging import bind
 from apps.research.history import record_scan
 from apps.scoring.signals import score_scan
 from apps.scoring.weights import active_weights
@@ -163,22 +164,31 @@ def start_scan(repository, user, trigger_type: str = TriggerType.MANUAL.value) -
             scoring_formula_version=active_weights().version,
         )
 
-    spawn(execute, scan.pk)
+    spawn(execute, scan.pk, scan_id=scan.pk)
     return scan
 
 
-def spawn(target: Callable, *args) -> threading.Thread:
+def spawn(target: Callable, *args, scan_id=None) -> threading.Thread:
     """Run `target` on a daemon thread with connection hygiene at both ends.
 
     Daemon so a deploy or a restart is never held open by a scan in flight: the
     row is left `running`, and `expire_stale` releases it on the next read or trigger.
     Losing a scan to a restart is recoverable; refusing to shut down is not.
+
+    `scan_id` is the thread's log context (§10 Phase 9). It is bound *here*
+    rather than inherited, because a `threading.Thread` starts with an empty
+    `contextvars` context rather than a copy of its parent's — which is the
+    right answer twice over: this thread is no longer serving the request that
+    started it, so carrying that request's id would attribute minutes of
+    background work to a response that has already been sent, and every line
+    this thread writes needs the one identifier that *does* still apply.
     """
 
     def wrapper() -> None:
         close_old_connections()
         try:
-            target(*args)
+            with bind(scan_id=scan_id):
+                target(*args)
         except Exception:
             # Nothing above this frame will ever see the exception, so it is
             # logged here or it is lost entirely.

@@ -24,6 +24,14 @@ handed the work; 409 means someone else's request is already doing it. Only the
 202 path can reach the model, and `services.request_combined` is what decides
 — the view's job is to turn three outcomes into three status codes.
 
+**Both POSTs are throttled and neither GET is** (§10 Phase 9). The throttle
+is not a spend limit — the cache already makes a generation cost at most once
+per `(scan, dependency)`, forever. It bounds the *request* rate on the two
+routes that can reach a model at all, which is the pair worth bounding when the
+whole deployment is one worker with eight threads (§8). The read routes carry
+the product's own polling loops and throttling them would eventually throttle
+the product rather than an abuser.
+
 **The GET is what the UI actually reads.** A generation's result never travels
 back through the request that started it; the panel polls this route until the
 status is terminal. That is what "the UI always reads stored rows" (§5.1) means
@@ -39,6 +47,7 @@ from django.http import HttpResponse
 from rest_framework import generics, renderers, status
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 
 from apps.common.authz import OwnedQuerySetMixin
 from apps.common.errors import ApiError
@@ -120,6 +129,8 @@ class ScanCombinedReportView(OwnedQuerySetMixin, generics.GenericAPIView):
     lookup_field = "scan_id"
     lookup_url_kwarg = "scan_id"
     serializer_class = ReportSerializer
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "generation"
 
     def post(self, request, *args, **kwargs):
         return _report_response(request_combined, self.get_object())
@@ -151,6 +162,8 @@ class DependencyReportView(OwnedQuerySetMixin, generics.GenericAPIView):
     lookup_field = "dependency_id"
     lookup_url_kwarg = "dependency_id"
     serializer_class = ReportSerializer
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "generation"
 
     def post(self, request, *args, **kwargs):
         return _report_response(request_per_dependency, self.get_object())

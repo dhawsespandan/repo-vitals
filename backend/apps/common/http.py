@@ -17,6 +17,14 @@ timeouts are always set, and transient failures (connection errors, timeouts,
 5xx) are retried with exponential backoff. 4xx is never retried: it is an
 answer, not a failure.
 
+**Read-only hosts (Phase 9).** §11's mitigation for the `repo` OAuth scope is
+that no backend code ever issues a write call to GitHub — the scope is wide
+because OAuth Apps offer no read-only equivalent, not because the product needs
+it. That was a grep-audit; from Phase 9 it is also a rule this module enforces,
+because "we looked and found none" is a statement about today's code and
+`_check_method` is a statement about any code. Every hop is checked, so a 307
+redirect cannot smuggle a POST through either.
+
 **Rate-limit awareness.** GitHub signals its primary limit as 403/429 with
 `x-ratelimit-remaining: 0` and its secondary limit with `Retry-After` (§8:
 5,000/hr/token). Both surface as `UpstreamRateLimited` so callers can map it
@@ -59,6 +67,18 @@ ALLOWED_HOSTS: frozenset[str] = frozenset(
     }
 )
 
+#: Hosts this application may only *read* from (§11, Phase 9). The OAuth token
+#: carries `repo` scope because GitHub OAuth Apps have no read-only private
+#: scope; what makes that safe is that nothing here can write, and this is
+#: where that becomes structural rather than a property of the current code.
+#: `api.osv.dev` and `api.groq.com` are absent because both need a POST to ask
+#: a question — OSV's `querybatch`, Groq's completion — and neither POST
+#: changes anything at the far end.
+READ_ONLY_HOSTS: frozenset[str] = frozenset({"api.github.com"})
+
+#: The only method a read-only host may be asked for.
+READ_ONLY_METHODS: frozenset[str] = frozenset({"GET", "HEAD"})
+
 # (connect, read). Kept short: a slow upstream must not hold a worker thread.
 DEFAULT_TIMEOUT: tuple[float, float] = (5.0, 15.0)
 
@@ -84,6 +104,16 @@ class UpstreamError(Exception):
 
 class DisallowedHost(UpstreamError):
     """A URL outside `ALLOWED_HOSTS` was requested. Always a bug or an attack."""
+
+
+class WriteCallRefused(DisallowedHost):
+    """A non-GET was aimed at a read-only host (§11's "no write call anywhere").
+
+    A subclass of `DisallowedHost` so every existing handler that already
+    treats an off-allowlist URL as "a bug or an attack" treats this the same
+    way without being taught to. It is raised before the socket is opened:
+    there is no request to observe at the other end.
+    """
 
 
 class UpstreamNotFound(UpstreamError):
@@ -165,6 +195,22 @@ def _check_host(url: str) -> None:
     if parsed.hostname not in ALLOWED_HOSTS:
         raise DisallowedHost(
             f"Host {parsed.hostname!r} is not in the outbound allowlist."
+        )
+
+
+def _check_method(method: str, url: str) -> None:
+    """Refuse a write to a read-only host, before the socket is opened.
+
+    Checked per hop rather than once at the top, for the same reason the host
+    is: a redirect target is upstream-controlled, 307 and 308 preserve the
+    method, and an open redirect on an allowlisted host that landed a POST on
+    `api.github.com` would otherwise walk straight past a check made only on
+    the original URL.
+    """
+    hostname = urlparse(url).hostname
+    if hostname in READ_ONLY_HOSTS and method.upper() not in READ_ONLY_METHODS:
+        raise WriteCallRefused(
+            f"Refusing a {method.upper()} to {hostname!r}: this host is read-only."
         )
 
 
@@ -264,6 +310,7 @@ def _follow(
     current = url
     for _hop in range(MAX_REDIRECTS + 1):
         _check_host(current)
+        _check_method(method, current)
         response = _session().request(
             method,
             current,

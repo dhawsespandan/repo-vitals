@@ -49,6 +49,13 @@ INSTALLED_APPS = [
     "apps.research",
 ]
 
+# `django.contrib.admin` is deliberately absent — see §10 Phase 9's "admin
+# read-only for research tables" and `docs/decisions.md` §9.7. The research
+# tables have no write surface at all, which is the stronger form of that
+# requirement, and the `User` model structurally cannot enter an admin: it
+# extends `AbstractBaseUser` with no `is_staff`, no `has_perm` and no usable
+# password, because GitHub owns identity (§2).
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -56,6 +63,8 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # After authentication, because it reads `request.user` (§9.5).
+    "apps.common.middleware.RequestContextMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # Required by django-allauth >= 0.56.
@@ -229,6 +238,24 @@ REST_FRAMEWORK = {
     ],
     "EXCEPTION_HANDLER": "apps.common.errors.exception_handler",
     "UNAUTHENTICATED_USER": None,
+    # Opt-in per view via `throttle_scope` (§10 Phase 9: "DRF throttles on auth
+    # + generation endpoints"). No default class: a blanket throttle across an
+    # API whose own polling loops are its heaviest caller would eventually
+    # throttle the product rather than an abuser.
+    "DEFAULT_THROTTLE_CLASSES": [],
+    "DEFAULT_THROTTLE_RATES": {
+        # A generation is already bounded by the cache — one per (scan,
+        # dependency), forever — so this is not a spend limit. It bounds the
+        # *request* rate: the 200-cached path is cheap but not free, and it is
+        # reachable in a loop by anyone with a session cookie.
+        "generation": "20/min",
+        # The session route is called on every cold load and on every
+        # `pageshow` after a back-navigation, and it is reachable
+        # unauthenticated — which means the throttle keys on IP, and one
+        # office NAT is one bucket. Sixty is far past what a person generates
+        # and still refuses a script.
+        "auth": "60/min",
+    },
 }
 
 # ── Static ─────────────────────────────────────────────────────────────────
@@ -246,24 +273,37 @@ USE_I18N = True
 USE_TZ = True
 
 # ── Logging ────────────────────────────────────────────────────────────────
-# Secrets are redacted by a filter rather than by discipline at call sites:
-# the Phase 1 acceptance criterion is "no token substring in logs".
+# Two filters, and both are controls rather than conveniences.
+#
+# `redact_secrets` scrubs anything token-shaped: the Phase 1 acceptance
+# criterion is "no token substring in logs", and a rule enforced at call sites
+# is a rule that lasts until somebody adds a call site.
+#
+# `request_context` attaches §10 Phase 9's request id, user id and scan id.
+# One worker, eight threads and a pool of background scans all write to one
+# stream (§3), so without it a warning about a rate limit belongs to nobody in
+# particular. It renders as the empty string outside a request, so startup
+# lines look exactly as they always did.
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "filters": {
         "redact_secrets": {"()": "apps.common.logging.RedactSecretsFilter"},
+        "request_context": {"()": "apps.common.logging.ContextFilter"},
     },
     "formatters": {
         "standard": {
-            "format": "%(asctime)s %(levelname)s %(name)s %(message)s",
+            "format": "%(asctime)s %(levelname)s %(name)s%(context)s %(message)s",
         },
     },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "standard",
-            "filters": ["redact_secrets"],
+            # `request_context` first: it is what puts `context` on the record,
+            # and a formatter referencing a missing attribute raises inside
+            # logging, where the error surfaces as the log line disappearing.
+            "filters": ["request_context", "redact_secrets"],
         },
     },
     "root": {"handlers": ["console"], "level": env("LOG_LEVEL", default="INFO")},
