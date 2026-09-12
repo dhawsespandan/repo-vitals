@@ -134,6 +134,67 @@ def _staleness_days(released_at: datetime | None, now: datetime) -> int | None:
     return max(0, (now - released_at).days)
 
 
+#: Keys in PyPI's `project_urls` that a maintainer uses for "where the code
+#: lives", most specific first. `Homepage` is last and is often a docs site or a
+#: landing page; it is tried because for a large number of small packages it is
+#: the only URL there is, and `fetch_docs` refuses anything that is not a GitHub
+#: repository anyway.
+PYPI_SOURCE_KEYS: tuple[str, ...] = (
+    "source",
+    "source code",
+    "repository",
+    "code",
+    "github",
+    "homepage",
+    "home",
+)
+
+
+def _npm_repository(document: object) -> str | None:
+    """npm's `repository` field, which is a string as often as it is an object.
+
+    Both spellings are current — `"repository": "github:sindresorhus/is"` and
+    `{"type": "git", "url": "git+https://github.com/expressjs/express.git"}` —
+    and neither is normalized by the registry. Returned verbatim; turning a URL
+    into `owner/repo` is `fetch_docs`'s job and is where the SSRF discipline
+    lives, so this function never decides which hosts are acceptable.
+    """
+    if not isinstance(document, dict):
+        return None
+    repository = document.get("repository")
+    if isinstance(repository, str) and repository.strip():
+        return repository.strip()
+    if isinstance(repository, dict):
+        url = repository.get("url")
+        if isinstance(url, str) and url.strip():
+            return url.strip()
+    return None
+
+
+def _pypi_repository(info: dict) -> str | None:
+    """The likeliest source URL among PyPI's free-form `project_urls`.
+
+    The keys are whatever the maintainer typed into their metadata, so they are
+    matched case-insensitively against `PYPI_SOURCE_KEYS` in preference order
+    rather than looked up. `home_page` (long deprecated, still widely present)
+    is the last resort.
+    """
+    urls = info.get("project_urls")
+    if isinstance(urls, dict):
+        lowered = {
+            key.strip().lower(): value
+            for key, value in urls.items()
+            if isinstance(key, str) and isinstance(value, str) and value.strip()
+        }
+        for key in PYPI_SOURCE_KEYS:
+            if key in lowered:
+                return lowered[key].strip()
+    home_page = info.get("home_page")
+    if isinstance(home_page, str) and home_page.strip():
+        return home_page.strip()
+    return None
+
+
 class NpmRegistryClient:
     """`GET registry.npmjs.org/{name}`, with an in-run cache keyed by name."""
 
@@ -256,6 +317,12 @@ class NpmRegistryClient:
             "released": released,
             "deprecations": deprecations,
             "times": times,
+            # Phase 8. Absent from the abbreviated packument, which is why this
+            # can be None for a package that plainly has a repository: the
+            # degradation is the same one staleness takes on that path, and
+            # `fetch_docs` treats it as "no source to retrieve" rather than
+            # guessing a URL from the package name.
+            "repository": _npm_repository(document),
         }
 
     # ── public API ─────────────────────────────────────────────────────────
@@ -320,6 +387,21 @@ class NpmRegistryClient:
             deprecation_reason=deprecations.get(assessed) if is_deprecated else None,
             registry_url=page_url,
         )
+
+    def source_repository(self, name: str) -> str | None:
+        """The package's declared source repository, verbatim (Phase 8).
+
+        Deliberately not a field on `PackageFacts`: that dataclass is the
+        scanner's signal record, every field of which is stored in §5.1 and
+        scored by §5.2. A source URL is neither — it is a retrieval starting
+        point that only the per-dependency agent asks for — and adding it there
+        would put an unscored, unstored value in the middle of the record D6
+        says is exactly what was observed.
+
+        Shares `_document`'s cache, so an agent run on a package the scan
+        already looked up spends no second request when they share a client.
+        """
+        return self._document(name).get("repository")
 
 
 # ── PyPI ───────────────────────────────────────────────────────────────────
@@ -483,6 +565,8 @@ class PypiRegistryClient:
             # D2's second half: a project-wide declaration that nobody is
             # maintaining this, which applies to every version of it.
             "inactive": INACTIVE_CLASSIFIER in classifiers,
+            # Phase 8's retrieval starting point. See `_pypi_repository`.
+            "repository": _pypi_repository(info),
         }
 
     # ── public API ─────────────────────────────────────────────────────────
@@ -554,3 +638,13 @@ class PypiRegistryClient:
             deprecation_reason=reason,
             registry_url=page_url,
         )
+
+    def source_repository(self, name: str) -> str | None:
+        """The project's declared source repository, verbatim (Phase 8).
+
+        Same contract as npm's, and the same reason it is not on
+        `PackageFacts`. The name is normalized on the way in by `_document`, so
+        a caller spelling it `Flask-SQLAlchemy` reaches the same cache entry the
+        scanner filled under `flask-sqlalchemy`.
+        """
+        return self._document(name).get("repository")
