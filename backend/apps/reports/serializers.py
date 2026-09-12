@@ -32,6 +32,26 @@ class ReportSerializer(serializers.ModelSerializer):
     summaryMd = serializers.CharField(source="summary_text", read_only=True)
     #: §5.8's array, verbatim. See the module docstring.
     fixes = serializers.JSONField(source="fixes_json", read_only=True)
+    #: Phase 8, and null on every combined row. §5.8: "PER_DEPENDENCY
+    #: additionally stores citations (chunk ids), all retrieved chunks, and the
+    #: grounding-confidence flag."
+    #:
+    #: All three travel on the same route as the answer rather than behind one
+    #: of their own, because the citation pane is not a detail view of the
+    #: report — it is the evidence the report is read *against*, and a surface
+    #: that could render the claim before the evidence arrived would be a
+    #: surface that renders an uncheckable claim, however briefly.
+    citations = serializers.JSONField(source="citations_json", read_only=True)
+    retrievedChunks = serializers.JSONField(
+        source="retrieved_chunks_json", read_only=True
+    )
+    #: `sufficient` | `low` | null. Null means the question does not apply — a
+    #: combined report retrieved nothing to be confident about — and is a
+    #: different statement from `low`, which means retrieval ran and §5.9's
+    #: threshold was not met.
+    groundingConfidence = serializers.CharField(
+        source="grounding_confidence", read_only=True
+    )
     #: Which model answered — recorded per row, so a report generated before a
     #: `GROQ_MODEL` change still names the model that wrote it.
     modelName = serializers.CharField(source="model_name", read_only=True)
@@ -49,6 +69,9 @@ class ReportSerializer(serializers.ModelSerializer):
             "status",
             "summaryMd",
             "fixes",
+            "citations",
+            "retrievedChunks",
+            "groundingConfidence",
             "modelName",
             "errorMessage",
             "generatedAt",

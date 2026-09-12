@@ -1,11 +1,21 @@
 """Report endpoints — §5.5.
 
     POST /api/scans/{id}/reports/combined/   200 cached | 202 started | 409 busy
+    POST /api/dependencies/{id}/report/      200 cached | 202 started | 409 busy
     GET  /api/reports/{id}/                  the stored row, polled
 
-Both sit behind `OwnedQuerySetMixin`, each declaring the path back to its owner
-— `repository__user` for a scan, `scan__repository__user` for a report. A
-foreign id is not in the queryset at all and 404s on its own (§11 BOLA).
+All three sit behind `OwnedQuerySetMixin`, each declaring the path back to its
+owner — `repository__user` for a scan, `manifest__scan__repository__user` for
+an occurrence, `scan__repository__user` for a report. A foreign id is not in
+the queryset at all and 404s on its own (§11 BOLA).
+
+**The two POSTs are the same shape and deliberately so.** §10 Phase 8 asks for
+the per-dependency endpoint to sit "on the shared cache/lock/polling pattern",
+so the status codes, the 409 body and the polling route are identical and the
+frontend has one flow to implement rather than two. What differs is the key —
+`(scan, 'per_dependency', dependency)` rather than `(scan, 'combined')` — and
+one extra refusal: there is nothing to remediate about a dependency the scan
+did not flag.
 
 **The POST is the only route that can spend money, and it never spends it
 twice.** 200 means the answer was already on disk; 202 means a thread has been
@@ -29,18 +39,67 @@ from rest_framework.response import Response
 
 from apps.common.authz import OwnedQuerySetMixin
 from apps.common.errors import ApiError
-from apps.scanning.models import ScanRun
+from apps.scanning.models import DependencyOccurrence, ScanRun
 
 from .models import Report
 from .serializers import ReportSerializer
 from .services import (
+    DependencyNotReportable,
     GenerationInProgress,
     ReportsUnavailable,
     ScanNotReportable,
     request_combined,
+    request_per_dependency,
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _report_response(request_fn, target):
+    """Turn one `request_*` call into §5.5's three status codes.
+
+    Shared by both POSTs because the mapping is the contract, not an
+    implementation detail: 200 means the answer was already on disk and no
+    model ran, 202 means a thread has the work, 409 means someone else's
+    request already does. Two copies of this would be two places for a status
+    code to drift from the one the client branches on.
+    """
+    try:
+        report, cached = request_fn(target)
+    except GenerationInProgress as busy:
+        raise ApiError(
+            "report_generating",
+            "This report is already being written. It'll be ready in a "
+            "moment - no need to ask again.",
+            status_code=status.HTTP_409_CONFLICT,
+            extra={"reportId": str(busy.report.pk)},
+        ) from busy
+    except ScanNotReportable as unfinished:
+        raise ApiError(
+            "scan_not_reportable",
+            "There's nothing to report on yet - this scan hasn't finished.",
+            status_code=status.HTTP_409_CONFLICT,
+        ) from unfinished
+    except DependencyNotReportable as nothing_to_fix:
+        raise ApiError(
+            "dependency_not_reportable",
+            str(nothing_to_fix),
+            status_code=status.HTTP_409_CONFLICT,
+        ) from nothing_to_fix
+    except ReportsUnavailable as unavailable:
+        # A deployment fault, answered as one. The reader is not told which
+        # setting is missing; the log line is where that belongs.
+        logger.error("A report was requested but no generator is configured.")
+        raise ApiError(
+            "reports_unavailable",
+            "Report generation isn't available on this deployment.",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        ) from unavailable
+
+    return Response(
+        ReportSerializer(report).data,
+        status=status.HTTP_200_OK if cached else status.HTTP_202_ACCEPTED,
+    )
 
 
 class ScanCombinedReportView(OwnedQuerySetMixin, generics.GenericAPIView):
@@ -59,37 +118,38 @@ class ScanCombinedReportView(OwnedQuerySetMixin, generics.GenericAPIView):
     serializer_class = ReportSerializer
 
     def post(self, request, *args, **kwargs):
-        scan = self.get_object()
-        try:
-            report, cached = request_combined(scan)
-        except GenerationInProgress as busy:
-            raise ApiError(
-                "report_generating",
-                "This report is already being written. It'll be ready in a "
-                "moment - no need to ask again.",
-                status_code=status.HTTP_409_CONFLICT,
-                extra={"reportId": str(busy.report.pk)},
-            ) from busy
-        except ScanNotReportable as unfinished:
-            raise ApiError(
-                "scan_not_reportable",
-                "There's nothing to report on yet - this scan hasn't finished.",
-                status_code=status.HTTP_409_CONFLICT,
-            ) from unfinished
-        except ReportsUnavailable as unavailable:
-            # A deployment fault, answered as one. The reader is not told which
-            # setting is missing; the log line is where that belongs.
-            logger.error("A report was requested but no generator is configured.")
-            raise ApiError(
-                "reports_unavailable",
-                "Report generation isn't available on this deployment.",
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            ) from unavailable
+        return _report_response(request_combined, self.get_object())
 
-        return Response(
-            ReportSerializer(report).data,
-            status=status.HTTP_200_OK if cached else status.HTTP_202_ACCEPTED,
-        )
+
+class DependencyReportView(OwnedQuerySetMixin, generics.GenericAPIView):
+    """`POST /api/dependencies/{id}/report/` — §5.5's Phase 8 route.
+
+    Keyed on the occurrence rather than on `(scan, package)`, because §5.1 is
+    explicit that duplicates across manifests are independent rows: the same
+    package in `package.json` and in `api/package.json` are two installations
+    needing two remediations, and they can be at different versions. The route
+    takes the id the table row already has, exactly as Phase 5's breakdown
+    route does.
+
+    `prefetch_related` on the advisories because the graph's `load_context`
+    reads all of them, and `select_related` down to the user because
+    retrieval needs that user's GitHub token.
+    """
+
+    owner_field = "manifest__scan__repository__user"
+    queryset = DependencyOccurrence.objects.select_related(
+        "manifest",
+        "manifest__scan",
+        "manifest__scan__repository",
+        "manifest__scan__repository__user",
+        "package",
+    ).prefetch_related("vulnerabilities")
+    lookup_field = "dependency_id"
+    lookup_url_kwarg = "dependency_id"
+    serializer_class = ReportSerializer
+
+    def post(self, request, *args, **kwargs):
+        return _report_response(request_per_dependency, self.get_object())
 
 
 class ReportDetailView(OwnedQuerySetMixin, generics.RetrieveAPIView):

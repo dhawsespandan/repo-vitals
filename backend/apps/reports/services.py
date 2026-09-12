@@ -47,8 +47,12 @@ from django.utils import timezone
 # would silently stop applying here. It did, and the first run of the
 # double-click test spawned a real thread that deadlocked SQLite.
 from apps.scanning import background
-from apps.scanning.models import ScanRun, ScanStatus
+from apps.scanning.models import DependencyOccurrence, ScanRun, ScanStatus
 
+# The module, not the name — see the `background` import above and
+# `docs/decisions.md` §7.11. `graph.run` is patched by the agent tests.
+from .agent import graph as agent_graph
+from .agent.graph import AgentFailed
 from .combined import GenerationFailed, generate
 from .llm.groq_client import (
     LlmModelUnavailable,
@@ -100,6 +104,11 @@ FAILURE_MESSAGES: tuple[tuple[type[Exception], str], ...] = (
         GenerationFailed,
         "We couldn't produce a reliable report for this scan. Please try again.",
     ),
+    (
+        AgentFailed,
+        "We couldn't produce a reliable remediation plan for this dependency. "
+        "Please try again.",
+    ),
 )
 GENERIC_FAILURE = "Something went wrong while writing this report. Please try again."
 
@@ -114,6 +123,24 @@ class GenerationInProgress(Exception):
 
 class ScanNotReportable(Exception):
     """The scan has no results to report on — it never completed, or it failed."""
+
+
+class DependencyNotReportable(Exception):
+    """There is nothing to remediate about this occurrence.
+
+    Two cases, both refused rather than generated: an occurrence §5.2 could not
+    assess, and one it assessed and did not flag.
+
+    An unassessable row is the clearer of the two — the scanner never measured
+    it, so a remediation plan for it would be built on nothing at all, which is
+    the invention this product exists to avoid. The clean row is the more
+    interesting decision. A model *would* produce something for it, and what it
+    produced would read like advice about a dependency that has no problem.
+    §10 Phase 8 puts the control on flagged rows, and an endpoint that accepted
+    what the button cannot send is an endpoint whose contract is the button's
+    rather than its own — so the rule is stated here, where it can be tested,
+    and the button simply agrees with it.
+    """
 
 
 class ReportsUnavailable(Exception):
@@ -141,6 +168,17 @@ def _lock_for(key: str) -> threading.Lock:
 
 def combined_key(scan_id) -> str:
     return f"combined:{scan_id}"
+
+
+def per_dependency_key(scan_id, dependency_id) -> str:
+    """§10 Phase 8: "keyed `(scan,'per_dependency',dependency)`".
+
+    The scan id is in the key as well as the dependency id even though a
+    dependency belongs to exactly one scan. It costs nothing and it makes the
+    key say what it protects: one generation per report row, and the row's
+    partial unique is on the pair.
+    """
+    return f"per_dependency:{scan_id}:{dependency_id}"
 
 
 def expire_stale(scan: ScanRun) -> int:
@@ -173,6 +211,20 @@ def combined_for(scan: ScanRun) -> Report | None:
     return Report.objects.filter(scan=scan, report_type=ReportType.COMBINED.value).first()
 
 
+def per_dependency_for(occurrence: DependencyOccurrence) -> Report | None:
+    """The stored remediation report for one occurrence, if there is one.
+
+    The read path for the drawer, and the same rule as `combined_for`: every
+    surface reads a stored row.
+    """
+    expire_stale(occurrence.manifest.scan)
+    return Report.objects.filter(
+        scan_id=occurrence.manifest.scan_id,
+        dependency=occurrence,
+        report_type=ReportType.PER_DEPENDENCY.value,
+    ).first()
+
+
 def request_combined(scan: ScanRun) -> tuple[Report, bool]:
     """Serve the cached report, or start one. Returns `(report, was_cached)`.
 
@@ -180,17 +232,84 @@ def request_combined(scan: ScanRun) -> tuple[Report, bool]:
     are no results to describe, and `ReportsUnavailable` when the deployment
     has no key.
     """
+    report, cached = _cache_or_queue(
+        scan,
+        report_type=ReportType.COMBINED.value,
+        dependency=None,
+        key=combined_key(scan.pk),
+    )
+    if cached:
+        return report, True
+    background.spawn(run_combined, report.pk)
+    return report, False
+
+
+def request_per_dependency(
+    occurrence: DependencyOccurrence,
+) -> tuple[Report, bool]:
+    """Serve the cached remediation plan for one occurrence, or start one.
+
+    §10 Phase 8: "Endpoints on the shared cache/lock/polling pattern keyed
+    `(scan,'per_dependency',dependency)`". Shared is the operative word — the
+    three layers behind "one click, one generation" are Phase 7's, unchanged,
+    and only the key and the runner differ.
+
+    Raises `DependencyNotReportable` on top of the three Phase 7 raises.
+    """
+    scan = occurrence.manifest.scan
+
+    if occurrence.is_unassessable:
+        raise DependencyNotReportable(
+            "This dependency could not be assessed, so there is nothing to remediate."
+        )
+    if not occurrence.is_flagged:
+        raise DependencyNotReportable(
+            "This dependency isn't flagged — there is nothing to remediate."
+        )
+
+    report, cached = _cache_or_queue(
+        scan,
+        report_type=ReportType.PER_DEPENDENCY.value,
+        dependency=occurrence,
+        key=per_dependency_key(scan.pk, occurrence.pk),
+    )
+    if cached:
+        return report, True
+    background.spawn(run_per_dependency, report.pk)
+    return report, False
+
+
+def _cache_or_queue(
+    scan: ScanRun,
+    *,
+    report_type: str,
+    dependency: DependencyOccurrence | None,
+    key: str,
+) -> tuple[Report, bool]:
+    """The cache-or-generate core, shared by both report types.
+
+    One implementation rather than two, because the three layers it implements
+    are subtle enough that a second copy would drift: the in-process lock
+    closes the millisecond race, the row's own status is what makes the answer
+    correct across processes, and §5.1's partial unique refuses whatever got
+    past both. A `per_dependency` copy of this that forgot the `IntegrityError`
+    branch would look correct in every test and bill two generations on a
+    two-worker deployment.
+
+    Returns `(report, was_cached)`. A `was_cached` of False means the caller
+    owns spawning the thread — which is the one thing the two paths genuinely
+    do differently.
+    """
     if scan.status != ScanStatus.COMPLETED.value:
         raise ScanNotReportable(
             "A report can only be generated from a scan that finished."
         )
 
-    key = combined_key(scan.pk)
+    lookup = {"scan": scan, "report_type": report_type, "dependency": dependency}
+
     with _lock_for(key):
         expire_stale(scan)
-        existing = Report.objects.filter(
-            scan=scan, report_type=ReportType.COMBINED.value
-        ).first()
+        existing = Report.objects.filter(**lookup).first()
 
         if existing is not None:
             if existing.status == ReportStatus.COMPLETED.value:
@@ -204,32 +323,25 @@ def request_combined(scan: ScanRun) -> tuple[Report, bool]:
             existing.status = ReportStatus.QUEUED.value
             existing.error_message = None
             existing.save(update_fields=["status", "error_message", "updated_at"])
-            report = existing
-        else:
-            if not is_configured():
-                raise ReportsUnavailable("GROQ_API_KEY is not set.")
-            try:
-                report = Report.objects.create(
-                    scan=scan,
-                    report_type=ReportType.COMBINED.value,
-                    status=ReportStatus.QUEUED.value,
-                )
-            except IntegrityError as clash:
-                # §5.1's partial unique, doing the job the lock cannot: another
-                # process created the row between our read and our insert. The
-                # row that won is the answer.
-                logger.info("A concurrent process created this scan's report first.")
-                winner = Report.objects.filter(
-                    scan=scan, report_type=ReportType.COMBINED.value
-                ).first()
-                if winner is None:  # pragma: no cover — the row must exist
-                    raise
-                if winner.status == ReportStatus.COMPLETED.value:
-                    return winner, True
-                raise GenerationInProgress(winner) from clash
+            return existing, False
 
-    background.spawn(run_combined, report.pk)
-    return report, False
+        if not is_configured():
+            raise ReportsUnavailable("GROQ_API_KEY is not set.")
+        try:
+            return Report.objects.create(
+                **lookup, status=ReportStatus.QUEUED.value
+            ), False
+        except IntegrityError as clash:
+            # §5.1's partial unique, doing the job the lock cannot: another
+            # process created the row between our read and our insert. The
+            # row that won is the answer.
+            logger.info("A concurrent process created this report first.")
+            winner = Report.objects.filter(**lookup).first()
+            if winner is None:  # pragma: no cover — the row must exist
+                raise
+            if winner.status == ReportStatus.COMPLETED.value:
+                return winner, True
+            raise GenerationInProgress(winner) from clash
 
 
 def run_combined(report_id) -> None:
@@ -281,6 +393,59 @@ def run_combined(report_id) -> None:
         "Generated combined report %s for scan %s in %d request(s).",
         report.pk,
         report.scan_id,
+        result.requests,
+    )
+
+
+def run_per_dependency(report_id) -> None:
+    """The thread body for §5.9's graph. Never raises.
+
+    Thinner than `run_combined` on purpose: the graph's `persist` node writes
+    the completed row itself, because §5.9 makes persistence a node and because
+    a trace has to be written in the same step as the report it describes.
+    What is left here is the lifecycle — `running` on the way in, and `_fail`
+    on any exception on the way out — which is the half that must not live
+    inside a graph that can be invoked directly by a test.
+    """
+    try:
+        report = Report.objects.select_related("scan", "scan__repository").get(
+            pk=report_id
+        )
+    except Report.DoesNotExist:
+        # Retention (§5.7) replaced the scan between the request and the thread
+        # starting, and the report cascaded with it. The trace, had one been
+        # written, would have survived — which is the whole reason it is not a
+        # foreign key.
+        return
+
+    occurrence = (
+        DependencyOccurrence.objects.select_related(
+            "manifest", "manifest__scan", "manifest__scan__repository", "package"
+        )
+        .prefetch_related("vulnerabilities")
+        .filter(pk=report.dependency_id)
+        .first()
+    )
+    if occurrence is None:  # pragma: no cover — the FK cascades together
+        return
+
+    report.status = ReportStatus.RUNNING.value
+    report.save(update_fields=["status", "updated_at"])
+
+    try:
+        result = agent_graph.run(report, occurrence)
+    # Broad, for the reason `run_combined`'s is broad: this is the top of a
+    # background thread.
+    except Exception as failure:
+        _fail(report, failure)
+        return
+
+    logger.info(
+        "Generated remediation report %s for %s (%s, %s) in %d request(s).",
+        report.pk,
+        occurrence.package.package_name,
+        result.branch,
+        result.grounding,
         result.requests,
     )
 

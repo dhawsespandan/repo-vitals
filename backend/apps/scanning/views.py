@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import logging
 
+from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.pagination import PageNumberPagination
@@ -28,6 +29,7 @@ from rest_framework.response import Response
 
 from apps.common.authz import OwnedQuerySetMixin
 from apps.common.errors import ApiError
+from apps.reports.models import Report, ReportType
 from apps.repositories.models import Repository
 
 from .background import ScanInProgress, expire_stale, start_scan
@@ -44,6 +46,29 @@ logger = logging.getLogger(__name__)
 
 
 EMPTY_STATE: dict = {"scan": None, "latestCompletedScanId": None}
+
+
+def _per_dependency_reports() -> Prefetch:
+    """Each occurrence's remediation report, in one query for the whole page.
+
+    Filtered to `per_dependency` on the prefetch rather than in the serializer:
+    the related name covers both report types, and a combined report has a null
+    `dependency_id` so it cannot appear here anyway — but stating the filter
+    where the query is built is what keeps that true if §5.1 ever grows a third
+    type.
+
+    `only()` because three fields are all `ReportStateSerializer` renders, and
+    a per-dependency report carries every retrieved chunk in full: fetching
+    those to display a status pill would pull the whole corpus of every report
+    on the page across the wire.
+    """
+    return Prefetch(
+        "reports",
+        queryset=Report.objects.filter(report_type=ReportType.PER_DEPENDENCY.value).only(
+            "report_id", "status", "generated_at", "dependency_id"
+        ),
+        to_attr="per_dependency_reports",
+    )
 
 
 def scan_states_for(repository_ids) -> dict[str, dict]:
@@ -214,6 +239,12 @@ class ScanDependenciesView(OwnedQuerySetMixin, generics.ListAPIView):
             .get_queryset()
             .filter(manifest__scan=scan)
             .select_related("manifest", "package")
+            # Phase 8: one query for every row's remediation-report state
+            # instead of one per row. `to_attr` rather than a plain prefetch so
+            # the serializer can tell "prefetched and empty" from "not
+            # prefetched" — the difference between reading a list and issuing a
+            # query, on a route that renders up to 300 of them.
+            .prefetch_related(_per_dependency_reports())
         )
 
         flagged = _boolean_param(self.request.query_params.get("flagged"))
@@ -251,6 +282,10 @@ class DependencyDetailView(OwnedQuerySetMixin, generics.RetrieveAPIView):
     serializer_class = DependencyBreakdownSerializer
     lookup_field = "dependency_id"
     lookup_url_kwarg = "dependency_id"
-    queryset = DependencyOccurrence.objects.select_related(
-        "manifest", "manifest__scan", "package"
-    ).prefetch_related("vulnerabilities")
+    queryset = (
+        DependencyOccurrence.objects.select_related(
+            "manifest", "manifest__scan", "package"
+        )
+        .prefetch_related("vulnerabilities")
+        .prefetch_related(_per_dependency_reports())
+    )

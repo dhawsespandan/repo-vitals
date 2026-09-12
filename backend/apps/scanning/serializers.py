@@ -20,6 +20,7 @@ from decimal import Decimal
 from django.db.models import Count, Q
 from rest_framework import serializers
 
+from apps.reports.models import ReportType
 from apps.reports.serializers import ReportStateSerializer
 from apps.reports.services import combined_for as combined_report_state
 from apps.scoring.signals import OccurrenceBreakdown, breakdown_for, top_contributors
@@ -271,6 +272,16 @@ class DependencyOccurrenceSerializer(serializers.ModelSerializer):
     #: because the advisory carried no CVSS anywhere. Surfaced rather than
     #: absorbed: the score is real, and the fact that part of it was assumed
     #: travels with it.
+    #: Phase 8. Whether this occurrence already has a remediation report, and
+    #: what state it is in — three fields, never the body.
+    #:
+    #: Here for §7.7's reason exactly one level down: the only route that
+    #: answers "does this dependency have a report?" is the POST that generates
+    #: one, so a drawer that asked on open would start a generation to find out
+    #: whether it needed to. On the list route it also costs zero extra
+    #: requests for a table of any size, which is what lets the button read
+    #: "View remediation" on the rows that have one.
+    report = serializers.SerializerMethodField()
     cvssReducedConfidence = serializers.BooleanField(
         source="cvss_reduced_confidence", read_only=True
     )
@@ -301,6 +312,7 @@ class DependencyOccurrenceSerializer(serializers.ModelSerializer):
             "isFlagged",
             "riskComponentScore",
             "cvssReducedConfidence",
+            "report",
         ]
         read_only_fields = fields
 
@@ -310,6 +322,24 @@ class DependencyOccurrenceSerializer(serializers.ModelSerializer):
             "minor": occurrence.versions_behind_minor,
             "patch": occurrence.versions_behind_patch,
         }
+
+    def get_report(self, occurrence: DependencyOccurrence) -> dict | None:
+        """This occurrence's remediation report, as three fields or null.
+
+        Reads `per_dependency_reports` when the view prefetched it — which the
+        list route does, because one query per row on a 300-row table is the
+        N+1 that turns a 200 ms page into a 4 s one. The fallback query exists
+        for the single-object routes, where there is exactly one row and a
+        prefetch would be ceremony.
+        """
+        prefetched = getattr(occurrence, "per_dependency_reports", None)
+        if prefetched is not None:
+            report = prefetched[0] if prefetched else None
+        else:
+            report = occurrence.reports.filter(
+                report_type=ReportType.PER_DEPENDENCY.value
+            ).first()
+        return ReportStateSerializer(report).data if report is not None else None
 
 
 class DependencyVulnerabilitySerializer(serializers.ModelSerializer):
