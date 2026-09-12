@@ -22,7 +22,7 @@ import pytest
 import responses
 from django.test import override_settings
 
-from apps.reports.rag import chroma_store, chunker, fetch_docs
+from apps.reports.rag import chroma_store, chunker, embeddings, fetch_docs
 from apps.reports.rag.fetch_docs import GITHUB_API
 
 TOKEN = "gho_testtoken"
@@ -643,3 +643,82 @@ def test_the_collection_name_is_one_chroma_will_accept():
     assert name == "scan-88888888888848888888888888888888"
     assert 3 <= len(name) <= 512
     assert name[0].isalnum() and name[-1].isalnum()
+
+
+# ── embeddings: the batching the 512 MB tier requires ──────────────────────
+
+
+class RecordingModel:
+    """A stand-in for `TextEmbedding` that records the batches it was handed.
+
+    The real model is not used here on purpose. What needs protecting is the
+    slicing and the ordering, and a test that loaded a 90 MB ONNX model to
+    check a loop would add a network download to CI for no extra coverage.
+    """
+
+    def __init__(self) -> None:
+        self.batches: list[int] = []
+
+    def embed(self, texts):
+        self.batches.append(len(texts))
+        # Each vector encodes its own text so ordering is checkable.
+        for text in texts:
+            yield [float(len(text))] + [0.0] * (embeddings.EXPECTED_DIMENSION - 1)
+
+
+@pytest.fixture
+def recording_model(monkeypatch):
+    model = RecordingModel()
+    monkeypatch.setattr(embeddings, "load_model", lambda: model)
+    return model
+
+
+def test_a_corpus_is_embedded_in_bounded_batches(recording_model):
+    """§8.15: embedding forty chunks in one call allocated ~160 MB transiently
+    and took the production worker over 512 MB. The cap is the fix, and a spike
+    is invisible to every other kind of assertion."""
+    texts = [f"chunk {index}" for index in range(20)]
+
+    embeddings.embed(texts)
+
+    assert recording_model.batches == [8, 8, 4]
+    assert max(recording_model.batches) <= embeddings.MAX_EMBED_BATCH
+
+
+def test_order_survives_the_batch_boundaries(recording_model):
+    """The caller zips these back onto the chunks by position, so a reordering
+    would attach one chunk's text to another chunk's vector — and every
+    similarity, citation and stored chunk downstream would be wrong about which
+    passage it described."""
+    texts = [f"{'x' * index} chunk" for index in range(20)]
+
+    vectors = embeddings.embed(texts)
+
+    assert [vector[0] for vector in vectors] == [float(len(text)) for text in texts]
+
+
+def test_a_batch_smaller_than_the_cap_is_one_call(recording_model):
+    embeddings.embed(["only one"])
+
+    assert recording_model.batches == [1]
+
+
+def test_nothing_is_embedded_for_no_texts(recording_model):
+    assert embeddings.embed([]) == []
+    assert recording_model.batches == []
+
+
+def test_a_wrong_dimension_is_refused_rather_than_stored(monkeypatch):
+    """A model swap that changed the dimension would otherwise write vectors
+    the collection cannot index, surfacing as an unrelated Chroma error several
+    frames from the cause."""
+
+    class WrongDimension:
+        def embed(self, texts):
+            for _ in texts:
+                yield [0.1, 0.2, 0.3]
+
+    monkeypatch.setattr(embeddings, "load_model", lambda: WrongDimension())
+
+    with pytest.raises(embeddings.EmbeddingUnavailable, match="dimensional"):
+        embeddings.embed(["one"])
