@@ -7,5 +7,16 @@ adds `per_dependency.py` beside `combined.py`; both are read by
 """
 
 from .combined import COMBINED_SYSTEM_PROMPT, build_combined_user_prompt
+from .per_dependency import (
+    GROUNDED_SYSTEM_PROMPT,
+    UNGROUNDED_SYSTEM_PROMPT,
+    build_per_dependency_user_prompt,
+)
 
-__all__ = ["COMBINED_SYSTEM_PROMPT", "build_combined_user_prompt"]
+__all__ = [
+    "COMBINED_SYSTEM_PROMPT",
+    "GROUNDED_SYSTEM_PROMPT",
+    "UNGROUNDED_SYSTEM_PROMPT",
+    "build_combined_user_prompt",
+    "build_per_dependency_user_prompt",
+]

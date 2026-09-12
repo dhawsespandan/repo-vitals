@@ -81,6 +81,30 @@ class GeneratedPayload(BaseModel):
     fixes: list[GeneratedFix] = Field(default_factory=list)
 
 
+class GeneratedGroundedPayload(GeneratedPayload):
+    """§5.8's payload plus what PER_DEPENDENCY adds: the chunk ids it cited.
+
+    §5.8: "PER_DEPENDENCY additionally stores citations (chunk ids), all
+    retrieved chunks, and the grounding-confidence flag." Only the first is
+    something the model supplies — the other two are measurements the graph
+    made, and §7.1's rule applies to them exactly as it applies to CVE lists.
+    """
+
+    citations: list[str] = Field(default_factory=list)
+
+
+#: How many citations a per-dependency answer may carry. `k=5` chunks are
+#: retrieved (§5.9), so a list longer than this is not a citation list.
+MAX_CITATIONS = 5
+
+#: Shortest prefix accepted when a cited id does not match a retrieved one
+#: exactly. Chunk ids are 12 hex characters (`rag/chunker._chunk_id`) and a
+#: model copying one occasionally truncates it; eight characters still identify
+#: one chunk out of at most five unambiguously, and an ambiguous prefix is
+#: dropped rather than guessed.
+MIN_CITATION_PREFIX = 8
+
+
 class PayloadInvalid(Exception):
     """The answer did not satisfy §5.8. Carries text the repair retry can use."""
 
@@ -190,6 +214,97 @@ def drop_unmatched(raw: dict, rows: list[dict]) -> dict:
         },
         rows,
     )
+
+
+def parse_grounded(raw: dict) -> GeneratedGroundedPayload:
+    """`parse`, for the payload that carries citations. Raises `PayloadInvalid`."""
+    try:
+        return GeneratedGroundedPayload.model_validate(raw)
+    except ValidationError as exc:
+        raise PayloadInvalid(
+            "The generated report did not match the required schema.",
+            _repair_hint(exc),
+        ) from exc
+
+
+def validate_grounded(raw: dict, rows: list[dict], chunk_ids: list[str]) -> dict:
+    """The §5.8 payload plus a citation list resolved against what was retrieved.
+
+    **An invented citation is dropped; an invented package is not.** The two
+    look like the same class of error and are not. A fix naming a package this
+    repository does not have is an instruction the reader may act on, and
+    §7.3's whole argument is that a plausible wrong row is the most damaging
+    thing this surface can print — so it fails the generation. A citation
+    naming a chunk that was never retrieved cannot render anything at all: the
+    pane displays retrieved chunks and highlights the cited ones, so an
+    unresolvable id highlights nothing. Dropping it costs the reader a
+    highlight; failing the generation over it would cost them the answer.
+
+    That asymmetry is also why the resolution below is forgiving. A model that
+    truncates or re-cases a 12-hex id has not cited a different chunk, and the
+    prefix rule can only ever resolve to something that *was* retrieved.
+    """
+    payload = validate_payload(raw, rows)
+    parsed = parse_grounded(raw)
+    payload["citations"] = resolve_citations(parsed.citations, chunk_ids)
+    return payload
+
+
+def drop_unmatched_grounded(raw: dict, rows: list[dict], chunk_ids: list[str]) -> dict:
+    """`drop_unmatched`, carrying the citations through the same resolution."""
+    payload = drop_unmatched(raw, rows)
+    parsed = parse_grounded(raw)
+    payload["citations"] = resolve_citations(parsed.citations, chunk_ids)
+    return payload
+
+
+def resolve_citations(cited: list[str], chunk_ids: list[str]) -> list[str]:
+    """Map what the model wrote onto the ids that were actually retrieved.
+
+    Order is the model's own — a citation list is an argument, and the first
+    thing cited is usually the thing the sentence rests on. Duplicates are
+    removed for the reason §7.13 exists: a list that says the same thing twice
+    reads as two pieces of evidence.
+    """
+    known = {chunk_id.lower(): chunk_id for chunk_id in chunk_ids}
+    resolved: list[str] = []
+    dropped = 0
+
+    for raw_id in cited:
+        if not isinstance(raw_id, str):
+            dropped += 1
+            continue
+        # Models produce `[a3f9c21b4e77]` and `chunk a3f9c21b4e77` about as
+        # often as the bare id; the brackets and the word are not a different
+        # citation.
+        candidate = (
+            raw_id.strip().strip("[]()").split()[-1].lower() if raw_id.strip() else ""
+        )
+        if not candidate:
+            dropped += 1
+            continue
+
+        match = known.get(candidate)
+        if match is None and len(candidate) >= MIN_CITATION_PREFIX:
+            prefixed = [
+                original
+                for lowered, original in known.items()
+                if lowered.startswith(candidate) or candidate.startswith(lowered)
+            ]
+            # Exactly one, or it is not an identification.
+            match = prefixed[0] if len(prefixed) == 1 else None
+
+        if match is None:
+            dropped += 1
+            continue
+        if match not in resolved:
+            resolved.append(match)
+
+    if dropped:
+        logger.info(
+            "Dropped %d citation(s) naming chunks that were not retrieved.", dropped
+        )
+    return resolved[:MAX_CITATIONS]
 
 
 def _key(ecosystem: str, package: str, manifest_path: str) -> tuple[str, str, str]:
