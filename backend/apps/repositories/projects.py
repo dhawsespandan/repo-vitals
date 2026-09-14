@@ -195,12 +195,15 @@ def delete_repository(repository: Repository, *, confirm) -> int:
     with transaction.atomic():
         # Read and locked inside the transaction: the membership this decides
         # on has to be the membership it deletes.
-        current = (
-            Repository.objects.select_for_update()
-            .select_related("project")
-            .filter(pk=repository.pk)
-            .first()
-        )
+        #
+        # No `select_related("project")` on the lock, although the project is
+        # read two lines down. `project_id` is nullable, so the join is a LEFT
+        # OUTER JOIN, and PostgreSQL refuses `FOR UPDATE` on the nullable side
+        # of an outer join - every DELETE on this route, grouped or not, would
+        # fail there. SQLite ignores `FOR UPDATE` entirely, so the local suite
+        # passed and only CI's Postgres run saw it. The project is one more
+        # query, read after the lock is held.
+        current = Repository.objects.select_for_update().filter(pk=repository.pk).first()
         if current is None:
             # A concurrent request deleted it between the lookup and here.
             return 0

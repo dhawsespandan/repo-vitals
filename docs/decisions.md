@@ -3704,3 +3704,28 @@ session cookie that no JavaScript-written cookie can then replace — the page
 bounces to `/login` exactly as §9.13 described. The way out was to write the
 seeded user's login into every existing session row, whatever key the browser
 already held.
+
+### 10.13 `FOR UPDATE` on an outer join, which SQLite never sees
+
+The phase was pushed with 871 backend tests green on SQLite, and CI's Postgres
+run failed. `delete_repository` locked the row with
+`select_for_update().select_related("project")`. `project_id` is nullable, so
+that join is a LEFT OUTER JOIN, and PostgreSQL refuses `FOR UPDATE` on the
+nullable side of an outer join. The join is in the query whether or not the
+repository has a project, so every `DELETE /api/repositories/{id}/`, grouped
+or independent, raised on Postgres. SQLite does not implement `FOR UPDATE` at
+all, so locally the lock was a no-op and every test passed.
+
+Docker was not available to reproduce CI, so the diagnosis was confirmed by
+compiling the query through Django's PostgreSQL backend without a server: the
+old SQL is `... LEFT OUTER JOIN ... FOR UPDATE`, the new one has no join. The
+fix reads the project after the lock is held.
+
+The more important half is the order of events. Render deploys on the GitHub
+webhook, which fires on push, while CI starts at the same moment and takes
+minutes. **A defect only Postgres can show therefore reaches production before
+CI reports it.** Here it broke repository removal for every user until the fix
+deployed. §4.3's "every commit green" was true of the SQLite suite and not of
+the one that decides, and the local check cannot close that gap while Docker
+does not start on this machine. Until it does, the SQLite run is a local signal
+only, and a push is not safe to call done before CI's Postgres run is green.
