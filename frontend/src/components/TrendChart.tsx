@@ -108,7 +108,12 @@ export function TrendChart({ points, total, thresholds }: TrendChartProps) {
           role="img"
           aria-label={label}
           data-testid="trend-chart"
-          style={{ display: "block", minWidth: 420, maxHeight: 240 }}
+          // No height cap. The first version had `maxHeight: 240`, and the
+          // browser check measured what that does to a viewBox: the drawing is
+          // scaled to fit the height and centred, so at 1280px the plot ran
+          // 235->1051 inside a 89->1175 box - a hundred empty pixels either
+          // side, under a caption that starts at the left edge.
+          style={{ display: "block", minWidth: 420 }}
         >
           {safeMin !== null && mediumMin !== null && (
             <g data-testid="trend-bands">
