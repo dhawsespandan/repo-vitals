@@ -3729,3 +3729,36 @@ deployed. §4.3's "every commit green" was true of the SQLite suite and not of
 the one that decides, and the local check cannot close that gap while Docker
 does not start on this machine. Until it does, the SQLite run is a local signal
 only, and a push is not safe to call done before CI's Postgres run is green.
+
+### 10.14 What the production acceptance run established
+
+Run on 2026-09-14 against production (`0716fa3`, CI green), in the account's
+real browser session. Only the five `rv-accept-*` fixtures were touched; the
+account's four real repositories were never grouped or removed. The project was
+`Acceptance`: `rv-accept-basic` and `rv-accept-monorepo`, which share flagged
+`lodash@4.17.19` and `request@2.88.2`, plus `rv-accept-unassessable`, which has
+nothing flagged and so carries the "not warranted" half of the notice.
+
+| §10 Phase 10 criterion | where it stands |
+|---|---|
+| cannot create a project with a foreign or single repo | **single: passes on production** — 422 `project_too_small`, nothing created. **Foreign: suite-only** (a second GitHub account); on production a random id answered 422 `project_repository_unknown`, which is by construction the body a foreign id gets (§10.2) |
+| delete-one -> confirm -> all members + project gone, history intact | **passes on production.** Remove on `rv-accept-basic` opened "Remove all 3 repositories in Acceptance?", naming all three, fully on screen; confirming removed the three registrations and the project. All three were then registered again, and each chart showed its pre-cascade points plus the new scan: basic 2 -> 3, monorepo 2 -> 3, unassessable 1 -> 2. It was also the first real DELETE on Postgres since §10.13 |
+| sibling notice appears exactly when warranted | **passes on production, both halves.** `rv-accept-basic`'s combined report: four lines — express (clean), lodash `packages/ui` (flagged) then `services/api` (clean), request (flagged) — with `rv-accept-unassessable` named as compared and contributing none. `rv-accept-unassessable`'s report: no notice, and the scope sentence names both siblings. Both downloads carry the context |
+| trend chart shows movement across rescans | **passes on production.** `rv-accept-mixed` 10.07 -> 10.01 -> 9.97; `rv-accept-monorepo` 8.44 -> 8.44 -> 8.38 across the re-registration scan |
+| zero corpus rows in it | **passes on production**: every chart's point count equals the live scans that fixture has had. Production holds no corpus data (D8), so this is the check that the filter did not invent any |
+
+The grouped dashboard, the Projects page card and its offered list, the project
+tags, and the flagged-first line order from §10.12 were all seen as expected on
+production.
+
+What the run cost: two model calls (the two combined reports), and
+`rv-accept-monorepo`'s Phase 8 `request` remediation plan, which the cascade
+destroyed as designed. The three fixtures have new repository ids; their scan
+history is unaffected, which is the point of the criterion.
+
+One observation, not a defect, and not changed. A repository whose score moves
+by a tenth of a point draws a flat line on a 0-100 axis — the chart is honest
+about how little changed, and the dots' tooltips and the accessible label carry
+the exact numbers. Scaling the y axis to the data would make small moves visible
+and would also make them look large; that trade is left for whoever next looks
+at the demo, and noted here rather than built (§12).
