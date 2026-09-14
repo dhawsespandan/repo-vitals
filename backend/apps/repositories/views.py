@@ -1,9 +1,13 @@
-"""Repository endpoints — §5.5.
+"""Repository and project endpoints — §5.5.
 
     POST   /api/repositories/        validate (§5.6) + register, then scan
     GET    /api/repositories/        the user's own registrations
     GET    /api/repositories/{id}/   one registration (Phase 3; see below)
     DELETE /api/repositories/{id}/   remove one
+    POST   /api/projects/            group >=2 of the user's repositories (Phase 10)
+    GET    /api/projects/            the user's projects, with members
+    GET    /api/projects/{id}/       one project
+    DELETE /api/projects/{id}/       ungroup it; every member stays
 
 All of them sit behind `OwnedQuerySetMixin`, so a foreign id is invisible
 rather than forbidden (§11 BOLA).
@@ -32,12 +36,14 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 
 from apps.common.authz import OwnedQuerySetMixin
+from apps.common.errors import ApiError
 from apps.scanning.background import ScanInProgress, start_scan
 from apps.scanning.models import TriggerType
 from apps.scanning.views import scan_states_for
 
-from .models import Repository
-from .serializers import SCAN_STATES, RepositorySerializer
+from .models import Project, Repository
+from .projects import ProjectRejected, create_project, ungroup_project
+from .serializers import SCAN_STATES, ProjectSerializer, RepositorySerializer
 from .validation import DuplicateRegistration, validate_and_describe
 
 logger = logging.getLogger(__name__)
@@ -62,7 +68,7 @@ class ScanStateContextMixin:
 class RepositoryListCreateView(
     ScanStateContextMixin, OwnedQuerySetMixin, generics.ListCreateAPIView
 ):
-    queryset = Repository.objects.all()
+    queryset = Repository.objects.select_related("project")
     serializer_class = RepositorySerializer
 
     def list(self, request, *args, **kwargs):
@@ -149,7 +155,7 @@ class RepositoryDetailView(
     precisely so they can outlive the live row they came from.
     """
 
-    queryset = Repository.objects.all()
+    queryset = Repository.objects.select_related("project")
     serializer_class = RepositorySerializer
     lookup_field = "repository_id"
     lookup_url_kwarg = "repository_id"
@@ -160,3 +166,86 @@ class RepositoryDetailView(
             repository, context=self.scan_context([repository])
         )
         return Response(serializer.data)
+
+
+def _rejected(rejected: ProjectRejected) -> ApiError:
+    return ApiError(
+        rejected.code,
+        rejected.message,
+        status_code=rejected.status_code,
+        extra=rejected.extra,
+    )
+
+
+class ProjectScanContextMixin(ScanStateContextMixin):
+    """Scan state for every member of every project in the response, batched."""
+
+    def project_context(self, projects) -> dict:
+        return self.scan_context(
+            [member for project in projects for member in project.repositories.all()]
+        )
+
+
+class ProjectListCreateView(
+    ProjectScanContextMixin, OwnedQuerySetMixin, generics.ListCreateAPIView
+):
+    """`GET/POST /api/projects/` — §10 Phase 10.
+
+    The request body is read directly rather than through an input serializer,
+    for the reason registration does it (§5.6): every refusal here has a `code`
+    the frontend branches on, and a serializer's own validation error would
+    answer in DRF's envelope instead.
+    """
+
+    queryset = Project.objects.prefetch_related("repositories")
+    serializer_class = ProjectSerializer
+
+    def list(self, request, *args, **kwargs):
+        projects = list(self.filter_queryset(self.get_queryset()))
+        return Response(
+            ProjectSerializer(
+                projects, many=True, context=self.project_context(projects)
+            ).data
+        )
+
+    def create(self, request, *args, **kwargs):
+        body = request.data if isinstance(request.data, dict) else {}
+        try:
+            created = create_project(
+                request.user, body.get("name"), body.get("repositoryIds")
+            )
+        except ProjectRejected as rejected:
+            raise _rejected(rejected) from rejected
+
+        project = self.get_queryset().get(pk=created.pk)
+        return Response(
+            ProjectSerializer(project, context=self.project_context([project])).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class ProjectDetailView(
+    ProjectScanContextMixin, OwnedQuerySetMixin, generics.RetrieveDestroyAPIView
+):
+    """`GET/DELETE /api/projects/{id}/`.
+
+    DELETE ungroups. It is the non-destructive way out of a project, and it is
+    the reason deleting one *member* can afford to remove them all: the reader
+    who wants to keep the others has a route that keeps them, and the cascade
+    confirmation names it.
+    """
+
+    queryset = Project.objects.prefetch_related("repositories")
+    serializer_class = ProjectSerializer
+    lookup_field = "project_id"
+    lookup_url_kwarg = "project_id"
+
+    def retrieve(self, request, *args, **kwargs):
+        project = self.get_object()
+        return Response(
+            ProjectSerializer(project, context=self.project_context([project])).data
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        ungroup_project(self.get_object())
+        return Response(status=status.HTTP_204_NO_CONTENT)

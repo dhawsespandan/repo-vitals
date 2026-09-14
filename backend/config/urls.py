@@ -32,7 +32,12 @@ from apps.reports.views import (
     ReportDownloadView,
     ScanCombinedReportView,
 )
-from apps.repositories.views import RepositoryDetailView, RepositoryListCreateView
+from apps.repositories.views import (
+    ProjectDetailView,
+    ProjectListCreateView,
+    RepositoryDetailView,
+    RepositoryListCreateView,
+)
 from apps.scanning.views import (
     DependencyDetailView,
     RepositoryScanStatusView,
@@ -103,5 +108,11 @@ urlpatterns = [
         "api/reports/<uuid:report_id>/download/",
         ReportDownloadView.as_view(),
         name="report-download",
+    ),
+    path("api/projects/", ProjectListCreateView.as_view(), name="project-list"),
+    path(
+        "api/projects/<uuid:project_id>/",
+        ProjectDetailView.as_view(),
+        name="project-detail",
     ),
 ]

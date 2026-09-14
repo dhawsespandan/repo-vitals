@@ -39,6 +39,38 @@ class AccessLevel(models.TextChoices):
     COLLABORATOR = "collaborator", "Collaborator"
 
 
+class Project(models.Model):
+    """§5.1's `projects` - a user's name for repositories that ship together.
+
+    Membership is not a table of its own: it is `repositories.project_id`
+    (§5.1), so a repository belongs to at most one project by construction and
+    there is no join row to outlive either side.
+
+    **Two rules the schema cannot state, enforced where membership is written**
+    (`projects.create_project`, the only code that sets `project_id`). A project
+    has at least two members, and every member belongs to the user who owns the
+    project. The second is the one with teeth: Phase 10's sibling notice reads a
+    sibling's latest scan into a report, and a sibling registered by another
+    user would put *their* private dependency list into *this* user's report.
+    """
+
+    project_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="projects",
+    )
+    name = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "projects"
+        ordering = ["name", "created_at"]
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class Repository(models.Model):
     repository_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -70,9 +102,19 @@ class Repository(models.Model):
     visibility = models.TextField(choices=Visibility.choices)
     access_level = models.TextField(choices=AccessLevel.choices)
 
-    # `project_id` (§5.1, ON DELETE SET NULL) arrives in Phase 10 with the
-    # `projects` table. It is deliberately absent rather than nullable-and-
-    # unused: an FK to a table that does not exist yet cannot be migrated.
+    #: §5.1, Phase 10. SET_NULL rather than CASCADE, because deleting a
+    #: *project* means ungrouping, and ungrouping must never delete a
+    #: repository. The other direction - deleting a repository that is in a
+    #: project removes every member - is a service-layer rule with a
+    #: confirmation in front of it (`projects.delete_repository`), not a
+    #: database cascade anyone could trigger by accident.
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="repositories",
+    )
 
     registered_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

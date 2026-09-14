@@ -40,6 +40,7 @@ from tests.factories import (
     DependencyOccurrenceFactory,
     ManifestFileFactory,
     PackageFactory,
+    ProjectFactory,
     ReportFactory,
     RepositoryFactory,
     ScanRunFactory,
@@ -66,12 +67,15 @@ ROUTES: dict[str, tuple[str, ...]] = {
     "dependency-report": ("post",),
     "report-detail": ("get",),
     "report-download": ("get",),
+    "project-detail": ("get", "delete"),
 }
 
 #: The URL kwargs this suite knows how to fill. The coverage guard refuses a
 #: route that asks for anything else, because a route taking an id nobody can
 #: build is a route nobody can test.
-ID_KWARGS = frozenset({"repository_id", "scan_id", "dependency_id", "report_id"})
+ID_KWARGS = frozenset(
+    {"repository_id", "scan_id", "dependency_id", "report_id", "project_id"}
+)
 
 #: Query strings a route needs to get past validation *before* it can reach the
 #: object. Without it, the download route answers 400 `invalid_format` to owner
@@ -90,6 +94,7 @@ class Graph:
     dependency_id: str
     report_id: str
     dependency_report_id: str
+    project_id: str
 
     def ids(self) -> dict[str, str]:
         """URL kwarg name -> the id to substitute."""
@@ -98,6 +103,7 @@ class Graph:
             "scan_id": self.scan_id,
             "dependency_id": self.dependency_id,
             "report_id": self.report_id,
+            "project_id": self.project_id,
         }
 
 
@@ -109,9 +115,14 @@ def build_graph() -> Graph:
     ownership, and an unflagged occurrence makes the per-dependency route refuse
     for a reason that has nothing to do with who is asking (§8.7). Either would
     turn the owner's half of each case into a check of the wrong rule.
+
+    The repository is grouped with a sibling (Phase 10), so the project routes
+    have a real, valid project to reach - two members, one owner.
     """
     user = UserFactory()
-    repository = RepositoryFactory(user=user)
+    project = ProjectFactory(user=user)
+    repository = RepositoryFactory(user=user, project=project)
+    RepositoryFactory(user=user, project=project)
     scan = ScanRunFactory(
         repository=repository, triggered_by=user, status=ScanStatus.COMPLETED.value
     )
@@ -134,6 +145,7 @@ def build_graph() -> Graph:
         dependency_id=str(occurrence.pk),
         report_id=str(report.pk),
         dependency_report_id=str(dependency_report.pk),
+        project_id=str(project.pk),
     )
 
 

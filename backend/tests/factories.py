@@ -8,7 +8,7 @@ from django.utils import timezone
 from apps.accounts.crypto import encrypt_token
 from apps.accounts.models import User
 from apps.reports.models import Report, ReportStatus, ReportType
-from apps.repositories.models import AccessLevel, Repository, Visibility
+from apps.repositories.models import AccessLevel, Project, Repository, Visibility
 from apps.scanning.models import (
     DependencyGroup,
     DependencyOccurrence,
@@ -55,6 +55,23 @@ class RepositoryFactory(factory.django.DjangoModelFactory):
     default_branch = "main"
     visibility = Visibility.PUBLIC
     access_level = AccessLevel.OWNER
+
+
+class ProjectFactory(factory.django.DjangoModelFactory):
+    """A project row with no members.
+
+    Membership is `repositories.project_id`, and the rules around it live in
+    `apps.repositories.projects.create_project`. Tests that need a *valid*
+    project either go through that function or set `project=` on two of the
+    same user's repositories, and a test that deliberately builds an invalid
+    one (a foreign member, a project of one) says so where it does it.
+    """
+
+    class Meta:
+        model = Project
+
+    user = factory.SubFactory(UserFactory)
+    name = factory.Sequence(lambda n: f"project-{n}")
 
 
 class ScanRunFactory(factory.django.DjangoModelFactory):
