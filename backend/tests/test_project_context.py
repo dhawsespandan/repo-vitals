@@ -147,16 +147,26 @@ def test_an_unassessable_sibling_occurrence_says_it_could_not_be_assessed(checko
     ]
 
 
-def test_one_package_in_two_sibling_manifests_is_two_lines(checkout):
+def test_one_package_in_two_sibling_manifests_is_two_lines_flagged_first(checkout):
+    """Found in the local browser check, not by the first version of this test.
+
+    Sorted by manifest path, `client/package.json` (clean) printed above
+    `package.json` (flagged) - and this test asserted exactly that order, so it
+    passed. The flagged line is the one the notice exists for.
+    """
     api = completed_scan(checkout["api"])
     uses(api, "axios", flagged=True)
     web = completed_scan(checkout["web"])
     uses(web, "axios", path="package.json", version="0.21.1", flagged=True)
     uses(web, "axios", path="client/package.json", version="1.7.0")
+    uses(web, "axios", path="tools/package.json", unassessable=True)
 
-    assert [line["manifest_path"] for line in for_scan(api)["lines"]] == [
-        "client/package.json",
-        "package.json",
+    assert [
+        (line["manifest_path"], line["status"]) for line in for_scan(api)["lines"]
+    ] == [
+        ("package.json", "flagged"),
+        ("tools/package.json", "unassessable"),
+        ("client/package.json", "clean"),
     ]
 
 

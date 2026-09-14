@@ -62,6 +62,24 @@ SCOPE_DISCLAIMER = (
     "and are not assessed here."
 )
 
+#: What a sibling's own scan found, and how each finding ends its sentence.
+VERDICTS = {
+    "flagged": "where it is flagged too.",
+    "unassessable": "where it could not be assessed.",
+    "clean": "where it is not flagged.",
+}
+
+#: The order lines are read in within one package and one sibling: the finding
+#: that needs action first, the one that could not be measured next, the one
+#: that needs nothing last.
+STATUS_ORDER = {"flagged": 0, "unassessable": 1, "clean": 2}
+
+
+def _status(occurrence: DependencyOccurrence) -> str:
+    if occurrence.is_unassessable:
+        return "unassessable"
+    return "flagged" if occurrence.is_flagged else "clean"
+
 
 def for_scan(scan: ScanRun) -> dict | None:
     """The context for a COMBINED report: every package the scan flagged.
@@ -185,11 +203,16 @@ def _build(repository_id, subjects: Iterable[DependencyOccurrence]) -> dict | No
             manifest__scan__in=list(latest.values()),
             package_id__in=packages,
         ).select_related("manifest", "manifest__scan", "package")
+        # Flagged first within each (package, sibling). Sorted by path alone,
+        # the local browser check printed `client/package.json ... not flagged`
+        # above `package.json ... flagged too` for the same sibling - the line
+        # the notice exists for, second, under the one that needs no action.
         ordered = sorted(
             shared,
             key=lambda occurrence: (
                 occurrence.package.package_name,
                 by_id[occurrence.manifest.scan.repository_id].full_name,
+                STATUS_ORDER[_status(occurrence)],
                 occurrence.manifest.manifest_path,
             ),
         )
@@ -221,12 +244,8 @@ def _line(occurrence: DependencyOccurrence, sibling: Repository) -> dict:
     a claim the data does not support when the sibling has already upgraded -
     the status is what the scan can vouch for, so the status is what it says.
     """
-    if occurrence.is_unassessable:
-        status, verdict = "unassessable", "where it could not be assessed."
-    elif occurrence.is_flagged:
-        status, verdict = "flagged", "where it is flagged too."
-    else:
-        status, verdict = "clean", "where it is not flagged."
+    status = _status(occurrence)
+    verdict = VERDICTS[status]
 
     version = occurrence.resolved_version or occurrence.declared_specifier or None
     where = occurrence.manifest.manifest_path + (f", {version}" if version else "")
