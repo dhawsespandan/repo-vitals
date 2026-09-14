@@ -36,6 +36,7 @@ from apps.repositories.views import (
     ProjectDetailView,
     ProjectListCreateView,
     RepositoryDetailView,
+    RepositoryHistoryView,
     RepositoryListCreateView,
 )
 from apps.scanning.views import (
@@ -108,6 +109,11 @@ urlpatterns = [
         "api/reports/<uuid:report_id>/download/",
         ReportDownloadView.as_view(),
         name="report-download",
+    ),
+    path(
+        "api/repositories/<uuid:repository_id>/history/",
+        RepositoryHistoryView.as_view(),
+        name="repository-history",
     ),
     path("api/projects/", ProjectListCreateView.as_view(), name="project-list"),
     path(

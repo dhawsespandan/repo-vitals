@@ -16,6 +16,8 @@ from __future__ import annotations
 
 from rest_framework import serializers
 
+from apps.scoring.weights import WeightsError, load_weights
+
 from .models import Project, Repository
 
 #: Context key holding `{repository_id: scan_state}` (see `scanning.views`).
@@ -95,3 +97,54 @@ class ProjectSerializer(serializers.ModelSerializer):
     def get_repositories(self, project: Project) -> list[dict]:
         members = sorted(project.repositories.all(), key=lambda member: member.full_name)
         return RepositorySerializer(members, many=True, context=self.context).data
+
+
+class HistoryPointSerializer(serializers.Serializer):
+    """One `scan_history` row as a point on the trend chart (Phase 10).
+
+    A plain `Serializer` over the permanent model rather than a `ModelSerializer`,
+    so the fields the product exposes from a research table are an explicit
+    list - the identifying snapshots (`github_username`, `repo_full_name`) and
+    the corpus columns are not in it and cannot drift into it.
+    """
+
+    id = serializers.UUIDField(source="scan_history_id")
+    #: Traceability only: the operational scan it names is normally deleted.
+    scanId = serializers.UUIDField(source="source_scan_id", allow_null=True)
+    scannedAt = serializers.DateTimeField(source="scanned_at")
+    riskScore = serializers.DecimalField(
+        source="risk_score", max_digits=5, decimal_places=2
+    )
+    classification = serializers.CharField()
+    scoringFormulaVersion = serializers.CharField(source="scoring_formula_version")
+    dependencyCount = serializers.IntegerField(source="dependency_count")
+    flaggedDependencyCount = serializers.IntegerField(source="flagged_dependency_count")
+
+
+def history_payload(points, *, total: int, limit: int) -> dict:
+    """`GET /api/repositories/{id}/history/`'s body.
+
+    `thresholds` carries §5.4's classification bands per formula version that
+    appears in `points`, read from each version's own weights file. The chart
+    draws its bands from these rather than from a hard-coded 80/50, because
+    §5.4 makes them calibration parameters that a later version may move - and
+    a missing file is sent as null rather than guessed.
+    """
+    versions = list(dict.fromkeys(point.scoring_formula_version for point in points))
+    return {
+        "total": total,
+        "limit": limit,
+        "points": HistoryPointSerializer(points, many=True).data,
+        "thresholds": {version: _thresholds(version) for version in versions},
+    }
+
+
+def _thresholds(version: str) -> dict | None:
+    try:
+        weights = load_weights(version)
+    except WeightsError:
+        return None
+    return {
+        "safeMin": str(weights.thresholds.safe_min),
+        "mediumMin": str(weights.thresholds.medium_min),
+    }

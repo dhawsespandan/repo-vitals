@@ -367,13 +367,19 @@ def test_there_is_no_admin_site():
     assert "django.contrib.admin" not in settings.INSTALLED_APPS
 
 
-def test_no_route_reaches_the_research_tables():
-    """No serializer, no view, no URL — they are written by code and read by
-    commands.
+#: Every route allowed to read a research table, and there is one: §5.5's
+#: Phase 10 history endpoint, a curated read of `live_scan` rows of
+#: `scan_history` through `apps.research.history.live_history_for`.
+SANCTIONED_RESEARCH_ROUTES = {"repository-history"}
 
-    Phase 10 adds a history *endpoint* over `scan_history`, filtered to
-    `live_scan` rows; that is a curated read of one table, and this assertion
-    will need updating to name it. Nothing today should match.
+
+def test_no_route_reaches_the_research_tables_but_the_history_read():
+    """No serializer, no view, no URL over them — with one named exception.
+
+    Phase 9 wrote this assertion as "nothing matches" and said Phase 10 would
+    have to update it to name the history endpoint. It names it now, as an
+    exact set rather than an allowance: a second route over `scan_history` or
+    any route over the traces still fails here, at the commit that adds it.
     """
     from django.urls import get_resolver
 
@@ -383,7 +389,28 @@ def test_no_route_reaches_the_research_tables():
         if getattr(entry, "name", None)
     }
 
-    assert not {name for name in names if "history" in name or "trace" in name}
+    assert {
+        name for name in names if "history" in name or "trace" in name
+    } == SANCTIONED_RESEARCH_ROUTES
+
+
+def test_the_one_research_route_can_only_read():
+    """The exception is a read, and stays one: D9's rows have no write path.
+
+    Checked on the view class rather than by sending the verbs, because a 405
+    from a missing handler and a 404 from a foreign id look alike from outside,
+    and only the first is the property being claimed.
+    """
+    import uuid
+
+    from django.urls import resolve, reverse
+
+    match = resolve(reverse("repository-history", kwargs={"repository_id": uuid.uuid4()}))
+    view = match.func.view_class
+
+    assert hasattr(view, "get")
+    for verb in ("post", "put", "patch", "delete"):
+        assert not hasattr(view, verb), f"the history route answers {verb.upper()}"
 
 
 def test_the_user_model_cannot_enter_an_admin_even_if_one_existed():

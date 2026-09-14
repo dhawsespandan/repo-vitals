@@ -8,6 +8,7 @@
     GET    /api/projects/            the user's projects, with members
     GET    /api/projects/{id}/       one project
     DELETE /api/projects/{id}/       ungroup it; every member stays
+    GET    /api/repositories/{id}/history/   live scans from the permanent record
 
 All of them sit behind `OwnedQuerySetMixin`, so a foreign id is invisible
 rather than forbidden (§11 BOLA).
@@ -37,6 +38,10 @@ from rest_framework.response import Response
 
 from apps.common.authz import OwnedQuerySetMixin
 from apps.common.errors import ApiError
+
+# The module, not its names (§7.11): the tests lower `HISTORY_LIMIT`, and a name
+# bound at import would keep answering with the old one.
+from apps.research import history as research_history
 from apps.scanning.background import ScanInProgress, start_scan
 from apps.scanning.models import TriggerType
 from apps.scanning.views import scan_states_for
@@ -48,7 +53,12 @@ from .projects import (
     delete_repository,
     ungroup_project,
 )
-from .serializers import SCAN_STATES, ProjectSerializer, RepositorySerializer
+from .serializers import (
+    SCAN_STATES,
+    ProjectSerializer,
+    RepositorySerializer,
+    history_payload,
+)
 from .validation import DuplicateRegistration, validate_and_describe
 
 logger = logging.getLogger(__name__)
@@ -187,6 +197,27 @@ class RepositoryDetailView(
         except ProjectRejected as rejected:
             raise _rejected(rejected) from rejected
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class RepositoryHistoryView(OwnedQuerySetMixin, generics.GenericAPIView):
+    """`GET /api/repositories/{id}/history/` — §5.5's Phase 10 route, live rows only.
+
+    The only request path into the permanent tables, and it goes through the
+    one helper `apps.research` exposes for it (`history.live_history_for`).
+    Ownership is the repository's, through the mixin: a foreign id 404s before
+    any history is read (§11 BOLA).
+    """
+
+    queryset = Repository.objects.select_related("user")
+    lookup_field = "repository_id"
+    lookup_url_kwarg = "repository_id"
+
+    def get(self, request, *args, **kwargs):
+        repository = self.get_object()
+        points, total = research_history.live_history_for(repository)
+        return Response(
+            history_payload(points, total=total, limit=research_history.HISTORY_LIMIT)
+        )
 
 
 def _rejected(rejected: ProjectRejected) -> ApiError:

@@ -34,6 +34,12 @@ logger = logging.getLogger(__name__)
 #: still being one round trip per few hundred rows rather than per row.
 INSERT_BATCH = 200
 
+#: Points the product's trend chart receives, newest kept (§10 Phase 10). A
+#: repository rescanned daily for half a year is under two hundred, and a chart
+#: of more points than it has pixels per point is not more information. The
+#: total is sent beside them, so a truncated chart can say it is one.
+HISTORY_LIMIT = 200
+
 
 class NotScored(Exception):
     """A scan reached history without a score. `risk_score` is NOT NULL (§5.1)."""
@@ -123,3 +129,34 @@ def record_scan(scan: ScanRun) -> ScanHistory:
         len(occurrences),
     )
     return entry
+
+
+def live_history_for(repository) -> tuple[list[ScanHistory], int]:
+    """A repository's live scans, oldest first (at most `HISTORY_LIMIT`), and the total.
+
+    The one function in this app that request-handling code calls - §3's
+    "never imported by request-handling code (except the history endpoint
+    helper)" - so the product's only read of the permanent tables goes through
+    one place that can be audited.
+
+    **`live_scan` rows only, by a positive filter.** §10: "corpus rows must never
+    pollute the product chart". The filter names the source it wants rather
+    than excluding the one it does not, so a `data_source` added later - or the
+    `backfill` value being renamed - cannot leak into a user's chart by default.
+
+    **Matched on GitHub's ids, not on the registration.** `scan_history` has no
+    foreign key (D9), and that is what makes this chart survive a repository
+    being removed and registered again, or renamed: the row carries
+    `github_repo_id`, which neither changes. It is scoped to the owner's
+    `github_user_id` as well, because a registration is a per-user claim (§5.1)
+    and two users tracking one repository must not see each other's scans.
+    """
+    rows = ScanHistory.objects.filter(
+        data_source=DataSource.LIVE_SCAN.value,
+        github_repo_id=repository.github_repo_id,
+        github_user_id=repository.user.github_user_id,
+    )
+    total = rows.count()
+    latest = list(rows.order_by("-scanned_at", "-scan_history_id")[:HISTORY_LIMIT])
+    latest.reverse()
+    return latest, total

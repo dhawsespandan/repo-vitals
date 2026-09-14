@@ -68,6 +68,7 @@ ROUTES: dict[str, tuple[str, ...]] = {
     "report-detail": ("get",),
     "report-download": ("get",),
     "project-detail": ("get", "delete"),
+    "repository-history": ("get",),
 }
 
 #: The URL kwargs this suite knows how to fill. The coverage guard refuses a
