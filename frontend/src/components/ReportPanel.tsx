@@ -38,6 +38,7 @@ import { BlueprintCorners } from "./Blueprint";
 import { CitationPane } from "./CitationPane";
 import { DownloadLinks } from "./DownloadLinks";
 import { Markdown } from "./Markdown";
+import { ProjectContextNotice } from "./ProjectContextNotice";
 import { fixAction } from "./ReportsTab";
 import { relativeTime } from "./StatusPill";
 
@@ -500,6 +501,10 @@ function ReadyState({ report, row }: { report: Report; row: DependencyOccurrence
             source to check it against.
           </div>
         )}
+
+        {/* Phase 10. Below the confidence banners, which qualify the plan's
+            *sources*, and above the plan, which the notice qualifies. */}
+        <ProjectContextNotice context={report.projectContext} />
 
         <div data-testid="remediation-summary">
           <Markdown text={report.summaryMd ?? ""} />

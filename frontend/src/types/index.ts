@@ -24,6 +24,12 @@ export interface ApiErrorBody {
   [key: string]: unknown;
 }
 
+/** The project a repository belongs to — two fields, not the project (Phase 10). */
+export interface ProjectRef {
+  id: string;
+  name: string;
+}
+
 /** A registered repository (`apps/repositories/serializers.py`). */
 export interface Repository {
   id: string;
@@ -35,6 +41,8 @@ export interface Repository {
   visibility: "public" | "private";
   accessLevel: "owner" | "write" | "collaborator";
   registeredAt: string;
+  /** Null for a repository in no project. */
+  project: ProjectRef | null;
   /** The newest scan, whatever its status. Null before the first one. */
   latestScan: ScanState | null;
   /** The last scan that produced results — what a detail page displays. */
@@ -321,6 +329,87 @@ export type RegisterResult =
   | { outcome: "created"; repository: Repository }
   | { outcome: "duplicate"; repository: Repository; message: string };
 
+/**
+ * `GET /api/projects/` — Phase 10. At least two members, all the caller's own
+ * (the backend refuses anything else at creation).
+ */
+export interface Project {
+  id: string;
+  name: string;
+  createdAt: string;
+  /** Sorted by full name, each carrying its scan state like the list does. */
+  repositories: Repository[];
+}
+
+/**
+ * One completed live scan of a repository, from the permanent record.
+ *
+ * `scan_history` rows are never deleted by retention (§5.7), which is what
+ * makes a trend possible at all: the operational scan these came from is gone
+ * by the time most of them are read, so `scanId` names a row that usually no
+ * longer exists and is kept for traceability only.
+ */
+export interface HistoryPoint {
+  id: string;
+  scanId: string | null;
+  scannedAt: string;
+  /** `NUMERIC(5,2)` as a string, like every score on this API. */
+  riskScore: string;
+  classification: Classification;
+  scoringFormulaVersion: string;
+  dependencyCount: number;
+  flaggedDependencyCount: number;
+}
+
+/** §5.4's classification bands for one weights version. */
+export interface ScoreThresholds {
+  safeMin: string;
+  mediumMin: string;
+}
+
+/** `GET /api/repositories/{id}/history/` — live scans only, oldest first. */
+export interface RepositoryHistory {
+  /** Every live scan on record; `points` may hold only the latest `limit`. */
+  total: number;
+  limit: number;
+  points: HistoryPoint[];
+  /** Per formula version in `points`. Null when that weights file is gone. */
+  thresholds: Record<string, ScoreThresholds | null>;
+}
+
+/**
+ * One package a report's repository shares with a sibling in its project.
+ *
+ * snake_case because it is stored JSON passed through, like `RetrievedChunk`.
+ * `text` is the finished sentence the backend built, rendered verbatim here and
+ * in the downloaded file, so the two cannot drift into different wordings.
+ */
+export interface ProjectContextLine {
+  package: string;
+  ecosystem: "npm" | "pypi";
+  sibling_repository_id: string;
+  sibling_repository: string;
+  manifest_path: string;
+  version: string | null;
+  /** What the *sibling's* latest scan found for this package. */
+  status: "flagged" | "clean" | "unassessable";
+  text: string;
+}
+
+/** The sibling notice and scope disclaimer a report was generated with. */
+export interface ProjectContext {
+  version: number;
+  project: ProjectRef;
+  siblings_compared: string[];
+  siblings_not_scanned: string[];
+  lines: ProjectContextLine[];
+  lines_omitted: number;
+  disclaimer: boolean;
+  /** What was compared, stated even when it found nothing. */
+  comparison_text: string;
+  disclaimer_text: string | null;
+}
+
 /** A report generation, mirroring `apps/reports/models.py::ReportStatus`. */
 export type ReportStatus = "queued" | "running" | "completed" | "failed";
 
@@ -414,6 +503,12 @@ export interface Report {
   /** Everything retrieved, cited or not. Null on a combined report. */
   retrievedChunks: RetrievedChunk[] | null;
   groundingConfidence: GroundingConfidence | null;
+  /**
+   * Phase 10. Null for a repository in no project — and for a report
+   * generated before its repository was grouped, since the context is a
+   * snapshot taken at generation time rather than a live view.
+   */
+  projectContext: ProjectContext | null;
   /** The model that actually answered, which may not be the one configured. */
   modelName: string | null;
   /** Written for a person: every one of them names what to do next. */

@@ -21,6 +21,7 @@ import { ClassificationTag, ScoreBadge } from "../components/ScoreBadge";
 import { ScoreContributors } from "../components/ScoreContributors";
 import { StatusPill, relativeTime } from "../components/StatusPill";
 import { Toast } from "../components/Toast";
+import { ScoreHistory } from "../components/TrendChart";
 import { usePolling } from "../hooks/usePolling";
 import type {
   DependencyOccurrence,
@@ -417,6 +418,18 @@ export function RepoDetail() {
                   repository that added a `pyproject.toml` last week says npm
                   here until the scan that found it. */}
               {scan && <ScanEcosystemChip manifests={scan.manifests} />}
+              {/* The wireframe's `curHasProject` tag, as a link: the one thing
+                  to do about a project from here is go and manage it. */}
+              {repository.project && (
+                <Link
+                  to="/projects"
+                  className="tag tag-accent"
+                  data-testid="project-tag"
+                  style={{ textDecoration: "none" }}
+                >
+                  {repository.project.name}
+                </Link>
+              )}
               <StatusPill scan={current} />
             </div>
             <div className="text-muted" style={{ fontSize: 13, marginTop: 5 }}>
@@ -518,6 +531,16 @@ export function RepoDetail() {
           </span>
         </div>
       </div>
+
+      {/* §10 Phase 10's trend, directly under the score it is the history of.
+          Only once a completed scan exists: before that there is no score on
+          the page for a history to explain, and an empty chart above a
+          "scanning" skeleton would be a second empty state saying the same
+          thing. It re-reads when the completed scan changes identity, which
+          is exactly when a new point exists. */}
+      {completedScanId !== null && (
+        <ScoreHistory repositoryId={repositoryId} completedScanId={completedScanId} />
+      )}
 
       {/* §10 Phase 9's rescan ConfirmDialog. It names the number, because
           "some reports" is not something a reader can weigh — and the sentence

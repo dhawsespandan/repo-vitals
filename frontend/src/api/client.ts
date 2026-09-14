@@ -13,9 +13,11 @@ import type {
   DependencyBreakdown,
   DependencyOccurrence,
   Paginated,
+  Project,
   RegisterResult,
   Report,
   Repository,
+  RepositoryHistory,
   ScanDetail,
   ScanStatusResponse,
   SessionResponse,
@@ -173,9 +175,71 @@ function isDuplicate(
   return (payload as DuplicatePayload).code === "already_registered";
 }
 
-/** `DELETE /api/repositories/{id}/` — 204 on success. */
-export const deleteRepository = (id: string) =>
-  api.delete<void>(`/repositories/${id}/`);
+/**
+ * `DELETE /api/repositories/{id}/` — 204, or from Phase 10 a 409
+ * `project_cascade_confirm` for a repository that belongs to a project.
+ *
+ * The refusal is a named outcome for the reason `startScan`'s is: it is a
+ * question, and the answer changes what happens next. Deleting one member
+ * deletes every member, so the server asks first and says which group; the
+ * caller re-sends with that group's id. The id rather than `true` is what stops
+ * a stale dialog confirming a group that has since changed membership
+ * (`docs/decisions.md` §10.3).
+ */
+export type DeleteRepositoryResult =
+  | { outcome: "deleted" }
+  | {
+      outcome: "confirm-required";
+      projectId: string;
+      projectName: string;
+      memberCount: number;
+      repositories: string[];
+    };
+
+export async function deleteRepository(
+  id: string,
+  confirmProjectId?: string,
+): Promise<DeleteRepositoryResult> {
+  const query = confirmProjectId
+    ? `?confirm=${encodeURIComponent(confirmProjectId)}`
+    : "";
+  try {
+    await api.delete<void>(`/repositories/${id}/${query}`);
+    return { outcome: "deleted" };
+  } catch (error) {
+    if (error instanceof ApiError && error.code === "project_cascade_confirm") {
+      return {
+        outcome: "confirm-required",
+        projectId: String(error.body.projectId ?? ""),
+        projectName: String(error.body.projectName ?? ""),
+        memberCount: Number(error.body.memberCount ?? 0),
+        repositories: Array.isArray(error.body.repositories)
+          ? error.body.repositories.map(String)
+          : [],
+      };
+    }
+    throw error;
+  }
+}
+
+/** `GET /api/projects/` — the caller's projects, each with its members. */
+export const listProjects = () => api.get<Project[]>("/projects/");
+
+/**
+ * `POST /api/projects/` — group two or more repositories.
+ *
+ * Every refusal throws with the `code` the page branches on, and each message
+ * is written for the reader (`project_too_small`, `repository_in_project`, ...).
+ */
+export const createProject = (name: string, repositoryIds: string[]) =>
+  api.post<Project>("/projects/", { name, repositoryIds });
+
+/** `DELETE /api/projects/{id}/` — ungroup. Every member stays monitored. */
+export const ungroupProject = (id: string) => api.delete<void>(`/projects/${id}/`);
+
+/** `GET /api/repositories/{id}/history/` — the trend chart's points. */
+export const getRepositoryHistory = (id: string) =>
+  api.get<RepositoryHistory>(`/repositories/${id}/history/`);
 
 /** `GET /api/repositories/{id}/` — one registration, with its scan state. */
 export const getRepository = (id: string) =>

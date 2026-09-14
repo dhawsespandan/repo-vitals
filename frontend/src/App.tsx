@@ -7,6 +7,7 @@ import { useLastAppPath, CONFIRM_LOGOUT_STATE } from "./auth/backNavGuard";
 import { FullPageLoader } from "./components/FullPageLoader";
 import { Dashboard } from "./pages/Dashboard";
 import { Login } from "./pages/Login";
+import { ProjectsPage } from "./pages/ProjectsPage";
 import { RepoDetail } from "./pages/RepoDetail";
 
 /**
@@ -43,6 +44,7 @@ export function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/repositories/:repositoryId" element={<RepoDetail />} />
+          <Route path="/projects" element={<ProjectsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>

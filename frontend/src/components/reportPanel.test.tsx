@@ -96,6 +96,8 @@ function report(overrides: Partial<Report> = {}): Report {
     citations: ["a1b2c3d4e5f6"],
     retrievedChunks: [chunk(), chunk({ chunk_id: "999888777666", similarity: 0.34 })],
     groundingConfidence: "sufficient",
+    // A repository in no project (Phase 10). Tests of the notice set one.
+    projectContext: null,
     modelName: "openai/gpt-oss-120b",
     errorMessage: null,
     generatedAt: new Date().toISOString(),

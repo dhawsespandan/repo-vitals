@@ -100,6 +100,19 @@ export function RepoCard({ repository, highlighted, onDelete }: RepoCardProps) {
           <div
             style={{ display: "flex", gap: 6, marginTop: 9, flexWrap: "wrap" }}
           >
+            {/* The wireframe's `repo.hasProject` tag. The dashboard also groups
+                by project, but a card is read on its own often enough — in a
+                search result, after a duplicate-registration redirect — that
+                the membership belongs on the card as well as around it. */}
+            {repository.project && (
+              <span
+                className="tag tag-accent"
+                data-testid="project-tag"
+                style={{ whiteSpace: "nowrap" }}
+              >
+                {repository.project.name}
+              </span>
+            )}
             {repository.visibility === "private" && (
               <span
                 className="tag tag-neutral"

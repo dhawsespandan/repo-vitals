@@ -7,8 +7,11 @@ import { AuthProvider } from "../auth/AuthContext";
 import type {
   DependencyBreakdown,
   DependencyOccurrence,
+  HistoryPoint,
+  Project,
   Report,
   Repository,
+  RepositoryHistory,
   ScanDetail,
   ScanState,
   ScanStatus,
@@ -77,6 +80,9 @@ export function repository(overrides: Partial<Repository> = {}): Repository {
     visibility: "public",
     accessLevel: "owner",
     registeredAt: "2026-08-30T09:00:00Z",
+    // Independent until a test groups it. The backend sends null, never an
+    // absent key, for a repository in no project.
+    project: null,
     latestScan: null,
     latestCompletedScanId: null,
     ...overrides,
@@ -84,6 +90,40 @@ export function repository(overrides: Partial<Repository> = {}): Repository {
 }
 
 export const REPOSITORY: Repository = repository();
+
+/** A project row as `GET /api/projects/` sends it (Phase 10). */
+export function project(overrides: Partial<Project> = {}): Project {
+  return {
+    id: "5a5a5a5a-0000-4000-8000-000000000001",
+    name: "Checkout",
+    createdAt: "2026-09-10T09:00:00Z",
+    repositories: [],
+    ...overrides,
+  };
+}
+
+/** One point of `GET /api/repositories/{id}/history/`. */
+export function historyPoint(overrides: Partial<HistoryPoint> = {}): HistoryPoint {
+  return {
+    id: "7e7e7e7e-0000-4000-8000-000000000001",
+    scanId: SCAN_ID,
+    scannedAt: "2026-09-01T09:00:00Z",
+    riskScore: "68.45",
+    classification: "medium",
+    scoringFormulaVersion: "v1",
+    dependencyCount: 3,
+    flaggedDependencyCount: 1,
+    ...overrides,
+  };
+}
+
+/** What the history route answers for a repository with no live scans. */
+export const EMPTY_HISTORY: RepositoryHistory = {
+  total: 0,
+  limit: 200,
+  points: [],
+  thresholds: {},
+};
 
 /** The same repository once its initial scan has finished. */
 export const SCANNED_REPOSITORY: Repository = repository({
@@ -238,8 +278,26 @@ interface StubOptions {
    */
   repositories?: Repository[] | (() => Repository[]);
   register?: RegisterStub;
-  /** Status returned by DELETE /api/repositories/{id}/. */
-  deleteStatus?: number;
+  /**
+   * Status returned by DELETE /api/repositories/{id}/. A function receives the
+   * URL, which is how a Phase 10 test answers 409 `project_cascade_confirm` to
+   * the unconfirmed request and 204 to the one carrying `?confirm=`.
+   */
+  deleteStatus?: number | ((url: string) => number);
+  /** Body for a DELETE that is not 204. A function receives the URL. */
+  deleteBody?: unknown | ((url: string) => unknown);
+  /** Rows returned by GET /api/projects/. A function is called per request. */
+  projects?: Project[] | (() => Project[]);
+  /** Answer to POST /api/projects/. Defaults to 201 with the first project. */
+  createProject?: (request?: RequestInit) => { status: number; body: unknown };
+  /** Status returned by DELETE /api/projects/{id}/. */
+  ungroupStatus?: number;
+  /**
+   * Answer to GET /api/repositories/{id}/history/. Defaults to an empty
+   * history, so every existing detail-page test keeps rendering: the page
+   * issues this request as soon as a completed scan exists.
+   */
+  history?: () => RepositoryHistory;
   /** Row returned by GET /api/repositories/{id}/ (the detail page's first call). */
   repository?: Repository;
   /** Answer to GET /api/repositories/{id}/scan-status/. Called per request. */
@@ -357,6 +415,11 @@ export function stubFetch({
   repositories = [],
   register,
   deleteStatus = 204,
+  deleteBody,
+  projects = [],
+  createProject,
+  ungroupStatus = 204,
+  history,
   repository: detailRow,
   scanStatus,
   scan,
@@ -400,6 +463,25 @@ export function stubFetch({
     }
     if (url.endsWith("/api/repositories/") && method === "POST") {
       return json(register?.body ?? REPOSITORY, register?.status ?? 201);
+    }
+    // Phase 10's routes. Projects have no prefix in common with anything else;
+    // history is matched before the bare repository GET at the bottom, which
+    // would otherwise answer it with a repository row.
+    if (url.endsWith("/api/projects/") && method === "GET") {
+      return json(typeof projects === "function" ? projects() : projects, 200);
+    }
+    if (url.endsWith("/api/projects/") && method === "POST") {
+      const answer = createProject?.(init) ?? {
+        status: 201,
+        body: (typeof projects === "function" ? projects() : projects)[0] ?? null,
+      };
+      return json(answer.body, answer.status);
+    }
+    if (url.includes("/api/projects/") && method === "DELETE") {
+      return new Response(null, { status: ungroupStatus });
+    }
+    if (url.includes("/history/") && method === "GET") {
+      return json(history?.() ?? EMPTY_HISTORY, 200);
     }
     // Order matters below: the scan routes are prefixed by the repository
     // path, so the bare `{id}/` case has to be matched last.
@@ -473,7 +555,11 @@ export function stubFetch({
         : json({ code: "not_found", message: "no" }, 404);
     }
     if (url.includes("/api/repositories/") && method === "DELETE") {
-      return new Response(null, { status: deleteStatus });
+      const status =
+        typeof deleteStatus === "function" ? deleteStatus(url) : deleteStatus;
+      if (status === 204) return new Response(null, { status });
+      const body = typeof deleteBody === "function" ? deleteBody(url) : deleteBody;
+      return json(body ?? { code: "error", message: "Request failed." }, status);
     }
     if (url.includes("/api/repositories/") && method === "GET") {
       return detailRow

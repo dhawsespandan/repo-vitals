@@ -73,6 +73,13 @@ export function AppShell({ children }: { children: ReactNode }) {
         >
           Repositories
         </NavLink>
+        <NavLink
+          to="/projects"
+          className="nav-link"
+          style={{ color: "inherit", textDecoration: "none", fontSize: 14 }}
+        >
+          Projects
+        </NavLink>
         {/* Documentation is a Phase 14 deliverable; shown inert so the nav
             does not shift shape when it lands. */}
         <span className="text-muted" style={{ fontSize: 14 }}>

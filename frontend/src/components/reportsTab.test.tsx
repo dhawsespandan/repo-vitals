@@ -74,6 +74,8 @@ function report(overrides: Partial<Report> = {}): Report {
     citations: null,
     retrievedChunks: null,
     groundingConfidence: null,
+    // A repository in no project (Phase 10). Tests of the notice set one.
+    projectContext: null,
     modelName: "openai/gpt-oss-120b",
     errorMessage: null,
     generatedAt: new Date().toISOString(),

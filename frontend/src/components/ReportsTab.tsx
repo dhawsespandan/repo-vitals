@@ -26,6 +26,7 @@
 import type { Report, ReportFix } from "../types";
 import { DownloadLinks } from "./DownloadLinks";
 import { Markdown } from "./Markdown";
+import { ProjectContextNotice } from "./ProjectContextNotice";
 import { relativeTime } from "./StatusPill";
 
 interface ReportsTabProps {
@@ -193,6 +194,12 @@ function ReadyState({
         Stored against this scan — returning to this tab re-reads the stored
         answer and never calls the model again; a fresh report needs a new scan.
       </div>
+
+      {/* Phase 10, where the wireframe puts it: above the summary, because a
+          sibling sharing the problem changes how the fixes below should be
+          read — a fix here is half a fix if the same package is flagged next
+          door. Null for a repository in no project, which renders nothing. */}
+      <ProjectContextNotice context={report.projectContext} />
 
       <div data-testid="report-summary" style={{ maxWidth: "78ch" }}>
         <Markdown text={report.summaryMd ?? ""} />

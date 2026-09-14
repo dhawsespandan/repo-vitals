@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { deleteRepository, listRepositories } from "../api/client";
 import { AddRepoDialog } from "../components/AddRepoDialog";
@@ -8,8 +9,23 @@ import { FolderIcon, PlusIcon } from "../components/Icons";
 import { RepoCard } from "../components/RepoCard";
 import { CLASSIFICATION_TONE } from "../components/ScoreBadge";
 import { usePolling } from "../hooks/usePolling";
-import type { Repository } from "../types";
+import type { ProjectRef, Repository } from "../types";
 import { isScanActive } from "../types";
+
+/**
+ * The question a project member's Remove button asks (§10 Phase 10).
+ *
+ * Built from the dashboard's own list when the button is pressed, and replaced
+ * by the server's answer if the two disagree: the server decides, and a 409
+ * `project_cascade_confirm` carries the membership as it is now.
+ */
+interface CascadeQuestion {
+  repository: Repository;
+  projectId: string;
+  projectName: string;
+  memberCount: number;
+  repositories: string[];
+}
 
 interface StatProps {
   label: string;
@@ -74,6 +90,7 @@ export function Dashboard() {
   const [loadError, setLoadError] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Repository | null>(null);
+  const [cascade, setCascade] = useState<CascadeQuestion | null>(null);
   const [highlighted, setHighlighted] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -143,16 +160,78 @@ export function Dashboard() {
     }, 0);
   };
 
+  /**
+   * Remove asks one of two questions, and which one is decided before any
+   * request is made.
+   *
+   * A repository in no project gets Phase 2's dialog. A project member gets
+   * the cascade dialog straight away, built from this list — sending the plain
+   * DELETE first and waiting for the 409 would show one dialog, then a second
+   * one about something much larger, which is two confirmations for one click
+   * and the wrong one first. The server stays the authority either way: a
+   * stale list is answered with a 409 that re-opens the dialog with the truth.
+   */
+  const requestDelete = (repository: Repository) => {
+    const group = repository.project;
+    if (!group) {
+      setPendingDelete(repository);
+      return;
+    }
+    const members = repositories.filter((row) => row.project?.id === group.id);
+    setCascade({
+      repository,
+      projectId: group.id,
+      projectName: group.name,
+      memberCount: members.length,
+      repositories: members.map((row) => row.fullName).sort(),
+    });
+  };
+
   const confirmDelete = async () => {
     if (!pendingDelete) return;
     const target = pendingDelete;
     setPendingDelete(null);
     try {
-      await deleteRepository(target.id);
+      const result = await deleteRepository(target.id);
+      if (result.outcome === "confirm-required") {
+        // Grouped since this list was loaded. Nothing was deleted; ask the
+        // question that actually applies.
+        setCascade({ repository: target, ...withoutOutcome(result) });
+        return;
+      }
       setRepositories((current) => current.filter((r) => r.id !== target.id));
       setNotice(`${target.fullName} is no longer monitored.`);
     } catch {
       setNotice(`We couldn't remove ${target.fullName}. Please try again.`);
+    }
+  };
+
+  const confirmCascade = async () => {
+    if (!cascade) return;
+    const question = cascade;
+    setCascade(null);
+    try {
+      // The project's id, not `true`: the server deletes the group this dialog
+      // named, or refuses if the group has changed (`docs/decisions.md` §10.3).
+      const result = await deleteRepository(question.repository.id, question.projectId);
+      if (result.outcome === "confirm-required") {
+        setCascade({ repository: question.repository, ...withoutOutcome(result) });
+        setNotice(
+          "That project changed after the dialog opened, so nothing was removed. Check the repositories it names now.",
+        );
+        return;
+      }
+      setRepositories((current) =>
+        current.filter((r) => r.project?.id !== question.projectId),
+      );
+      setNotice(
+        `${question.projectName} and its ${question.memberCount} repositories are no longer monitored.`,
+      );
+      // The list above is this tab's idea of the membership; the server's is
+      // what was deleted. Re-read rather than trust the filter.
+      void load();
+    } catch {
+      setNotice(`We couldn't remove ${question.projectName}. Please try again.`);
     }
   };
 
@@ -369,22 +448,11 @@ export function Dashboard() {
           </p>
         </div>
       ) : (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(345px, 1fr))",
-            gap: 16,
-          }}
-        >
-          {repositories.map((repository) => (
-            <RepoCard
-              key={repository.id}
-              repository={repository}
-              highlighted={highlighted === repository.id}
-              onDelete={setPendingDelete}
-            />
-          ))}
-        </div>
+        <RepositoryGroups
+          repositories={repositories}
+          highlighted={highlighted}
+          onDelete={requestDelete}
+        />
       )}
 
       <AddRepoDialog
@@ -407,6 +475,203 @@ export function Dashboard() {
         onCancel={() => setPendingDelete(null)}
         onConfirm={() => void confirmDelete()}
       />
+
+      {/* §10 Phase 10's project-aware delete confirmation. It names every
+          repository that will go, because "all N" is a number and a reader
+          can only check a number against names. */}
+      <ConfirmDialog
+        open={cascade !== null}
+        title={
+          cascade
+            ? `Remove all ${cascade.memberCount} repositories in ${cascade.projectName}?`
+            : ""
+        }
+        body={cascade ? cascadeBody(cascade) : ""}
+        cancelLabel="Keep monitoring"
+        confirmLabel={cascade ? `Remove all ${cascade.memberCount}` : "Remove"}
+        onCancel={() => setCascade(null)}
+        onConfirm={() => void confirmCascade()}
+      />
     </main>
+  );
+}
+
+/**
+ * The cascade dialog's body, as one finished paragraph (§6.7).
+ *
+ * The last sentence is the part that makes it a fair question: the reader who
+ * wanted to remove one repository has a way to do that, and the dialog says
+ * where it is rather than only offering the larger deletion.
+ */
+export function cascadeBody(question: {
+  repository: { fullName: string };
+  projectName: string;
+  memberCount: number;
+  repositories: string[];
+}): string {
+  const others = question.memberCount - 1;
+  return (
+    `${question.repository.fullName} is part of the project ${question.projectName}, ` +
+    `with ${others} other ${others === 1 ? "repository" : "repositories"}. ` +
+    `A project can't shrink to one repository, so removing it removes all ` +
+    `${question.memberCount}: ${joinNames(question.repositories)}. Their scans and ` +
+    `reports are deleted; your permanent scan history is kept. To keep the ` +
+    `others, ungroup the project on the Projects page instead.`
+  );
+}
+
+function joinNames(names: string[]): string {
+  if (names.length <= 1) return names.join("");
+  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}
+
+function withoutOutcome(result: {
+  projectId: string;
+  projectName: string;
+  memberCount: number;
+  repositories: string[];
+}) {
+  return {
+    projectId: result.projectId,
+    projectName: result.projectName,
+    memberCount: result.memberCount,
+    repositories: result.repositories,
+  };
+}
+
+/**
+ * §10 Phase 10's "dashboard grouping": one section per project, then the
+ * repositories in none.
+ *
+ * An account with no projects renders exactly the grid it always has, with no
+ * section heading over it — a heading reading "Independent" above every
+ * repository someone owns would be naming a distinction they have not made.
+ */
+function RepositoryGroups({
+  repositories,
+  highlighted,
+  onDelete,
+}: {
+  repositories: Repository[];
+  highlighted: string | null;
+  onDelete: (repository: Repository) => void;
+}) {
+  const groups = new Map<string, { project: ProjectRef; members: Repository[] }>();
+  for (const repository of repositories) {
+    if (!repository.project) continue;
+    const group = groups.get(repository.project.id) ?? {
+      project: repository.project,
+      members: [],
+    };
+    group.members.push(repository);
+    groups.set(repository.project.id, group);
+  }
+  const independent = repositories.filter((repository) => !repository.project);
+
+  const grid = (rows: Repository[]) => (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(345px, 1fr))",
+        gap: 16,
+      }}
+    >
+      {rows.map((repository) => (
+        <RepoCard
+          key={repository.id}
+          repository={repository}
+          highlighted={highlighted === repository.id}
+          onDelete={onDelete}
+        />
+      ))}
+    </div>
+  );
+
+  if (groups.size === 0) return grid(repositories);
+
+  const ordered = [...groups.values()].sort(
+    (a, b) =>
+      a.project.name.localeCompare(b.project.name) ||
+      a.project.id.localeCompare(b.project.id),
+  );
+
+  return (
+    <div style={{ display: "grid", gap: 28 }}>
+      {ordered.map(({ project, members }) => (
+        <section
+          key={project.id}
+          data-testid="project-group"
+          data-project-id={project.id}
+          aria-label={`Project ${project.name}`}
+        >
+          <GroupHeading
+            kicker="Project"
+            title={project.name}
+            note={`${members.length} repositories · a report on any of them names what it shares with the others`}
+            action={
+              <Link to="/projects" className="btn btn-ghost" style={{ height: 28, fontSize: 12.5 }}>
+                Manage
+              </Link>
+            }
+          />
+          {grid(members)}
+        </section>
+      ))}
+      {independent.length > 0 && (
+        <section data-testid="independent-group" aria-label="Repositories in no project">
+          <GroupHeading
+            kicker="Independent"
+            title="Not in a project"
+            note={`${independent.length} ${independent.length === 1 ? "repository" : "repositories"}`}
+          />
+          {grid(independent)}
+        </section>
+      )}
+    </div>
+  );
+}
+
+function GroupHeading({
+  kicker,
+  title,
+  note,
+  action,
+}: {
+  kicker: string;
+  title: string;
+  note: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "space-between",
+        gap: 12,
+        flexWrap: "wrap",
+        marginBottom: 12,
+        paddingBottom: 8,
+        borderBottom: "1px solid var(--color-divider)",
+      }}
+    >
+      <div style={{ minWidth: 0 }}>
+        <div
+          style={{
+            fontSize: 10,
+            letterSpacing: ".15em",
+            textTransform: "uppercase",
+            color: "var(--color-accent)",
+          }}
+        >
+          {kicker}
+        </div>
+        <h3 style={{ margin: "2px 0 0", fontSize: 21 }}>{title}</h3>
+        <div className="text-muted" style={{ fontSize: 12, marginTop: 2 }}>
+          {note}
+        </div>
+      </div>
+      {action}
+    </div>
   );
 }
