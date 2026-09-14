@@ -3451,3 +3451,256 @@ being moved.
 leave it in: it is what a repository looks like the moment before somebody
 presses Generate, and Phase 10's sibling-notice work will want to generate into
 a fresh scan anyway.
+
+---
+
+## Phase 10 — Projects + trends
+
+§10 Phase 10 groups a user's repositories into projects, puts the one
+cross-repository signal the product can verify into its reports — which sibling
+shares a package, and what that sibling's own scan found — beside a sentence
+about what it cannot see, and charts the permanent scan record. One migration
+(`repositories.0002_project`); no new environment variable, no new dependency.
+
+### 10.1 Membership has one writer
+
+§5.1 puts membership in `repositories.project_id` and leaves the two rules that
+matter — at least two members, all owned by the requester — to "the service
+layer at creation". `apps/repositories/projects.py` is that layer, and the only
+code that writes `project_id`. That is what makes §5.1's inference true ("a
+non-empty `project_id` therefore implies same-user siblings exist by
+construction"), and §10.5's notice reads one repository's scan into another's
+report on the strength of it.
+
+Three refusals a length check would wave through, each with a case: `[a, a]` is
+a project of one, so ids are collapsed (case-insensitively) before the size
+rule; a malformed id is an id that names nothing; and a repository already in a
+project is refused rather than moved, because moving it could leave its old
+project with a single member — the state §10.3 exists to prevent from the other
+side.
+
+### 10.2 A foreign id in a request body gets the missing-id answer
+
+§11's BOLA rule is written about ids in paths, but the leak is the same in a
+body: "that repository belongs to someone else" confirms it exists. So an id
+this user does not own and an id that names nothing are one outcome,
+`project_repository_unknown`, and the test asserts the two bodies are identical
+rather than merely both refusals. The size rule runs first, so a single foreign
+id is refused as a project of one and never prompts a lookup.
+
+### 10.3 A cascade is confirmed with the project's id, not with `true`
+
+§10: deleting a repository in a multi-repo project answers 409
+`project_cascade_confirm` with counts; the confirmed request deletes every member
+and the project row. §9.1 confirmed a destructive rescan with `{confirm: true}`,
+and the same shape has a hole here. The dialog asks "remove these N
+repositories?", and between the dialog and the click another tab can ungroup the
+project and regroup this repository with something else. Under a boolean, that
+click deletes a repository the reader never saw named.
+
+So the confirmation is `?confirm=<projectId>`. Membership is re-read and locked
+inside the transaction that deletes it, and any value that is not the current
+project's id — `true`, `1`, `yes`, another project, the empty string — is
+answered with a fresh 409 naming the group as it is *now*. A test builds the
+regroup sequence exactly. Checked the §3.13 way: with `_project_id` patched to
+accept any non-empty value, six of the file's tests fail, that one among them.
+
+A query parameter rather than a body, because RFC 9110 §9.3.5 gives DELETE
+content no defined semantics and an intermediary may drop it — which would turn
+a confirmed cascade into a refusal on every retry.
+
+The frontend asks before it sends anything. A member's Remove opens the cascade
+dialog straight from the dashboard's own list, naming every repository that will
+go; sending the plain DELETE first and waiting for the 409 would ask the small
+question and then the large one. The server stays the authority: a stale list's
+409 re-opens the dialog with the server's membership, and nothing was removed.
+
+### 10.4 Deleting a project ungroups; deleting a member is the cascade
+
+`project_id` is ON DELETE SET NULL, so `DELETE /api/projects/{id}/` removes the
+grouping and nothing else — no repository, scan, report or history row. That
+route is what makes §10.3's cascade a fair question rather than an ultimatum: the
+reader who wanted to remove one repository has a way to, and the cascade
+dialog's last sentence says where it is.
+
+A project of one is unreachable through `create_project`. If a hand-edited row
+ever produces one, deleting its member deletes it too, without a question: a
+group nobody agreed to has nothing to confirm.
+
+### 10.5 The sibling notice is computed, and never reaches the prompt
+
+Every line is assembled in `apps/reports/project_context.py` from stored
+occurrence rows. None of it is sent to the model. A sibling's scan is a
+measurement of a *different* repository: asking the model to restate it invites
+restating it wrong (§7.1), and it would put a second repository's dependency
+list into a request about the first. The remediation graph's test asserts that
+neither the sibling's name nor the project's appears in anything the model is
+sent.
+
+Same-owner data is checked again where it is read, not only at creation: a
+stranger's repository forced into the project with a raw UPDATE never appears in
+a line or in the list of siblings. "A sibling's latest scan" is its newest
+*completed* scan — a running or failed one has no finished measurement to
+compare against — and a sibling with none is named as not compared (§10.8).
+
+### 10.6 The notice is a snapshot, taken before the model runs
+
+The context is built at the start of `run_combined` and in the graph's first
+node, `load_context`, and stored with the report. A sibling rescanned next week
+does not rewrite what this report said; a report is an interpretation of one
+moment, which is why it dies with its scan (§5.7). Building it *before* the
+model call means a fault building it fails the report before anything is spent.
+Checked by moving the build after `generate` in a scratch copy: the guard test
+fails on `assert 1 == 0` — one model call, billed for a report that then failed.
+
+Two consequences, both deliberate and both stated in the product. A report
+generated before its repository was grouped carries no context. And ungrouping
+does not strip notices from reports already generated — the ungroup dialog says
+exactly that.
+
+### 10.7 What a line says
+
+Each line states what the sibling's *own* scan found — "flagged too", "not
+flagged", "could not be assessed" — as one sentence built once in the backend,
+rendered verbatim by the panel and printed verbatim by the markdown download.
+§6.7: a sentence assembled in two places is two places for the join to break.
+
+The wireframe's notice said "A fix here should be applied there too." That is
+false about a sibling that has already upgraded, and the product has no way to
+know which case it is in beyond what the sibling's scan measured. So the line
+says the measurement. Within one package and one sibling, lines are ordered
+flagged, then unassessable, then clean (§10.12).
+
+### 10.8 The scope sentence is unconditional; the notice is not
+
+§10: the notice "appears exactly when warranted". A line exists only for a
+package a sibling's latest scan really shares. But the *absence* of a line is
+ambiguous on its own — it reads identically whether the siblings were compared
+and share nothing, or were never compared at all. §4.7 is the same defect on the
+score badge.
+
+So every project member's report carries `comparison_text` — what was compared,
+naming any sibling without a completed scan — followed by the disclaimer, in one
+quiet paragraph under the loud notice: the mentor demo's "in the same breath".
+The stored row carries only the flag §5.1 specifies; the sentence is one
+constant, resolved by the API and by both downloads.
+
+### 10.9 The history endpoint: live rows by a positive filter, keyed on GitHub's ids
+
+`GET /api/repositories/{id}/history/` reads through
+`apps.research.history.live_history_for`, §3's one sanctioned import of the
+research app from request-handling code.
+
+The filter names `live_scan` rather than excluding the other value. That other
+value is still `backfill` in `apps/research/models.py`, while File A's §5.1 now
+reads `corpus_scan`; the rename belongs to Phase 11, whose command is the only
+thing that will ever write it. The test is parametrized over every `DataSource`
+value that is not `live_scan`, so the rename cannot slip past it.
+
+Rows are matched on `github_repo_id` and the owner's `github_user_id`, not on the
+registration. `scan_history` has no foreign key (D9), and that is what lets the
+chart survive a repository being removed and registered again; the user id
+keeps two people tracking one repository out of each other's charts. At most
+200 points, newest kept, with the total beside them.
+
+Phase 9's `test_no_route_reaches_the_research_tables` said in its docstring that
+Phase 10 would have to name this endpoint, and it went red when the route
+landed. It now asserts the set of such routes *equals* `{"repository-history"}`,
+plus a second test that the view has no write handler.
+
+### 10.10 The chart says what its axes and bands mean
+
+Spaced by scan, not by date: rescans are bursty, and a time axis would stack an
+afternoon's three into one dot. The caption says so. Bands come from each
+formula version's own weights-file thresholds, which the endpoint sends; where a
+file is unavailable no bands are drawn and the caption says why — a band from a
+hard-coded 80 would be a claim about a formula the page does not know, and §5.4
+makes the thresholds calibration parameters. Dots are coloured by the
+classification stored on each row, never recomputed from the bands. A dashed
+marker sits where the scoring formula changed (D5), because a step there is a
+change in the ruler, not in the repository.
+
+The panel renders once a completed scan exists and re-reads when the completed
+scan changes identity, which is the only moment a new point can exist.
+
+### 10.11 API additions to §5.5
+
+```
+POST   /api/projects/                    201 | 400 | 409 | 422
+GET    /api/projects/                    200
+GET    /api/projects/{id}/               200 | 404
+DELETE /api/projects/{id}/               204 | 404          ungroup
+DELETE /api/repositories/{id}/           + 409 project_cascade_confirm   ?confirm=<projectId>
+GET    /api/repositories/{id}/history/   200 | 404          live rows only
+```
+
+Repository rows gain `project: {id, name} | null`. Report rows gain
+`projectContext` (null for a repository in no project); the JSON download gains
+`project_context`, and the markdown download a `## Project context` section
+after the fixes.
+
+Additions to §9.12's error taxonomy:
+
+| `code` | HTTP | Where | What it means, and what follows |
+|---|---|---|---|
+| `project_name_required` | 400 | create project | No name, or only whitespace. |
+| `project_name_too_long` | 400 | create project | Over 80 characters. |
+| `project_too_small` | 422 | create project | Fewer than two *distinct* repositories. |
+| `project_repository_unknown` | 422 | create project | An id that is not one of yours. Foreign and missing are deliberately the same answer (§10.2). |
+| `repository_in_project` | 409 | create project | Already grouped; body carries `repositoryIds`. Ungroup that project first. |
+| `project_cascade_confirm` | 409 | delete repository | **Phase 10.** A project member. Body carries `projectId`, `projectName`, `memberCount`, `otherCount`, `repositories`; re-send with `?confirm=<projectId>` (§10.3). |
+
+### 10.12 What the browser check found
+
+Measured through the real backend against a seeded local stack: a three-repository
+project with one member that never finished a scan, two independent
+repositories, and four live history points across a `v0_equal` -> `v1` change,
+plus one non-live row seeded at 3.00 that must never reach the chart.
+
+What held:
+
+- **The cascade dialog**, at 1000x520 scrolled to the bottom — §7.9.1's viewport —
+  sat at top 135 / bottom 385 of 520 with the backdrop covering the viewport,
+  and its paragraph read as written, naming all three repositories. Escape
+  removed nothing.
+- **The cascade itself.** Confirming removed all three members and the project,
+  and the dashboard returned to its ungrouped grid. In the database afterwards,
+  all eight `scan_history` rows and their `dependency_history` rows were still
+  there, and both of the removed member's reports were gone. §10's "history
+  intact" was observed directly, not inferred from a shared transaction as
+  §9.16 had to.
+- **The chart** drew exactly the four live points (the 3.00 row absent), one
+  marker at `v1`, and the bands and caption as written.
+- **The Projects page**: create -> notice -> new card -> "every repository you
+  monitor is already in a project"; the ungroup dialog on screen, its notice,
+  and both repositories offered again.
+- **The notice in the remediation drawer** sat exactly inside the answer column
+  (199 -> 718).
+- Every GET appeared twice in development. That is `React.StrictMode`'s double
+  mount, established in §5.11, not a second loop.
+
+Two defects, both fixed:
+
+1. **The flagged line printed second.** The Reports tab read "lodash is also a
+   dependency of web (client/package.json, 4.17.21), where it is not flagged."
+   above "...(package.json, 4.17.15), where it is flagged too." Lines were sorted
+   by manifest path. The test for one package in two manifests asserted exactly
+   that order, and passed: it had been written from the order the code produced
+   rather than from the order a reader needs. Lines now read flagged, then
+   unassessable, then clean within one package and one sibling, and the test
+   covers all three.
+2. **The chart floated in its panel.** `maxHeight: 240` on an SVG that has a
+   `viewBox`: the browser meets the height and centres the drawing, so at 1280px
+   the plot ran 235 -> 1051 inside an 89 -> 1175 box — a hundred empty pixels
+   either side, under a caption starting at the left edge. jsdom has no layout
+   and could not see it. With the cap removed the plot runs 144 -> 1148, and at
+   700px the page still does not scroll sideways.
+
+And a trap in the local tooling, recorded for the next check. The browse server
+must run with the `DJANGO_SECRET_KEY` the seed script signed its session with.
+Without it, `backend/.env`'s key applies, the seeded session fails its signature
+("Session data corrupted"), and the server answers with an anonymous HttpOnly
+session cookie that no JavaScript-written cookie can then replace — the page
+bounces to `/login` exactly as §9.13 described. The way out was to write the
+seeded user's login into every existing session row, whatever key the browser
+already held.
