@@ -173,6 +173,102 @@ def ungroup_project(project: Project) -> int:
     return count
 
 
+def delete_repository(repository: Repository, *, confirm) -> int:
+    """Delete one repository - or, for a project member, the whole project.
+
+    §10 Phase 10: "deleting a repo in a multi-repo project -> 409
+    `project_cascade_confirm` + counts; confirm deletes **all** member repos
+    (normal operational cascades) + the project row (a project cannot shrink to
+    one member); history/traces persist." Returns how many repositories went.
+
+    **The confirmation is the project's id, not `true`** (`docs/decisions.md`
+    §10.3). A boolean answers "delete?"; the dialog asked "delete these N
+    repositories?", and between the dialog and the click another tab can
+    ungroup the project and regroup this repository with something else. Under
+    a boolean that click would delete a repository the reader never saw named.
+    Under an id it is refused, and the refusal names the group that exists now.
+
+    **History and traces persist without doing anything here.** `scan_history`,
+    `dependency_history` and `agent_execution_traces` have no foreign key into
+    the operational schema (D9), so the cascade below cannot reach them.
+    """
+    with transaction.atomic():
+        # Read and locked inside the transaction: the membership this decides
+        # on has to be the membership it deletes.
+        current = (
+            Repository.objects.select_for_update()
+            .select_related("project")
+            .filter(pk=repository.pk)
+            .first()
+        )
+        if current is None:
+            # A concurrent request deleted it between the lookup and here.
+            return 0
+
+        project = current.project
+        if project is None:
+            current.delete()
+            return 1
+
+        members = list(
+            Repository.objects.select_for_update().filter(
+                project=project, user_id=current.user_id
+            )
+        )
+        if len(members) < MIN_MEMBERS:
+            # Unreachable through `create_project`, which is the only writer
+            # of `project_id`. A project of one is not a group anyone agreed
+            # to, so there is nothing to ask about: it goes with its member.
+            current.delete()
+            project.delete()
+            return 1
+
+        if _project_id(confirm) != project.pk:
+            others = len(members) - 1
+            raise ProjectRejected(
+                "project_cascade_confirm",
+                f"{current.full_name} is part of the project {project.name} with "
+                f"{others} other {'repository' if others == 1 else 'repositories'}. "
+                "A project can't shrink to one repository, so removing it removes "
+                f"all {len(members)}, with their scans and reports.",
+                status.HTTP_409_CONFLICT,
+                # camelCase like every other `extra` on this API (§9.11).
+                extra={
+                    "projectId": str(project.pk),
+                    "projectName": project.name,
+                    "memberCount": len(members),
+                    "otherCount": others,
+                    # Sorted here rather than by the database: Postgres
+                    # collation ignores punctuation, so "a-b/x" and "ab/x"
+                    # order differently there than in the dialog's own sort.
+                    "repositories": sorted(member.full_name for member in members),
+                },
+            )
+
+        Repository.objects.filter(pk__in=[member.pk for member in members]).delete()
+        project.delete()
+
+    logger.info(
+        "Deleted project %s and its %d repositories on confirmation.",
+        project.pk,
+        len(members),
+    )
+    return len(members)
+
+
+def _project_id(value) -> uuid.UUID | None:
+    """The project a confirmation names, or None when it names none.
+
+    Strict on purpose, for §9.2's reason: `true`, `1` and `yes` are not ids, and
+    a destructive confirmation is the one place this API refuses to guess what a
+    value was meant to say.
+    """
+    try:
+        return uuid.UUID(str(value).strip())
+    except (ValueError, TypeError, AttributeError):
+        return None
+
+
 def _too_small() -> ProjectRejected:
     return ProjectRejected(
         "project_too_small",

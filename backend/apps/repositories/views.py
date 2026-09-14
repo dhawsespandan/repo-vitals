@@ -42,7 +42,12 @@ from apps.scanning.models import TriggerType
 from apps.scanning.views import scan_states_for
 
 from .models import Project, Repository
-from .projects import ProjectRejected, create_project, ungroup_project
+from .projects import (
+    ProjectRejected,
+    create_project,
+    delete_repository,
+    ungroup_project,
+)
 from .serializers import SCAN_STATES, ProjectSerializer, RepositorySerializer
 from .validation import DuplicateRegistration, validate_and_describe
 
@@ -153,6 +158,14 @@ class RepositoryDetailView(
     `agent_execution_traces` are never cascaded by any trigger, including
     this one. That is by design, not an oversight: those rows are denormalized
     precisely so they can outlive the live row they came from.
+
+    From Phase 10 a DELETE on a project member answers 409
+    `project_cascade_confirm` until it is re-sent with `?confirm=<projectId>`,
+    and then removes every member of the project (`projects.delete_repository`).
+    The confirmation is a query parameter rather than a body because a body on
+    DELETE has no defined meaning (RFC 9110 §9.3.5) and is exactly the kind of
+    thing an intermediary is entitled to drop - and a dropped confirmation here
+    would turn a confirmed cascade back into a refusal on every retry.
     """
 
     queryset = Repository.objects.select_related("project")
@@ -166,6 +179,14 @@ class RepositoryDetailView(
             repository, context=self.scan_context([repository])
         )
         return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        repository = self.get_object()
+        try:
+            delete_repository(repository, confirm=request.query_params.get("confirm"))
+        except ProjectRejected as rejected:
+            raise _rejected(rejected) from rejected
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 def _rejected(rejected: ProjectRejected) -> ApiError:
