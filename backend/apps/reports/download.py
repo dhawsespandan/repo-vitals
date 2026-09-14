@@ -38,6 +38,7 @@ import json
 import re
 from datetime import UTC, datetime
 
+from . import project_context
 from .models import GroundingConfidence, ReportType
 
 #: What survives into a filename. Everything else becomes `-`.
@@ -252,6 +253,34 @@ def _blockquote(text: str) -> list[str]:
     return [f"> {line}" if line else ">" for line in (text or "").splitlines()] or [">"]
 
 
+def _project_section(report) -> list[str]:
+    """Phase 10's sibling notice and scope disclaimer, inside the file.
+
+    §9.4's argument again: a downloaded file has no panel around it, so the
+    sentence saying what this report *cannot* see - integration-level risk
+    between the repositories - travels in the document or nowhere. Every
+    sentence here is the one the panel renders (`project_context.payload`).
+    """
+    context = project_context.payload(report.project_context_json)
+    if context is None:
+        return []
+
+    lines = ["## Project context", "", context["comparison_text"], ""]
+    shared = context.get("lines") or []
+    for line in shared:
+        lines.append(f"- {line['text']}")
+    omitted = int(context.get("lines_omitted") or 0)
+    if omitted:
+        lines.append(
+            f"- ...and {omitted} more shared "
+            f"{'occurrence' if omitted == 1 else 'occurrences'}, not listed."
+        )
+    if shared:
+        lines.append("")
+    lines += [f"_{context['disclaimer_text']}_", ""]
+    return lines
+
+
 def render_markdown(report) -> str:
     """The human artifact: what the drawer says, in a file that stands alone."""
     scan = report.scan
@@ -300,6 +329,11 @@ def render_markdown(report) -> str:
     else:
         lines.append("_No specific action was recommended._")
     lines.append("")
+
+    # After the fixes and before the sources: it qualifies the plan (another
+    # repository shares this problem; some risks are out of view), and the
+    # sources section is evidence for the plan rather than part of it.
+    lines += _project_section(report)
 
     if per_dependency:
         cited = _cited_chunks(report)
@@ -360,6 +394,10 @@ def render_json(report) -> dict:
         "dependency": None,
         "grounding_confidence": report.grounding_confidence,
         "citations": [],
+        # Phase 10. Provenance, like everything above §5.8's two keys: an agent
+        # holding these fixes should know the same package is flagged in a
+        # sibling, and that integration-level risk was not assessed at all.
+        "project_context": project_context.payload(report.project_context_json),
         "note": SUGGESTION_NOTE,
         # §5.8's payload, verbatim.
         "summary_md": report.summary_text,

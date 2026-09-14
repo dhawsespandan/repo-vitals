@@ -49,6 +49,10 @@ from django.utils import timezone
 from apps.scanning import background
 from apps.scanning.models import DependencyOccurrence, ScanRun, ScanStatus
 
+# The module, not the name, for §7.11's reason: the tests patch
+# `project_context.for_scan` to prove it runs before the model does.
+from . import project_context
+
 # The module, not the name — see the `background` import above and
 # `docs/decisions.md` §7.11. `graph.run` is patched by the agent tests.
 from .agent import graph as agent_graph
@@ -364,6 +368,10 @@ def run_combined(report_id) -> None:
     report.save(update_fields=["status", "updated_at"])
 
     try:
+        # Phase 10's sibling notice, taken *before* the model call: it is a
+        # snapshot of the project at generation time, and a fault building it
+        # fails the report before anything has been spent on it.
+        context = project_context.for_scan(report.scan)
         result = generate(report.scan)
     # Broad on purpose: this is the top of a background thread, so an
     # exception that escapes here is lost and the row stays `running`
@@ -375,6 +383,7 @@ def run_combined(report_id) -> None:
     report.status = ReportStatus.COMPLETED.value
     report.summary_text = result.payload["summary_md"]
     report.fixes_json = result.payload["fixes"]
+    report.project_context_json = context
     report.model_name = result.model_name
     report.error_message = None
     report.generated_at = timezone.now()
@@ -383,6 +392,7 @@ def run_combined(report_id) -> None:
             "status",
             "summary_text",
             "fixes_json",
+            "project_context_json",
             "model_name",
             "error_message",
             "generated_at",

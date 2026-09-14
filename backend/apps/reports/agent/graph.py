@@ -44,6 +44,7 @@ from apps.scanning.models import DependencyOccurrence
 from apps.scoring.engine import flag_reasons
 from apps.scoring.signals import signals_for, weights_for_scan
 
+from .. import project_context
 from ..llm.groq_client import LlmCall, active_model, complete_json, parse_content
 from ..llm.prompts import (
     GROUNDED_SYSTEM_PROMPT,
@@ -82,6 +83,9 @@ class AgentState(TypedDict, total=False):
 
     target: dict
     context: dict
+    #: Phase 10's sibling notice, or None for an independent repository.
+    #: Never read by `generate` - it is stored beside the answer, not fed to it.
+    project_context: dict | None
 
     corpus: dict
     branch: str
@@ -179,6 +183,12 @@ def load_context(state: AgentState) -> dict:
 
     return {
         "target": target,
+        # Phase 10. Built here, in the first node, so it is a snapshot taken
+        # before any fetch or model call - and so a fault building it stops the
+        # graph before `generate` spends anything. It is deliberately not part
+        # of `target`: the prompt is about this repository's dependency, and a
+        # sibling's scan is another repository's data (`project_context`).
+        "project_context": project_context.for_occurrence(occurrence),
         "context": {
             "scan_id": scan.pk,
             "repository_id": scan.repository_id,
@@ -521,6 +531,7 @@ def persist(state: AgentState) -> dict:
     report.citations_json = payload.get("citations") or []
     report.retrieved_chunks_json = retrieved
     report.grounding_confidence = state["grounding"]
+    report.project_context_json = state.get("project_context")
     report.model_name = state.get("model_name") or active_model()
     report.error_message = None
     report.generated_at = timezone.now()
@@ -532,6 +543,7 @@ def persist(state: AgentState) -> dict:
             "citations_json",
             "retrieved_chunks_json",
             "grounding_confidence",
+            "project_context_json",
             "model_name",
             "error_message",
             "generated_at",

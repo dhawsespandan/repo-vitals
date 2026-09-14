@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from rest_framework import serializers
 
+from . import project_context
 from .models import Report
 
 
@@ -52,6 +53,12 @@ class ReportSerializer(serializers.ModelSerializer):
     groundingConfidence = serializers.CharField(
         source="grounding_confidence", read_only=True
     )
+    #: Phase 10: the sibling notice and scope disclaimer this report was
+    #: generated with, or null for a repository in no project. snake_case inside,
+    #: like `retrievedChunks`, because it is stored JSON passed through - plus
+    #: the two sentences resolved (`project_context.payload`), so the panel and
+    #: the downloaded file render one wording rather than two.
+    projectContext = serializers.SerializerMethodField()
     #: Which model answered — recorded per row, so a report generated before a
     #: `GROQ_MODEL` change still names the model that wrote it.
     modelName = serializers.CharField(source="model_name", read_only=True)
@@ -72,12 +79,16 @@ class ReportSerializer(serializers.ModelSerializer):
             "citations",
             "retrievedChunks",
             "groundingConfidence",
+            "projectContext",
             "modelName",
             "errorMessage",
             "generatedAt",
             "createdAt",
         ]
         read_only_fields = fields
+
+    def get_projectContext(self, report: Report) -> dict | None:
+        return project_context.payload(report.project_context_json)
 
 
 class ReportStateSerializer(serializers.ModelSerializer):
