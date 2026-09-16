@@ -1,0 +1,113 @@
+# The corpus sampling frame (D14, §10 Phase 11).
+#
+# WP-4 runs this file:
+#
+#     python manage.py build_corpus --seed 42 --target 1000 --config corpus_frame.yaml
+#
+# It is a *design document that executes*. Every band below is a claim about
+# which populations the corpus should be able to say something about, and the
+# grid's product is the partition — 3 languages x 5 star bands x 4 pushed
+# bands x 4 created bands = 240 cells, of which the ones whose created and
+# pushed bands cannot overlap are skipped without a request.
+#
+# Editing it changes what S1's dataset represents, so a change belongs in the
+# same commit as the reason for it. The resolved frame (including the absolute
+# dates the month bands become on the run date) is copied into
+# `corpus_manifest.json`, so a corpus found on disk always carries the frame
+# that produced it even if this file has moved on.
+
+# ── language x ecosystem ───────────────────────────────────────────────────
+# §10 Phase 11 says "language {JS/TS, Python}". GitHub's `language:` qualifier
+# takes one value, and repeating the qualifier ANDs rather than ORs, so
+# JavaScript and TypeScript are two languages that share one ecosystem. That
+# is also the more useful partition: a 2015 JavaScript project and a 2023
+# TypeScript one are different populations even though npm scores both.
+languages:
+  - name: javascript
+    ecosystem: npm
+    qualifier: "language:JavaScript"
+  - name: typescript
+    ecosystem: npm
+    qualifier: "language:TypeScript"
+  - name: python
+    ecosystem: pypi
+    qualifier: "language:Python"
+
+# ── stars ──────────────────────────────────────────────────────────────────
+# §10 Phase 11's bands verbatim. The floor of 5 is deliberate: below it the
+# population is dominated by tutorial checkouts and one-commit experiments,
+# which carry dependencies nobody maintains or uses and would put noise where
+# the stale strata are supposed to put signal.
+#
+# Any band GitHub reports as holding more than `search.results_cap` is split
+# geometrically until it fits; the splits appear as their own cells.
+stars:
+  - { name: "5-20", min: 5, max: 20 }
+  - { name: "21-50", min: 21, max: 50 }
+  - { name: "51-200", min: 51, max: 200 }
+  - { name: "201-1000", min: 201, max: 1000 }
+  - { name: "1000+", min: 1001, max: null }
+
+# ── months since the last push ─────────────────────────────────────────────
+# `oversample` is D14's "deliberate oversampling of stale cells". The risky
+# dependencies this product exists to find live in repositories nobody has
+# pushed to in years, and those are rare — a proportional sample would give S1
+# almost no power exactly where it matters. The multipliers tilt the
+# allocation; `sampling_weight` on every admitted repository records the tilt
+# so a population estimate can undo it.
+pushed:
+  - { name: "lt6", min_months: 0, max_months: 6, oversample: 1.0 }
+  - { name: "6-18", min_months: 6, max_months: 18, oversample: 1.0 }
+  - { name: "18-48", min_months: 18, max_months: 48, oversample: 2.0 }
+  - { name: "gt48", min_months: 48, max_months: null, oversample: 3.0 }
+
+# ── created-year bands ─────────────────────────────────────────────────────
+# Age at creation is not the same signal as staleness: a 2014 project pushed
+# last week has accumulated a decade of dependency decisions, and a 2023 one
+# abandoned after six months has not. Both matter and the grid separates them.
+created:
+  - { name: "le2015", min_year: null, max_year: 2015 }
+  - { name: "2016-2018", min_year: 2016, max_year: 2018 }
+  - { name: "2019-2021", min_year: 2019, max_year: 2021 }
+  - { name: "2022plus", min_year: 2022, max_year: null }
+
+# ── qualifiers applied to every cell ───────────────────────────────────────
+# §10 Phase 11: `fork:false archived:false`. Applied in the query rather than
+# checked per candidate, which is both cheaper and stricter — it keeps them
+# out of `total_count` as well, so the sampling weights describe the
+# population that was actually eligible. `is:public` is not in the plan's list
+# and is implied by an unauthenticated view of GitHub; it is stated because a
+# PAT can see private repositories and the corpus must never contain one.
+qualifiers:
+  - "fork:false"
+  - "archived:false"
+  - "is:public"
+
+search:
+  # Deterministic ordering. `best-match` is GitHub's relevance function and is
+  # neither stable nor documented, which would make "the first 1,000 results"
+  # of a capped cell a different set on every run.
+  sort: stars
+  order: desc
+  per_page: 100
+  # §8's hard cap. Lowering it is useful in a test; raising it does nothing,
+  # because the API stops answering past 1,000 whatever this says.
+  results_cap: 1000
+
+verification:
+  # How many packages to ask a registry about before concluding that nothing
+  # in this repository is registry-resolvable. The check ends at the first
+  # success; a repository whose first three dependencies are all unknown to
+  # the registry is not one this corpus wants.
+  registry_probe_limit: 3
+
+admission:
+  # §10 Phase 11 expects ~50% admission and says to oversample candidates.
+  # 2.5x rather than 2x leaves headroom for the dedup discards, which are not
+  # in that 50% — they depend on how much scaffolding a cell happens to hold.
+  candidate_multiplier: 2.5
+  # D14: roughly 500/500. The split is by ecosystem, not by language, so npm's
+  # half is divided across the JavaScript and TypeScript cells.
+  ecosystem_share:
+    npm: 0.5
+    pypi: 0.5

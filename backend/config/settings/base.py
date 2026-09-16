@@ -91,7 +91,7 @@ TEMPLATES = [
 
 # ── Database ───────────────────────────────────────────────────────────────
 # One URL, three contexts (D8): dev Docker Postgres, Supabase in prod, and the
-# teammate's research Postgres for corpus/backfill commands.
+# teammate's research Postgres for the corpus commands.
 DATABASES = {"default": env.db("DATABASE_URL")}
 DATABASES["default"].setdefault("CONN_MAX_AGE", 60)
 # Fail fast instead of hanging for the driver default: a background scan
@@ -185,6 +185,23 @@ GROQ_API_KEY = env("GROQ_API_KEY", default="")
 # what D11 actually requires: temperature 0 and JSON mode. Verified end to end
 # (`docs/decisions.md` §7.12).
 GROQ_MODEL = env("GROQ_MODEL", default="openai/gpt-oss-120b")
+
+# ── Research (§6, Phase 11) ────────────────────────────────────────────────
+# The PAT the corpus commands read public repositories with. `public_repo`
+# scope and nothing more.
+#
+# "research commands only; never used for user-facing scans" is §6's wording
+# and it is structural rather than a convention: only `apps/research/` reads
+# this setting, there is no view that could, and `tests/test_hardening.py`
+# fails the moment a module outside that package names it. A token carrying a
+# thousand repositories of hourly quota must not be spendable by an HTTP
+# request — a scan spends the signed-in user's own token, which is what makes
+# §8's per-token budget a per-user budget.
+#
+# Empty is a valid configuration: every phase before 11 runs without one, CI
+# has none, and the commands refuse with a sentence naming the variable rather
+# than failing at the first call.
+GITHUB_API_PAT = env("GITHUB_API_PAT", default="")
 
 # ── Retrieval (§6, Phase 8) ────────────────────────────────────────────────
 # Where the embedded Chroma collections live. A *cache*, not storage: §5.9
