@@ -1,0 +1,17 @@
+# Research-only dependencies (Phase 11 onward).
+#
+# **Never installed on Render.** The web service installs `requirements.txt`
+# and nothing else, and §8's 512 MB tier is already holding Django, a
+# connection pool, the scan threads and — once a per-dependency report is
+# generated — fastembed's ~180 MB ONNX model (§8.9). matplotlib plus its NumPy
+# dependency is ~50 MB of import that no request path would ever reach.
+#
+# Installed by `requirements-dev.txt`, so CI has it and the corpus-figure tests
+# run for real rather than being skipped, and by the research machine that runs
+# `corpus_report`.
+
+-r requirements.txt
+
+# `corpus_report`'s two PNGs (§10 Phase 11). Imported inside the function that
+# draws them, so every other research command runs without it.
+matplotlib>=3.9,<4.0
