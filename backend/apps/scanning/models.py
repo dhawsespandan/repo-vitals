@@ -412,7 +412,7 @@ class DependencyVulnerability(models.Model):
     cvss_score = models.DecimalField(
         max_digits=3, decimal_places=1, null=True, blank=True
     )
-    # D17: the backfill engine's as-of filter needs the disclosure date, and it
+    # D17: the research needs the disclosure date as a covariate, and it
     # cannot be recovered later for an advisory that has since been edited.
     published_at = models.DateTimeField(null=True, blank=True)
 

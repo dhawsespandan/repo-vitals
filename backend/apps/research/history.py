@@ -86,8 +86,9 @@ def record_scan(scan: ScanRun) -> ScanHistory:
         ),
         scoring_formula_version=scan.scoring_formula_version,
         data_source=DataSource.LIVE_SCAN.value,
-        # NULL: a live scan has no month-end grid to snap to, and inventing one
-        # would let a backfill query silently pick up product rows.
+        # NULL on both: a live scan has no sampling frame behind it and no
+        # as-of date other than `scanned_at`. Inventing either would let a
+        # corpus query silently pick up product rows.
         snapshot_date=None,
         sampling_weight=None,
         scanned_at=scan.completed_at or timezone.now(),
@@ -142,7 +143,8 @@ def live_history_for(repository) -> tuple[list[ScanHistory], int]:
     **`live_scan` rows only, by a positive filter.** §10: "corpus rows must never
     pollute the product chart". The filter names the source it wants rather
     than excluding the one it does not, so a `data_source` added later - or the
-    `backfill` value being renamed - cannot leak into a user's chart by default.
+    `corpus_scan` value being renamed again - cannot leak into a user's chart
+    by default.
 
     **Matched on GitHub's ids, not on the registration.** `scan_history` has no
     foreign key (D9), and that is what makes this chart survive a repository

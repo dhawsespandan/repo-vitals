@@ -31,8 +31,8 @@ ones.** §5.1 is explicit and the reason is statistical: hazard models need the
 at-risk denominator, not just the events. A history containing only bad rows
 can tell you how many packages went bad and never what fraction that was.
 
-`data_source` separates live product scans from Phase 11's reconstructed
-monthly snapshots, which land in a different database entirely (D8) using these
+`data_source` separates live product scans from Phase 11's corpus
+cross-section, which lands in a different database entirely (D8) using these
 same models — one schema, three contexts, selected by `DATABASE_URL`.
 """
 
@@ -54,15 +54,26 @@ from apps.scanning.models import (
 class DataSource(models.TextChoices):
     """Where a history row came from (D14, D17).
 
-    `backfill` rows are reconstructed as-of a month-end grid from the registry
-    and OSV publication dates; `live_scan` rows are what a user's scan actually
-    observed on the day. WP-10's agreement report exists precisely because the
-    two are not interchangeable, so the column that tells them apart is not
-    optional.
+    `live_scan` rows are what a signed-in user's scan observed on the day, in
+    the product's own database. `corpus_scan` rows are Phase 11's research
+    cross-section: a repository nobody registered, scanned once as of the run
+    date, in a different database entirely (D8).
+
+    The two are not interchangeable and must never be pooled by accident. A
+    corpus row carries a `sampling_weight` and a `snapshot_date` and describes
+    a repository its owner has never heard of; a live row carries neither and
+    describes one somebody asked about. Every product read filters
+    *positively* on `live_scan` for that reason (`history.live_history_for`).
+
+    The value was `backfill` until Phase 11. That name belonged to a monthly
+    reconstruction engine which was cut with the longitudinal study on
+    2026-09-09; D14 now reads "each admitted repo is scanned once, as-of the
+    run date — the corpus is a cross-section, not a time series", and the
+    column says so.
     """
 
     LIVE_SCAN = "live_scan", "Live scan"
-    BACKFILL = "backfill", "Backfill"
+    CORPUS_SCAN = "corpus_scan", "Corpus scan"
 
 
 class ScanHistory(models.Model):
@@ -96,10 +107,13 @@ class ScanHistory(models.Model):
     data_source = models.TextField(
         choices=DataSource.choices, default=DataSource.LIVE_SCAN
     )
-    #: The month-end a backfill row reconstructs. NULL for a live scan, whose
-    #: date is simply `scanned_at` — there is no grid to snap to.
+    #: The as-of date a corpus row was scanned on (D14). NULL for a live scan,
+    #: whose date is simply `scanned_at` — there is no frame to snap to, and
+    #: inventing one would let a corpus query silently pick up product rows.
     snapshot_date = models.DateField(null=True, blank=True)
-    #: Corpus stratification weight (D14). NULL outside the backfill corpus.
+    #: Corpus stratification weight (D14): how many repositories in the
+    #: sampling frame this one stands for. NULL for every live scan, which was
+    #: not sampled from anything.
     sampling_weight = models.DecimalField(
         max_digits=12, decimal_places=6, null=True, blank=True
     )

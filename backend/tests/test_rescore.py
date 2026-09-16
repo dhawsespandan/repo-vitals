@@ -174,12 +174,12 @@ class TestRescore:
             dependency_count=0,
             flagged_dependency_count=0,
             scoring_formula_version="v1",
-            data_source=DataSource.BACKFILL.value,
+            data_source=DataSource.CORPUS_SCAN.value,
             snapshot_date=timezone.now().date(),
             scanned_at=timezone.now(),
         )
 
-        run(tmp_path, source="backfill")
+        run(tmp_path, source=DataSource.CORPUS_SCAN.value)
 
         assert [
             row["repo_full_name"] for row in rows_of(tmp_path / "panel_repositories.csv")

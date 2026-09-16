@@ -22,9 +22,9 @@ carry no severity at all, which is a much smaller set than "advisories whose
 score is not a plain number in the JSON".
 
 Everything is stored as observed. `published_at` in particular is D17's
-"cheap now, impossible later": the backfill engine's as-of filter needs to
-know when an advisory was *disclosed*, and an advisory edited two years from
-now will not tell you what it said today.
+"cheap now, impossible later": the research needs to know when an advisory was
+*disclosed*, and an advisory edited two years from now will not tell you what
+it said today.
 """
 
 from __future__ import annotations

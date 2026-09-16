@@ -19,7 +19,7 @@ Nothing here is user-facing: no route, no serializer, no import from
 request-handling code (§3, and the same discipline D13 puts around issue
 search). It reads the permanent tables in whichever database `DATABASE_URL`
 points at — prod's Supabase for live-scan rows, the teammate's research
-Postgres for backfill (D8).
+Postgres for corpus rows (D8).
 
     python manage.py rescore --weights v1 --out ../research_data/exports/v1
     python manage.py rescore --weights v0_equal --out /tmp/naive --source live_scan
@@ -93,7 +93,8 @@ REPOSITORY_COLUMNS = [
 ]
 
 #: Snapshots are streamed a chunk at a time. The research database holds a few
-#: million `dependency_history` rows after Phase 11's backfill (D8), and this
+#: forty thousand `dependency_history` rows after Phase 11's corpus scan (D8),
+#: and this
 #: command has to run on the teammate's laptop.
 CHUNK = 500
 
