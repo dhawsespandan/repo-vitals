@@ -3762,3 +3762,406 @@ about how little changed, and the dots' tooltips and the accessible label carry
 the exact numbers. Scaling the y axis to the data would make small moves visible
 and would also make them look large; that trade is left for whoever next looks
 at the demo, and noted here rather than built (§12).
+
+---
+
+## Phase 11 — Research I: corpus builder + corpus scan engine
+
+§10 Phase 11 builds the two engines that create S1/S3's dataset: a reproducible
+~1,000-repository sampling frame, and one scored scan of every admitted
+repository. Code here; the runs are File B's WP-4 and WP-5. One migration
+(`research.0003_corpus_scan_data_source`), one new environment variable
+(`GITHUB_API_PAT`), and one new dependency that Render never installs
+(matplotlib, via `requirements-research.txt`).
+
+Every command runs against the research database (D8) and writes only §5.1's
+permanent tables (D10) — which is enforced at the database cursor rather than
+reviewed at the diff (§11.6).
+
+### 11.1 The corpus measures the shipped formula, and that is a property of the imports
+
+§10 Phase 11 states the point in a sentence: "The adapter-and-scorer identity
+with the product is the point: it is what lets S1 claim the corpus measures the
+shipped formula rather than a research reimplementation of it."
+
+A claim like that is worth nothing if it is made by two copies of the same
+logic, because the two copies will eventually differ and nothing will say when.
+So `apps/research/corpus_scan.py` contains no parsing, no registry logic, no
+severity arithmetic and no formula. It calls, in order:
+
+    adapters.adapter_for_path -> adapter.parse -> scanner.enrich_from_registries
+      -> scanner.enrich_from_osv -> scanner.derive_signals
+      -> scoring.score_occurrence / is_flagged -> scoring.roll_up / classify
+
+Every one of those is the function `run_scan` calls. Making that possible took
+three small extractions in `scanner.py`, all behaviour-preserving:
+
+- `tree_url`, `blob_url` and `decode_blob` — how this project addresses and
+  unwraps GitHub content. The corpus builder addresses the same endpoints for
+  repositories nobody has registered, and a second string built elsewhere is a
+  second place for the quoting to be wrong.
+- `enrich_from_registries` and `enrich_from_osv`, made public and given an
+  optional cache (§11.4).
+- **`derive_signals` and `OccurrenceSignals`** — the measurement, separated
+  from where it is stored. `_build_occurrence` now builds a
+  `dependency_occurrences` row out of it; `corpus_scan.score` builds a
+  `dependency_history` row out of it. Two writers, one derivation.
+
+`OccurrenceSignals` carries §5.1's four formula column names — `is_deprecated`,
+`vulnerability_count`, `cvss_max`, `staleness_days` — which is not a
+coincidence: `scoring.signals.signals_for` is duck-typed over exactly those, so
+the record scores through the shipped engine **without being persisted first**.
+D6 wrote that duck-typing for `dependency_history`; it pays for itself again
+here.
+
+`tests/test_corpus_scan.py::TestIdentityWithAProductScan` is the assertion.
+Both pipelines run over the same stubbed GitHub, registry and OSV, and the test
+compares the repository score, the classification, and then twelve columns of
+every occurrence row by row. Not "close to" — exactly. Two different
+measurements can roll up to one number by coincidence; forty columns cannot.
+
+### 11.2 The float that would have made "exactly" false
+
+OSV hands back `cvss_score` as a `float`. The live path assigns it to a
+`DecimalField` and Postgres returns `Decimal("6.1")`; the corpus path had it in
+memory and would have scored `Decimal(6.1)`, which is
+`6.099999999999999644728632119949907064437866210937500`.
+
+The two agree after §5.2's two-decimal quantization, so this was never going to
+change a score. It was going to make the *identity test* pass for a reason
+other than identity, which is worse — the acceptance criterion is "match
+exactly", and a criterion that holds only because the arithmetic rounds away a
+difference is not the criterion that was written down. `derive_signals`
+quantizes through `str` (`Decimal(str(6.1))`, not `Decimal(6.1)` — quantizing
+the latter is a rounding decision made on binary noise) to `NUMERIC(3,1)`, the
+column's own precision, so the in-memory value *is* the stored value.
+
+### 11.3 `backfill` becomes `corpus_scan`
+
+`DataSource.BACKFILL` named a monthly reconstruction engine — sixty as-of
+snapshots per repository — which was cut with the longitudinal study on
+2026-09-09. D14 now reads "each admitted repo is scanned once, as-of the run
+date — the corpus is a cross-section, not a time series", and §5.1's CHECK says
+`('live_scan','corpus_scan')`.
+
+§10.9 predicted this rename and built for it: the history endpoint filters
+*positively* on `live_scan`, and its test is parametrized over every
+`DataSource` value that is not `live_scan`. The rename went through both without
+an edit, which is what that design was for.
+
+The migration's `RunPython` is load-bearing rather than insurance.
+`AddConstraint` validates against existing rows, so one surviving `backfill`
+row would fail the migration mid-deploy. No code ever wrote that value — the
+engine was never built — and the update is here precisely because "no code ever
+wrote it" is a claim about every database this migration will run against,
+including the teammate's, which nobody here can see. It is reversible in both
+directions for the same reason.
+
+### 11.4 One observation of `lodash` for the whole run
+
+Both enrichment functions now take an optional cache, defaulting to the
+per-call one they always had. The product passes nothing and behaves exactly as
+before.
+
+`scan_corpus` passes one registry memo and one `OsvClient` across all thousand
+repositories, and the argument is not only the call budget (§8). D14 makes the
+corpus **a cross-section as of a single date**. Observing `lodash` once for the
+whole run is the more faithful measurement of that cross-section, not a
+shortcut from it: the alternative is a dataset in which the same package has
+two different `latest_version` values because the run crossed a release.
+
+`registry_clients.py` argues at length for the opposite default in the product,
+and that argument still holds there — a user's scan is one self-consistent
+observation, and a cache outliving it would raise a staleness question the
+product has no answer to. The two conclusions differ because the two things
+being measured differ.
+
+One incidental change came out of it: `enrich_from_osv` now builds one client
+per *call* rather than one per ecosystem. OSV ids are globally unique, so a
+mixed monorepo's two ecosystems can share the document cache, and previously an
+advisory reachable from both was fetched twice.
+
+### 11.5 The sampling weight, and why its denominator is candidates drawn
+
+`sampling_weight` is an expansion weight: one admitted repository stands for
+this many in the frame. It is `cell.available / candidates_drawn`, and the
+denominator is the number **drawn**, not the number **admitted**.
+
+The derivation, because it is the kind of thing that gets "corrected" later.
+Verification is a filter on the cell, so the admitted repositories are a
+uniform random sample of the cell's *admissible subpopulation* — the
+repositories in it that have a parseable manifest with a registry-resolvable
+dependency. That subpopulation's size is itself estimated by
+`available x admitted/drawn`. The expansion weight is therefore
+`(available x admitted/drawn) / admitted`, and the two `admitted` terms cancel.
+Which is also why the weight is computable before a single candidate has been
+checked.
+
+`available` is `min(total_count, results_cap)`, not `total_count`. A cell the
+Search API will not enumerate past its thousandth result has a frame of one
+thousand, whatever GitHub says it holds; weighting by a population the sample
+could not reach would silently inflate that stratum in every weighted estimate.
+The cell records `capped: true` and the strata report says what such a cell
+cannot support.
+
+### 11.6 D10 is enforced at the cursor
+
+§10 Phase 11's acceptance asks for "zero writes to operational tables
+(asserted)". There are three ways to satisfy that sentence and only one of them
+survives the next person to edit the command.
+
+*Reviewing the code* satisfies it for today's code. *Counting rows after a test
+run* satisfies it for the paths that test happened to take — and a corpus run's
+interesting paths are the failure ones, which a happy-path test does not visit.
+`apps/research/guards.py` satisfies it for every statement the command actually
+issues, including the ones nobody wrote by hand: a cascade, a `bulk_create`, a
+lazily-saved related object, a `get_or_create` three frames into library code.
+
+It hooks `connection.execute_wrapper`, which is *below* the ORM rather than
+beside it. Signals were the obvious alternative and are not enough on their
+own: `bulk_create` and `queryset.update()` send no `pre_save`, and those are
+exactly the shapes a scan writer reaches for. SQL is what everything becomes.
+
+**Deny by default.** The allowlist is §5.1's three permanent tables, and
+anything else writing is refused — including tables that do not exist yet. An
+allowlist naming the *operational* tables would silently admit the next one
+added.
+
+It raises rather than logs. By the time anyone reads a log line the run has
+already violated D8's separation, and on the teammate's machine it would be
+writing an operational row into the one database nothing ever reads operational
+rows from.
+
+### 11.7 The checkpoint bug the resume test found
+
+A checkpoint line is appended and flushed as each unit of work finishes, and
+`read` skips any line a `kill -9` tore in half — everything before it is still
+good, and the work that line recorded is simply redone.
+
+The test that killed the process mid-write found that this was not enough. A
+fragment left by a kill has **no trailing newline**. The next run's append
+opened the file in `a` mode and wrote its own object directly onto the
+fragment, producing one unparseable line where there had been one — so the
+crash cost not just the record in flight but the next one written, and the loss
+was silent, because `read` discards both together.
+
+`append_jsonl` now terminates a torn line before appending. The cost is a
+one-byte read per record. The defect is exactly the shape §10 Phase 11's
+acceptance is aimed at ("kill −9 mid-run → `--resume` completes without
+duplicate rows") and it would have survived every test that did not actually
+tear a line.
+
+### 11.8 Resume is idempotent against the database, not only against the file
+
+`scan_corpus` writes its rows in one transaction and then writes its checkpoint
+line. A process killed between the two leaves rows that no line accounts for,
+and a file-only `--resume` would scan that repository again — producing the
+duplicate rows the acceptance criterion forbids.
+
+So `--resume` asks the database first: which `github_repo_id`s already hold a
+`corpus_scan` row for this snapshot date. One query per run, not per
+repository. The checkpoint remains as the fast path and as the record of
+*failures*, which have no database row to be recognised by.
+
+This is also why `--snapshot-date` matters on a multi-day run: it is the key
+`--resume` matches on, and a run that took the default on day two would find
+nothing to skip.
+
+### 11.9 A corpus row's identity columns name the repository's owner
+
+`scan_history.github_user_id` and `github_username` are NOT NULL, and on a live
+row they name the RepoVitals user who ran the scan. A corpus repository has no
+such person: nobody registered it and nobody will ever see its score.
+
+The honest analogue of "whose repository is this" is the GitHub account that
+owns it, so that is what is recorded, from the owner id and login `build_corpus`
+captured at sampling time. Nothing joins on those columns across the two data
+sources — every product read filters `data_source='live_scan'` first (§10.9) —
+and S1 needs to be able to ask how many corpus repositories share an owner,
+which is a real confound in a stratified GitHub sample.
+
+`source_scan_id` is NULL, because there is no `scan_runs` row to name. §5.1
+already makes it a plain nullable column rather than a foreign key, for the
+related reason that the row it names is usually deleted by the time anyone
+reads it.
+
+### 11.10 A cell that cannot exist is not an empty cell
+
+WP-4's review checklist tells the teammate that an empty stratum cell is worth
+flagging, "especially the old/stale cells (they carry the research; a zero
+stale cell → flag, don't accept)".
+
+Some cells of this grid are empty by arithmetic. A repository created in 2024
+cannot have gone unpushed for forty-eight months in 2026. Presenting those as
+findings about GitHub would train the reviewer to ignore the line that matters.
+
+`_is_infeasible` computes it from the frame: if the earliest creation date the
+created-band allows is later than the newest push the pushed-band allows,
+nothing can be in both. Such a cell is marked `infeasible`, is never searched
+(saving a request spent confirming arithmetic), and the strata report counts it
+separately — "N of M feasible cells are empty (K more are infeasible by
+construction)".
+
+### 11.11 Star bands split geometrically
+
+The Search API answers at most 1,000 results per query however many pages are
+asked for (§8), so a cell over that cap is split until each piece fits.
+
+The split is geometric, not arithmetic. Star counts are heavy-tailed: the
+arithmetic midpoint of 51..200 is 125, above almost every repository in the
+band, so the "split" would leave one half still over the cap and the other
+nearly empty — two requests spent to make no progress. `split_star_range(51,
+200)` returns `(51, 100), (101, 200)`.
+
+An open-ended band is cut at three times its floor and can be cut again. Past
+`MAX_SPLIT_DEPTH`, or at a single star value, the cell records `capped: true`:
+its sample is drawn from the ranked head of the query rather than from the
+cell, which is a different claim, and the strata report says so in as many
+words.
+
+### 11.12 Admission checks the registry rather than inferring from the specifier
+
+"≥1 registry-resolvable dependency" could have been read as "at least one
+`DepSpec` the adapter did not mark unassessable", which costs nothing. It is
+implemented as a real lookup — up to `registry_probe_limit` packages per
+ecosystem, stopping at the first success.
+
+The cheap reading admits a repository whose every dependency is a private or
+deleted package. It parses perfectly, enters the corpus, and scores **100 over
+nothing assessed** — indistinguishable in the data from a genuinely healthy
+project, and there is no later stage that could tell them apart. The lookups
+are unauthenticated and free; roughly one per candidate is affordable inside
+WP-4's hour.
+
+### 11.13 Dedup is by dependency set, and versions are deliberately not in it
+
+D14's "dependency-set hash dedup (sorted dependency names)" is the automated
+near-duplicate control, and the two words that carry it are *names* and
+*sorted*.
+
+GitHub is full of course scaffolds and `create-react-app` output: different
+names, different owners, the same forty packages. They inflate the corpus's
+apparent size while adding no information and — worse for S1 — concentrate
+whatever quirks that scaffold has. Hashing the *versions* alongside the names
+would call two checkouts of one scaffold a year apart distinct, which is
+exactly the duplicate the control exists to catch. The ecosystem is part of the
+key, because `requests` is a real package in both of them.
+
+### 11.14 `build_corpus` archives the manifests it read
+
+A manifest blob is fetched to verify a candidate, so it is already in hand;
+archiving it costs a few kilobytes, content-addressed under `blobs/<sha[:2]>/`.
+`scan_corpus` reads from there when it can.
+
+The saving is incidental. The reason is that WP-4 and WP-5 are separate runs,
+potentially days apart, and a repository that changed in between would
+otherwise be *scanned as something other than the thing that was sampled* —
+with its stratum, its sampling weight and its dedup hash all describing the
+earlier version. Reading the archived bytes makes the corpus internally
+consistent by construction.
+
+Lockfiles are not archived: they reach megabytes, and a thousand of them would
+turn a 6 MB directory into a gigabyte. `scan_corpus` fetches them by the sha
+recorded beside each manifest, which is also why WP-5 warns that the run may
+pause near GitHub's hourly limit.
+
+Lockfile *inheritance* is recorded rather than re-derived. Whether a workspace
+member borrows the root's lockfile depends on what the root declares, which is
+knowable only with the bytes in hand; `build_corpus` has them, runs the
+product's own `adopt_workspace_lockfiles`, and writes down the answer.
+
+### 11.15 The two reports answer their reviewer's checklist
+
+`strata_report.md` and `scan_corpus_report.md` are not summaries. File B gives
+the teammate a numbered checklist for each run, and each line of it is a line of
+the corresponding report with its number already computed — total admitted,
+ecosystem split, admission rate, dedup discards, empty cells, empty *stale*
+cells, corpus coverage, unassessable rate. A run that fails one of them fails it
+visibly rather than in a spreadsheet nobody built.
+
+Both reports end with a section on what the artefact cannot say: that the corpus
+is a cross-section as of one date and supports no temporal claim (D14), that a
+capped cell's sample is of a ranked head, and that the stale strata are
+deliberately oversampled so the unweighted shape is the corpus's and not
+GitHub's.
+
+### 11.16 The figures recompute the flag rule, under the weights the rows were scored with
+
+`dependency_history` has no `is_flagged` column and should not: the flag is a
+derived property of four signals, and D6 keeps derived properties out of the
+permanent record so a weights revision cannot turn a stored boolean into a lie.
+
+So `corpus_report` recomputes it — under the weights version the rows are
+tagged with, not under `active_weights()`. `signals.weights_for_scan` makes the
+same argument for the drill-down panel: "what would we score with today" is the
+wrong question about a number that has already been computed. A corpus scanned
+under `v1` and charted after `WEIGHTS_VERSION` moved to `v2` would otherwise get
+a flagged rate computed at a `stale_flag_days` no row in the figure was ever
+measured against.
+
+The rule is counted through `values_list` rather than through
+`engine.flag_reasons`, because this walks tens of thousands of rows. A fast copy
+of a rule is a copy that can drift, so the test asserts the count against
+`flag_reasons` itself rather than against a literal.
+
+### 11.17 matplotlib is a research dependency and Render never sees it
+
+`corpus_report` draws PNGs, which needs matplotlib and NumPy — about 50 MB of
+import that no request path would ever reach, against a 512 MB tier already
+holding Django, the scan threads and fastembed's ONNX model (§8.9).
+
+It lives in a new `requirements-research.txt`, which `requirements-dev.txt`
+includes (so CI installs it and the figure tests run for real rather than
+skipping) and `requirements.txt` does not (so the deploy never installs it).
+The import is inside `render_figures`, so `apps.research.charts` and its command
+both load on a machine without it and the error names the file to install.
+
+### 11.18 The PAT is structurally unreachable from a request
+
+§6: `GITHUB_API_PAT` is for "research commands only; never used for
+user-facing scans". A token carrying a thousand repositories of hourly quota
+must not be spendable by an HTTP request — a user's scan spends the signed-in
+user's own token, which is what makes §8's 5,000/hour a *per-user* budget
+rather than a shared one.
+
+Nothing outside `apps/research/` reads the setting, and
+`tests/test_corpus_scan.py::test_the_research_pat_is_read_in_exactly_one_package`
+fails the moment that stops being true — the same discipline D13 puts around
+issue search, applied to a credential. A second test asserts by import graph
+that no view module reaches `apps.research.corpus*`.
+
+An unset PAT is a valid configuration: CI has none and every phase before this
+one ran without one, so the commands refuse with a sentence naming the variable
+and the scope rather than failing at their first call.
+
+### 11.19 What the pipeline test covers that the unit tests do not
+
+Everything else in this phase's suite calls the library functions directly,
+which leaves the layer WP-4 and WP-5 actually type untested: argument parsing,
+path resolution, the `--out` default, where the guard is wrapped, and whether
+the three commands' file contracts line up. A break in any of those passes every
+unit test and fails the first real run, an hour and several thousand API calls
+in.
+
+`tests/test_corpus_pipeline.py` runs all three commands through `call_command`
+over three stubbed repositories: `build_corpus` writes a manifest,
+`scan_corpus` opens it and scores what it admitted, `corpus_report` joins the
+strata back to it. It also re-asserts D10 over the *commands* rather than the
+functions — a `with` block in the wrong place is invisible to a unit test of
+what it wraps.
+
+### 11.20 Deploy notes
+
+**This phase does not need to reach production at all.** Every command runs on
+the research machine against the research database (D8); the web service gains
+nothing from them and installs none of their dependencies. What the push does
+carry to production is `research.0003_corpus_scan_data_source`, which must run
+pre-deploy like every other migration, and which touches no row on a database
+that has only ever held `live_scan`.
+
+- **Migration:** `research.0003_corpus_scan_data_source` (drops and re-adds one
+  CHECK, relabels any `backfill` row).
+- **New environment variable:** `GITHUB_API_PAT`, on the research machine only.
+  Leaving it unset on Render is correct.
+- **New dependency:** matplotlib, in `requirements-research.txt`, which Render
+  does not install.
