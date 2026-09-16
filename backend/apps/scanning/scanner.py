@@ -29,6 +29,19 @@ are size-capped before they are decoded, and are handed to a parser that only
 ever calls `json.loads` (§11 "manifest parsing abuse"). A parse failure is
 caught per manifest: one malformed `package.json` in a twelve-manifest
 monorepo must not cost the other eleven their scan.
+
+**Four seams are public, for Phase 11 and nothing else.** `tree_url`,
+`blob_url` and `decode_blob` say how this project addresses and unwraps GitHub
+content; `enrich_from_registries`, `enrich_from_osv` and `derive_signals` are
+the measurement itself, from a parsed `DepSpec` through to the columns §5.1
+stores. §10 Phase 11 makes identity with the product the point of the corpus
+engine -- "it is what lets S1 claim the corpus measures the shipped formula
+rather than a research reimplementation of it" -- and identity claimed by two
+copies of the same logic is not identity. So `apps.research.corpus_scan` calls
+these, and they are exported rather than reimplemented. Both enrichment
+functions take an optional cache so a thousand-repository run can hold one
+across repositories; passed nothing they behave exactly as they did when they
+were private to `run_scan`.
 """
 
 from __future__ import annotations
@@ -38,6 +51,7 @@ import binascii
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
+from decimal import Decimal
 from urllib.parse import quote
 
 from django.db import transaction
@@ -140,20 +154,57 @@ class PooledOccurrence:
 # at registration. Nothing user-typed reaches an outbound call (§5.6).
 
 
+def tree_url(owner: str, name: str, branch: str) -> str:
+    """The recursive-tree URL for one branch.
+
+    Public because Phase 11's corpus builder addresses the same endpoint for
+    repositories nobody has registered, and a second string built somewhere
+    else is a second place for the quoting to be wrong.
+    """
+    return (
+        f"{GITHUB_API}/repos/{quote(owner)}/{quote(name)}"
+        f"/git/trees/{quote(branch, safe='')}"
+    )
+
+
+def blob_url(owner: str, name: str, sha: str) -> str:
+    """The blob URL for one object sha (see `_fetch_blob` for why not contents)."""
+    return f"{GITHUB_API}/repos/{quote(owner)}/{quote(name)}/git/blobs/{quote(sha)}"
+
+
+def decode_blob(document: dict, cap: int) -> bytes | None:
+    """Unwrap GitHub's blob envelope, or None if it is unusable or too large.
+
+    Split out from the fetch so Phase 11 can reuse the unwrapping while
+    watching the response headers for its rate budget — the caller there needs
+    the whole `UpstreamResponse`, which `_fetch_blob` deliberately does not
+    return.
+    """
+    if document.get("encoding") != "base64":
+        # GitHub reports `"encoding": "none"` for blobs it will not inline.
+        logger.warning("Blob returned an unusable encoding; skipping it.")
+        return None
+
+    try:
+        raw = base64.b64decode(document.get("content") or "")
+    except (binascii.Error, ValueError):
+        logger.warning("Blob content was not decodable base64; skipping it.")
+        return None
+
+    if len(raw) > cap:
+        return None
+    return raw
+
+
 def _fetch_tree(scan: ScanRun, token: str) -> list[dict]:
     repository = scan.repository
     branch = repository.default_branch or ""
     if not branch:
         raise ScanFailed("This repository has no default branch to scan.")
 
-    path = (
-        f"/repos/{quote(repository.owner)}/{quote(repository.name)}"
-        f"/git/trees/{quote(branch, safe='')}"
-    )
+    url = tree_url(repository.owner, repository.name, branch)
     try:
-        response = http.get_json(
-            f"{GITHUB_API}{path}", token=token, params={"recursive": "1"}
-        )
+        response = http.get_json(url, token=token, params={"recursive": "1"})
     except http.UpstreamUnauthorized as exc:
         raise ScanFailed(
             "Your GitHub sign-in is no longer valid. Sign out and sign in "
@@ -196,12 +247,10 @@ def _fetch_blob(scan: ScanRun, token: str, sha: str, cap: int) -> bytes | None:
     the contents API's 1 MB does not.
     """
     repository = scan.repository
-    path = (
-        f"/repos/{quote(repository.owner)}/{quote(repository.name)}"
-        f"/git/blobs/{quote(sha)}"
-    )
     try:
-        response = http.get_json(f"{GITHUB_API}{path}", token=token)
+        response = http.get_json(
+            blob_url(repository.owner, repository.name, sha), token=token
+        )
     except http.UpstreamRateLimited as exc:
         # Not a per-file problem: the budget is gone, so every remaining fetch
         # in this scan would fail too. Stopping now leaves a clear message
@@ -213,21 +262,7 @@ def _fetch_blob(scan: ScanRun, token: str, sha: str, cap: int) -> bytes | None:
         logger.warning("Could not read a blob during a scan.")
         return None
 
-    document = response.data if isinstance(response.data, dict) else {}
-    if document.get("encoding") != "base64":
-        # GitHub reports `"encoding": "none"` for blobs it will not inline.
-        logger.warning("Blob returned an unusable encoding; skipping it.")
-        return None
-
-    try:
-        raw = base64.b64decode(document.get("content") or "")
-    except (binascii.Error, ValueError):
-        logger.warning("Blob content was not decodable base64; skipping it.")
-        return None
-
-    if len(raw) > cap:
-        return None
-    return raw
+    return decode_blob(response.data if isinstance(response.data, dict) else {}, cap)
 
 
 # ── planning ───────────────────────────────────────────────────────────────
@@ -356,7 +391,15 @@ def adopt_workspace_lockfiles(
 # ── enrichment ─────────────────────────────────────────────────────────────
 
 
-def _enrich_from_registries(pool: list[PooledOccurrence]) -> None:
+#: One registry answer, keyed by everything that can change it. The ecosystem
+#: is part of the key because `requests` is a real package in both of them.
+FactsKey = tuple[str, str, str | None]
+
+
+def enrich_from_registries(
+    pool: list[PooledOccurrence],
+    memo: dict[FactsKey, adapters.PackageFacts] | None = None,
+) -> None:
     """Ask each ecosystem's registry about every assessable occurrence.
 
     A single package the registry has never heard of becomes unassessable — a
@@ -364,23 +407,39 @@ def _enrich_from_registries(pool: list[PooledOccurrence]) -> None:
     whole scan instead: recording "unassessable" for every row would write a
     permanent claim about the packages out of a temporary fact about the
     network.
+
+    `memo` defaults to a fresh dict per call, which is the per-scan cache
+    `registry_clients.py` argues for at length: a scan is one self-consistent
+    observation of the registry, and a cache outliving it would raise a
+    staleness question the product has no answer to. Phase 11's corpus run
+    passes one in across every repository deliberately — D14 makes that run a
+    *cross-section as of a single date*, so observing `lodash` once for the
+    whole run is the more faithful measurement as well as the cheaper one
+    (§8: the registries are free but not infinite, and `lodash` appears in
+    hundreds of the thousand repositories).
     """
     by_ecosystem: dict[str, list[PooledOccurrence]] = defaultdict(list)
     for occurrence in pool:
         if not occurrence.spec.is_unassessable:
             by_ecosystem[occurrence.ecosystem].append(occurrence)
 
+    if memo is None:
+        memo = {}
+
     for ecosystem, occurrences in by_ecosystem.items():
         client = adapters.get_adapter(ecosystem).registry_client()
-        memo: dict[tuple[str, str | None], adapters.PackageFacts] = {}
         attempted = 0
         unavailable = 0
 
         for occurrence in occurrences:
-            key = (occurrence.spec.name, occurrence.spec.resolved_version)
+            key: FactsKey = (
+                ecosystem,
+                occurrence.spec.name,
+                occurrence.spec.resolved_version,
+            )
             if key not in memo:
                 attempted += 1
-                memo[key] = client.facts(*key)
+                memo[key] = client.facts(key[1], key[2])
                 if memo[key].unavailable:
                     unavailable += 1
             occurrence.facts = memo[key]
@@ -392,8 +451,17 @@ def _enrich_from_registries(pool: list[PooledOccurrence]) -> None:
             )
 
 
-def _enrich_from_osv(pool: list[PooledOccurrence]) -> None:
-    """Batch every `(package, version)` pair to OSV, then fetch each advisory once."""
+def enrich_from_osv(
+    pool: list[PooledOccurrence], client: osv.OsvClient | None = None
+) -> None:
+    """Batch every `(package, version)` pair to OSV, then fetch each advisory once.
+
+    `client` defaults to a fresh one, whose document cache then lives exactly
+    as long as the scan. Phase 11 hands one in for the whole corpus run for
+    the reason `enrich_from_registries` gives about its memo — and here the
+    saving is larger, because one advisory is reached from every repository
+    that pins the affected version.
+    """
     by_ecosystem: dict[str, list[PooledOccurrence]] = defaultdict(list)
     for occurrence in pool:
         if occurrence.spec.is_unassessable or occurrence.facts is None:
@@ -403,14 +471,19 @@ def _enrich_from_osv(pool: list[PooledOccurrence]) -> None:
         if occurrence.assessed_version:
             by_ecosystem[occurrence.ecosystem].append(occurrence)
 
+    # One client for the whole call rather than one per ecosystem. OSV ids are
+    # globally unique, so a mixed monorepo's two ecosystems can share the
+    # document cache safely; previously they each built their own and an
+    # advisory reachable from both was fetched twice.
+    shared = client or osv.OsvClient()
+
     for ecosystem, occurrences in by_ecosystem.items():
-        client = osv.OsvClient()
         targets = [
             (occurrence.spec.name, occurrence.assessed_version or "")
             for occurrence in occurrences
         ]
         try:
-            found = client.query_batch(ecosystem, targets)
+            found = shared.query_batch(ecosystem, targets)
         except (http.UpstreamError, ValueError) as exc:
             # Unlike a registry outage, this one is all-or-nothing by nature:
             # a missing batch answer is indistinguishable from "no advisories",
@@ -424,7 +497,7 @@ def _enrich_from_osv(pool: list[PooledOccurrence]) -> None:
         for occurrence in occurrences:
             key = (occurrence.spec.name, occurrence.assessed_version or "")
             for osv_id in found.get(key, []):
-                detail = client.detail(osv_id, occurrence.spec.name)
+                detail = shared.detail(osv_id, occurrence.spec.name)
                 if detail is not None:
                     occurrence.vulnerabilities.append(detail)
 
@@ -444,50 +517,93 @@ def _package_for(ecosystem: str, name: str, registry_url: str | None) -> Package
     return package
 
 
-def _build_occurrence(
-    pooled: PooledOccurrence, package: Package, manifest: ManifestFile
-) -> DependencyOccurrence:
+@dataclass(frozen=True)
+class OccurrenceSignals:
+    """Every column §5.1 records about one occurrence, before any row exists.
+
+    The measurement, separated from where it is stored. A live scan writes
+    these onto a `dependency_occurrences` row; Phase 11's corpus run writes
+    the subset §5.1 keeps into `dependency_history` directly, with no
+    operational row anywhere (D10). Two writers, one derivation — which is the
+    whole of §10 Phase 11's "same adapters" claim, made structural.
+
+    The four field names the formula reads — `is_deprecated`,
+    `vulnerability_count`, `cvss_max`, `staleness_days` — are §5.1's, not
+    coincidentally: `apps.scoring.signals.signals_for` is duck-typed over
+    exactly those, so this record scores through the shipped engine without
+    being persisted first.
+
+    `cvss_max` is a `Decimal` here though OSV hands back a float, because the
+    column is `NUMERIC(3,1)` and a corpus score computed from `6.1` must equal
+    the product score computed from a row that went through Postgres and came
+    back as `Decimal("6.1")`.
+    """
+
+    dependency_group: str
+    declared_specifier: str | None
+    is_unassessable: bool = False
+    unassessable_reason: str | None = None
+    resolved_version: str | None = None
+    resolution: str | None = None
+    latest_version: str | None = None
+    latest_release_at: object | None = None  # datetime | None
+    staleness_days: int | None = None
+    versions_behind_major: int = 0
+    versions_behind_minor: int = 0
+    versions_behind_patch: int = 0
+    is_deprecated: bool = False
+    deprecation_reason: str | None = None
+    vulnerability_count: int = 0
+    highest_severity: str | None = None
+    cvss_max: Decimal | None = None
+
+
+#: The CVSS column's precision (§5.1: `NUMERIC(3,1)`).
+CVSS_QUANTUM = Decimal("0.1")
+
+
+def derive_signals(pooled: PooledOccurrence) -> OccurrenceSignals:
+    """What one enriched occurrence measured — §5.1's columns, no database.
+
+    The three unassessable exits are ordered by what they claim, worst-founded
+    first: the adapter said the specifier names nothing a registry can
+    describe; the registry could not be reached; the registry has never heard
+    of the package. Only the last of them keeps a version, because only it
+    read one.
+    """
     spec = pooled.spec
     facts = pooled.facts
 
-    occurrence = DependencyOccurrence(
-        manifest=manifest,
-        package=package,
-        dependency_group=spec.group,
-        declared_specifier=spec.declared_specifier,
-    )
+    base = {
+        "dependency_group": spec.group,
+        "declared_specifier": spec.declared_specifier,
+    }
 
     if spec.is_unassessable:
-        occurrence.is_unassessable = True
-        occurrence.unassessable_reason = spec.unassessable_reason
-        return occurrence
+        return OccurrenceSignals(
+            **base, is_unassessable=True, unassessable_reason=spec.unassessable_reason
+        )
 
     if facts is None or facts.unavailable:
-        occurrence.is_unassessable = True
-        occurrence.unassessable_reason = REASON_REGISTRY_UNAVAILABLE
-        return occurrence
+        return OccurrenceSignals(
+            **base,
+            is_unassessable=True,
+            unassessable_reason=REASON_REGISTRY_UNAVAILABLE,
+        )
 
     if facts.not_found:
-        occurrence.is_unassessable = True
-        occurrence.unassessable_reason = REASON_NOT_IN_REGISTRY
-        occurrence.resolved_version = spec.resolved_version
-        occurrence.resolution = spec.resolution
-        return occurrence
+        return OccurrenceSignals(
+            **base,
+            is_unassessable=True,
+            unassessable_reason=REASON_NOT_IN_REGISTRY,
+            resolved_version=spec.resolved_version,
+            resolution=spec.resolution,
+        )
 
-    occurrence.resolved_version = pooled.assessed_version
-    occurrence.resolution = spec.resolution or Resolution.RANGE_LATEST_APPROX.value
-    occurrence.latest_version = facts.latest_version
-    occurrence.latest_release_at = facts.latest_release_at
-    occurrence.staleness_days = facts.staleness_days
-    occurrence.versions_behind_major = facts.versions_behind_major
-    occurrence.versions_behind_minor = facts.versions_behind_minor
-    occurrence.versions_behind_patch = facts.versions_behind_patch
-    occurrence.is_deprecated = facts.is_deprecated
-    occurrence.deprecation_reason = facts.deprecation_reason
-
-    occurrence.vulnerability_count = len(pooled.vulnerabilities)
+    highest_severity: str | None = None
+    cvss_max: Decimal | None = None
     if pooled.vulnerabilities:
-        occurrence.highest_severity = max(
+        highest_severity = max(
             (vuln.severity or Severity.UNKNOWN.value for vuln in pooled.vulnerabilities),
             key=lambda severity: SEVERITY_RANK.get(severity, 0),
         )
@@ -496,9 +612,41 @@ def _build_occurrence(
             for vuln in pooled.vulnerabilities
             if vuln.cvss_score is not None
         ]
-        occurrence.cvss_max = max(scores) if scores else None
+        if scores:
+            # `str` first: `Decimal(6.1)` is 6.0999999999999996 and quantizing
+            # that is a rounding decision made on binary noise.
+            cvss_max = Decimal(str(max(scores))).quantize(CVSS_QUANTUM)
 
-    return occurrence
+    return OccurrenceSignals(
+        **base,
+        resolved_version=pooled.assessed_version,
+        resolution=spec.resolution or Resolution.RANGE_LATEST_APPROX.value,
+        latest_version=facts.latest_version,
+        latest_release_at=facts.latest_release_at,
+        staleness_days=facts.staleness_days,
+        versions_behind_major=facts.versions_behind_major,
+        versions_behind_minor=facts.versions_behind_minor,
+        versions_behind_patch=facts.versions_behind_patch,
+        is_deprecated=facts.is_deprecated,
+        deprecation_reason=facts.deprecation_reason,
+        vulnerability_count=len(pooled.vulnerabilities),
+        highest_severity=highest_severity,
+        cvss_max=cvss_max,
+    )
+
+
+def _build_occurrence(
+    pooled: PooledOccurrence, package: Package, manifest: ManifestFile
+) -> DependencyOccurrence:
+    signals = derive_signals(pooled)
+    return DependencyOccurrence(
+        manifest=manifest,
+        package=package,
+        **{
+            field: getattr(signals, field)
+            for field in OccurrenceSignals.__dataclass_fields__
+        },
+    )
 
 
 def _persist(
@@ -669,8 +817,8 @@ def run_scan(scan: ScanRun) -> None:
             "them. Please try again shortly."
         )
 
-    _enrich_from_registries(pool)
-    _enrich_from_osv(pool)
+    enrich_from_registries(pool)
+    enrich_from_osv(pool)
     _persist(scan, read, pool, skipped)
 
     logger.info(
