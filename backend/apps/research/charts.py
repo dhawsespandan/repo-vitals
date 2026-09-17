@@ -194,7 +194,14 @@ def _weights_for(scans) -> WeightSet:
     moved to `v2` would otherwise get a flagged rate computed at a
     `stale_flag_days` no row in the figure was ever measured against.
     """
-    versions = set(scans.values_list("scoring_formula_version", flat=True).distinct())
+    # `.order_by()` clears `Meta.ordering` before the DISTINCT. Without it
+    # Django has to add `scanned_at` to the select list to satisfy the sort,
+    # which makes the DISTINCT two columns wide and returns one row per scan —
+    # the Python `set` still answers correctly, over a thousand rows fetched to
+    # learn one string.
+    versions = set(
+        scans.order_by().values_list("scoring_formula_version", flat=True).distinct()
+    )
     if len(versions) == 1:
         version = versions.pop()
         try:
@@ -225,12 +232,18 @@ def _flagged_counts(scans, weights: WeightSet) -> dict:
     tests rather than trusted to stay in step.
     """
     counts: dict = defaultdict(lambda: [0, 0, 0])
-    rows = DependencyHistory.objects.filter(scan_history__in=scans).values_list(
-        "scan_history_id",
-        "is_unassessable",
-        "is_deprecated",
-        "vulnerability_count",
-        "staleness_days",
+    # `.order_by()` again: `Meta.ordering` would sort forty thousand rows by
+    # manifest path and package name for a pass that only counts them.
+    rows = (
+        DependencyHistory.objects.filter(scan_history__in=scans)
+        .order_by()
+        .values_list(
+            "scan_history_id",
+            "is_unassessable",
+            "is_deprecated",
+            "vulnerability_count",
+            "staleness_days",
+        )
     )
     for scan_id, unassessable, deprecated, vulnerabilities, staleness in rows.iterator(
         chunk_size=2000
