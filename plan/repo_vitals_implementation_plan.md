@@ -430,7 +430,7 @@ Cost is bounded by construction: single pass, fixed tool set, one generation per
 | TOKEN_ENCRYPTION_KEY | 1 | Fernet; rotation invalidates stored tokens (users re-login) |
 | GITHUB_OAUTH_CLIENT_ID / SECRET | 1 | separate dev + prod apps |
 | FRONTEND_URL | 1 | OAuth redirect + CSRF trusted origin |
-| GITHUB_API_PAT | 11 | research commands only; never used for user-facing scans |
+| GITHUB_API_PAT | 11 | research commands only; never used for user-facing scans. **Grant it no scopes at all** — a classic token with nothing ticked reads every public repository at the full authenticated 5,000/hr, and nothing in this codebase issues anything but a GET (§11's read-only-hosts rule). `public_repo` would grant *write* on every public repo its owner can touch, which no code here can use |
 | GROQ_API_KEY / GROQ_MODEL | 7 | default `openai/gpt-oss-120b`, temp 0. Check Groq's live model list before a redeploy after a long gap: a retired model answers 404 (§7.12) |
 | CHROMA_DIR / EMBED_MODEL | 8 | default `all-MiniLM-L6-v2` via fastembed |
 | GROUNDING_MIN_SIM / GROUNDING_MIN_CHARS | 8 | defaults 0.30 / 400 |
@@ -438,7 +438,7 @@ Cost is bounded by construction: single pass, fixed tool set, one generation per
 | EPSS_ENABLED / NVD_API_KEY | 12 | optional |
 | GEMINI_API_KEY / JUDGE_MODEL | 13 | judge provider ≠ generator provider (D11) |
 
-**Credentials (provided by the developer's own accounts; all free):** Phase 1 → GitHub OAuth apps (dev + prod), Supabase URL, Render + Vercel. Phase 7 → Groq key. Phase 11 → GitHub PAT (`public_repo`). Phase 13 → Gemini key. Optional → NVD key. Keys pasted into working sessions are treated as rotatable and rotated at project end.
+**Credentials (provided by the developer's own accounts; all free):** Phase 1 → GitHub OAuth apps (dev + prod), Supabase URL, Render + Vercel. Phase 7 → Groq key. Phase 11 → GitHub PAT (**no scopes**). Phase 13 → Gemini key. Optional → NVD key. Keys pasted into working sessions are treated as rotatable and rotated at project end.
 
 ---
 
