@@ -2,7 +2,7 @@
 
 **Status of this document.** Files A, B, and C together supersede and replace every earlier project document (the v5 proposal, the schema/normalization notes, the risk-engine spec, the formula-generation methodology docs). Those files are discarded; nothing in them is needed again. Where memory of them conflicts with these three files, these files win. File A is the only guide for the codebase; File B (`repo_vitals_parallel_work_plan.md`) is the teammate's non-code work; File C (`repo_vitals_research_plan.md`) begins only after A and B complete.
 
-**What RepoVitals is (standalone context).** A web application where a developer logs in with GitHub, registers repositories they own or can write to, and gets a deterministic 0–100 dependency-health score per repository (Node.js/npm and Python/PyPI), with a drill-down explaining exactly which dependencies are risky and why. On demand, an LLM agent produces remediation reports: a repo-wide triage summary (no retrieval) and per-dependency plans grounded in the package's own changelog/README via RAG, shown beside the retrieved source text with citations. The system additionally carries research instrumentation — permanent history tables, full agent traces, a corpus builder, a historical backfill engine, and experiment harnesses — so that three studies (S1 scoring validation, S2 stochastic risk modelling, S3 grounding quality across ecosystems; defined in File C) need **zero further engineering** once this plan completes.
+**What RepoVitals is (standalone context).** A web application where a developer logs in with GitHub, registers repositories they own or can write to, and gets a deterministic 0–100 dependency-health score per repository (Node.js/npm and Python/PyPI), with a drill-down explaining exactly which dependencies are risky and why. On demand, an LLM agent produces remediation reports: a repo-wide triage summary (no retrieval) and per-dependency plans grounded in the package's own changelog/README via RAG, shown beside the retrieved source text with citations. The system additionally carries research instrumentation — permanent history tables, full agent traces, a corpus builder, a corpus-scale scan engine, and experiment harnesses — so that two studies (S1 scoring validation, S3 grounding quality across ecosystems; defined in File C) need **zero further engineering** once this plan completes.
 
 **Executed by:** the developer (solo). Nothing here depends on any other person except the explicit File B gates (§7).
 
@@ -27,13 +27,13 @@ Phases 1–10 build the product. Phases 11–13 build research infrastructure. P
 | D5 | Weights live in versioned YAML (`weights/`). `v1` = informal pairwise pass (WP-1). `v2` = AHP + entropy validated (WP-3…WP-6). Swapping versions requires zero code change. Every stored score row is tagged `scoring_formula_version` | Unblocks the build; keeps score provenance auditable |
 | D6 | **Signals are persisted raw; scoring is a pure function over stored signals.** Stored history scores are used only for product display; research analysis always **recomputes** scores from stored signals under an explicitly chosen weights version. History rows are never mutated by re-scoring — re-scored panels are materialized to files | Makes weight revisions free, retroactive, and non-destructive |
 | D7 | Embeddings via **fastembed** (ONNX, `all-MiniLM-L6-v2`); never sentence-transformers/torch | Torch alone (~700 MB installed) exceeds Render's 512 MB tier; fastembed ≈ 50 MB, same model |
-| D8 | **Three database contexts.** Dev = local Docker Postgres. Prod = Supabase free (product data + cohort live scans only). **Research = a separate local Docker Postgres on the teammate's machine** holding corpus + backfill data. Backfill volume (~1,000 repos × 60 months × ~40 occurrences ≈ 2–4 M `dependency_history` rows) would blow Supabase's 500 MB and hammer prod — it never touches Supabase | Found on verification pass; without this the research data has nowhere legal to live |
-| D9 | Research tables (`scan_history`, `dependency_history`, `agent_execution_traces`) never cascade on any trigger (not rescan, not repo/user deletion); identifying fields denormalized; rows tagged `data_source ∈ {live_scan, backfill}`. Privacy requests handled by manual anonymization pass, never cascade logic | They exist for retrospective research; joins back to live rows must never be assumed |
-| D10 | Backfill and corpus commands write **only** research tables in the **research DB**, never operational tables, never prod | Keeps product state clean and prod small |
+| D8 | **Three database contexts.** Dev = local Docker Postgres. Prod = Supabase free (product data only). **Research = a separate local Docker Postgres on the teammate's machine** holding all corpus data. A ~1,000-repo corpus scan (≈ 40 k `dependency_history` rows plus archived manifests) is not product data, must never be reachable from a product query, and would hammer prod's connection budget on a single run — it never touches Supabase | Found on verification pass; without this the research data has nowhere legal to live |
+| D9 | Research tables (`scan_history`, `dependency_history`, `agent_execution_traces`) never cascade on any trigger (not rescan, not repo/user deletion); identifying fields denormalized; rows tagged `data_source ∈ {live_scan, corpus_scan}`. Privacy requests handled by manual anonymization pass, never cascade logic | They exist for retrospective research; joins back to live rows must never be assumed |
+| D10 | Corpus commands write **only** research tables in the **research DB**, never operational tables, never prod | Keeps product state clean and prod small |
 | D11 | Generator LLM = Groq (`GROQ_MODEL`, default `openai/gpt-oss-120b`), temperature 0, JSON mode. Judge LLM = **different provider** (Gemini free tier, `JUDGE_MODEL`) | Determinism for a trust tool; self-judging is a known reviewer attack. The decision is the *provider* and the determinism settings; Groq retires checkpoints on a rolling schedule, so the named default is expected to move (`llama-3.3-70b-versatile` was decommissioned before Phase 7's first live call — `docs/decisions.md` §7.12) |
 | D12 | S1 validation reference: **deps.dev OpenSSF Scorecard score** as the independent reference; OSV severity rollup computed alongside as the conventional-but-circular reference with the circularity stated (OSV feeds 2 of 4 formula signals) | Honest convergent validity instead of validating against our own inputs |
 | D13 | Internal issue/discussion-search utility: **management command only.** No URL route, no serializer, no UI, never imported by request-handling code. Public issue text is open to any account with no review gate — higher prompt-injection exposure than changelogs (which require a merged PR to alter) — so it must be unreachable from any user-triggered path until a threat-model extension explicitly promotes it | Enables S3's condition D without touching the live threat model |
-| D14 | Corpus ≈ 1,000 repos (≈500/500 npm/PyPI), stratified partitioned GitHub search, seeded, dedup-verified, stale cells deliberately oversampled with recorded sampling weights. Backfill: monthly snapshots × 60 months | Transition events are rare; statistical power for S2/S3 comes from scale + stratification |
+| D14 | Corpus ≈ 1,000 repos (≈500/500 npm/PyPI), stratified partitioned GitHub search, seeded, dedup-verified, stale cells deliberately oversampled with recorded sampling weights. Each admitted repo is scanned once, as-of the run date — the corpus is a cross-section, not a time series | Risky dependencies are rare; statistical power for S1/S3 comes from scale + stratification |
 | D15 | S3 labelled set: 150 items (75/75 npm/PyPI), ground truth auto-extracted (no manual labelling), stratified by case type `cve_fix` vs `deprecation_replacement`. The automated faithfulness judge is validated against a 50-item human-labelled subset (WP-9) | The case-type stratification controls the confound that npm and PyPI contribute different case mixes |
 | D16 | Everything runs on free tiers; §8 is the constraint register. A change that violates §8 is wrong by definition | Hard project constraint |
 | D17 | The scan pipeline records everything the research needs **at scan time** (raw signals, publish dates, CVE publication dates, deprecation text verbatim) so no study ever requires retrofitting instrumentation | Cheap now, impossible later |
@@ -87,11 +87,11 @@ repo-vitals/
 │       │   ├── agent/          # LangGraph graph + nodes (PER_DEPENDENCY)
 │       │   ├── services.py · views.py
 │       └── research/           # never imported by request-handling code (except the history endpoint helper)
-│           ├── corpus.py · backfill.py · issue_search.py
+│           ├── corpus.py · issue_search.py
 │           ├── validation/     # ahp.py entropy.py reference.py agree.py sensitivity.py anchors.py report.py
 │           ├── experiment/     # groundtruth.py conditions.py runner.py judge.py metrics.py judge_validation.py
 │           └── management/commands/
-│               build_corpus.py backfill.py backfill_validate.py validate_formula.py
+│               build_corpus.py scan_corpus.py validate_formula.py
 │               extract_ground_truth.py run_experiment.py analyze_experiment.py
 │               judge_validation_packet.py judge_validation_kappa.py
 │               cleanup_chroma.py export_research_data.py smoke_memory.py scan_anchors.py
@@ -106,7 +106,7 @@ repo-vitals/
 │       ├── components/         # RepoCard ScoreBadge AddRepoForm DependencyTable WhyFlaggedPanel
 │       │                       # ReportPanel CitationPane TrendChart ConfirmDialog EcosystemChip StatusPill
 │       └── types/
-├── notebooks/                  # Phase 14: 13_1_analysis · 13_2_markov_hazard · 13_3_validation
+├── notebooks/                  # Phase 14: 13_1_analysis · 13_3_validation
 └── research_data/              # git-ignored except .gitkeep and small manifests
     ├── corpus/ · runs/ · validation_report/ · exports/ · deliverables/
 ```
@@ -124,7 +124,7 @@ repo-vitals/
 | DB | Docker `postgres:16` | Supabase free (500 MB) | Docker `postgres:16` (compose profile `research`) |
 | Chroma | `backend/.chroma/` | Render ephemeral disk (fine: per-scan collections rebuild on demand) | local dir (experiment runs) |
 | OAuth app | dev app (localhost callback) | prod app (Render callback) | — |
-| Data | disposable | product + cohort live scans | corpus + backfill (D8) |
+| Data | disposable | product data only | corpus scans (D8) |
 
 The developer also loads the WP-5 research-DB dump locally when building Phases 12–13 (§7), so dev work on harnesses runs against real corpus data without touching the teammate's machine.
 
@@ -246,7 +246,7 @@ Constraint: `UNIQUE(ecosystem, package_name)`.
 | osv_id TEXT NOT NULL; cve_id TEXT NULL | | |
 | severity TEXT NULL | CHECK as above | |
 | cvss_score NUMERIC(3,1) NULL | | |
-| published_at TIMESTAMPTZ NULL | | disclosure date — backfill's as-of filter needs this (D17) |
+| published_at TIMESTAMPTZ NULL | | disclosure date — recorded as a research covariate (D17) |
 | summary / affected_range / fixed_version / source_url | TEXT NULL | fixed_version feeds S3 ground truth |
 | epss_score NUMERIC(6,5) NULL | | Phase 12, flag-gated |
 
@@ -275,14 +275,14 @@ Partial uniques: one `combined` per scan; one `per_dependency` per (scan_id, dep
 | risk_score NUMERIC(5,2) NOT NULL; classification TEXT NOT NULL | | CHECKs as above |
 | dependency_count INT; flagged_dependency_count INT | | ≥0 |
 | scoring_formula_version | TEXT NOT NULL | |
-| data_source | TEXT | CHECK IN ('live_scan','backfill'), DEFAULT 'live_scan' |
-| snapshot_date | DATE NULL | backfill grid month-end; NULL for live |
-| sampling_weight | NUMERIC NULL | corpus stratification weight (backfill rows) |
+| data_source | TEXT | CHECK IN ('live_scan','corpus_scan'), DEFAULT 'live_scan' |
+| snapshot_date | DATE NULL | corpus-scan as-of date; NULL for live |
+| sampling_weight | NUMERIC NULL | corpus stratification weight (corpus_scan rows) |
 | scanned_at | TIMESTAMPTZ | |
 
 Indexes: (github_repo_id, snapshot_date), (data_source).
 
-**`dependency_history`** — permanent; one row per occurrence per completed scan/snapshot **including clean and unassessable occurrences** (hazard models need at-risk denominators, not just bad rows). FK only to its own permanent parent.
+**`dependency_history`** — permanent; one row per occurrence per completed scan **including clean and unassessable occurrences** (entropy weighting needs the full signal distribution, not just the bad rows). FK only to its own permanent parent.
 
 | Column | Type | Notes |
 |---|---|---|
@@ -450,12 +450,10 @@ Cost is bounded by construction: single pass, fixed tool set, one generation per
 | WP-2 | Anchor set CSV | Phase 12 validation run | none (blocks Phase 12 acceptance only) |
 | WP-3 | AHP matrices (2 independent + reconciled) | Phase 12 weights-v2 computation | none |
 | WP-4 | Corpus manifest + strata report | Phase 12 inputs | requires Phase 11 code first |
-| WP-5 | Backfill completion report **+ research-DB dump file** | Phase 12/13 dev inputs (developer loads dump locally) | overnight, resumable |
+| WP-5 | Corpus scan completion report **+ research-DB dump file** | Phase 12/13 dev inputs (developer loads dump locally) | resumable |
 | WP-6 | Validation sign-off → `weights_v2.yaml` | **Phase 12 acceptance** | code-complete may tag `v0.12.0-rc`; final tag waits |
-| WP-7 | Cohort registered + monthly rescans + consent recorded | starts right after Phase 6 deploys | lead-time critical — start immediately |
 | WP-8 | S3 full runs (A/B/C × 150) | Phase 14 acceptance | pilot (20 items) is Phase 13's own acceptance |
 | WP-9 | 50-item judge-validation labels | Phase 14 acceptance | |
-| WP-10 | Backfill-vs-prospective agreement report | not a phase gate; pre-S2-drafting (File C) | time-gated: ≥3 monthly WP-7 waves |
 
 ---
 
@@ -467,7 +465,7 @@ Cost is bounded by construction: single pass, fixed tool set, one generation per
 | Render sleep / Supabase pause | 15 min / ~7 days | keepalive cron (Phase 1) |
 | Render instance-hours | 750/mo | exactly one always-on service |
 | Render request timeout | ~100 s | scans + generations always background threads + polling, never inline |
-| Supabase storage | 500 MB | prod holds product + cohort data only; corpus/backfill live in the research DB (D8); manifests on disk, not Postgres |
+| Supabase storage | 500 MB | prod holds product data only; all corpus data lives in the research DB (D8); manifests on disk, not Postgres |
 | GitHub API | 5,000/hr/token | user scans on user tokens; research on PAT; shared client honors `X-RateLimit-*`, backs off, checkpoints |
 | GitHub Search API | 30 req/min; 1,000 results/query hard cap | corpus builder partitions the query space and paces (Phase 11) |
 | OSV / npm / PyPI / deps.dev | free, unauthenticated | OSV batched ≤100/batch; in-run caches; no TTL cache layer at this scale (deliberate deferral, §12) |
@@ -491,7 +489,7 @@ Cost is bounded by construction: single pass, fixed tool set, one generation per
 | 8 | PER_DEPENDENCY RAG agent | cited remediation + retrieved chunks side-by-side | v0.8.0 | — |
 | 9 | Guards, downloads, hardening | rescan confirm, MD/JSON downloads, BOLA suite | v0.9.0 | — |
 | 10 | Projects + trends | grouped repos, trend chart, sibling notice | v0.10.0 | — |
-| 11 | Research I: corpus + backfill engines | 5-year reconstructed risk curve, one real repo | v0.11.0 | PAT |
+| 11 | Research I: corpus builder + corpus scan engine | strata report + scored cross-section over a pilot corpus | v0.11.0 | PAT |
 | 12 | Research II: S1 harness + weights v2 | validation report: AHP vs entropy, correlation, sensitivity | v0.12.0 | WP-2…6 |
 | 13 | Research III: S3 harness + judge | pilot 3-condition comparison table | v0.13.0 | Gemini key |
 | 14 | Replication package + v1.0 | 10-min seminar walkthrough | v1.0.0 | WP-8, WP-9 |
@@ -598,7 +596,7 @@ Cost is bounded by construction: single pass, fixed tool set, one generation per
 
 **Acceptance.** Old-pinned-Django repo registers/scans/scores; poetry repo resolves from lock; mixed monorepo → one pooled score, both chips; yanked-release dependency shows deprecated with (possibly empty) verbatim reason; `adapter_soundness.md` shows zero core-path changes.
 
-**Mentor demo.** Python repo → same flow, same badge, same drill-down → show the diff doc: "second ecosystem, zero core changes — a design claim turned into evidence." *(WP-7 recruiting starts today.)*
+**Mentor demo.** Python repo → same flow, same badge, same drill-down → show the diff doc: "second ecosystem, zero core changes — a design claim turned into evidence."
 
 ### Phase 7 — COMBINED report: first LLM call `needs: Groq key`
 
@@ -646,31 +644,30 @@ Cost is bounded by construction: single pass, fixed tool set, one generation per
 
 **Objective.** Group sibling repos, surface the one verifiable cross-repo signal plus an honest scope disclaimer, and chart accumulated history.
 
-**Backend.** `Project` model; creation requires ≥2 repo ids, all owned by the requester (cross-user membership structurally impossible — otherwise the sibling notice would leak another user's private dependency list). Delete semantics: deleting a repo in a multi-repo project → 409 `project_cascade_confirm` + counts; confirm deletes **all** member repos (normal operational cascades) + the project row (a project cannot shrink to one member); history/traces persist. Report context at generation time for project members: computed sibling shared-dependency lines (same package in a sibling's latest scan, same-owner data only) + a static one-sentence disclaimer that integration-level risks (API contracts, shared data formats, auth/session behavior, timing) exist and are not assessed — stored into `project_context_json`; independent repos get neither. History endpoint: `data_source='live_scan'` rows only (backfill must never pollute the product chart).
+**Backend.** `Project` model; creation requires ≥2 repo ids, all owned by the requester (cross-user membership structurally impossible — otherwise the sibling notice would leak another user's private dependency list). Delete semantics: deleting a repo in a multi-repo project → 409 `project_cascade_confirm` + counts; confirm deletes **all** member repos (normal operational cascades) + the project row (a project cannot shrink to one member); history/traces persist. Report context at generation time for project members: computed sibling shared-dependency lines (same package in a sibling's latest scan, same-owner data only) + a static one-sentence disclaimer that integration-level risks (API contracts, shared data formats, auth/session behavior, timing) exist and are not assessed — stored into `project_context_json`; independent repos get neither. History endpoint: `data_source='live_scan'` rows only (corpus rows must never pollute the product chart).
 
 **Frontend.** ProjectsPage; dashboard grouping; TrendChart (score line, classification band coloring, formula-version change markers); project-aware delete ConfirmDialog ("This repo is part of Project X with N other repo(s); deleting it will remove all N+1 repos in this project — continue?"); reports render sibling notices + the quiet disclaimer.
 
 **Commits.** 1 `feat(projects): model + owned-membership creation rules` · 2 `feat(projects): cascade delete-with-confirm semantics` · 3 `feat(reports): sibling shared-dependency notice + scope disclaimer` · 4 `feat(backend): scan history endpoint (live rows only)` · 5 `feat(frontend): projects page, grouped dashboard, trend chart, cascade confirm` · 6 `test(projects): ownership, cascade matrix, sibling-notice correctness, history filtering`
 
-**Acceptance.** Cannot create a project with a foreign or single repo; delete-one → confirm → all members + project gone, history intact; sibling notice appears exactly when warranted; trend chart shows movement across rescans; zero backfill rows in it.
+**Acceptance.** Cannot create a project with a foreign or single repo; delete-one → confirm → all members + project gone, history intact; sibling notice appears exactly when warranted; trend chart shows movement across rescans; zero corpus rows in it.
 
 **Mentor demo.** Group 3 repos → a report that names the shared risky package in the sibling — and in the same breath states what it *cannot* see. "Honest scope is a feature."
 
-### Phase 11 — Research I: corpus builder + backfill engine `needs: PAT` `enables: WP-4, WP-5, WP-10`
+### Phase 11 — Research I: corpus builder + corpus scan engine `needs: PAT` `enables: WP-4, WP-5`
 
-**Objective.** The two engines that create S1/S2's dataset: a reproducible ~1,000-repo sampling frame, and monthly reconstructed risk history over 5 years. Code here; execution is File B. **All commands here run against the research DB (D8) and never write operational tables (D10).**
+**Objective.** The two engines that create S1/S3's dataset: a reproducible ~1,000-repo sampling frame, and one scored scan of every admitted repo. Code here; execution is File B. **All commands here run against the research DB (D8) and never write operational tables (D10).**
 
 **Backend (`research/`).**
 - `build_corpus` (D14): config-YAML grid — language {JS/TS, Python} × stars {5–20, 21–50, 51–200, 201–1000, 1000+} × pushed {<6 mo, 6–18, 18–48, >48 mo} × created-year bands; qualifiers `fork:false archived:false`. Enumerate each cell's `total_count`; auto-split star bands while > 1,000 (Search API hard cap); seeded random sample per cell with **deliberate oversampling of stale cells**, sampling weights recorded per admitted repo; paced ≤ 30 search req/min. Verification per candidate: one tree call → supported manifest present; ≥1 registry-resolvable dependency; **dependency-set hash dedup** (sorted dependency names) against the admitted set — the automated near-duplicate/boilerplate control; not-fork/not-archived via qualifiers. ~50% admission expected; oversample candidates. Outputs: `corpus_manifest.json` (full_name, github id, cell, sampling weight, manifest paths + blob shas, checks, seed, grid config, timestamp), manifest blobs archived under `research_data/corpus/`, `strata_report.md`. Checkpointed, resumable.
-- `backfill` (D10/D14): per repo — commit history per manifest path (paginated) → blob per distinct sha → parse via the same adapters → monthly grid (60 months or since repo creation): manifest state = last change ≤ month-end → **as-of signal reconstruction**: one OSV package-level query per package (all vulns, cached), affected-version matching + `published_at ≤ snapshot` filtering done offline per month; staleness/versions-behind from registry publish dates ≤ snapshot (one registry doc per package, reused across months); **deprecation/yanked treated as time-invariant (known-now)** — registries don't timestamp it; recorded limitation: S2's primary datable event is CVE disclosure. Score under the active weights → write `scan_history` + `dependency_history` rows only (`data_source='backfill'`, `snapshot_date`, `sampling_weight`, formula version; all occurrences incl. clean). Checkpoint JSONL per repo; `--resume`; `--repo owner/name` single mode; rate-budget guard.
-- `backfill_validate` (WP-10): input = cohort tracker + a **live-scan export file from prod** (produced by `export_research_data`, handed over by the developer); compares backfill-reconstructed recent months vs actual live scans: score-delta distribution, classification agreement (Cohen's kappa), per-signal diff attribution → md report. This is what turns backfill from shortcut into validated method.
-- `plot_history`: score-over-time PNG for one repo (demo artifact).
+- `scan_corpus` (D10/D14): per admitted repo — fetch the manifest blobs recorded by `build_corpus` → parse through **the same adapters the product uses** → resolve signals exactly as a live scan does (OSV batched ≤100/batch + in-run cache; registry publish dates for staleness and versions-behind; deprecation/`yanked` from registry metadata) → score under the active weights → write `scan_history` + `dependency_history` rows only (`data_source='corpus_scan'`, `snapshot_date` = run date, `sampling_weight`, formula version; all occurrences incl. clean and unassessable). Checkpoint JSONL per repo; `--resume`; `--repo owner/name` single mode; rate-budget guard. The adapter-and-scorer identity with the product is the point: it is what lets S1 claim the corpus measures the shipped formula rather than a research reimplementation of it.
+- `corpus_report`: score histogram per ecosystem + flagged-rate by stratum → PNGs (demo artifact, and S1's descriptive figures).
 
-**Commits.** 1 `feat(research): partitioned sampling frame with auto-split, seeding, stale oversampling` · 2 `feat(research): candidate verification with dep-set-hash dedup + manifest snapshotting` · 3 `feat(research): backfill manifest-history walk + as-of signal reconstruction` · 4 `feat(research): backfill monthly scoring into research tables with data_source + sampling weights` · 5 `feat(research): backfill_validate agreement report + plot_history` · 6 `test(research): grid splitting, dedup, as-of cve filtering, resume, no-operational-writes assertion`
+**Commits.** 1 `feat(research): partitioned sampling frame with auto-split, seeding, stale oversampling` · 2 `feat(research): candidate verification with dep-set-hash dedup + manifest snapshotting` · 3 `feat(research): scan_corpus over recorded manifests through the product adapters` · 4 `feat(research): corpus scoring into research tables with data_source + sampling weights` · 5 `feat(research): corpus_report distribution charts` · 6 `test(research): grid splitting, dedup, resume, no-operational-writes assertion`
 
-**Acceptance.** 20-repo pilot corpus end-to-end with sane strata report; single-repo 5-year backfill < 5 min with a plausible curve — verify one cliff by hand against a real CVE's OSV `published` date; kill −9 mid-run → `--resume` completes without duplicate rows; zero writes to operational tables (asserted); product trend endpoint still shows only live rows.
+**Acceptance.** 20-repo pilot corpus end-to-end with sane strata report; pilot `scan_corpus` scores every admitted repo and the per-repo scores match a product scan of the same repo exactly (same adapters, same weights — assert on at least 3 repos); kill −9 mid-run → `--resume` completes without duplicate rows; zero writes to operational tables (asserted); product trend endpoint still shows only `live_scan` rows.
 
-**Mentor demo.** Live single-repo backfill → the 5-year curve → point at a cliff: "that's the CVE's disclosure date. Three months of project time, five years of data — and WP-10 validates the reconstruction against reality."
+**Mentor demo.** Pilot strata report → `corpus_report` histograms: "a thousand repositories sampled on a documented frame and scored by the exact code the product runs. That cross-section is study S1's dataset."
 
 ### Phase 12 — Research II: S1 validation harness + weights v2 `GATES: WP-2…WP-6` `optional: NVD key`
 
@@ -678,7 +675,7 @@ Cost is bounded by construction: single pass, fixed tool set, one generation per
 
 **Backend (`research/validation/`).**
 - `ahp.py`: matrix CSV → principal eigenvector, λ_max, CI, CR (Random Index table n=3–7: 0.58, 0.90, 1.12, 1.24, 1.32); **reject CR ≥ 0.10 with a report naming the most-inconsistent judgment triads** (actionable revisit); reconciliation helper: cell-wise divergence report between two matrices + geometric-mean merge.
-- `entropy.py`: Shannon-entropy weights from the corpus's normalized signal matrix (backfill `dependency_history`); comparison vs AHP vector (cosine similarity + rank order). At n≈1,000 the variance estimates behind entropy weights are stable — the whole reason the cross-check is run at corpus scale rather than n=40.
+- `entropy.py`: Shannon-entropy weights from the corpus's normalized signal matrix (`corpus_scan` rows of `dependency_history`); comparison vs AHP vector (cosine similarity + rank order). At n≈1,000 the variance estimates behind entropy weights are stable — the whole reason the cross-check is run at corpus scale rather than n=40.
 - `reference.py`: deps.dev client → OpenSSF Scorecard score per corpus repo (independent reference, D12; ~1,000 calls, free); OSV severity rollup computed alongside with its circularity stated in the output.
 - `agree.py`: Pearson + Spearman vs both references (with CIs); 3-class confusion + Cohen's kappa (reference bucketed by tertiles; bucketing-choice sensitivity reported).
 - `sensitivity.py`: ±10–20% per-weight perturbation (renormalized), **both** vectors, plus `rollup.decay`, `max_terms`, and thresholds ±5 → bucket-flip counts/rates.
@@ -698,7 +695,7 @@ Cost is bounded by construction: single pass, fixed tool set, one generation per
 **Objective.** The full S3 apparatus: automated ground truth, three conditions (+ one internal), deterministic correctness metric, cross-provider judge with a human-validation loop, checkpointed runners, analysis tables. After this phase S3 is data collection + analysis only.
 
 **Backend (`research/experiment/`).**
-- `groundtruth.py` (D15): over corpus (research DB) + cohort flagged dependencies — `cve_fix` cases: target = minimum fixed version > resolved, from OSV ranges; `deprecation_replacement` cases: successor parsed from deprecation text ("use X instead", "replaced by X", "migrate to X"), **registry-verified to exist**; unextractable → dropped with the rate reported (an honest denominator). `extract_ground_truth` → `labelled_set.jsonl`; stratified sampler: 150 items, 75/75 npm/PyPI, case-type quotas recorded (PyPI's replacement stratum will be thin — that asymmetry is itself a finding, and the cve_fix stratum is the controlled head-to-head).
+- `groundtruth.py` (D15): over the corpus's flagged dependencies (research DB) — `cve_fix` cases: target = minimum fixed version > resolved, from OSV ranges; `deprecation_replacement` cases: successor parsed from deprecation text ("use X instead", "replaced by X", "migrate to X"), **registry-verified to exist**; unextractable → dropped with the rate reported (an honest denominator). `extract_ground_truth` → `labelled_set.jsonl`; stratified sampler: 150 items, 75/75 npm/PyPI, case-type quotas recorded (PyPI's replacement stratum will be thin — that asymmetry is itself a finding, and the cve_fix stratum is the controlled head-to-head).
 - `conditions.py`: **A** no-retrieval (same task prompt, no chunks); **B** changelog-RAG, fixed framing (no branch); **C** full branching agent (= the production graph code). **D (internal, D13):** issue/discussion retrieval via `issue_search.py` (GitHub search → same chunk/embed/retrieve path), management-command-only, provably unreachable via HTTP (route-table test). **The runner drives the same graph components against experiment items without any operational scan** — Chroma collection keyed by run id, context built from `labelled_set` signals, so corpus items don't need product registrations.
 - `runner.py` (`run_experiment --condition A|B|C|D --items … --resume`): per item stores generation, retrieved chunks, branch, timings, model ids → `research_data/runs/{run_id}/items.jsonl`; checkpointed; Groq/Gemini pacing with clean stop at daily caps (multi-day runs are normal).
 - `metrics.py`: **correctness = deterministic, no LLM** — recommended version satisfies the ground-truth fixed range (PEP 440 / semver) or replacement name matches; **faithfulness** = Gemini judge, claim-level rubric → {faithful, minor_unsupported, major_unsupported}, cached by (item, condition, judge-version); **retrieval precision@k** = judge chunk-relevance (B/C/D).
@@ -716,12 +713,12 @@ Cost is bounded by construction: single pass, fixed tool set, one generation per
 **Objective.** A stranger can reproduce the system and studies; seminars run from a script; the repo is `v1.0.0`.
 
 **Work.**
-- `export_research_data`: parquet/CSV dumps — `exports/scan_history.parquet`, `exports/dependency_history.parquet`, `exports/agent_traces.parquet`, `exports/live_scans_cohort.parquet` (prod), plus corpus manifest, weights files, run outputs; File B deliverables archived under `research_data/deliverables/` as received. These filenames are the interface File C consumes.
-- `notebooks/`: `13_1_analysis` (runs → condition tables, paired tests), `13_2_markov_hazard` (transition matrix from backfill panel; hazard scaffold over dependency covariates; WP-10 section), `13_3_validation` (renders Phase 12 report data). Scaffolded and runnable against the exports.
-- `REPLICATION.md`: pinned versions (Python/Node + lockfiles committed; `GROQ_MODEL`/`JUDGE_MODEL` ids; embed model), seeds, corpus grid config + timestamp, weights lineage v0→v1→v2, run ids, regeneration instructions for every table/figure, and the limitations that must travel with the data (deprecation time-invariance; judge kappa; PyPI weight lineage; reconstruction caveat).
-- Final sweeps: dependency freeze; security checklist re-run (§11); prod smoke checklist; README (fresh clone → running dev env < 30 min); `docs/demo_script.md` — 10-minute flow: login → register live → score → drill-down → PyPI proof → cited remediation → trend → backfill curve → validation report → pilot table. Tag `v1.0.0`.
+- `export_research_data`: parquet/CSV dumps — `exports/scan_history.parquet`, `exports/dependency_history.parquet`, `exports/agent_traces.parquet`, plus corpus manifest, weights files, run outputs; File B deliverables archived under `research_data/deliverables/` as received. These filenames are the interface File C consumes.
+- `notebooks/`: `13_1_analysis` (runs → condition tables, paired tests) and `13_3_validation` (renders Phase 12 report data). Scaffolded and runnable against the exports. *(The `13_x` prefixes are the studies' legacy ids, hence the gap.)*
+- `REPLICATION.md`: pinned versions (Python/Node + lockfiles committed; `GROQ_MODEL`/`JUDGE_MODEL` ids; embed model), seeds, corpus grid config + timestamp, weights lineage v0→v1→v2, run ids, regeneration instructions for every table/figure, and the limitations that must travel with the data (judge kappa; PyPI weight lineage; the corpus being a single cross-section, so no temporal claim is supportable from it).
+- Final sweeps: dependency freeze; security checklist re-run (§11); prod smoke checklist; README (fresh clone → running dev env < 30 min); `docs/demo_script.md` — 10-minute flow: login → register live → score → drill-down → PyPI proof → cited remediation → trend → corpus cross-section → validation report → pilot table. Tag `v1.0.0`.
 
-**Commits.** 1 `feat(research): export_research_data dumps` · 2 `feat(notebooks): S1/S2/S3 analysis scaffolds over exports` · 3 `docs: replication.md with pins, seeds, lineage, limitations` · 4 `chore: dependency freeze, security re-sweep, prod smoke checklist` · 5 `docs: readme + 10-minute demo script` · 6 `chore(release): v1.0.0`
+**Commits.** 1 `feat(research): export_research_data dumps` · 2 `feat(notebooks): S1/S3 analysis scaffolds over exports` · 3 `docs: replication.md with pins, seeds, lineage, limitations` · 4 `chore: dependency freeze, security re-sweep, prod smoke checklist` · 5 `docs: readme + 10-minute demo script` · 6 `chore(release): v1.0.0`
 
 **Acceptance.** Fresh clone → dev env < 30 min from README alone; exports regenerate every notebook table; demo script runs on prod without improvisation; WP-8 outputs + WP-9 kappa present; all 15 tags exist.
 
@@ -754,4 +751,4 @@ Confidence-retry loop; live issue-search branch (D stays command-only pending an
 
 ## 13. What comes after
 
-When Phase 14 tags `v1.0.0` and File B's WP-8/WP-9 are in: open File C. It consumes exactly the artifacts named in Phase 14's export list and File B's deliverable registry, and defines the three studies end-to-end through submission.
+When Phase 14 tags `v1.0.0` and File B's WP-8/WP-9 are in: open File C. It consumes exactly the artifacts named in Phase 14's export list and File B's deliverable registry, and defines the two studies end-to-end through submission.

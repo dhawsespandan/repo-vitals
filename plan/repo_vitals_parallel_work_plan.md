@@ -6,7 +6,7 @@
 
 **What you produce:** results, not commits. Each WP ends in a **deliverable** with an exact format defined below. You hand it to the developer, who feeds it into the build at the marked phase gate. A late deliverable blocks its phase (one exception: WP-1 has a fallback).
 
-**The system in two minutes.** RepoVitals scans GitHub repositories (Node.js/npm and Python/PyPI), extracts every dependency, checks each against registry metadata and the OSV vulnerability database, and computes a deterministic 0–100 risk score from four signals — deprecation, vulnerability severity, vulnerability count, staleness. The *weights* on those signals are your responsibility (WP-1 informal now, WP-3 rigorous later). An AI agent separately produces citation-backed remediation reports; validating the automated judge of those reports is also yours (WP-9). The research needs data at two scales: a ~1,000-repository corpus with reconstructed monthly score history (WP-4, WP-5) and a small cohort of real users scanning real repos monthly (WP-7).
+**The system in two minutes.** RepoVitals scans GitHub repositories (Node.js/npm and Python/PyPI), extracts every dependency, checks each against registry metadata and the OSV vulnerability database, and computes a deterministic 0–100 risk score from four signals — deprecation, vulnerability severity, vulnerability count, staleness. The *weights* on those signals are your responsibility (WP-1 informal now, WP-3 rigorous later). An AI agent separately produces citation-backed remediation reports; validating the automated judge of those reports is also yours (WP-9). The research needs one large dataset: a ~1,000-repository corpus, sampled (WP-4) and then scored at scale (WP-5).
 
 ---
 
@@ -18,12 +18,12 @@
 | WP-2 | `wp2_anchor_set.csv` | CSV (§WP-2) | Phase 12 validation run |
 | WP-3 | `wp3_matrix_A.csv`, `wp3_matrix_B.csv`, `wp3_matrix_reconciled.csv`, `wp3_session_notes.md` | CSV matrices + prose | Phase 12 (weights v2) |
 | WP-4 | `corpus_manifest.json`, `strata_report.md` + sign-off note | tool-generated + prose | Phase 12 inputs |
-| WP-5 | backfill completion report + **research-DB dump file** + sign-off note | tool-generated + prose | Phase 12/13 inputs |
+| WP-5 | corpus scan completion report + **research-DB dump file** + sign-off note | tool-generated + prose | Phase 12/13 inputs |
 | WP-6 | `validation_report/` folder + `wp6_signoff.md` | tool-generated + prose | **Phase 12 acceptance** |
-| WP-7 | `wp7_cohort_tracker.csv` (living; monthly updates) | CSV (§WP-7) | starts after Phase 6; feeds WP-10 |
 | WP-8 | `runs/` folders + `wp8_run_log.md` | tool-generated + prose | Phase 14 acceptance |
 | WP-9 | `wp9_judge_labels.csv` | CSV (§WP-9) | Phase 14 acceptance |
-| WP-10 | agreement report + `wp10_signoff.md` | tool-generated + prose | no phase gate; **required before the S2 paper is drafted** (File C) |
+
+*(There is no WP-7 and no WP-10 — the gap is deliberate. The surviving work packages keep the numbers they already had rather than being renumbered, so that every reference to WP-1…WP-6, WP-8 and WP-9 in File A and `docs/decisions.md` stays valid.)*
 
 **Handoff etiquette:** zip each deliverable as `WPx_YYYYMMDD.zip`, send to the developer, keep a copy. Never edit a deliverable after handoff — send a v2 zip instead. The developer archives everything under the repo's `research_data/deliverables/`.
 
@@ -38,13 +38,11 @@ Read as: *"my deliverable must arrive before that phase can close."*
 | While Phases 1–3 are built | **WP-1** (half a day). Begin **WP-2** browsing (no tooling needed). |
 | Before Phase 4 closes | WP-1 delivered. |
 | While Phases 5–10 are built | **WP-2** completed. **WP-3** session held (any time after WP-1). |
-| Immediately after Phase 6 deploys | **WP-7 starts** — the longest lead-time item in the project; every week of delay costs a week of longitudinal data. Monthly ritual thereafter. |
 | After Phase 11 code lands | **WP-4** (≈1 h + review), then **WP-5** (overnight + review + dump handoff). *(File A may pull Phase 11 earlier — if so, so do these.)* |
 | During Phase 12 | **WP-6** (runs + review + sign-off). Phase 12 cannot close without it. |
 | After Phase 13 code lands | **WP-8** (multi-day paced runs), then **WP-9** (one sitting, 3–4 h). Both before Phase 14 closes. |
-| ≥3 monthly WP-7 waves after Phase 6 | **WP-10** (run + review). Calendar it the day WP-7 starts. |
 
-Total effort ≈ 6–8 working days spread across the build + ~1 h/month for WP-7 + wall-clock waiting on runs.
+Total effort ≈ 6–8 working days spread across the build, plus wall-clock waiting on runs.
 
 ---
 
@@ -52,9 +50,9 @@ Total effort ≈ 6–8 working days spread across the build + ~1 h/month for WP-
 
 The developer gives you: a checkout of the repository, a filled `.env` (contains the GitHub token and API keys — **treat as secrets**; don't paste into chats or commit anywhere), and the activation one-liner for the Python environment. You additionally need:
 
-- **Docker Desktop** installed. Your machine hosts the **research database** — a local Postgres started once with `docker compose --profile research up -d` from `backend/`. All corpus/backfill data lives there (it is far too large for the free cloud database, by design). Expect **2–5 GB disk** total.
+- **Docker Desktop** installed. Your machine hosts the **research database** — a local Postgres started once with `docker compose --profile research up -d` from `backend/`. All corpus data lives there — it is research data and is kept structurally separate from the product's cloud database, by design. Expect **1–2 GB disk** total.
 - Internet on first run: the tools download a small (~90 MB) embedding model once.
-- A spreadsheet app for CSVs and a calendar for WP-7's monthly ritual.
+- A spreadsheet app for the CSV deliverables.
 
 Every WP states its exact commands. You don't need to understand the code — run the command, watch for the completion summary, review outputs against the checklist. If a command crashes: rerun once with `--resume` (safe by design); if it crashes again, send the developer the last 30 lines of output and stop.
 
@@ -154,7 +152,7 @@ Staleness,,,,1
 
 **Gate:** Phase 12 input; runnable any time after Phase 11 code lands. **Effort:** ~1 h wall clock + 30 min review. **Depends on:** Phase 11 code; research DB up (§3); PAT in `.env`.
 
-**Purpose.** Builds the ~1,000-repository research corpus (≈500 npm / ≈500 PyPI) by stratified, seeded, deduplicated sampling of GitHub — the dataset for the scoring-validation and longitudinal studies. You run it and confirm the output is sane.
+**Purpose.** Builds the ~1,000-repository research corpus (≈500 npm / ≈500 PyPI) by stratified, seeded, deduplicated sampling of GitHub — the dataset for the scoring-validation and grounding studies. You run it and confirm the output is sane.
 
 **Procedure.**
 1. `docker compose --profile research up -d` (once per boot).
@@ -167,19 +165,19 @@ Staleness,,,,1
 
 ---
 
-## WP-5 — Backfill run (the overnight one)
+## WP-5 — Corpus scan run
 
-**Gate:** Phase 12/13 inputs; run after WP-4. **Effort:** ~6 h wall clock unattended + 30 min review. **Depends on:** WP-4.
+**Gate:** Phase 12/13 inputs; run after WP-4. **Effort:** ~2–3 h wall clock unattended + 30 min review. **Depends on:** WP-4.
 
-**Purpose.** For every corpus repository, reconstructs what its dependency manifests looked like at each month-end over the past 5 years (public git history) and what was *known* about each dependency at that time (CVE disclosure dates, release dates), then scores each monthly snapshot. ≈60,000 scored repo-months — five years of longitudinal data collected in one night.
+**Purpose.** Scans every corpus repository once — the same pipeline the live product runs, over the manifests WP-4 recorded — and scores the result. ≈1,000 scored repositories and ≈40,000 scored dependency occurrences: the cross-section that the entropy weights, the external-reference correlations, and the grounding study's sampling frame are all computed from.
 
 **Procedure.**
-1. Evening: `python manage.py backfill --corpus research_data/corpus/corpus_manifest.json --resume`
-2. Checkpoints continuously; crashes/sleep cost nothing — rerun the same command. May pause itself near GitHub's hourly limit (normal). ~6 h.
-3. Morning: read the completion report.
+1. `python manage.py scan_corpus --corpus research_data/corpus/corpus_manifest.json --resume`
+2. Checkpoints continuously; crashes and sleep cost nothing — rerun the same command. May pause itself near GitHub's hourly limit (normal). ~2–3 h.
+3. Read the completion report.
 4. Produce the DB dump for the developer (they need the data locally to build Phases 12–13): `docker exec repovitals-research-db pg_dump -U postgres -Fc repovitals_research > wp5_research_db.dump` (exact command confirmed by the developer).
 
-**Review checklist:** ≥95% of corpus repos completed (a handful of deleted/renamed repos is normal; 50+ failures is not → flag); snapshot count within the report's own expected range; ask the developer for 2–3 `plot_history` charts and eyeball them — curves should *move* (a corpus where nothing ever changes classification would be useless, and itself worth flagging).
+**Review checklist:** ≥95% of corpus repos completed (a handful of deleted/renamed repos is normal; 50+ failures is not → flag); scored-occurrence count within the report's own expected range; ask the developer for the `corpus_report` charts and eyeball them — the score distribution should *spread* across the range (a corpus where almost everything lands in one class would be useless for weight derivation, and itself worth flagging); unassessable-occurrence rate reported and not dominant.
 
 **Deliverable:** completion report + `wp5_research_db.dump` + 5-line sign-off note.
 
@@ -205,31 +203,6 @@ Staleness,,,,1
 6. Final vectors (both ecosystems) sum to 1 and look non-degenerate (a weight ≈0 or ≈0.8 needs a sentence of justification or a bounce).
 
 **Deliverable:** the `validation_report/` folder + `wp6_signoff.md` walking all six checks. Your sign-off is the event that ships weights v2.
-
----
-
-## WP-7 — Prospective cohort (the recruiting job) — START EARLY
-
-**Gate:** starts immediately after Phase 6 deploys; monthly thereafter. **Effort:** 2–3 h to recruit; ~1 h/month ritual. **Depends on:** the product live with both ecosystems.
-
-**Purpose.** The longitudinal study's historical data is *reconstructed* (WP-5). Science requires showing the reconstruction matches reality — real repositories scanned live, monthly, going forward. That validation (WP-10) needs **≥3 monthly waves**, so every week of late start pushes the study's earliest defensible date a week out. The most calendar-critical item in either file.
-
-**Targets:** ≥8 people (course-mates with GitHub repos — the product requires they *own* or have write access to what they register); ≥30 repositories total; both ecosystems (aim ≥10 each — ask specifically for Python repos; JS is what everyone offers first).
-
-**Recruit message (adapt):** *"We built a tool that scores your GitHub repos' dependency health (0–100) and explains exactly which packages are risky and why. Five minutes: log in with GitHub at <URL>, register 3–5 of your own repos (Node or Python), done — it scans automatically. Once a month I'll ask you to press one Rescan button per repo. Your scan data will be used, anonymized, in our final-year academic research — by registering you're okay with that."*
-
-**Consent is mandatory:** the research use must be stated up front (it's in the message above); record their agreement in the tracker. No consent recorded → their data stays out of the research set.
-
-**Setup per recruit:** they log in, register 3–5 own repos, initial scan runs automatically; you add tracker rows (aliases, not names). If a repo is rejected at registration, record the rejection reason — that's useful data too.
-
-**Monthly ritual (fixed slot — e.g. 1st weekend):** message every recruit to hit Rescan per repo (or sit with them — it's minutes); verify in the tracker; chase stragglers within 3 days — a missed month is an unfillable hole in a time series; send the updated tracker to the developer.
-
-**Deliverable — `wp7_cohort_tracker.csv` (living):**
-```
-person_alias, consent_ok, repo_url, ecosystem, registered_date, wave_1_date, wave_1_done, wave_2_date, wave_2_done, ...
-```
-
-**Quality checks:** ≥8 people / ≥30 repos within two weeks of Phase 6; `consent_ok=yes` on every row; per-wave completion ≥80%; ecosystem mix recorded.
 
 ---
 
@@ -269,24 +242,6 @@ person_alias, consent_ok, repo_url, ecosystem, registered_date, wave_1_date, wav
 **Quality checks:** 50/50 labelled; only the three allowed values; notes on every `major_unsupported`.
 
 **Worked examples: Appendix C.**
-
----
-
-## WP-10 — Backfill-vs-reality agreement run
-
-**Gate:** none in File A — **required before the S2 paper is drafted** (File C blocks on it). Earliest date: 3 monthly WP-7 waves after Phase 6. Calendar it the day WP-7 starts. **Effort:** ~1 h + 1 h review.
-
-**Purpose.** WP-5 reconstructed history from public records. This run proves the reconstruction is trustworthy: for the cohort's repositories, it compares the backfill engine's reconstruction of recent months against the *actual live scans* your recruits performed in those months. Close agreement makes the 5-year corpus defensible — the difference between "we cleverly reconstructed history" and "we validated a reconstruction method." The second is publishable.
-
-**Procedure.**
-1. Confirm ≥3 completed waves in the tracker.
-2. Get the cohort live-scan export file from the developer (one command on their side).
-3. `python manage.py backfill_validate --cohort wp7_cohort_tracker.csv --live-export live_scans_cohort.parquet`
-4. Read the agreement report: per-repo-month score deltas, classification agreement (kappa), per-signal attribution of disagreements.
-
-**Review checklist:** classification agreement high (the report flags its own threshold); deltas *attributed* in the per-signal table (expected sources: the known deprecation-timing limitation; packages published between snapshot and scan) — explainable deltas are fine, unexplained systematic drift is not → flag; your sign-off records the agreement number and dominant disagreement source.
-
-**Deliverable:** the agreement report + `wp10_signoff.md` (5–10 lines).
 
 ---
 

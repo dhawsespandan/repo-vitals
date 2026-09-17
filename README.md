@@ -36,8 +36,8 @@ The build is planned end to end in [`plan/`](plan/):
 | File | What it governs |
 |---|---|
 | `repo_vitals_implementation_plan.md` | **the only guide for this codebase** — 14 phases, schema, API surface, scoring specs |
-| `repo_vitals_parallel_work_plan.md` | non-code work running alongside (weight elicitation, corpus, cohort) |
-| `repo_vitals_research_plan.md` | the three studies, which begin only after the other two complete |
+| `repo_vitals_parallel_work_plan.md` | non-code work running alongside (weight elicitation, corpus, experiment runs, judge validation) |
+| `repo_vitals_research_plan.md` | the two studies, which begin only after the other two files complete |
 | `wireframe.html` | the binding visual specification |
 
 Design decisions made during the build are logged in
@@ -167,7 +167,7 @@ Record the production figure in `docs/decisions.md` §1.13.
 |---|---|---|
 | Frontend | Vercel Hobby, root `frontend/` | `vercel.json` rewrites `/api/(.*)` to the Render service — update the host after the first deploy |
 | Backend | Render free web service, root `backend/` | build `pip install -r requirements.txt`; pre-deploy `python manage.py migrate`; start `gunicorn config.wsgi -c gunicorn.conf.py` |
-| Database | Supabase free | 500 MB; product and cohort data only |
+| Database | Supabase free | 500 MB; product data only — corpus data lives in a separate local research database |
 | Keepalive | `.github/workflows/keepalive.yml` | asks for every 10 min, actually runs every 2–11 h; **set the `RENDER_HEALTH_URL` repository variable** or every run fails |
 
 The keepalive cron is load-bearing, not hygiene: Render free services sleep
