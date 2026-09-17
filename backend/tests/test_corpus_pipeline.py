@@ -33,6 +33,7 @@ from apps.research.corpus import MANIFEST_FILENAME, STRATA_REPORT_FILENAME
 from apps.research.corpus_scan import REPORT_FILENAME
 from apps.research.models import DataSource, DependencyHistory, ScanHistory
 from apps.scanning.models import DependencyOccurrence, ManifestFile, Package, ScanRun
+from tests.test_corpus_report import MATPLOTLIB_ERROR
 
 FIXTURES = pathlib.Path(__file__).parent / "fixtures"
 
@@ -181,10 +182,10 @@ def frame(tmp_path):
 @pytest.mark.django_db
 class TestThePilotRun:
     @responses.activate
-    def test_the_three_commands_hand_files_to_each_other(self, tmp_path, frame):
-        """§10 Phase 11's acceptance, at pilot scale: a corpus is built, every
-        admitted repository is scored, and the figures are drawn from it —
-        with each command finding the previous one's output where it expects."""
+    def test_build_corpus_hands_a_manifest_to_scan_corpus(self, tmp_path, frame):
+        """§10 Phase 11's acceptance, at pilot scale: a corpus is built and
+        every admitted repository is scored, with the second command finding
+        the first one's output where it expects."""
         corpus_dir = tmp_path / "corpus"
         mock_github()
 
@@ -222,6 +223,32 @@ class TestThePilotRun:
         assert ScanHistory.objects.count() == len(REPOS)
         assert (corpus_dir / REPORT_FILENAME).exists()
         assert "Scanned 3 repositor(ies)" in out.getvalue()
+
+    @responses.activate
+    @pytest.mark.skipif(
+        bool(MATPLOTLIB_ERROR),
+        reason=f"matplotlib will not load here: {MATPLOTLIB_ERROR}",
+    )
+    def test_corpus_report_draws_from_what_the_scan_wrote(self, tmp_path, frame):
+        """The third hand-off, split out because it is the only step that needs
+        matplotlib. A machine that cannot load it still verifies the two
+        commands that matter for the dataset (see `MATPLOTLIB_ERROR`)."""
+        corpus_dir = tmp_path / "corpus"
+        mock_github()
+        call_command(
+            "build_corpus",
+            "--config",
+            str(frame),
+            "--seed",
+            "42",
+            "--target",
+            "3",
+            "--out",
+            str(corpus_dir),
+            stdout=StringIO(),
+        )
+        manifest_path = corpus_dir / MANIFEST_FILENAME
+        call_command("scan_corpus", "--corpus", str(manifest_path), stdout=StringIO())
 
         out = StringIO()
         call_command(

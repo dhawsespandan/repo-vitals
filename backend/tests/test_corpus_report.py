@@ -16,6 +16,7 @@ S1's descriptive statistics.
 from __future__ import annotations
 
 import json
+import pathlib
 from datetime import date
 from decimal import Decimal
 
@@ -111,6 +112,36 @@ CLEAN = {"staleness_days": 0}
 DEPRECATED = {"staleness_days": 0, "is_deprecated": True}
 VULNERABLE = {"staleness_days": 0, "vulnerability_count": 2}
 UNASSESSABLE = {"is_unassessable": True}
+
+
+def _matplotlib_loads() -> str:
+    """Empty if matplotlib imports, otherwise why it does not.
+
+    Not `pytest.importorskip`. Two different failures wear the same
+    `ImportError`, and only one of them is a reason to skip:
+
+    *Not installed* is a real problem. `requirements-dev.txt` pulls in
+    `requirements-research.txt`, so CI has matplotlib, and a run that silently
+    skipped these because the install was broken would hide exactly the kind of
+    dependency drift `test_matplotlib_is_declared_research_only` exists to
+    catch — so that test never skips.
+
+    *Installed but unloadable* is the platform's answer, not the code's. This
+    machine blocked matplotlib's `_image` DLL under a Windows Application
+    Control policy between one test run and the next; there is nothing to
+    verify on such a box and nothing to fix in this repository.
+    """
+    try:
+        import matplotlib
+
+        matplotlib.use("Agg")
+        import matplotlib.pyplot
+    except ImportError as exc:
+        return str(exc)
+    return ""
+
+
+MATPLOTLIB_ERROR = _matplotlib_loads()
 
 
 @pytest.mark.django_db
@@ -244,6 +275,10 @@ class TestCollect:
 
 
 @pytest.mark.django_db
+@pytest.mark.skipif(
+    bool(MATPLOTLIB_ERROR),
+    reason=f"matplotlib will not load here: {MATPLOTLIB_ERROR}",
+)
 class TestFigures:
     def test_both_figures_are_written(self, tmp_path):
         corpus_row(1, ecosystem="npm", score="90.00", occurrences=[CLEAN])
@@ -298,3 +333,36 @@ class TestSummary:
             tmp_path, [frame_entry(1, "npm", "javascript|5-20|lt6|le2015")]
         )
         assert "Unassessable occurrences: 1 (50.0%)" in summary(collect(path), [])
+
+
+def test_matplotlib_is_declared_research_only():
+    """§8: it must be installed for the figures and never installed on Render.
+
+    This test never skips, because it is the one that protects the deploy.
+    `requirements.txt` is what the web service installs, against a 512 MB tier
+    already holding Django, the scan threads and fastembed's ONNX model (§8.9);
+    matplotlib and NumPy are ~50 MB of import no request path would reach.
+    `requirements-dev.txt` includes the research file so CI has it and
+    `TestFigures` runs for real rather than skipping.
+    """
+    backend = pathlib.Path(__file__).resolve().parent.parent
+    runtime = (backend / "requirements.txt").read_text(encoding="utf-8")
+    research = (backend / "requirements-research.txt").read_text(encoding="utf-8")
+    dev = (backend / "requirements-dev.txt").read_text(encoding="utf-8")
+
+    assert "matplotlib" in research
+    assert "matplotlib" not in runtime
+    assert "-r requirements-research.txt" in dev
+
+
+def test_the_charts_module_imports_without_matplotlib():
+    """The import is inside `render_figures`, so `corpus_report` loads on a
+    machine that has no matplotlib and refuses with a sentence naming the file
+    to install — rather than failing at import time, several frames from the
+    cause."""
+    import importlib
+
+    module = importlib.import_module("apps.research.charts")
+    source = pathlib.Path(module.__file__).read_text(encoding="utf-8")
+    header, _, _ = source.partition("def render_figures")
+    assert "import matplotlib" not in header
