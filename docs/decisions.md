@@ -4165,3 +4165,63 @@ that has only ever held `live_scan`.
   Leaving it unset on Render is correct.
 - **New dependency:** matplotlib, in `requirements-research.txt`, which Render
   does not install.
+
+### 11.21 Two things the per-commit verification found
+
+Every commit of this phase was checked out in a worktree and run through the
+project's whole check command (§4.3: ruff, format, `makemigrations --check`,
+pytest). That is not ceremony; it found two things the final-state run could
+not.
+
+**A commit that renamed an enum member and left the suite red.** The
+`backfill` -> `corpus_scan` rename landed in the scan-engine commit, and
+`test_rescore.py`'s one reference to the old value was going to travel with
+the phase's *test* commit two commits later. Both intervening commits were red,
+which nothing in a final-state run would ever show. The test edit moved into the
+commit that caused it.
+
+**A `DISTINCT` widened by `Meta.ordering`.** `charts._weights_for` asks which
+weights version the corpus rows were scored under.
+`ScanHistory.Meta.ordering = ["-scanned_at"]`, so Django had to add
+`scanned_at` to the select list to satisfy the sort — making the `DISTINCT`
+two columns wide and returning one row per scan rather than one per version.
+The Python `set` still answered correctly, which is why no test noticed: a
+thousand rows fetched to learn one string. `.order_by()` before `.distinct()`
+fixes it, and the same call is now in `_flagged_counts`, which was sorting
+forty thousand rows by manifest path for a pass that only counts them.
+
+This one was looked for on purpose. §10.13 shipped a `FOR UPDATE` on an outer
+join that Postgres refuses and SQLite ignores, and there is still no local
+Postgres (Docker does not start on this machine), so every query this phase
+adds was read back as generated SQL rather than trusted to a SQLite run. The
+`scan_history__in` subquery was checked the same way — Django strips its
+ordering, so it is safe.
+
+### 11.22 The figure tests skip where matplotlib cannot load, and say why
+
+Midway through this phase matplotlib stopped importing on the development
+machine: `DLL load failed while importing _image: An Application Control policy
+has blocked this file`. It had imported forty minutes earlier, in the same
+virtualenv. A Windows Application Control policy had blocked the
+freshly-installed binary; nothing in this repository changed.
+
+A suite that is permanently red for a reason the repository cannot fix trains
+people to ignore it, so the two rendering tests and the pipeline's chart step
+skip when matplotlib will not load, with the platform's own error text as the
+skip reason.
+
+The distinction that makes this safe rather than convenient: **not installed**
+and **installed but unloadable** both arrive as `ImportError`, and only the
+second is a reason to skip. So the skip does not stand alone.
+`test_matplotlib_is_declared_research_only` never skips, and asserts the
+contract that actually matters — matplotlib is in `requirements-research.txt`,
+is *not* in `requirements.txt` (Render's 512 MB tier, §8), and
+`requirements-dev.txt` includes the research file so CI installs it and runs the
+figures for real. A broken install shows up there rather than as a quiet skip.
+A second non-skipping test asserts the matplotlib import stays inside
+`render_figures`, which is what lets the command load and refuse with a useful
+sentence on a machine without it.
+
+The figures themselves therefore have **not** been rendered on this machine
+since the policy landed. They were, before it: both PNGs written and checked for
+a PNG magic number. CI on `ubuntu-latest` is unaffected and runs them.
