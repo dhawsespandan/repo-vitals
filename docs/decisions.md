@@ -4323,3 +4323,85 @@ error mentions `public_repo`. Both passed. Both were encoding the defect: a
 test can only check that the code does what it was written to do, and these
 two faithfully confirmed two things that were wrong. Nothing short of spending
 a real token against the real API was going to say so.
+
+
+### 11.25 A pilot pays a production enumeration, and that is the frame's fault
+
+`build_corpus` enumerates *and splits* every cell before allocation decides
+which cells it will draw from. Splitting only matters for cells you sample
+from — it exists so that a cell larger than the Search API's 1,000-result cap
+is sampled across its whole range rather than across its ranked head — so
+doing it up front means a 20-repository target costs exactly what a 1,000-
+repository target costs.
+
+Measured on the real frame, 2026-09-17: five parent cells produced **35
+leaves**, of which **eleven were still over the cap** after splitting, at
+roughly 21 search calls per parent. One cell
+(`javascript|5-20|lt6|2022plus`) produced sixteen leaves on its own.
+Extrapolated across 240 cells that is ~3,000 search calls — about two hours at
+§8's 30/minute — to place twenty repositories. The run was stopped after 17
+cells in 8 minutes, having produced no manifest.
+
+**The fix, not taken tonight.** Enumerate each cell with one call, allocate on
+those totals, and split only the cells that received an allocation,
+distributing the parent's allocation across its children by population. At
+target 20 that is ~240 calls plus splits for ~20 cells rather than ~3,000. It
+is a restructure of the sampling engine, and this session had already changed
+that engine twice (§11.23); making a third structural change to it at the end
+of an acceptance run is how the fix becomes the defect. It is written down
+here instead, and `corpus_frame_pilot.yaml` makes the pilot runnable meanwhile.
+
+Note also that WP-4's "~1 h" estimate looks optimistic even for the real run.
+The 240-cell frame at target 1,000 splits nearly every cell, so the enumeration
+cost is the same ~3,000 calls; File B should say two to three hours.
+
+### 11.26 What the production acceptance run established
+
+§10 Phase 11's five acceptance criteria, run on 2026-09-17 against live GitHub
+with a zero-scope PAT. Four pass; one cannot run on this machine.
+
+| Criterion | Outcome |
+|---|---|
+| 20-repo pilot corpus end-to-end with sane strata report | **passes.** 17 admitted of 33 candidates (52%, against the plan's expected ~50%), npm 9 / PyPI 8 — a 53/47 split, inside WP-4's 45/55 band. No empty cells, no empty *stale* cells, nothing left over the results cap, seed and run date recorded. Rejections: 13 `no_supported_manifest`, 3 `no_declared_dependencies`. Run on `corpus_frame_pilot.yaml` for the reason §11.25 gives |
+| pilot `scan_corpus` scores every admitted repo | **passes.** All 17 scored: 410 occurrences, 239 flagged, 1 unassessable. Scores span 0.00 to 99.24 across all three classes, which is the spread WP-5's reviewer is asked to confirm |
+| per-repo scores match a product scan exactly (≥3 repos) | **passes, 3 of 3, exactly.** `mjhea0/node-stripe-charge` 7.40 high_alert, `danthareja/node-google-apps-script` 0.00 high_alert, `atomify/atomify` 55.19 medium — identical score, classification, occurrence count, and all fourteen signal columns row by row, against live GitHub, the live registry and live OSV |
+| kill −9 mid-run → `--resume` completes without duplicate rows | **passes, in the hard form.** The scan was killed after 5 repositories, then **two checkpoint lines were deleted** so the database held rows the file did not know about — the case a file-only resume cannot survive. The resume skipped all five, scanned the remaining twelve, and finished at 17 `scan_history` rows over 17 distinct `github_repo_id`s with no duplicates, and 410 `dependency_history` rows: exactly the uninterrupted totals |
+| zero writes to operational tables (asserted) | **passes on a live run**, not only in the suite. After a full corpus scan on a fresh database: `scan_runs` 0, `manifest_files` 0, `dependency_occurrences` 0, `packages` 0, `dependency_vulnerabilities` 0, `repositories` 0, `projects` 0, `app_users` 0, `reports` 0 |
+| product trend endpoint still shows only `live_scan` rows | **suite-only.** The pilot database holds no live scans to contrast against; `test_corpus_scan.py::TestTheProductNeverSeesThem` puts a corpus row on the same `github_repo_id` as a registered repository and asserts the chart stays empty |
+
+`corpus_report` **did not run**: matplotlib will not load on this machine
+(§11.22). The numbers it would have charted were taken from `charts.collect`
+directly and are below.
+
+**Two deviations, both deliberate.** The run used a local SQLite research
+database rather than D8's Docker Postgres — the daemon does not start on this
+machine, and a 20-repository pilot is neither the volume nor the isolation case
+D8 is about. And the product-scan comparison registered nothing on anyone's
+GitHub account: a "product scan" needs a `repositories` row and a user with a
+token, both of which are local rows, and the scan itself only reads public data.
+
+### 11.27 What the pilot's data suggests, and why it is not a finding
+
+The seventeen repositories split sharply by ecosystem:
+
+| | n | min | median | max | safe / medium / high-alert |
+|---|---|---|---|---|---|
+| npm | 9 | 0.00 | 0.00 | 55.19 | 0 / 2 / 7 |
+| PyPI | 8 | 31.13 | 76.25 | 99.24 | 3 / 3 / 2 |
+
+Nothing follows from n=17, and the frame was the *stale* strata only. But the
+shape is worth carrying into S1 as a hypothesis with a built-in confound,
+because it is visible here and would be easy to mistake for a result later.
+
+The npm repositories carry far more dependencies than the PyPI ones — 31, 85
+and 153 occurrences against 2 to 7. §5.3's roll-up sums rank-decayed penalties
+over occurrences, so more dependencies means more opportunities for a worst
+case, and the undecayed worst occurrence dominates by construction. A
+repository with 153 dependencies is therefore *structurally* likelier to reach
+0.00 than one with 3, independent of how well maintained either is.
+
+So "npm scores worse than PyPI" and "npm projects declare more dependencies"
+are not separable in this data, and S1 must control for dependency count before
+reporting any ecosystem comparison. That is a methodology note for File C, not
+a result, and it is recorded here because the pilot is where it first became
+visible.

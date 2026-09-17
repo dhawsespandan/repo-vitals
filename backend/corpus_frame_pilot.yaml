@@ -1,0 +1,65 @@
+# A pilot sampling frame — §10 Phase 11's "20-repo pilot corpus end-to-end".
+#
+#     python manage.py build_corpus --seed 42 --target 20 --config corpus_frame_pilot.yaml
+#
+# Sixteen cells rather than `corpus_frame.yaml`'s 240, chosen so that a pilot
+# exercises every code path — enumeration, star-band splitting, allocation with
+# stale oversampling, seeded sampling, verification, dedup, the strata report —
+# in minutes instead of hours.
+#
+# **Why a pilot needs its own frame.** `build_corpus` enumerates and splits
+# every cell before allocation decides which cells it will sample from, so the
+# production frame costs the same enumeration whether the target is 20 or
+# 1,000. Measured on 2026-09-17: five parent cells of `corpus_frame.yaml`
+# produced 35 leaves, eleven of which were *still* over the 1,000 cap after
+# splitting, at roughly 21 search calls per parent. Across 240 cells that is
+# ~3,000 calls — about two hours at §8's 30/minute — to place twenty
+# repositories. `docs/decisions.md` §11.25 records the fix that would remove
+# the asymmetry; until then, pilot with this file and run WP-4 with the other.
+#
+# The bands are deliberately the *sparse* ones. Higher star counts and older,
+# less-recently-pushed repositories are thinner on GitHub, so most cells here
+# come in under the results cap and splitting stays shallow — and they are also
+# the strata this research actually cares about (D14).
+
+languages:
+  - name: javascript
+    ecosystem: npm
+    qualifier: "language:JavaScript"
+  - name: python
+    ecosystem: pypi
+    qualifier: "language:Python"
+
+stars:
+  - { name: "201-1000", min: 201, max: 1000 }
+  - { name: "1000+", min: 1001, max: null }
+
+# Both stale bands: this is where the product's premise lives, and a pilot that
+# only sampled actively-maintained repositories would tell us least.
+pushed:
+  - { name: "18-48", min_months: 18, max_months: 48, oversample: 2.0 }
+  - { name: "gt48", min_months: 48, max_months: null, oversample: 3.0 }
+
+created:
+  - { name: "le2015", min_year: null, max_year: 2015 }
+  - { name: "2016-2018", min_year: 2016, max_year: 2018 }
+
+qualifiers:
+  - "fork:false"
+  - "archived:false"
+  - "is:public"
+
+search:
+  sort: stars
+  order: desc
+  per_page: 100
+  results_cap: 1000
+
+verification:
+  registry_probe_limit: 3
+
+admission:
+  candidate_multiplier: 2.5
+  ecosystem_share:
+    npm: 0.5
+    pypi: 0.5

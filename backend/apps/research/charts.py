@@ -273,11 +273,17 @@ def render_figures(stats: CorpusStats, out_dir: Path) -> list[Path]:
         matplotlib.use("Agg")  # No display on a research box or in CI.
         import matplotlib.pyplot as plt
     except ImportError as exc:  # pragma: no cover - exercised by absence
+        # The underlying error is quoted rather than summarised, because
+        # "is not installed" is only one of the two things this catches and
+        # guessing wrong sends the reader to the wrong fix. A blocked or
+        # unloadable binary reports itself here instead (§11.22).
         raise ChartsUnavailable(
-            "matplotlib is needed for the corpus figures and is not installed. "
-            "It is research-only and deliberately absent from the runtime "
-            "requirements (§8's 512 MB tier): "
-            "`pip install -r requirements-research.txt`."
+            f"matplotlib could not be imported, so the corpus figures cannot be "
+            f"drawn: {exc}. It is research-only and deliberately absent from the "
+            f"runtime requirements (§8's 512 MB tier) — if it is genuinely "
+            f"missing, `pip install -r requirements-research.txt`. If that "
+            f"reports it as already installed, the import is failing for another "
+            f"reason and the message above is the one to read."
         ) from exc
 
     out_dir.mkdir(parents=True, exist_ok=True)
