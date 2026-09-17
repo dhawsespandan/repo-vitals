@@ -14,9 +14,17 @@ never had to think about (§8):
 
 Everything still goes through `apps.common.http`: the allowlist is the SSRF
 choke point (§5.6) and `api.github.com` is already on it, so nothing here
-widens the outbound surface. `READ_ONLY_HOSTS` covers these calls too — the
-PAT is asked for `public_repo` scope, and a GET is the only method that could
-be sent to GitHub from anywhere in this codebase (§11).
+widens the outbound surface. `READ_ONLY_HOSTS` covers these calls too — a GET
+is the only method that could be sent to GitHub from anywhere in this codebase
+(§11).
+
+**The token wants no scopes at all.** §6 says `public_repo`, and that is more
+than this code can use: `public_repo` grants *write* access to every public
+repository the owner can touch, while a classic token with zero scopes reads
+all public repositories and still gets the authenticated 5,000/hour. Since
+nothing here issues anything but a GET — structurally, not by convention — the
+extra grant buys nothing and risks something. Verified against a real token on
+2026-09-17: `X-OAuth-Scopes: ''`, core limit 5,000.
 
 **The PAT is never reachable from a request.** `D13`'s discipline, applied to
 a credential: nothing outside `apps/research/` reads `GITHUB_API_PAT`, there
@@ -46,9 +54,20 @@ logger = logging.getLogger(__name__)
 SEARCH_API = f"{GITHUB_API}/search/repositories"
 
 #: §8: the Search API allows 30 requests/minute for an authenticated caller.
-#: Expressed as a minimum interval rather than a bucket, because a bucket
-#: drained in ten seconds earns a 403 that costs more than the wait it saved.
-SEARCH_MIN_INTERVAL_SECONDS = 60.0 / 30.0
+#: Paced a little under that rather than exactly at it — 2.5s is 24/minute.
+#: The first pilot run paced at exactly 60/30 and died on its 31st call inside
+#: the minute: a limit of 30 means the 31st fails, so issuing exactly 30 leaves
+#: no room for the boundary landing where it likes. The real guard is
+#: `RateBudget` on the search resource; this just stops a burst reaching it.
+SEARCH_MIN_INTERVAL_SECONDS = 2.5
+
+#: The Search API's window. Used only to guess a reset when a 403 arrives
+#: without usable headers — the budget prefers what GitHub actually reports.
+SEARCH_WINDOW_SECONDS = 60.0
+
+#: Stop searching with this many calls left in the window. Two is enough to
+#: finish an in-flight split rather than stranding it half-enumerated.
+SEARCH_RESERVE = 2
 
 #: Leave this much of the hourly REST budget unspent before pausing. A corpus
 #: repository costs one tree call plus one blob call per manifest, so stopping
@@ -74,8 +93,10 @@ def research_token() -> str:
     if not token:
         raise ResearchCredentialMissing(
             "GITHUB_API_PAT is not set. Phase 11's commands read public "
-            "repositories with a personal access token (§6); create one with "
-            "the `public_repo` scope and put it in backend/.env."
+            "repositories with a personal access token (§6). Create a classic "
+            "token with NO scopes ticked — that reads public repositories and "
+            "still gets the authenticated 5,000/hour, and nothing here issues "
+            "anything but a GET — then put it in backend/.env."
         )
     return token
 
@@ -188,6 +209,13 @@ class ResearchClient:
     search_pacer: Pacer = field(
         default_factory=lambda: Pacer(SEARCH_MIN_INTERVAL_SECONDS)
     )
+    #: Tracked apart from `budget`: the Search API has its own allowance and
+    #: reports it in the same header names, so one shared object would let a
+    #: healthy REST budget mask an exhausted search one. That is precisely how
+    #: the first pilot run died.
+    search_budget: RateBudget = field(
+        default_factory=lambda: RateBudget(reserve=SEARCH_RESERVE)
+    )
     #: Set False by `--no-wait`, so an unattended overnight run pauses and a
     #: foreground smoke run stops instead of sleeping for fifty minutes.
     wait_for_reset: bool = True
@@ -207,26 +235,49 @@ class ResearchClient:
     def search_repositories(
         self, query: str, *, page: int = 1, per_page: int = 100, sort: str, order: str
     ) -> dict:
-        """One page of `/search/repositories`, paced to §8's 30/minute.
+        """One page of `/search/repositories`, under its own budget (§8: 30/min).
 
-        The Search API has its own budget (30/min) and reports it in the same
-        headers as the REST one, so the budget object is deliberately *not*
-        updated from a search answer: mixing the two would have a search call's
-        `remaining: 12` pause a run whose REST budget is untouched.
+        The Search API's budget is tracked *separately* from the REST one and
+        reported in the same header names, which is why `search_budget` exists:
+        a search call's `remaining: 2` must not pause a run whose REST budget is
+        untouched, and — the mistake that mattered — a REST budget of 4,900 must
+        not convince a run that it may keep searching.
+
+        **Pacing alone does not keep a caller under a per-minute limit.** The
+        first pilot run paced at exactly 60/30 = 2.0s and died on its 31st call
+        inside a minute: issuing exactly the limit guarantees arriving at the
+        boundary, and any drift at all puts you over it. The pacer still earns
+        its place by smoothing bursts, but what actually holds the line is
+        reading the remaining count out of the response and stopping before it
+        reaches zero.
+
+        A 403 despite all that is a secondary limit. It is treated as a spent
+        window and retried once, because the alternative is what the pilot did:
+        raise `UpstreamRateLimited` out of a recursive enumeration and lose the
+        whole run.
         """
+        params = {
+            "q": query,
+            "page": page,
+            "per_page": per_page,
+            "sort": sort,
+            "order": order,
+        }
+
+        self.search_budget.pause_if_low(wait=self.wait_for_reset)
         self.search_pacer.wait()
         self.search_calls += 1
-        response = http.get_json(
-            SEARCH_API,
-            token=self.token,
-            params={
-                "q": query,
-                "page": page,
-                "per_page": per_page,
-                "sort": sort,
-                "order": order,
-            },
-        )
+        try:
+            response = http.get_json(SEARCH_API, token=self.token, params=params)
+        except http.UpstreamRateLimited:
+            logger.info("Search hit a limit the budget had not seen; waiting it out.")
+            self.search_budget.remaining = 0
+            self.search_budget.reset_at = time.time() + SEARCH_WINDOW_SECONDS
+            self.search_budget.pause_if_low(wait=self.wait_for_reset)
+            self.search_calls += 1
+            response = http.get_json(SEARCH_API, token=self.token, params=params)
+
+        self.search_budget.observe(response.headers)
         return response.data if isinstance(response.data, dict) else {}
 
     def repository(self, owner: str, name: str) -> dict:

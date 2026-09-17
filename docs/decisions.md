@@ -4274,3 +4274,52 @@ admitted repositories were correctly admitted. Nothing asserted *how many*
 there were. It took arithmetic over the shipped frame — allocation, ceiling,
 admitted, at three admission rates — to see it, which is the kind of check that
 belongs with a sampling design and not with a unit test.
+
+
+### 11.24 The first live pilot died in seventy seconds
+
+It is worth recording exactly how, because every part of it was invisible to a
+suite of 970 passing tests.
+
+`build_corpus --seed 42 --target 20` against the real frame raised
+`UpstreamRateLimited` out of a recursive `enumerate_cell` after 70 seconds and
+8 checkpointed cells. No manifest, no strata report, nothing to hand to WP-4.
+
+**Pacing at exactly the limit is not pacing.** `SEARCH_MIN_INTERVAL_SECONDS`
+was `60.0 / 30.0`, derived straight from §8's "30 req/min". A limit of 30 means
+the *31st* request in the window fails, so issuing exactly 30 leaves no room
+for the window boundary to land wherever it likes — and it lands wherever it
+likes. The interval is now 2.5s (24/minute), but the interval was never going
+to be the real guard.
+
+**The real guard was missing entirely.** `RateBudget` existed and was wired to
+the REST resource, where a corpus scan needs it. The Search API has a *separate*
+allowance reported under the *same* header names, and `search_repositories`
+deliberately did not call `budget.observe` — the docstring even explained why,
+and the reasoning was right: mixing them would let a search call's `remaining:
+12` pause a run whose REST budget was untouched. The conclusion was wrong. The
+answer is a second budget, not no budget. With one shared object a healthy REST
+budget masks an exhausted search one, which is precisely what happened: the run
+walked into a 403 holding 4,900 REST calls.
+
+**A 403 anyway is a secondary limit, and it must not end the run.** It is now
+treated as a spent window, waited out, and retried once — once, not in a loop,
+because a limit that survives a full window is a different problem and belongs
+in front of the operator.
+
+The pilot also settled a scope question. §6 asks for a `public_repo` token;
+`public_repo` grants **write** access to every public repository its owner can
+touch. Nothing in this codebase can use that — `READ_ONLY_HOSTS` refuses any
+non-GET to `api.github.com` before the socket opens (§9.8) — and a classic
+token with **no scopes at all** reads every public repository at the same
+authenticated 5,000/hour. Verified against a real token: `X-OAuth-Scopes: ''`,
+core limit 5,000, search limit 30. The refusal message in `research_token()`
+now tells the operator to tick nothing, and §6 should be corrected to match.
+
+Two of the tests in `test_corpus_builder.py` had to be *changed rather than
+added*, which is the part worth remembering. One asserted
+`SEARCH_MIN_INTERVAL_SECONDS == 2.0` and the other asserted that the credential
+error mentions `public_repo`. Both passed. Both were encoding the defect: a
+test can only check that the code does what it was written to do, and these
+two faithfully confirmed two things that were wrong. Nothing short of spending
+a real token against the real API was going to say so.

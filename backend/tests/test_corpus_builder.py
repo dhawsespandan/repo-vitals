@@ -895,7 +895,12 @@ class TestResearchCredential:
         with pytest.raises(github_module.ResearchCredentialMissing) as excinfo:
             ResearchClient.from_settings()
         assert "GITHUB_API_PAT" in str(excinfo.value)
-        assert "public_repo" in str(excinfo.value)
+        # It tells the operator to grant NO scopes. §6 says `public_repo`, and
+        # that grants *write* on every public repo the owner can touch, which
+        # nothing here can use: a zero-scope classic token reads public
+        # repositories at the full authenticated 5,000/hour.
+        assert "NO scopes" in str(excinfo.value)
+        assert "public_repo" not in str(excinfo.value)
 
     def test_a_set_pat_is_the_token_every_call_carries(self, settings):
         settings.GITHUB_API_PAT = "ghp_research_token"
@@ -926,6 +931,103 @@ class TestRateBudget:
         assert budget.remaining is None
 
 
+class TestTheSearchBudget:
+    """The defect the first live pilot found, pinned.
+
+    The run died 70 seconds in, on its 31st search call, with
+    `UpstreamRateLimited` raised out of a recursive `enumerate_cell` — losing
+    every split in flight and producing no manifest at all. Three things were
+    wrong and all three are covered here.
+    """
+
+    def _client(self, settings, monkeypatch, responses_in_order):
+        settings.GITHUB_API_PAT = "ghp_x"
+        monkeypatch.setattr(github_module, "_sleep", lambda _s: None)
+        client = ResearchClient.from_settings()
+        calls = []
+
+        def fake_get(url, **kwargs):
+            calls.append(url)
+            nxt = responses_in_order.pop(0)
+            if isinstance(nxt, Exception):
+                raise nxt
+            return nxt
+
+        monkeypatch.setattr(github_module.http, "get_json", fake_get)
+        return client, calls
+
+    def _answer(self, remaining, reset=0.0):
+        return github_module.http.UpstreamResponse(
+            200,
+            {"x-ratelimit-remaining": str(remaining), "x-ratelimit-reset": str(reset)},
+            {"total_count": 1, "items": []},
+        )
+
+    def test_the_search_budget_is_not_the_rest_budget(self, settings, monkeypatch):
+        """One shared object let a healthy REST budget mask an exhausted search
+        one, which is how the pilot walked into a 403 with 4,900 REST calls in
+        hand."""
+        client, _ = self._client(settings, monkeypatch, [self._answer(3)])
+        client.budget.remaining = 4900
+
+        client.search_repositories("q", sort="stars", order="desc")
+
+        assert client.search_budget.remaining == 3
+        assert client.budget.remaining == 4900
+
+    def test_it_pauses_before_the_window_is_spent(self, settings, monkeypatch):
+        """Reserve 2: at two remaining the next call waits for the reset rather
+        than discovering the limit by being refused."""
+        client, _ = self._client(
+            settings, monkeypatch, [self._answer(2), self._answer(29)]
+        )
+        client.search_repositories("q", sort="stars", order="desc")
+        assert client.search_budget.remaining == 2
+
+        client.search_repositories("q", sort="stars", order="desc")
+
+        assert client.search_budget.pauses == 1
+
+    def test_a_403_is_waited_out_and_retried_once(self, settings, monkeypatch):
+        """A secondary limit arrives with no warning in the headers. The pilot
+        let it propagate out of a recursive enumeration; now it costs a wait."""
+        client, calls = self._client(
+            settings,
+            monkeypatch,
+            [
+                github_module.http.UpstreamRateLimited("secondary"),
+                self._answer(25),
+            ],
+        )
+
+        payload = client.search_repositories("q", sort="stars", order="desc")
+
+        assert payload["total_count"] == 1
+        assert len(calls) == 2
+        assert client.search_budget.pauses == 1
+
+    def test_a_second_403_is_not_swallowed(self, settings, monkeypatch):
+        """One retry, not a loop. A limit that survives a full window is a
+        different problem and must reach the operator."""
+        client, _ = self._client(
+            settings,
+            monkeypatch,
+            [
+                github_module.http.UpstreamRateLimited("secondary"),
+                github_module.http.UpstreamRateLimited("still secondary"),
+            ],
+        )
+        with pytest.raises(github_module.http.UpstreamRateLimited):
+            client.search_repositories("q", sort="stars", order="desc")
+
+    def test_the_pace_leaves_headroom_under_the_documented_limit(self):
+        """§8 allows 30/minute. Pacing at exactly 60/30 means the 31st call
+        lands inside the minute whenever anything drifts — which it did, on the
+        first real run."""
+        assert github_module.SEARCH_MIN_INTERVAL_SECONDS > 2.0
+        assert 60.0 / github_module.SEARCH_MIN_INTERVAL_SECONDS < 30
+
+
 class TestSearchPacing:
     def test_search_calls_are_paced_and_rest_calls_are_not(self, monkeypatch, settings):
         """§8: the Search API's limit is 30/minute and the REST one is
@@ -948,8 +1050,12 @@ class TestSearchPacing:
             github_module.SEARCH_MIN_INTERVAL_SECONDS, abs=0.2
         )
 
-    def test_the_interval_is_the_one_the_free_tier_allows(self):
-        assert github_module.SEARCH_MIN_INTERVAL_SECONDS == pytest.approx(2.0)
+    def test_the_interval_leaves_room_under_the_documented_limit(self):
+        """This used to assert exactly 60/30 = 2.0, which is what the first
+        live pilot paced at before dying on its 31st call inside the minute.
+        A limit of 30 means the 31st request fails; issuing exactly 30 leaves
+        nothing for the boundary to drift into. See `TestTheSearchBudget`."""
+        assert github_module.SEARCH_MIN_INTERVAL_SECONDS > 60.0 / 30.0
 
 
 def test_a_blob_is_unwrapped_by_the_scanners_own_decoder(monkeypatch, settings):
