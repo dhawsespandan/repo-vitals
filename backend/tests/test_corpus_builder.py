@@ -46,6 +46,7 @@ from apps.research.corpus import (
     build_corpus,
     dependency_set_hash,
     enumerate_cell,
+    finalize_weights,
     load_grid,
     sample_indices,
     split_star_range,
@@ -276,9 +277,12 @@ class TestStarBandSplitting:
             capped=True,
         )
         allocate([cell], target=4, grid=frame)
+        cell.examined = 7
+        finalize_weights([cell])
+
         assert cell.available == 20
-        drawn = corpus_module._candidates_wanted(cell, frame)
-        assert cell.sampling_weight == pytest.approx(20 / drawn)
+        # 20 reachable over 7 looked at — not 5000 over 7.
+        assert cell.sampling_weight == pytest.approx(20 / 7)
 
 
 # ── allocation and sampling ────────────────────────────────────────────────
@@ -322,22 +326,30 @@ class TestAllocation:
         assert all(cell.allocation == 0 for cell in cells if cell.infeasible)
 
     def test_the_weight_is_the_expansion_factor_the_report_explains(self, frame):
-        """One admitted repository stands for `available / drawn` in the frame.
+        """One admitted repository stands for `available / examined` in the frame.
 
-        The denominator is candidates *drawn*, not candidates admitted:
+        The denominator is candidates *examined*, not candidates admitted:
         verification is a filter on the cell, so the admitted set estimates the
         admissible subpopulation, whose own size is estimated by
-        `available x admitted/drawn`. The two `admitted` terms cancel — which
-        is why the weight is computable before a single candidate is checked.
+        `available x admitted/examined`. The two `admitted` terms cancel.
+
+        And not candidates *drawn* either — a cell that fills its allocation
+        stops examining, and the candidates it drew but never looked at were
+        never part of the sample.
         """
         cells = self._cells(frame)
         allocate(cells, target=100, grid=frame)
         live = [cell for cell in cells if cell.allocation]
-        for cell in live:
-            drawn = min(
-                cell.available, round(cell.allocation * frame.candidate_multiplier)
-            )
-            assert cell.sampling_weight == pytest.approx(cell.available / drawn)
+
+        # Nothing examined yet, so there is no weight to report.
+        assert all(cell.sampling_weight is None for cell in live)
+
+        for index, cell in enumerate(live):
+            cell.examined = index + 1
+        finalize_weights(cells)
+
+        for index, cell in enumerate(live):
+            assert cell.sampling_weight == pytest.approx(cell.available / (index + 1))
 
 
 class TestSeededSampling:
@@ -608,7 +620,12 @@ class TestResume:
     ):
         """A checkpoint is appended and flushed per candidate. A process killed
         mid-write leaves a partial JSON line; everything before it is still
-        good, and the truncated one is simply redone."""
+        good, and the truncated one is simply redone.
+
+        `target=8` so the cell's allocation is four and every candidate is
+        examined. At a lower target the quota stop ends the cell after two
+        admissions, which is correct behaviour and leaves nothing to tear.
+        """
         monkeypatch.setattr(
             corpus_module, "_registry_resolvable", lambda specs, limit: True
         )
@@ -625,7 +642,7 @@ class TestResume:
             out_dir=tmp_path,
             grid=frame,
             seed=42,
-            target=4,
+            target=8,
             client=client,
             today=RUN_DATE,
         )
@@ -644,7 +661,7 @@ class TestResume:
             out_dir=tmp_path,
             grid=frame,
             seed=42,
-            target=4,
+            target=8,
             client=resumed_client,
             resume=True,
             today=RUN_DATE,
@@ -680,6 +697,106 @@ class TestResume:
                 today=RUN_DATE,
             )
         assert result.candidates == 1
+
+
+@pytest.mark.django_db
+class TestTheQuotaStop:
+    """The corpus comes out the size it was asked for.
+
+    `candidate_multiplier` oversamples so that attrition still leaves the
+    allocation filled. Verifying *every* drawn candidate and admitting every
+    passer therefore overshoots by exactly that margin — at the frame's 2.5x
+    and §10 Phase 11's expected ~50% admission, a 1,000-repo target delivers
+    ~1,250, outside WP-4's own "total admitted 900-1,100" check.
+    """
+
+    def _run(self, tmp_path, frame, monkeypatch, *, items, target):
+        monkeypatch.setattr(
+            corpus_module, "_registry_resolvable", lambda specs, limit: True
+        )
+        trees = {
+            item["full_name"]: tree_with("package.json", f"m{i}")
+            for i, item in enumerate(items)
+        }
+        blobs = {f"m{i}": manifest_bytes({f"pkg-{i}": "^1"}) for i in range(len(items))}
+        live = next(cell for cell in build_cells(frame, RUN_DATE) if not cell.infeasible)
+        client = FakeGitHub({live.query: len(items)}, {live.query: items}, trees, blobs)
+        return build_corpus(
+            out_dir=tmp_path,
+            grid=frame,
+            seed=42,
+            target=target,
+            client=client,
+            today=RUN_DATE,
+        )
+
+    def test_a_cell_stops_examining_once_its_allocation_is_filled(
+        self, tmp_path, frame, monkeypatch
+    ):
+        """Ten admissible candidates, an allocation of two: two admitted, two
+        examined, and eight left alone."""
+        result = self._run(
+            tmp_path,
+            frame,
+            monkeypatch,
+            items=[repo_item(i) for i in range(10)],
+            target=4,
+        )
+
+        assert result.admitted == 2
+        assert result.candidates == 2
+        cell = next(c for c in result.cells if c.allocation)
+        assert cell.examined == 2
+
+    def test_the_weight_divides_by_what_was_examined_not_what_was_drawn(
+        self, tmp_path, frame, monkeypatch
+    ):
+        """The other half of the same change. A cell that stopped early looked
+        at two of the four it drew, and two is the denominator - dividing by
+        four would halve that stratum's weight and under-count it in every
+        weighted estimate."""
+        result = self._run(
+            tmp_path,
+            frame,
+            monkeypatch,
+            items=[repo_item(i) for i in range(10)],
+            target=4,
+        )
+
+        cell = next(c for c in result.cells if c.allocation)
+        assert cell.examined == 2
+        assert cell.sampling_weight == pytest.approx(cell.available / 2)
+
+        document = json.loads((tmp_path / MANIFEST_FILENAME).read_text(encoding="utf-8"))
+        for entry in document["repositories"]:
+            assert entry["sampling_weight"] == pytest.approx(cell.available / 2)
+
+    def test_the_examined_candidates_are_not_the_top_of_the_ranking(
+        self, tmp_path, frame, monkeypatch
+    ):
+        """Positions are sampled at random but fetched in ascending order, and
+        position correlates with the cell's `stars desc` sort. Stopping at a
+        quota without shuffling would take the highest-starred candidates of
+        every cell - a quota sample of the head of the ranking, wearing a
+        random sample's weights."""
+        self._run(
+            tmp_path,
+            frame,
+            monkeypatch,
+            items=[repo_item(i) for i in range(10)],
+            target=4,
+        )
+
+        admitted = {
+            entry["github_repo_id"]
+            for entry in json.loads(
+                (tmp_path / MANIFEST_FILENAME).read_text(encoding="utf-8")
+            )["repositories"]
+        }
+        # The first two positions of the drawn (ascending) order would be the
+        # two lowest ids. The shuffle means that is not what came out.
+        drawn_ascending = sorted(900000 + i for i in range(10))
+        assert admitted != set(drawn_ascending[:2])
 
 
 # ── the strata report ──────────────────────────────────────────────────────

@@ -315,7 +315,11 @@ class Cell:
     #: is not tripped by arithmetic.
     infeasible: bool = False
     allocation: int = 0
-    drawn: int = 0
+    #: Candidates actually *verified* for this cell — which is the number the
+    #: sampling weight divides by. A cell that fills its allocation early stops
+    #: examining, and the candidates it drew but never looked at are not part
+    #: of the sample and must not be in the denominator.
+    examined: int = 0
     admitted: int = 0
     rejected: dict[str, int] = field(default_factory=dict)
     sampling_weight: float | None = None
@@ -512,16 +516,31 @@ def allocate(cells: list[Cell], target: int, grid: GridConfig) -> None:
             len(group),
         )
 
+    # The weight is deliberately *not* set here. It divides by the number of
+    # candidates actually examined, and a cell that fills its allocation early
+    # stops examining — so the denominator is not known until verification has
+    # run. `finalize_weights` sets it.
+
+
+def finalize_weights(cells: list[Cell]) -> None:
+    """Set each cell's expansion weight from the candidates it actually examined.
+
+    One admitted repository stands for `available / examined` in the frame.
+
+    The denominator is candidates **examined**, not candidates admitted.
+    Verification is a filter on the cell, so the admitted repositories are a
+    uniform random sample of the cell's *admissible* subpopulation, whose size
+    is itself estimated by `available x admitted/examined`. The expansion
+    weight is `(available x admitted/examined) / admitted`, and the two
+    `admitted` terms cancel.
+
+    It is also not the number *drawn*. A cell that fills its allocation stops
+    verifying, and the candidates it drew but never looked at were never part
+    of the sample — counting them would inflate every estimate from that
+    stratum in proportion to how early it filled.
+    """
     for cell in cells:
-        drawn = _candidates_wanted(cell, grid)
-        # The expansion weight: one admitted repository stands for this many
-        # in the frame. Denominator is the number *drawn*, not the number
-        # admitted — verification is a filter on the cell, so the admitted set
-        # estimates the admissible subpopulation, whose size is itself
-        # estimated by `total x admitted/drawn`. The two `admitted` terms
-        # cancel, which is why this is computable before a single candidate
-        # has been checked.
-        cell.sampling_weight = (cell.available / drawn) if drawn else None
+        cell.sampling_weight = (cell.available / cell.examined) if cell.examined else None
 
 
 def _candidates_wanted(cell: Cell, grid: GridConfig) -> int:
@@ -587,7 +606,14 @@ def draw_candidates(
         if offset < len(items) and isinstance(items[offset], dict):
             drawn.append(items[offset])
 
-    cell.drawn = len(drawn)
+    # Shuffled, and that is load-bearing rather than tidy. The positions were
+    # sampled at random but are fetched in ascending order, and position
+    # correlates with the cell's sort (`stars desc`). Verifying in that order
+    # and stopping at the allocation would take the highest-starred candidates
+    # of every cell — a quota sample of the head of the ranking, wearing a
+    # random sample's weights. Shuffling first makes the examined set a
+    # uniform random subset of the drawn set, whatever the stop.
+    random.Random(f"{seed}:{cell.key}:order").shuffle(drawn)  # noqa: S311
     return drawn
 
 
@@ -710,7 +736,11 @@ def verify_candidate(
         stars=int(item.get("stargazers_count") or 0),
         pushed_at=item.get("pushed_at"),
         created_at=item.get("created_at"),
-        sampling_weight=cell.sampling_weight,
+        # Left None here, and stamped by `build_corpus` once the run knows how
+        # many candidates this cell actually examined. A weight copied at
+        # verification time would be the weight of a cell that had not finished
+        # being sampled.
+        sampling_weight=None,
     )
 
     try:
@@ -937,13 +967,13 @@ class BuildResult:
 def _cell_from_checkpoint(payload: dict) -> Cell:
     """Replay an enumerated cell, without its tallies.
 
-    `drawn`, `admitted` and `rejected` are deliberately dropped and recomputed
+    `examined`, `admitted` and `rejected` are deliberately dropped and recomputed
     from the candidate checkpoint. They are derived from it, and restoring
     both would count every candidate of the previous run twice — an error that
     is invisible in the run itself and shows up as an impossible admission
     rate in the strata report.
     """
-    counters = {"drawn", "admitted", "rejected", "allocation", "sampling_weight"}
+    counters = {"examined", "admitted", "rejected", "allocation", "sampling_weight"}
     known = set(Cell.__dataclass_fields__) - counters
     return Cell(**{key: value for key, value in payload.items() if key in known})
 
@@ -1009,7 +1039,7 @@ def build_corpus(
         cell = by_key.get(row.get("cell", ""))
         if cell is None:
             continue
-        cell.drawn += 1
+        cell.examined += 1
         if row.get("admitted"):
             cell.admitted += 1
         elif row.get("reason"):
@@ -1019,21 +1049,27 @@ def build_corpus(
     for cell in cells:
         if cell.allocation <= 0:
             continue
-        already = cell.drawn
-        if already >= _candidates_wanted(cell, grid):
-            # Every candidate this cell was ever going to draw is already in
-            # the checkpoint. Re-running `draw_candidates` would spend search
-            # calls re-fetching pages only to discard every item — on a resume
-            # near the end of a run, that is most of the frame.
+        if cell.admitted >= cell.allocation:
+            # Filled on an earlier run. Nothing to draw and nothing to verify.
             continue
-        drawn = draw_candidates(cell, client, grid, seed)
-        cell.drawn = already + len(
-            [item for item in drawn if item.get("id") not in seen_repo_ids]
-        )
-        for item in drawn:
+        if cell.examined >= _candidates_wanted(cell, grid):
+            # Every candidate this cell was ever going to draw has been looked
+            # at; it simply did not fill. Re-running `draw_candidates` would
+            # spend search calls re-fetching pages only to discard every item —
+            # on a resume near the end of a run, that is most of the frame.
+            continue
+
+        for item in draw_candidates(cell, client, grid, seed):
+            if cell.admitted >= cell.allocation:
+                # The quota is met. Every remaining candidate goes unexamined,
+                # which is what keeps the corpus the size it was asked for:
+                # verifying all of them and admitting every passer overshoots
+                # the target by the margin `candidate_multiplier` adds.
+                break
             if item.get("id") in seen_repo_ids:
                 continue
             seen_repo_ids.add(item.get("id"))
+            cell.examined += 1
             candidate = verify_candidate(item, cell, client, grid, seen_hashes, blob_dir)
             checkpoint.append(CANDIDATES_CHECKPOINT, _candidate_payload(candidate))
             candidates.append(candidate)
@@ -1046,8 +1082,18 @@ def build_corpus(
                 )
         say(
             f"{cell.key}: {cell.admitted}/{cell.allocation} admitted "
-            f"from {cell.drawn} candidate(s)."
+            f"from {cell.examined} examined."
         )
+
+    finalize_weights(cells)
+    # Only now can a candidate carry its weight: the denominator is what its
+    # cell examined, which is not known while the cell is still being examined.
+    # Stamped on every candidate, admitted or not, so a rejected row in the
+    # checkpoint still says which cell's sampling it came out of.
+    for candidate in candidates:
+        cell = by_key.get(candidate.cell)
+        if cell is not None:
+            candidate.sampling_weight = cell.sampling_weight
 
     admitted = [candidate for candidate in candidates if candidate.admitted]
     rejected: dict[str, int] = {}
@@ -1293,9 +1339,11 @@ def strata_report(
         "`weight` is the expansion weight recorded on every admitted repository",
         "in this cell: one admitted repository stands for this many in the frame.",
         "It is the cell's available population over the number of candidates",
-        "drawn, so verification's own attrition is already inside it.",
+        "*examined*, so verification's own attrition is already inside it. A",
+        "cell that filled its allocation stopped examining, and the candidates",
+        "it never looked at are correctly absent from the denominator.",
         "",
-        "| Cell | Ecosystem | Population | Allocated | Drawn | Admitted | Weight | Notes |",
+        "| Cell | Ecosystem | Population | Allocated | Examined | Admitted | Weight | Notes |",
         "|---|---|---|---|---|---|---|---|",
     ]
     for cell in sorted(cells, key=lambda c: c.key):
@@ -1308,7 +1356,7 @@ def strata_report(
             notes.append("empty")
         lines.append(
             f"| `{cell.key}` | {cell.ecosystem} | {cell.total_count} | "
-            f"{cell.allocation} | {cell.drawn} | {cell.admitted} | "
+            f"{cell.allocation} | {cell.examined} | {cell.admitted} | "
             f"{'' if cell.sampling_weight is None else f'{cell.sampling_weight:.1f}'} | "
             f"{', '.join(notes)} |"
         )
@@ -1330,7 +1378,7 @@ def strata_report(
         "  registry-resolvable dependency. The population this corpus represents",
         "  is therefore repositories *with assessable dependencies*, not all",
         "  repositories in the cell — which is what the weight's denominator",
-        "  (candidates drawn, not admitted) accounts for.",
+        "  (candidates examined, not admitted) accounts for.",
         "",
     ]
     return "\n".join(lines)

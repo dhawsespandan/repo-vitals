@@ -4225,3 +4225,52 @@ sentence on a machine without it.
 The figures themselves therefore have **not** been rendered on this machine
 since the policy landed. They were, before it: both PNGs written and checked for
 a PNG magic number. CI on `ubuntu-latest` is unaffected and runs them.
+
+
+### 11.23 The corpus stops at its target, and the weight follows
+
+Preparing the pilot run found the phase's worst defect, and it was in the part
+that matters most: the sampling.
+
+`candidate_multiplier` draws 2.5x a cell's allocation so that verification's
+attrition still leaves the allocation filled. But `build_corpus` verified
+*every* drawn candidate and admitted every passer, so the multiplier became a
+straight multiplier on the corpus size. At §10 Phase 11's own expected ~50%
+admission, a 1,000-repo target delivered ~1,250 — outside WP-4's "total
+admitted 900-1,100" review check, and 25% more work for WP-5 and 25% more API
+budget than anyone asked for. Simulated across the frame: the old code produced
+1,040 / 1,300 / 1,560 admissions at 40 / 50 / 60% admission rates; it now
+produces 1,000 / 1,040 / 1,040.
+
+A cell now stops examining once its allocation is filled. Two consequences, and
+neither is optional:
+
+**The examined candidates have to be shuffled first.** Positions are sampled at
+random but fetched in ascending order, and position correlates with the cell's
+sort (`stars desc`). Verifying in that order and stopping at the quota would
+take the highest-starred candidates of every cell — a quota sample of the head
+of the ranking, wearing a random sample's weights, which is a worse artefact
+than the overshoot it replaced. `draw_candidates` shuffles with a seeded RNG
+derived from the cell key, so the examined set is a uniform random subset of the
+drawn set whatever the stop.
+
+**The weight's denominator becomes candidates examined.** It was
+`available / drawn`, computed in `allocate()` before verification ran. A cell
+that stops early drew 2.5x and looked at far fewer, and the ones it never
+looked at were never part of the sample — dividing by them would under-count
+that stratum in proportion to how *early* it filled, which is to say in
+proportion to how healthy its repositories were. `finalize_weights` now runs
+after verification, and `build_corpus` stamps the result onto every candidate
+afterwards. That ordering is load-bearing: the first version of this change
+left `verify_candidate` copying `cell.sampling_weight` at verification time,
+and every repository in the manifest came out with a null weight.
+
+`Cell.drawn` is now `Cell.examined`, in the checkpoint and in the strata
+report's table, because the two numbers stopped being the same.
+
+The lesson is the one §8.15 already recorded in a different register: the
+overshoot was invisible to every test, because every test asserted that
+admitted repositories were correctly admitted. Nothing asserted *how many*
+there were. It took arithmetic over the shipped frame — allocation, ceiling,
+admitted, at three admission rates — to see it, which is the kind of check that
+belongs with a sampling design and not with a unit test.
