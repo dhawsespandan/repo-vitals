@@ -38,7 +38,7 @@ The build is planned end to end in [`plan/`](plan/):
 | `repo_vitals_implementation_plan.md` | **the only guide for this codebase** — 14 phases, schema, API surface, scoring specs |
 | `repo_vitals_parallel_work_plan.md` | non-code work running alongside (weight elicitation, corpus, experiment runs, judge validation) |
 | `repo_vitals_research_plan.md` | the two studies, which begin only after the other two files complete |
-| `wireframe.html` | the binding visual specification |
+| `wireframe.html` | a visual reference — layout, spacing and component look where the implementation plan is silent. It does **not** outrank that plan, which never mentions it (`docs/decisions.md` §7.8) |
 
 Design decisions made during the build are logged in
 [`docs/decisions.md`](docs/decisions.md).
