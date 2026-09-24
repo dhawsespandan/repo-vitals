@@ -1,0 +1,41 @@
+repo_url,ecosystem,bucket_seeded,is_known_anchor,anchor_package,approx_dep_count,has_lockfile,why_this_bucket
+https://github.com/facebook/react,npm,healthy,false,,90,true,Actively maintained core React library by Meta; recent pushes; reputable org; no deprecated or stale deps
+https://github.com/vercel/next.js,npm,healthy,false,,245,true,Actively maintained React meta-framework by Vercel; continuous releases; 240+ deps all current
+https://github.com/expressjs/express,npm,healthy,false,,32,true,Actively maintained minimalist web framework; stable dep set; reputable org; recent security patches
+https://github.com/nestjs/nest,npm,healthy,false,,128,true,Actively maintained enterprise Node.js framework; TypeScript-first; frequent minor and patch releases
+https://github.com/vitejs/vite,npm,healthy,false,,88,true,Actively maintained modern build tool; pushed several times per week; no obsolete dependencies
+https://github.com/prettier/prettier,npm,healthy,false,,56,true,Actively maintained code formatter; recent pushes; well-governed small dep tree
+https://github.com/eslint/eslint,npm,healthy,false,,72,true,Actively maintained linting tool; governed by ESLint Foundation; strict dep hygiene
+https://github.com/axios/axios,npm,healthy,false,,26,true,Actively maintained HTTP client; recent v1.x release cycle; lean dep tree
+https://github.com/pallets/flask,pypi,healthy,false,,12,false,Actively maintained micro-framework by Pallets org; current deps; no yanked releases in tree
+https://github.com/django/django,pypi,healthy,false,,6,false,Actively maintained web framework with LTS releases; minimal dep surface; security-patch cadence
+https://github.com/encode/httpx,pypi,healthy,false,,19,true,Actively maintained modern HTTP client; poetry lockfile; no stale transitive deps
+https://github.com/tiangolo/fastapi,pypi,healthy,false,,14,true,Actively maintained API framework; pushed weekly; pydantic v2 migration completed
+https://github.com/psf/requests,pypi,healthy,false,,10,false,Actively maintained classic HTTP library under PSF stewardship; minimal dep set all current
+https://github.com/pydantic/pydantic,pypi,healthy,false,,11,true,Actively maintained data-validation library; v2 rewrite shipped; recent CI pushes
+https://github.com/sqlalchemy/sqlalchemy,pypi,healthy,false,,22,false,Actively maintained ORM; v2 released; well-documented dep set; no obsolete pins
+https://github.com/nicedoc/nicedoc.io,npm,risky,true,request@2.88.2,48,true,Not pushed since 2020; depends on request@2.x which was officially deprecated Feb 2020 by its author
+https://github.com/TalAter/UpUp,npm,risky,true,lodash@3.10.1,22,false,Not pushed since 2017; depends on lodash 3.10.1 which carries CVE-2019-10744 (prototype pollution)
+https://github.com/strongloop/loopback,npm,risky,true,moment@2.24.0,110,true,No significant pushes since 2020; depends on moment@2.x which its own maintainers declared as legacy/deprecated in Sept 2020
+https://github.com/krakenjs/kraken-js,npm,risky,false,,62,true,No meaningful pushes since 2019; Express-based framework abandoned in favour of newer alternatives; several stale production deps
+https://github.com/Unitech/pm2-gui,npm,risky,false,,130,false,Not pushed since 2019; no lockfile; large stale dependency tree; maintainer focus shifted fully to pm2 CLI
+https://github.com/yeoman/yo,npm,risky,false,,32,true,Last significant push 2021; Yeoman ecosystem effectively deprecated; scaffolding approach replaced by modern CLIs
+https://github.com/assemble/assemble,npm,risky,false,,140,true,Not pushed since 2020; static-site generator superseded; many transitive deps unmaintained
+https://github.com/jaredhanson/passport-local,npm,risky,false,,12,true,No pushes since 2021; Passport ecosystem stagnant; open CVE-related issues unaddressed upstream
+https://github.com/cgross/generator-cg-angular,npm,risky,false,,45,false,Not pushed since 2016; Yeoman/Angular 1.x boilerplate; all deps effectively EOL; no lockfile
+https://github.com/omab/django-social-auth,pypi,risky,true,django@1.8.x,28,false,Archived 2016; requires Django 1.8 which reached EOL April 2018; superseded by python-social-auth
+https://github.com/Pylons/repoze.bfg,pypi,risky,false,,15,false,No pushes since 2011; Python 2 only; superseded entirely by Pyramid; zero maintenance
+https://github.com/pinax/pinax,pypi,risky,true,django@1.4.x,55,false,Last real commit 2014; pinned to Django 1.4 which reached EOL Oct 2015; unmaintained collection of apps
+https://github.com/benoitc/couchdbkit,pypi,risky,false,,12,false,Not pushed since 2019; CouchDB client unmaintained; Python 2/3 compatibility shims present throughout
+https://github.com/rdegges/django-sslify,pypi,risky,false,,5,false,Not pushed since 2016; README explicitly states deprecated; Django middleware approach it used removed in Django 4.0
+https://github.com/lincolnloop/django-geoip,pypi,risky,false,,18,false,Not pushed since 2018; unmaintained; depends on GeoIP C library wrappers that are effectively abandoned
+https://github.com/mochajs/mocha,npm,in_between,false,,115,true,Maintained but growth has stalled; some dependencies lag behind current majors; test-runner ecosystem shifting toward Vitest/Jest
+https://github.com/gruntjs/grunt,npm,in_between,false,,45,true,Maintained but Grunt ecosystem widely considered superseded by Webpack/Vite; still receives patches but adoption declining
+https://github.com/koajs/koa,npm,in_between,false,,105,true,Maintained by a small group; still active but well behind Express in ecosystem momentum; some deps at older majors
+https://github.com/jshint/jshint,npm,in_between,false,,28,true,Maintained with security patches but widely superseded by ESLint; low velocity; some old dependencies
+https://github.com/sindresorhus/np,npm,in_between,false,,42,true,Actively maintained but very small team; some minor dep lag; clean and purposeful dep tree
+https://github.com/Modernizr/Modernizr,npm,in_between,false,,38,false,Still accessible but low velocity post-2020; approach (browser feature detection) largely replaced by modern targets; no lockfile
+https://github.com/Pylons/pyramid,pypi,in_between,false,,35,false,Still maintained but declining community relative to FastAPI/Django; some dependencies lag behind current stable
+https://github.com/bottlepy/bottle,pypi,in_between,false,,4,false,Maintained but extremely low velocity; single-file library; minimal dependencies; activity peaks around security patches
+https://github.com/hugapi/hug,pypi,in_between,false,,22,false,Last meaningful push ~2021; superseded by FastAPI in its niche; still installable; pip-installable but no active development
+https://github.com/pennersr/django-allauth,pypi,in_between,false,,40,false,Maintained but some pinned compatibility ranges lag current Django/Python releases; single maintainer; recent activity sparse
