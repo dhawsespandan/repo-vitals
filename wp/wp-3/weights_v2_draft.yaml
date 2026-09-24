@@ -1,0 +1,32 @@
+# weights_v2.yaml — Tier-2 AHP-entropy-validated weights (DRAFT)
+# STATUS: DRAFT — do not commit or set WEIGHTS_VERSION=v2 until WP-6 sign-off is complete.
+# After WP-6 sign-off, this file moves to backend/weights/weights_v2.yaml unchanged.
+#
+# Derivation: AHP two-judge session (WP-3), reconciled via geometric-mean merge.
+# npm weight vector: principal eigenvector of wp3_matrix_reconciled.csv (λ_max=4.078, CR=0.029)
+# PyPI weight vector: reasoned redistribution from npm reconciled vector (same session).
+# Full derivation and session record: wp/wp-3/wp3_session_notes.md
+# Validation: WP-6 sign-off required before this version is activated.
+#
+# Cross-check to File A §5.4 schema — all keys must be present and in this order:
+#   version, derivation, normalization, flag_rule, thresholds, rollup, weights, epss
+
+version: v2
+derivation: ahp-entropy-validated
+normalization: { cve_count_cap: 10, staleness_cap_days: 1095 }
+flag_rule:     { stale_flag_days: 730 }
+thresholds:    { safe_min: 80, medium_min: 50 }
+rollup:        { decay: 0.5, max_terms: 20 }
+weights:
+  npm:  { deprecation: 0.40, severity: 0.34, count: 0.15, staleness: 0.11 }
+  pypi: { deprecation: 0.26, severity: 0.43, count: 0.15, staleness: 0.16 }
+epss: { enabled: false, weight: 0.0 }
+
+# Verification:
+#   npm  sum: 0.40+0.34+0.15+0.11 = 1.00  ✓
+#   pypi sum: 0.26+0.43+0.15+0.16 = 1.00  ✓
+#   No weight = 0 or > 0.6: min=0.11, max=0.43  ✓
+#
+# Note on rounding: the eigenvector gives npm Dep=0.401, Sev=0.336, Cnt=0.154, Stl=0.109.
+# Published as 0.40, 0.34, 0.15, 0.11 (rounded to 2 decimal places, sum preserved at 1.00).
+# The loader validates sum to 1 ±0.001 — these rounded values satisfy that constraint.

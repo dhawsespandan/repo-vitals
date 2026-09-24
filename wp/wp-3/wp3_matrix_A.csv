@@ -1,0 +1,23 @@
+# WP-3 Matrix A — Judge 1 (independent pairwise judgment)
+# Judge: Teammate (primary judge)
+# Date: 2026-09-23
+# Scale: Saaty 1–9 (see Appendix A of File B)
+# Upper triangle filled; lower triangle = reciprocal; diagonal = 1.
+#
+# Judgments (upper triangle only):
+#   Deprecation vs Severity:  2  — deprecation is a cleaner first-party signal, but severity can be catastrophic; moderate dominance
+#   Deprecation vs Count:     3  — certainty of a deprecation declaration outranks mere breadth of vulnerabilities
+#   Deprecation vs Staleness: 4  — deprecation is explicit; staleness is only an indirect proxy; directness gap is wide
+#   Severity vs Count:        2  — one critical CVE outweighs several low-severity ones, but a long tail still matters
+#   Severity vs Staleness:    3  — known, scored evidence vs inferred abandonment; evidence quality drives the gap
+#   Count vs Staleness:       2  — both are second-tier signals; count is at least measured, staleness is inferred
+#
+# Derived weight vector (principal eigenvector, normalized):
+#   Deprecation: 0.466 | Severity: 0.277 | Count: 0.161 | Staleness: 0.096
+#   (sum = 1.000)
+# Consistency Ratio: 0.0115  (< 0.10 — coherent)
+,Deprecation,Severity,Count,Staleness
+Deprecation,1,2,3,4
+Severity,0.500,1,2,3
+Count,0.333,0.500,1,2
+Staleness,0.250,0.333,0.500,1
