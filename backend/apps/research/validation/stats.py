@@ -194,3 +194,31 @@ def cohen_kappa(matrix: Sequence[Sequence[int]]) -> float | None:
     if expected >= 1:
         return None
     return (observed - expected) / (1 - expected)
+
+
+def weighted_kappa(matrix: Sequence[Sequence[int]]) -> float | None:
+    """Linearly weighted kappa for ordered categories (Cohen 1968).
+
+    For an ordinal scale such as S3's faithful < minor < major, a one-step
+    disagreement is less severe than a two-step one; the weight of cell (i, j)
+    is |i - j| / (k - 1). Reported beside the unweighted kappa, never instead.
+    """
+    total = sum(sum(row) for row in matrix)
+    size = len(matrix)
+    if total == 0 or size < 2:
+        return None
+    rows = [sum(matrix[i]) / total for i in range(size)]
+    columns = [sum(matrix[i][j] for i in range(size)) / total for j in range(size)]
+    observed = sum(
+        abs(i - j) / (size - 1) * matrix[i][j] / total
+        for i in range(size)
+        for j in range(size)
+    )
+    expected = sum(
+        abs(i - j) / (size - 1) * rows[i] * columns[j]
+        for i in range(size)
+        for j in range(size)
+    )
+    if expected == 0:
+        return None
+    return 1 - observed / expected
