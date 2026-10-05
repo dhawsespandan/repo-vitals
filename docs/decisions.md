@@ -4951,3 +4951,180 @@ The panel is in `research_data/exports/` (gitignored, regenerated in seconds).
 
 Phase 12's last open criterion is closed. `v0.12.0` stays where it is: it
 was pushed and has moved once already, and commit 7 travels in `v0.13.0`.
+
+## Phase 13 — Research III: S3 experiment harness
+
+Coded on the local branch `phase13-s3-harness` under §12.16's recorded
+deviation: not pushed, not tagged, not deployed. Six commands
+(`extract_ground_truth`, `run_experiment`, `analyze_experiment`,
+`judge_validation_packet`, `judge_validation_kappa`, and condition D inside
+`run_experiment`) over `apps/research/experiment/` and
+`apps/research/issue_search.py`. No migration, no new dependency, two
+research-only environment variables (`GEMINI_API_KEY`, `JUDGE_MODEL`), one
+host on the allowlist.
+
+### 13.1 The labelled set, and what its correctness can mean
+
+`extract_ground_truth` pools the snapshot's deprecated or vulnerable
+occurrences by (ecosystem, package, resolved version) and extracts an answer
+per case type (D15).
+
+**A `cve_fix` answer is a set of versions.** Corpus scans keep no advisory
+rows, so OSV is asked again for the resolved version and every affected
+interval is kept. Correct is any upgrade that escapes all of them; the stored
+`target_version` (the smallest) walks up through any interval that re-opens a
+fix. Two scope choices are deliberate and stated in the module: only the
+advisories OSV returns *for the resolved version* are in an item — so a
+recommended upgrade can be "correct" here and carry a different, unflagged
+advisory — and an advisory with no fix drops the item.
+
+**A successor exists or the item is dropped.** File A's three phrasings plus
+four synonyms ("superseded by", "in favour of", "renamed to", "moved to");
+stopwords, version numbers, paths, the package's own name and npm's
+lower-case rule filtered; the survivor looked up through the scanner's own
+registry client. Each item records the pattern, so the analysis can restrict
+to File A's three. Every drop is counted by reason (File C L6).
+
+### 13.2 An open question for File C: the answer is in TARGET
+
+Each item carries TARGET in exactly the shape the production graph's
+`load_context` builds — a test pins the key sets together — so condition C is
+the production agent answering the production prompt. That has a consequence
+S3 has to face, and it is **recorded here rather than designed around**,
+because it is a study-design decision and not an engineering one:
+
+- TARGET carries each advisory's `fixed_version`, which is what the `cve_fix`
+  ground truth is extracted from.
+- TARGET carries the deprecation sentence, which is what the
+  `deprecation_replacement` successor is extracted from.
+
+So correctness partly measures whether a pipeline *uses* facts it was handed,
+and condition A (no retrieval) can score well by copying them; the end-to-end
+test's fake generator does exactly that and is scored correct on every
+`cve_fix` item. Where retrieval can still matter: items with several
+advisories (OSV's per-advisory `fixed_version` is not the version that
+escapes all of them), re-opened fixes, and successors the sentence does not
+name. Options for File C, none taken: report it as a threat to validity;
+restrict RQ1/RQ2's headline to items where TARGET's fixed version is *not*
+the answer; or add a withheld-TARGET variant of each condition. The analysis
+and every report this harness writes carry one line saying so.
+
+### 13.3 Four conditions, each pair differing in one thing
+
+A is the grounded prompt over an empty SOURCE block; B adds the passages with
+one fixed framing and no gate; C is the production branch and gate, called
+rather than copied; D is C over changelog *and* issue text. So A-B is
+retrieval alone (RQ1), B-C is the branch and the gate (RQ2), C-D is the
+indexed sources (RQ4).
+
+Two choices worth defending. A takes the **grounded** system prompt, not the
+ungrounded one, so that A and B differ in passages and nothing else; the
+ungrounded prompt would add an instruction to disclaim. And A and B use a new
+`FIXED_FRAMING` task text, because the production no-reason text tells the
+model a dependency is "not deprecated", which is false for half of a
+no-branch condition's items. The production graph never passes it; both
+production texts are unchanged and asserted.
+
+### 13.4 The driver stops before `persist`, and writes no trace
+
+`graph.run` needs a report row and an occurrence with a scan, repository and
+user behind it. Creating those for corpus items would be operational writes
+from a research command (D10). The driver calls the graph's components in its
+order and stops before `persist`, inside D10's guard, and a test counts zero
+reports, traces, scans and occurrences. `guards.py` allows
+`agent_execution_traces` "for Phase 13's runner"; it is deliberately not used:
+the trace table has no condition or run column, File B names `runs/` as WP-8's
+deliverable, and File C reads `research_data/runs/` directly.
+
+Chroma collections are named for the run (a stable uuid5 of the run id) and
+emptied after each item. Documents are cached under `runs/_docs/` on first
+fetch and read by every later condition, so B, C and D retrieve over the same
+text however many days apart WP-8 runs them — a paired design needs that, and
+the cache is the record of what each condition saw.
+
+### 13.5 The runner: one condition, one labelled set, one model
+
+The run id is `{condition}_{set digest}_{model}`. Re-typing WP-8's command
+continues the run; a retired Groq model starts a separate run rather than
+mixing two models into one condition. Two non-answers in a row end the session
+with nothing recorded for those items (the daily cap is not a result); a
+configuration fault stops at once; a truncated or non-JSON answer is a failed
+item. The Groq client raises one exception for "did not answer" and for
+"answered with non-JSON", so the runner tells them apart by whether the
+completion call returned during that item — the second would otherwise have
+been read as the daily limit.
+
+### 13.6 Correctness is the structured fix, and abstention is not correct
+
+The generation's highest-priority fix for the item's own package, not the
+prose: §5.8 makes the JSON the actionable handoff. `^`, `>=` and `v` are
+forgiven; `latest` and `4.x` are unreadable and incorrect; replacing where an
+upgrade exists is incorrect. "Insufficient information" is faithful (Appendix
+C) but not correct, and `declared_insufficient` is reported beside it for
+File C §3.4.7's calibration table.
+
+### 13.7 The judge lists claims, and the verdict is computed
+
+Gemini at temperature 0, JSON out, key in the `x-goog-api-key` header. It
+lists claims (core, supported, evidence) against TARGET and **only the
+passages the generation was shown**; File B's rule computes the verdict from
+them, and the judge's own stated verdict is kept so disagreements can be
+counted. Relevance is judged per retrieved chunk for a question that never
+contains the answer. Cache key: task, item, condition, model + rubric version,
+and a digest of the exact inputs.
+
+**The first live calls, 2026-10-05, changed two things.** `gemini-2.5-flash`,
+the default being written, is still in the model list and answered 404 "no
+longer available to new users"; the default is now `gemini-3.8-flash`, and
+the settings say to check a model with a call, not the list — §7.12 again, in
+a sharper form. And `gemini-3.8-flash` answered 503 (overloaded) before
+answering; with one attempt and a hook that switches judging off at the first
+"unavailable", one 503 would have ended a day's judging, so the judge now
+retries twice with backoff. The live faithfulness call on a toy record then
+behaved as designed: an unsupported "it is also much faster" made the verdict
+`minor_unsupported`, matching the model's own.
+
+### 13.8 WP-9's packet is blind
+
+No judge verdict or note, no condition, no run, no grounding flag; ids are
+`ITEM-001`…`ITEM-050`, as the 2026-09-24 review told the teammate they would
+be. The key file stays with the developer. Only judged generations are
+sampled, stratified across condition x ecosystem. Kappa reports File C
+§3.4.1's decision with the number.
+
+### 13.9 The analysis is File C's prespecified set and nothing else
+
+McNemar exact with the discordant odds ratio, Wilcoxon signed-rank on
+faithful=2/minor=1/major=0 with the matched rank-biserial r, Holm within each
+metric's family, intervals resampling items, the `cve_fix` ecosystem contrast
+before the confounded full-set one. A failed generation leaves its pair and is
+counted beside it. One run per condition, one labelled set, checked.
+
+### 13.10 Condition D, and D13
+
+Issues only: Discussions are GraphQL, a POST to a host `common/http.py` keeps
+read-only by method (§9.8). The search spends the research PAT on the same
+Search API budget as repository search. D13 is asserted three ways: no view
+module's namespace reaches the experiment or `issue_search`, only
+`apps/research/` names `issue_search`, and no URL pattern's view lives there.
+
+### 13.11 Two changes to the shared HTTP client
+
+`post_json` takes extra headers (Gemini's key; a header because a URL is what
+reaches logs). And an unexpected 4xx is now `UpstreamClientError`, a subclass
+of the `UpstreamUnavailable` it was raised as before — every existing handler
+behaves identically — so the judge can read a 400 as "refused" rather than
+"try later". Phase 9's POST audit named "Phase 13's judge provider" as a
+future third caller; it is added there by name.
+
+### 13.12 Acceptance, as of this branch
+
+| Criterion | State |
+|---|---|
+| extraction coverage reported, ≥150 candidates (shortfall flagged early) | **pending WP-5**; the report and the shortfall flag are built and tested |
+| pilot: 20 items x A/B/C end-to-end with pacing | **pending WP-5**; the same sequence runs end to end in `test_experiment_pipeline.py` with the network replaced at its edge; Groq and Gemini keys exist |
+| resumable after a mid-run kill | **passes, suite**: a stopped run and a torn last line |
+| judge cache hits on re-run | **passes, suite**: counted in requests, in unit and pipeline tests |
+| analysis renders from the pilot | **renders from synthetic runs**; the pilot is the live version |
+| D runs from the command line and is unreachable via HTTP | **passes, suite** |
+| correctness fixture matrix passes | **passes, suite** |
