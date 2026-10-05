@@ -368,6 +368,32 @@ class TestJudging:
         )
 
 
+class TestRetries:
+    @responses.activate
+    def test_an_overloaded_model_is_retried_not_given_up_on(self, tmp_path):
+        """Gemini's first live answer to this module was a 503, then a result."""
+        responses.add(responses.POST, GEMINI, status=503, json={})
+        mock_judge()  # registered second: answers from the second call on
+        found = judge.Judge(cache=judge.JudgeCache(tmp_path / "c.jsonl")).faithfulness(
+            RECORD, CVE_ITEM
+        )
+        assert found["verdict"] == judge.MINOR
+        assert len(responses.calls) == 2
+
+    @responses.activate
+    def test_three_non_answers_are_unavailable(self, tmp_path):
+        responses.add(responses.POST, GEMINI, status=503, json={})
+        with pytest.raises(judge.JudgeUnavailable):
+            judge.Judge(cache=judge.JudgeCache(tmp_path / "c.jsonl")).faithfulness(
+                RECORD, CVE_ITEM
+            )
+        assert len(responses.calls) == 3
+
+    def test_the_default_is_the_model_checked_by_a_real_call(self, settings):
+        settings.JUDGE_MODEL = ""
+        assert judge.judge_model() == "gemini-3.8-flash"
+
+
 class TestTheRunnerHook:
     @responses.activate
     def test_a_judge_at_its_limit_stops_judging_and_not_generating(self, tmp_path):
@@ -376,5 +402,7 @@ class TestTheRunnerHook:
         hook(RECORD, CVE_ITEM)
         assert not hook.enabled
         assert "analyze_experiment --judge" in hook.stopped
+        asked = len(responses.calls)  # the first call and its two retries
         hook(RECORD, CVE_ITEM)  # disabled: asks nothing more
-        assert len(responses.calls) == 1
+        assert asked == 3
+        assert len(responses.calls) == asked

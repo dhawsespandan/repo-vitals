@@ -69,6 +69,17 @@ CACHE_FILENAME = "judge_cache.jsonl"
 #: Gemini's free tier counts requests per minute; one every 6.5 s stays under ten.
 DEFAULT_PACE_SECONDS = 6.5
 
+#: Waits before each retry of a judge that did not answer. Gemini answers 503
+#: ("model overloaded") routinely on the free tier and then answers seconds
+#: later — the first live call of this module did exactly that — so one 503
+#: must not be read as the daily limit and switch judging off for a session.
+UNAVAILABLE_BACKOFF_SECONDS: tuple[float, ...] = (10.0, 30.0)
+
+#: The default judge. Checked by a real call on 2026-10-05, not by the model
+#: list: `gemini-2.5-flash` was still *listed* and answered 404 "no longer
+#: available to new users", naming this one as its replacement (§13).
+DEFAULT_JUDGE_MODEL = "gemini-3.8-flash"
+
 
 class JudgeError(Exception):
     pass
@@ -91,7 +102,7 @@ class JudgeUnusable(JudgeError):
 
 
 def judge_model() -> str:
-    return getattr(settings, "JUDGE_MODEL", "") or "gemini-2.5-flash"
+    return getattr(settings, "JUDGE_MODEL", "") or DEFAULT_JUDGE_MODEL
 
 
 def judge_version() -> str:
@@ -300,17 +311,24 @@ class Judge:
             if wait > 0:
                 _sleep(wait)
         self._last = time.monotonic()
-        self.calls += 1
         complete = self.complete or complete_judge
-        try:
-            return complete(system_prompt, user_prompt)
-        except JudgeUnusable:
-            # One repair attempt, as the generator gets (§10 Phase 7): a
-            # formatting slip is cheaper to retry than to lose.
+        for wait in (*UNAVAILABLE_BACKOFF_SECONDS, None):
             self.calls += 1
-            return complete(
-                system_prompt, user_prompt + "\nAnswer again: one JSON object only."
-            )
+            try:
+                return complete(system_prompt, user_prompt)
+            except JudgeUnusable:
+                # One repair attempt, as the generator gets (§10 Phase 7): a
+                # formatting slip is cheaper to retry than to lose.
+                self.calls += 1
+                return complete(
+                    system_prompt, user_prompt + "\nAnswer again: one JSON object only."
+                )
+            except JudgeUnavailable:
+                if wait is None:
+                    raise
+                logger.info("The judge did not answer; retrying in %.0fs.", wait)
+                _sleep(wait)
+        raise JudgeUnavailable("unreachable")  # pragma: no cover - returns or raises
 
     def faithfulness(self, record: dict, item: dict) -> dict:
         shown_ids = set(record.get("shown_chunk_ids") or [])

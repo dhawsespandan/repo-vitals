@@ -212,10 +212,11 @@ EPSS_ENABLED = env.bool("EPSS_ENABLED", default=False)
 
 # Phase 13 (§6, D11). S3's judge: a different provider from the generator, so
 # no model grades its own family's answers. Research machine only. Gemini
-# retires models on a schedule as Groq does (§7.12): check the live model list
-# before a long run, and set JUDGE_MODEL to a current one.
+# retires models on a schedule as Groq does (§7.12). Check by a real call before
+# a long run, not by the model list: on 2026-10-05 the list still named
+# gemini-2.5-flash, which answered 404 "no longer available to new users".
 GEMINI_API_KEY = env("GEMINI_API_KEY", default="")
-JUDGE_MODEL = env("JUDGE_MODEL", default="gemini-2.5-flash")
+JUDGE_MODEL = env("JUDGE_MODEL", default="gemini-3.8-flash")
 
 # ── Retrieval (§6, Phase 8) ────────────────────────────────────────────────
 # Where the embedded Chroma collections live. A *cache*, not storage: §5.9
