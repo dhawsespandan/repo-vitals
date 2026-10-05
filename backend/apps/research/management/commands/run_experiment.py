@@ -20,7 +20,7 @@ from pathlib import Path
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
-from apps.research.experiment import conditions, runner
+from apps.research.experiment import conditions, judge, runner
 from apps.research.github import RateBudgetExhausted, ResearchCredentialMissing
 from apps.research.guards import no_operational_writes
 
@@ -55,6 +55,11 @@ class Command(BaseCommand):
         )
         parser.add_argument("--limit", type=int, metavar="N", help="Stop after N items.")
         parser.add_argument(
+            "--no-judge",
+            action="store_true",
+            help="Generate only; judge later with analyze_experiment --judge.",
+        )
+        parser.add_argument(
             "--pace",
             type=float,
             default=runner.DEFAULT_PACE_SECONDS,
@@ -74,6 +79,17 @@ class Command(BaseCommand):
                     f"issue text and exists only as this command."
                 )
             )
+        hook = None
+        if not options["no_judge"] and judge.is_configured():
+            hook = runner.JudgeHook(
+                judge.Judge(cache=judge.JudgeCache(out / judge.CACHE_FILENAME)),
+                progress=lambda line: self.stdout.write(self.style.WARNING(f"  {line}")),
+            )
+        elif not options["no_judge"]:
+            self.stdout.write(
+                "  GEMINI_API_KEY is not set: generating only. Judge later with "
+                "`analyze_experiment --judge`."
+            )
         try:
             with no_operational_writes():
                 outcome = runner.run_experiment(
@@ -84,6 +100,7 @@ class Command(BaseCommand):
                     retry_failed=options["retry_failed"],
                     limit=options["limit"],
                     pace_seconds=max(0.0, options["pace"]),
+                    after_item=hook,
                     progress=lambda line: self.stdout.write(f"  {line}"),
                 )
         except (runner.RunError, ResearchCredentialMissing, RateBudgetExhausted) as exc:
@@ -106,4 +123,9 @@ class Command(BaseCommand):
             )
         else:
             self.stdout.write(self.style.SUCCESS(summary))
+        if hook is not None:
+            self.stdout.write(
+                f"  judge: {hook.judge.calls} call(s), {hook.judge.hits} cache hit(s)"
+                + (f"; {hook.stopped}" if hook.stopped else "")
+            )
         self.stdout.write(f"  {outcome.directory / runner.ITEMS_FILENAME}")

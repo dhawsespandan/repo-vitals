@@ -348,6 +348,44 @@ class StopRun(Exception):
     """Raised by an `after_item` hook to end the session cleanly."""
 
 
+class JudgeHook:
+    """Judge each record as it lands, until the judge stops answering.
+
+    The judge and the generator have separate free-tier budgets, so a judge
+    that hits its daily limit switches judging off for the rest of the session
+    and generation carries on; `analyze_experiment --judge` fills the gaps
+    later from the same cache. A refused key or model is reported the same
+    way — judging is optional at generation time, never a reason to lose a
+    day's generations.
+    """
+
+    def __init__(self, judge, progress=None) -> None:
+        self.judge = judge
+        self.enabled = True
+        self.stopped: str | None = None
+        self.progress = progress
+
+    def __call__(self, record: dict, item: dict) -> None:
+        from .judge import JudgeRefused, JudgeUnavailable, JudgeUnusable
+
+        if not self.enabled:
+            return
+        try:
+            self.judge.judge(record, item)
+        except (JudgeUnavailable, JudgeRefused) as exc:
+            self.enabled = False
+            self.stopped = (
+                f"Judging stopped for this session ({exc}); generations continue. "
+                f"Judge the rest later with `analyze_experiment --judge`."
+            )
+            if self.progress is not None:
+                self.progress(self.stopped)
+        except JudgeUnusable:
+            logger.warning(
+                "The judge could not be made to answer for %s.", record["item_id"]
+            )
+
+
 def _failed(item: dict, condition, error: str) -> driver.ItemResult:
     return driver.ItemResult(
         item_id=item["item_id"],

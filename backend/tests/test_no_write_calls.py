@@ -207,12 +207,15 @@ def test_no_module_names_a_write_verb_against_github():
     assert not offenders, f"write verbs in GitHub-facing modules: {offenders}"
 
 
-def test_the_only_post_call_sites_are_the_two_that_need_one():
-    """`post_json` has exactly two callers, and neither talks to GitHub.
+def test_the_only_post_call_sites_are_the_three_that_need_one():
+    """`post_json` has exactly three callers, and none talks to GitHub.
 
-    A new caller is not forbidden — Phase 13's judge provider will be a third —
-    but it has to be added here deliberately, which is the moment somebody
-    reads what it is posting and to whom.
+    A new caller is not forbidden, but it has to be added here deliberately,
+    which is the moment somebody reads what it is posting and to whom. The
+    third arrived in Phase 13 as predicted: S3's judge posts a generated report
+    and the passages its author was shown to Gemini
+    (`generativelanguage.googleapis.com`) and changes nothing there. It is a
+    research command; no request path reaches it.
     """
     callers = sorted(
         path.relative_to(BACKEND).as_posix()
@@ -221,7 +224,11 @@ def test_the_only_post_call_sites_are_the_two_that_need_one():
         and re.search(r"\bpost_json\s*\(", path.read_text(encoding="utf-8"))
     )
 
-    assert callers == ["apps/reports/llm/groq_client.py", "apps/scanning/osv.py"]
+    assert callers == [
+        "apps/reports/llm/groq_client.py",
+        "apps/research/experiment/judge.py",
+        "apps/scanning/osv.py",
+    ]
 
 
 def test_the_read_only_list_still_names_github():

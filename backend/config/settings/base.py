@@ -210,6 +210,13 @@ GITHUB_API_PAT = env("GITHUB_API_PAT", default="")
 # formula never reads it. Off by default, which is also the production setting.
 EPSS_ENABLED = env.bool("EPSS_ENABLED", default=False)
 
+# Phase 13 (§6, D11). S3's judge: a different provider from the generator, so
+# no model grades its own family's answers. Research machine only. Gemini
+# retires models on a schedule as Groq does (§7.12): check the live model list
+# before a long run, and set JUDGE_MODEL to a current one.
+GEMINI_API_KEY = env("GEMINI_API_KEY", default="")
+JUDGE_MODEL = env("JUDGE_MODEL", default="gemini-2.5-flash")
+
 # ── Retrieval (§6, Phase 8) ────────────────────────────────────────────────
 # Where the embedded Chroma collections live. A *cache*, not storage: §5.9
 # deletes a dependency's chunks the moment its report is persisted, and

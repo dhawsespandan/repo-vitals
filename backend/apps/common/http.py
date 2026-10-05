@@ -71,6 +71,10 @@ ALLOWED_HOSTS: frozenset[str] = frozenset(
         # Phase 12. EPSS (D3), behind `EPSS_ENABLED`. Reached only by
         # `apps.scanning.epss`, whose URL is a module constant.
         "api.first.org",
+        # Phase 13. S3's judge (D11: a different provider from the generator).
+        # Reached only by `apps.research.experiment.judge`, a research command;
+        # the URL is a module constant and the key travels in a header.
+        "generativelanguage.googleapis.com",
     }
 )
 
@@ -164,6 +168,21 @@ class UpstreamTooLarge(UpstreamError):
 
 class UpstreamUnavailable(UpstreamError):
     """Transport failure or 5xx that outlived the retry budget."""
+
+
+class UpstreamClientError(UpstreamUnavailable):
+    """A 4xx this module has no specific class for (400, 405, 422, ...).
+
+    A subclass of `UpstreamUnavailable` because that is what these answers were
+    raised as until Phase 13, and every existing handler keeps treating them
+    the same way. It exists for the caller to whom the difference matters:
+    S3's judge, where a 400 means a bad key or request — waiting will not fix
+    it — while a 5xx means try later.
+    """
+
+    def __init__(self, message: str, status_code: int) -> None:
+        super().__init__(message)
+        self.status_code = status_code
 
 
 @dataclass(frozen=True)
@@ -367,6 +386,7 @@ def _request_json(
     timeout: tuple[float, float],
     retries: int,
     max_bytes: int | None,
+    extra_headers: dict[str, str] | None = None,
 ) -> UpstreamResponse:
     """The shared body of `get_json` and `post_json`.
 
@@ -380,6 +400,12 @@ def _request_json(
     headers = {"Accept": accept}
     if token:
         headers["Authorization"] = f"Bearer {token}"
+    if extra_headers:
+        # Phase 13: a provider that authenticates with its own header rather
+        # than a bearer token (Gemini's `x-goog-api-key`). A header, never a
+        # query parameter, because a URL is what ends up in logs; and nothing
+        # here logs headers.
+        headers.update(extra_headers)
 
     path = urlparse(url).path
     attempt = 0
@@ -426,8 +452,9 @@ def _request_json(
         if response.status_code == 403:
             raise UpstreamForbidden(f"Upstream returned 403 for {path}.")
         if response.status_code >= 400:
-            raise UpstreamUnavailable(
-                f"Upstream returned {response.status_code} for {path}."
+            raise UpstreamClientError(
+                f"Upstream returned {response.status_code} for {path}.",
+                response.status_code,
             )
 
         return UpstreamResponse(
@@ -478,6 +505,7 @@ def post_json(
     timeout: tuple[float, float] = DEFAULT_TIMEOUT,
     retries: int = MAX_RETRIES,
     max_bytes: int | None = DEFAULT_MAX_BYTES,
+    headers: dict[str, str] | None = None,
 ) -> UpstreamResponse:
     """POST a JSON body to an allowlisted host and read a JSON answer.
 
@@ -498,4 +526,5 @@ def post_json(
         timeout=timeout,
         retries=retries,
         max_bytes=max_bytes,
+        extra_headers=headers,
     )
