@@ -37,6 +37,14 @@ path; a process killed between the two would leave rows with no line. So
 `--resume` also asks the database which repositories already have a
 `corpus_scan` row for this snapshot date, and the checkpoint is only a
 fast-path and a record of the failures.
+
+**A resumed run keeps the date it started under.** D14 makes the corpus one
+cross-section as of one date, and `snapshot_date` is the key every later read
+selects it by. The default used to be "today" on every invocation, so a run
+resumed the next morning wrote its second half under a second date — two
+half-corpora, each of which `corpus_report` and the Phase 12 harness would
+have read as the whole. `--resume` without `--snapshot-date` now carries the
+date over from the run it is continuing (§11.28).
 """
 
 from __future__ import annotations
@@ -87,6 +95,15 @@ STATUS_FAILED = "failed"
 
 class CorpusManifestError(Exception):
     """`corpus_manifest.json` is absent or is not one."""
+
+
+class SnapshotDateConflict(Exception):
+    """`--resume` cannot tell which as-of date it is continuing, or was told a
+    different one from the date the run started under.
+
+    Refused rather than guessed: whichever date a guess picked, the other half
+    of the corpus would be stranded under a date nothing selects.
+    """
 
 
 # ── the corpus manifest ────────────────────────────────────────────────────
@@ -474,12 +491,21 @@ class Checkpoint:
         self.path.unlink(missing_ok=True)
 
 
+#: Where a run's `snapshot_date` came from, printed beside it so the operator
+#: can see a resume continued the date it should have.
+DATE_GIVEN = "given"
+DATE_RESUMED = "resumed"
+DATE_TODAY = "today"
+
+
 @dataclass
 class RunOutcome:
     """What one `scan_corpus` invocation did, for the completion report."""
 
     snapshot_date: date
     weights_version: str
+    #: `DATE_GIVEN`, `DATE_RESUMED` or `DATE_TODAY`.
+    snapshot_date_source: str = DATE_GIVEN
     attempted: int = 0
     scanned: int = 0
     skipped: int = 0
@@ -489,6 +515,100 @@ class RunOutcome:
     flagged: int = 0
     failures: list[tuple[str, str]] = field(default_factory=list)
     report_path: Path | None = None
+
+
+def _today() -> date:
+    """The default as-of date, in UTC. Indirection so a test can resume "tomorrow"."""
+    return datetime.now(UTC).date()
+
+
+def snapshot_dates_by_repository(corpus: Corpus) -> dict[int, set[date]]:
+    """Every corpus as-of date already written, per repository in *this* corpus.
+
+    One query over `(github_repo_id, snapshot_date)` pairs, intersected with the
+    corpus in Python rather than by an `IN` over a thousand ids: the research
+    database may hold other corpora, and a thousand bound parameters is a
+    statement some backends refuse.
+    """
+    ids = {repository.github_repo_id for repository in corpus.repositories}
+    found: dict[int, set[date]] = {}
+    pairs = (
+        ScanHistory.objects.filter(data_source=DataSource.CORPUS_SCAN.value)
+        .exclude(snapshot_date=None)
+        .order_by()
+        .values_list("github_repo_id", "snapshot_date")
+        .distinct()
+    )
+    for repo_id, snapshot in pairs.iterator(chunk_size=2000):
+        if repo_id in ids:
+            found.setdefault(repo_id, set()).add(snapshot)
+    return found
+
+
+def _checkpoint_date(row: dict) -> date | None:
+    raw = row.get("snapshot_date")
+    if not isinstance(raw, str):
+        return None
+    try:
+        return date.fromisoformat(raw)
+    except ValueError:
+        return None
+
+
+def resolve_snapshot_date(
+    corpus: Corpus,
+    checkpoint: Checkpoint,
+    *,
+    requested: date | None,
+    resume: bool,
+) -> tuple[date, str]:
+    """The as-of date this invocation writes under, and where it came from.
+
+    A fresh run takes the date it is given, or today. A resumed run continues
+    the date its corpus was started under, read from the rows already written
+    and from the checkpoint (which also covers a run whose every repository so
+    far failed, and so wrote no row to read a date from).
+
+    Two cases are refused instead of guessed. An explicit `--snapshot-date`
+    that differs from the run being resumed would start a second cross-section
+    while the checkpoint skipped the repositories the first one already holds.
+    And a corpus already split across several dates gives a resume nothing to
+    continue: the operator has to name the one they mean.
+    """
+    if not resume:
+        if requested is not None:
+            return requested, DATE_GIVEN
+        return _today(), DATE_TODAY
+
+    recorded: set[date] = set()
+    for dates in snapshot_dates_by_repository(corpus).values():
+        recorded |= dates
+    for row in checkpoint.read():
+        found = _checkpoint_date(row)
+        if found is not None:
+            recorded.add(found)
+
+    listed = ", ".join(sorted(day.isoformat() for day in recorded))
+    if requested is not None:
+        if recorded and requested not in recorded:
+            raise SnapshotDateConflict(
+                f"--resume continues a run, and this corpus was scanned as of "
+                f"{listed}, not {requested.isoformat()}. Resuming under a new date "
+                f"would split the corpus into two cross-sections. Pass "
+                f"--snapshot-date {max(recorded).isoformat()} to continue, or drop "
+                f"--resume to start a separate snapshot on purpose."
+            )
+        return requested, DATE_GIVEN
+
+    if len(recorded) == 1:
+        return next(iter(recorded)), DATE_RESUMED
+    if len(recorded) > 1:
+        raise SnapshotDateConflict(
+            f"This corpus already has rows under more than one snapshot date "
+            f"({listed}), so --resume cannot tell which run it is continuing. "
+            f"Pass --snapshot-date with the one you mean."
+        )
+    return _today(), DATE_TODAY
 
 
 def already_scanned(snapshot_date: date) -> set[int]:
@@ -524,14 +644,20 @@ def scan_corpus(
     consistent measurement as well as the cheaper one).
     """
     weights = weights or active_weights()
-    snapshot_date = snapshot_date or datetime.now(UTC).date()
     checkpoint = Checkpoint(corpus.directory / CHECKPOINT_FILENAME)
+    # Resolved before the checkpoint is cleared or read: on a resume it is the
+    # checkpoint (and the rows) that say which date the run started under.
+    snapshot_date, date_source = resolve_snapshot_date(
+        corpus, checkpoint, requested=snapshot_date, resume=resume
+    )
     if not resume:
         checkpoint.clear()
 
     def say(message: str) -> None:
         if progress is not None:
             progress(message)
+
+    say(f"snapshot date {snapshot_date.isoformat()} ({date_source})")
 
     targets = list(corpus.repositories)
     if only:
@@ -545,13 +671,24 @@ def scan_corpus(
     done_ids: set[int] = set()
     if resume:
         done_ids = already_scanned(snapshot_date)
+        # Only lines written under this date count as done. A line from a run
+        # under another date describes a row this snapshot does not have, and
+        # skipping on it would leave that repository out of the cross-section.
+        # Lines from before the date was recorded are left to the database
+        # check above, which knows the date of every row it answers for.
         done_ids |= {
             int(row["github_repo_id"])
             for row in checkpoint.read()
-            if row.get("status") == STATUS_OK and row.get("github_repo_id")
+            if row.get("status") == STATUS_OK
+            and row.get("github_repo_id")
+            and _checkpoint_date(row) == snapshot_date
         }
 
-    outcome = RunOutcome(snapshot_date=snapshot_date, weights_version=weights.version)
+    outcome = RunOutcome(
+        snapshot_date=snapshot_date,
+        weights_version=weights.version,
+        snapshot_date_source=date_source,
+    )
     registry_memo: dict = {}
     osv_client = osv.OsvClient()
 
@@ -585,6 +722,7 @@ def scan_corpus(
                     "full_name": repository.full_name,
                     "github_repo_id": repository.github_repo_id,
                     "status": STATUS_FAILED,
+                    "snapshot_date": snapshot_date.isoformat(),
                     "error": str(exc),
                     "at": datetime.now(UTC).isoformat(),
                 }
@@ -601,6 +739,7 @@ def scan_corpus(
                 "full_name": repository.full_name,
                 "github_repo_id": repository.github_repo_id,
                 "status": STATUS_OK,
+                "snapshot_date": snapshot_date.isoformat(),
                 "scan_history_id": str(entry.pk),
                 "risk_score": str(scored.risk_score),
                 "classification": scored.classification,
@@ -644,6 +783,21 @@ def completion_report(corpus: Corpus, outcome: RunOutcome, client: ResearchClien
         outcome.unassessable / outcome.occurrences if outcome.occurrences else 0.0
     )
 
+    # Repositories of this corpus written under any *other* date. Zero is the
+    # only healthy answer for one cross-section (D14); anything else is a split
+    # that happened before §11.28 or a second snapshot taken on purpose, and the
+    # reviewer has to be told which dates exist before reading the coverage line.
+    elsewhere: dict[str, int] = {}
+    for dates in snapshot_dates_by_repository(corpus).values():
+        for other in dates - {outcome.snapshot_date}:
+            elsewhere[other.isoformat()] = elsewhere.get(other.isoformat(), 0) + 1
+
+    date_note = {
+        DATE_GIVEN: "given with --snapshot-date",
+        DATE_RESUMED: "carried over from the run being resumed",
+        DATE_TODAY: "today's date in UTC, the default for a new run",
+    }.get(outcome.snapshot_date_source, outcome.snapshot_date_source)
+
     lines = [
         "# Corpus scan completion report",
         "",
@@ -653,7 +807,8 @@ def completion_report(corpus: Corpus, outcome: RunOutcome, client: ResearchClien
         "## This run",
         "",
         f"- Corpus manifest: `{corpus.path.name}` ({total} admitted repositories)",
-        f"- Snapshot date (`snapshot_date` on every row written): `{outcome.snapshot_date.isoformat()}`",
+        f"- Snapshot date (`snapshot_date` on every row written): "
+        f"`{outcome.snapshot_date.isoformat()}` ({date_note})",
         f"- Weights version: `{outcome.weights_version}`",
         f"- Attempted: {outcome.attempted} · scanned: {outcome.scanned} · "
         f"failed: {outcome.failed} · already done and skipped: {outcome.skipped}",
@@ -676,6 +831,21 @@ def completion_report(corpus: Corpus, outcome: RunOutcome, client: ResearchClien
         "flagging.",
         "",
     ]
+
+    if elsewhere:
+        lines += [
+            "## This corpus has rows under other snapshot dates",
+            "",
+            "One corpus is one cross-section as of one date (D14), and the",
+            "coverage above counts only this run's date. These repositories of",
+            "the same corpus were written under a different one; flag it unless a",
+            "second snapshot was taken on purpose.",
+            "",
+            "| Snapshot date | Repositories |",
+            "|---|---|",
+            *(f"| `{day}` | {count} |" for day, count in sorted(elsewhere.items())),
+            "",
+        ]
 
     if outcome.failures:
         lines += [

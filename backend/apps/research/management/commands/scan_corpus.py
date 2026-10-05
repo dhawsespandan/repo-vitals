@@ -29,7 +29,12 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from apps.research.corpus import MANIFEST_FILENAME
-from apps.research.corpus_scan import CorpusManifestError, load_corpus, run_guarded
+from apps.research.corpus_scan import (
+    CorpusManifestError,
+    SnapshotDateConflict,
+    load_corpus,
+    run_guarded,
+)
 from apps.research.github import (
     RateBudgetExhausted,
     ResearchClient,
@@ -79,9 +84,10 @@ class Command(BaseCommand):
         parser.add_argument(
             "--snapshot-date",
             metavar="YYYY-MM-DD",
-            help="The as-of date recorded on every row (default: today). "
-            "Also the key --resume matches on, so a multi-day run must pass "
-            "the same value it started with.",
+            help="The as-of date recorded on every row. Default: today (UTC) "
+            "for a new run; with --resume, the date the run being resumed "
+            "started under. A --resume naming a different date is refused, "
+            "because it would split the corpus across two dates.",
         )
         parser.add_argument(
             "--no-wait",
@@ -140,7 +146,7 @@ class Command(BaseCommand):
             )
         except RateBudgetExhausted as exc:
             raise CommandError(str(exc)) from exc
-        except CorpusManifestError as exc:
+        except (CorpusManifestError, SnapshotDateConflict) as exc:
             raise CommandError(str(exc)) from exc
 
         self.stdout.write(

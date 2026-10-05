@@ -3967,6 +3967,10 @@ This is also why `--snapshot-date` matters on a multi-day run: it is the key
 `--resume` matches on, and a run that took the default on day two would find
 nothing to skip.
 
+*Superseded in part by §11.28.* That last sentence understated it: the
+checkpoint did find things to skip, and the rest of the corpus was then written
+under the second day's date. A resume now carries the date over by itself.
+
 ### 11.9 A corpus row's identity columns name the repository's owner
 
 `scan_history.github_user_id` and `github_username` are NOT NULL, and on a live
@@ -4405,3 +4409,46 @@ are not separable in this data, and S1 must control for dependency count before
 reporting any ecosystem comparison. That is a methodology note for File C, not
 a result, and it is recorded here because the pilot is where it first became
 visible.
+
+### 11.28 A resumed scan kept today's date, not its own
+
+Found on 2026-10-05 while preparing WP-5, before it ran.
+
+`scan_corpus` defaulted `snapshot_date` to today's UTC date **on every
+invocation**. A run started without `--snapshot-date` and resumed after
+midnight UTC — 05:30 IST, so an evening start was enough — wrote its second
+half under a second date. The checkpoint's `ok` lines were matched by
+repository id alone, so the first half was correctly skipped, and every
+remaining repository then landed under the new date. Nothing failed and nothing
+warned. The result was two half-corpora, and every consumer selects by date:
+`corpus_report` charts the most recent one, and Phase 12's harness reads one
+cross-section. Each would have read half the corpus as the whole of it, at a
+coverage figure the completion report computed over the half it could see.
+
+The 2026-09-24 review told the teammate to pass the same `--snapshot-date` on
+every run, which avoids it. A procedure that depends on the operator never
+forgetting a flag is not a fix, so:
+
+- **`--resume` carries the date over.** Without `--snapshot-date`, a resume
+  reads the date the corpus was started under — from the rows already written
+  and from the checkpoint, which now records `snapshot_date` on every line.
+  The checkpoint matters for a run whose repositories have so far all failed:
+  it has written no row to read a date from.
+- **A resume that would split the corpus is refused.** An explicit
+  `--snapshot-date` that differs from the run being resumed would start a
+  second cross-section while skipping the repositories the first one holds; a
+  corpus already split across two dates gives a resume nothing to continue.
+  Both stop with a sentence naming the dates and the flag to pass. A run
+  *without* `--resume` may still take a new date — a second snapshot taken on
+  purpose is legitimate (`test_a_run_without_resume_scans_again`).
+- **Checkpoint lines count only for their own date.** A line written under
+  another date describes a row this snapshot does not have. Lines from before
+  this change carry no date and are ignored for skipping; the database check,
+  which knows the date of every row it answers for, covers them.
+- **The completion report names any other date** this corpus's repositories
+  were written under, before the coverage line is read, and says where the
+  run's own date came from (given, carried over, or today).
+
+The seven tests in `TestOneCorpusOneDate` were run against the pre-fix module
+first, and all seven failed — the headline one by writing the resumed half as
+of 2026-09-27 under a run started on 2026-09-26.

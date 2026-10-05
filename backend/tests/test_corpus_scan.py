@@ -604,6 +604,176 @@ class TestResume:
         assert rows[0]["status"] == "ok"
         assert rows[0]["github_repo_id"] == REPO_ID
         assert rows[0]["scan_history_id"] == str(ScanHistory.objects.get().pk)
+        assert rows[0]["snapshot_date"] == SNAPSHOT.isoformat()
+
+
+# ── one corpus, one as-of date ─────────────────────────────────────────────
+
+SECOND_NAME = "shop-two"
+SECOND_REPO_ID = 778900
+DAY_ONE = date(2026, 9, 26)
+DAY_TWO = date(2026, 9, 27)
+
+
+def two_repositories(tmp_path) -> pathlib.Path:
+    """The golden repository twice, under two names, both scannable.
+
+    The second needs only its lockfile served: the manifests come from the
+    archive, which is keyed by blob sha and so serves both.
+    """
+    responses.add(
+        responses.GET,
+        f"https://api.github.com/repos/{OWNER}/{SECOND_NAME}/git/blobs/root-lock",
+        json=blob_response("manifests/root_package_lock.json"),
+        status=200,
+    )
+    document = json.loads(write_manifest(tmp_path).read_text(encoding="utf-8"))
+    first = document["repositories"][0]
+    second = {
+        **first,
+        "full_name": f"{OWNER}/{SECOND_NAME}",
+        "github_repo_id": SECOND_REPO_ID,
+        "manifests": [dict(record) for record in GOLDEN_MANIFESTS],
+    }
+    first["manifests"] = [dict(record) for record in GOLDEN_MANIFESTS]
+    return write_manifest(tmp_path, repositories=[first, second], archive=True)
+
+
+def dates_written() -> set[date]:
+    return set(ScanHistory.objects.values_list("snapshot_date", flat=True))
+
+
+@pytest.mark.django_db
+class TestOneCorpusOneDate:
+    """D14: the corpus is one cross-section, as of one date (§11.28).
+
+    `snapshot_date` defaulted to "today" on *every* invocation, so a run that
+    took the default and was resumed after midnight UTC wrote its second half
+    under a second date. Each half then looked like a whole corpus to anything
+    that selects by date — `corpus_report`, and Phase 12's harness.
+    """
+
+    @responses.activate
+    def test_a_run_resumed_the_next_day_keeps_the_first_days_date(
+        self, tmp_path, monkeypatch
+    ):
+        from apps.research import corpus_scan
+
+        mock_everything()
+        manifest = two_repositories(tmp_path)
+
+        monkeypatch.setattr(corpus_scan, "_today", lambda: DAY_ONE)
+        first = run(tmp_path, manifest=manifest, snapshot_date=None, limit=1)
+        monkeypatch.setattr(corpus_scan, "_today", lambda: DAY_TWO)
+        resumed = run(tmp_path, manifest=manifest, snapshot_date=None, resume=True)
+
+        assert first.scanned == 1
+        assert resumed.scanned == 1
+        assert resumed.snapshot_date == DAY_ONE
+        assert resumed.snapshot_date_source == "resumed"
+        assert dates_written() == {DAY_ONE}
+
+    @responses.activate
+    def test_the_date_survives_a_lost_checkpoint(self, tmp_path, monkeypatch):
+        """The kill -9 that loses the checkpoint must not lose the date: the
+        rows themselves say which day the run started on."""
+        from apps.research import corpus_scan
+
+        mock_everything()
+        manifest = two_repositories(tmp_path)
+
+        monkeypatch.setattr(corpus_scan, "_today", lambda: DAY_ONE)
+        run(tmp_path, manifest=manifest, snapshot_date=None, limit=1)
+        Checkpoint(manifest.parent / CHECKPOINT_FILENAME).clear()
+        monkeypatch.setattr(corpus_scan, "_today", lambda: DAY_TWO)
+        resumed = run(tmp_path, manifest=manifest, snapshot_date=None, resume=True)
+
+        assert resumed.skipped == 1
+        assert dates_written() == {DAY_ONE}
+
+    @responses.activate
+    def test_a_resume_under_a_different_date_is_refused(self, tmp_path):
+        from apps.research.corpus_scan import SnapshotDateConflict
+
+        mock_everything()
+        manifest = two_repositories(tmp_path)
+        run(tmp_path, manifest=manifest, snapshot_date=DAY_ONE, limit=1)
+
+        with pytest.raises(SnapshotDateConflict, match=DAY_ONE.isoformat()):
+            run(tmp_path, manifest=manifest, snapshot_date=DAY_TWO, resume=True)
+        assert dates_written() == {DAY_ONE}
+
+    @responses.activate
+    def test_a_corpus_already_split_must_be_told_which_date_to_continue(self, tmp_path):
+        """A split made before the fix cannot be resumed by guessing. Named
+        explicitly, the resume fills in that date, and the report lists the
+        other one so the reviewer sees the split rather than a coverage number."""
+        from apps.research.corpus_scan import SnapshotDateConflict
+
+        mock_everything()
+        manifest = two_repositories(tmp_path)
+        run(tmp_path, manifest=manifest, snapshot_date=DAY_ONE, only=FULL_NAME)
+        run(
+            tmp_path,
+            manifest=manifest,
+            snapshot_date=DAY_TWO,
+            only=f"{OWNER}/{SECOND_NAME}",
+        )
+
+        with pytest.raises(SnapshotDateConflict, match="more than one snapshot date"):
+            run(tmp_path, manifest=manifest, snapshot_date=None, resume=True)
+
+        outcome = run(tmp_path, manifest=manifest, snapshot_date=DAY_ONE, resume=True)
+        assert outcome.scanned == 1
+        assert ScanHistory.objects.filter(snapshot_date=DAY_ONE).count() == 2
+        report = outcome.report_path.read_text(encoding="utf-8")
+        assert "rows under other snapshot dates" in report
+        assert f"| `{DAY_TWO.isoformat()}` | 1 |" in report
+
+    @responses.activate
+    def test_a_checkpoint_line_from_another_date_does_not_count_as_done(self, tmp_path):
+        """A line written under a different date describes a row this snapshot
+        does not hold. Skipping on it would leave the repository out."""
+        mock_everything()
+        manifest = two_repositories(tmp_path)
+        run(
+            tmp_path,
+            manifest=manifest,
+            snapshot_date=DAY_ONE,
+            only=f"{OWNER}/{SECOND_NAME}",
+        )
+        Checkpoint(manifest.parent / CHECKPOINT_FILENAME).append(
+            {
+                "full_name": FULL_NAME,
+                "github_repo_id": REPO_ID,
+                "status": "ok",
+                "snapshot_date": "2026-09-01",
+            }
+        )
+
+        outcome = run(tmp_path, manifest=manifest, snapshot_date=DAY_ONE, resume=True)
+
+        assert outcome.scanned == 1
+        assert outcome.skipped == 1
+        assert ScanHistory.objects.filter(
+            github_repo_id=REPO_ID, snapshot_date=DAY_ONE
+        ).exists()
+
+    @responses.activate
+    def test_a_new_run_without_a_date_takes_today_and_says_so(
+        self, tmp_path, monkeypatch
+    ):
+        from apps.research import corpus_scan
+
+        mock_everything()
+        monkeypatch.setattr(corpus_scan, "_today", lambda: DAY_TWO)
+        outcome = run(tmp_path, snapshot_date=None)
+
+        assert outcome.snapshot_date == DAY_TWO
+        assert outcome.snapshot_date_source == "today"
+        report = outcome.report_path.read_text(encoding="utf-8")
+        assert "today's date in UTC" in report
+        assert "other snapshot dates" not in report
 
 
 # ── failures ───────────────────────────────────────────────────────────────
