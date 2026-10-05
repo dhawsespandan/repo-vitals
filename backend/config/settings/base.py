@@ -203,6 +203,11 @@ GROQ_MODEL = env("GROQ_MODEL", default="openai/gpt-oss-120b")
 # than failing at the first call.
 GITHUB_API_PAT = env("GITHUB_API_PAT", default="")
 
+# Phase 12, optional (§6, D3). When true, a live scan records FIRST.org's EPSS
+# probability on each advisory (`dependency_vulnerabilities.epss_score`). The
+# formula never reads it. Off by default, which is also the production setting.
+EPSS_ENABLED = env.bool("EPSS_ENABLED", default=False)
+
 # ── Retrieval (§6, Phase 8) ────────────────────────────────────────────────
 # Where the embedded Chroma collections live. A *cache*, not storage: §5.9
 # deletes a dependency's chunks the moment its report is persisted, and

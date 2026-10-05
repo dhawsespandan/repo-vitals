@@ -68,6 +68,9 @@ ALLOWED_HOSTS: frozenset[str] = frozenset(
         # deps.dev's v3 API. Reached only by `apps.research.validation
         # .reference`, a research command, never by a request.
         "api.deps.dev",
+        # Phase 12. EPSS (D3), behind `EPSS_ENABLED`. Reached only by
+        # `apps.scanning.epss`, whose URL is a module constant.
+        "api.first.org",
     }
 )
 

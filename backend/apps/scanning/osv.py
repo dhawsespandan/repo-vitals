@@ -32,6 +32,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from decimal import Decimal
 
 from apps.common import http
 
@@ -81,6 +82,9 @@ class Vulnerability:
     affected_range: str | None = None
     fixed_version: str | None = None
     source_url: str | None = None
+    #: Phase 12, flag-gated (`apps.scanning.epss`). None unless `EPSS_ENABLED`
+    #: and FIRST.org has a score for this advisory's CVE.
+    epss_score: Decimal | None = None
 
 
 # ── CVSS v3 base score ─────────────────────────────────────────────────────

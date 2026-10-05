@@ -50,15 +50,16 @@ import base64
 import binascii
 import logging
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from decimal import Decimal
 from urllib.parse import quote
 
+from django.conf import settings
 from django.db import transaction
 
 from apps.common import http
 
-from . import adapters, osv
+from . import adapters, epss, osv
 from .models import (
     SEVERITY_RANK,
     DependencyOccurrence,
@@ -502,6 +503,37 @@ def enrich_from_osv(
                     occurrence.vulnerabilities.append(detail)
 
 
+def enrich_from_epss(
+    pool: list[PooledOccurrence], client: epss.EpssClient | None = None
+) -> None:
+    """Attach FIRST.org's EPSS probability to every advisory with a CVE id.
+
+    Flag-gated by the caller (`EPSS_ENABLED`) and formula-inert (D3): nothing
+    reads it to score. So, unlike OSV, an outage here is logged and the scan
+    carries on — a missing EPSS value changes no number the product shows.
+    """
+    cves = {
+        vulnerability.cve_id
+        for occurrence in pool
+        for vulnerability in occurrence.vulnerabilities
+        if vulnerability.cve_id
+    }
+    if not cves:
+        return
+    try:
+        found = (client or epss.EpssClient()).scores(sorted(cves))
+    except http.UpstreamError:
+        logger.warning("EPSS lookup failed; the scan continues without it.")
+        return
+    for occurrence in pool:
+        occurrence.vulnerabilities = [
+            replace(vulnerability, epss_score=found.get(vulnerability.cve_id.upper()))
+            if vulnerability.cve_id
+            else vulnerability
+            for vulnerability in occurrence.vulnerabilities
+        ]
+
+
 # ── persistence ────────────────────────────────────────────────────────────
 
 
@@ -708,6 +740,7 @@ def _persist(
                         affected_range=vuln.affected_range,
                         fixed_version=vuln.fixed_version,
                         source_url=vuln.source_url,
+                        epss_score=vuln.epss_score,
                     )
                 )
         DependencyVulnerability.objects.bulk_create(vulnerabilities)
@@ -819,6 +852,8 @@ def run_scan(scan: ScanRun) -> None:
 
     enrich_from_registries(pool)
     enrich_from_osv(pool)
+    if getattr(settings, "EPSS_ENABLED", False):
+        enrich_from_epss(pool)
     _persist(scan, read, pool, skipped)
 
     logger.info(
