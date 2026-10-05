@@ -64,6 +64,10 @@ ALLOWED_HOSTS: frozenset[str] = frozenset(
         # Phase 7. The generator LLM (D11). Reached only by
         # `apps.reports.llm.groq_client`, whose URL is a module constant.
         "api.groq.com",
+        # Phase 12. S1's independent reference (D12): OpenSSF Scorecard via
+        # deps.dev's v3 API. Reached only by `apps.research.validation
+        # .reference`, a research command, never by a request.
+        "api.deps.dev",
     }
 )
 
