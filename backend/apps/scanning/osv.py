@@ -389,6 +389,16 @@ class OsvClient:
             return None
         return build_vulnerability(document, package_name)
 
+    def document(self, osv_id: str) -> dict | None:
+        """The raw advisory, through the same once-per-run cache as `detail`.
+
+        Phase 13's ground truth needs every `affected` range event, where
+        `build_vulnerability` keeps only a printable summary and the last fix.
+        """
+        if osv_id not in self._documents:
+            self._documents[osv_id] = self._fetch(osv_id)
+        return self._documents[osv_id]
+
     def _fetch(self, osv_id: str) -> dict | None:
         try:
             response = http.get_json(
