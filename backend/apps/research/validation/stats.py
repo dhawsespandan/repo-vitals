@@ -24,6 +24,7 @@ one.
 from __future__ import annotations
 
 import math
+import random
 from collections.abc import Sequence
 
 
@@ -116,3 +117,80 @@ def percentile(sorted_values: Sequence[float], fraction: float) -> float:
         return float(sorted_values[low])
     share = position - low
     return float(sorted_values[low]) * (1 - share) + float(sorted_values[high]) * share
+
+
+def bootstrap_interval(
+    n: int,
+    statistic,
+    *,
+    iterations: int,
+    seed: int,
+    level: float = 0.95,
+) -> tuple[float, float] | None:
+    """A percentile bootstrap interval for `statistic(indices)`.
+
+    Resamples observation *indices* with replacement, so the caller decides
+    what an observation is — for S1 a repository, which makes this the
+    cluster bootstrap File C §2.4.3 asks for. Resamples on which the statistic
+    is undefined are skipped rather than counted as zeros; if too few survive
+    to place both tails, there is no interval.
+    """
+    if n < 2 or iterations <= 0:
+        return None
+    rng = random.Random(seed)  # noqa: S311 - resampling, not crypto
+    draws: list[float] = []
+    for _ in range(iterations):
+        sample = [rng.randrange(n) for _ in range(n)]
+        value = statistic(sample)
+        if value is not None:
+            draws.append(value)
+    if len(draws) < max(20, iterations // 2):
+        return None
+    draws.sort()
+    tail = (1 - level) / 2
+    return percentile(draws, tail), percentile(draws, 1 - tail)
+
+
+def quantile_cuts(values: Sequence[float], fractions: Sequence[float]) -> list[float]:
+    """The values at the given cumulative fractions of the sample."""
+    ordered = sorted(values)
+    return [percentile(ordered, fraction) for fraction in fractions]
+
+
+def bucket(value: float, cuts: Sequence[float]) -> int:
+    """0 for at-or-below the first cut, 1 for at-or-below the second, and so on."""
+    for index, cut in enumerate(cuts):
+        if value <= cut:
+            return index
+    return len(cuts)
+
+
+def confusion(
+    first: Sequence[str], second: Sequence[str], categories: Sequence[str]
+) -> list[list[int]]:
+    """`matrix[i][j]` = how many observations are `categories[i]` in `first`
+    and `categories[j]` in `second`."""
+    index = {category: position for position, category in enumerate(categories)}
+    matrix = [[0] * len(categories) for _ in categories]
+    for a, b in zip(first, second, strict=True):
+        matrix[index[a]][index[b]] += 1
+    return matrix
+
+
+def cohen_kappa(matrix: Sequence[Sequence[int]]) -> float | None:
+    """Cohen's kappa from a square confusion matrix: (p_o - p_e) / (1 - p_e).
+
+    None when chance agreement is already total (every observation in one
+    category on both sides), where kappa is 0/0 rather than any number.
+    """
+    total = sum(sum(row) for row in matrix)
+    if total == 0:
+        return None
+    size = len(matrix)
+    observed = sum(matrix[i][i] for i in range(size)) / total
+    rows = [sum(matrix[i]) / total for i in range(size)]
+    columns = [sum(matrix[i][j] for i in range(size)) / total for j in range(size)]
+    expected = sum(rows[i] * columns[i] for i in range(size))
+    if expected >= 1:
+        return None
+    return (observed - expected) / (1 - expected)
