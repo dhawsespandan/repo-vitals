@@ -4549,3 +4549,255 @@ chart had 575 bars — §11.29's confusion, in the figures. It now groups by
 
 Each new test was run against the code it guards with that guard removed,
 and failed.
+
+## Phase 12 — Research II: S1 validation harness + weights v2
+
+§10 Phase 12 builds everything S1 needs to go from AHP matrices to a validated
+`weights_v2.yaml`. It is **code-complete, not accepted**: §7 gates acceptance on
+WP-2 to WP-6, none of which has been accepted (the 2026-09-24 review bounced
+WP-2 and WP-3 and found the rest unfilled). §7's fallback applies —
+"code-complete may tag `v0.12.0-rc`; final tag waits".
+
+Three commands (`ahp_check`, `validate_formula`, `scan_anchors`) over
+`apps/research/validation/`. No migration, no new dependency, one new optional
+environment variable (`EPSS_ENABLED`), and two hosts on the outbound allowlist
+(`api.deps.dev`, `api.first.org`). Commit 7 of §10 Phase 12 — adopting
+`weights_v2.yaml` and re-scoring the corpus panel — is the one that waits for
+WP-6, by design.
+
+### 12.1 The statistics are written out, not imported
+
+Pearson, Spearman, the bootstrap, Cohen's kappa, entropy and the eigenvector
+are plain Python in `validation/stats.py`, `entropy.py` and `ahp.py`. No
+SciPy, no NumPy. Two reasons, neither of them taste: an examiner can check
+every formula against a textbook in minutes, and the research machine must run
+this without a new compiled dependency — §11.22 records a freshly installed
+binary blocked by an Application Control policy within the hour, and a harness
+that cannot import its statistics produces no report at all. At a thousand
+repositories it costs seconds. (matplotlib imported again on this machine on
+2026-10-05 and the figure tests ran rather than skipped; nothing here depends
+on that staying true.)
+
+### 12.2 The matrix is the upper triangle, and "textbook" means a theorem
+
+`ahp.parse_matrix` reads File B's template exactly as the review asked for it:
+upper triangle filled, lower triangle blank, `1/3`-style fractions. The lower
+triangle is *computed* as exact reciprocals, because a typed `0.333` is not
+`1/3`. A typed lower triangle that agrees with the upper within 1% is accepted
+with a note saying the exact reciprocals were used; one that contradicts it is
+refused with both cells named. Comment lines are skipped and noted rather than
+refused — the judgement is not wrong because of its packaging.
+
+§10 Phase 12's acceptance asks `ahp.py` to "reproduce a textbook AHP example
+exactly". A remembered table is the wrong oracle, so the tests use cases whose
+answer is a theorem: a consistent matrix `a_ij = w_i/w_j` must return `w` and
+λ_max = n, and a 3x3 reciprocal matrix must return the normalised row geometric
+mean with λ_max = 1 + t + 1/t, t = (a12·a23/a13)^(1/3). Beside those, the
+values the 2026-09-24 review recomputed by hand are regression oracles — WP-1's
+seed (λ_max 4.031, CI 0.0103, CR 0.0115), the delivered Matrix B (λ_max 4.154,
+CR 0.057, 0.338/0.401/0.143/0.119) and their merge (λ_max 4.077, CR 0.028) —
+and the module reproduces all three.
+
+### 12.3 The gate refuses, and names what to re-think
+
+File B WP-6 item 1: "the tool refuses otherwise — a refusal is a WP-3 revisit,
+not a tweak". A refusal that only printed "CR = 0.14" would invite exactly the
+random tweaking File B forbids, so it names the triads whose judgements
+contradict each other — with the value the other two imply — and the single
+cells furthest from what the eigenvector implies (Saaty's ε). `validate_formula`
+runs the gate *first*: nothing is fetched to validate weights that are about to
+be re-judged.
+
+**One command beyond §3's list.** WP-3 step 2 has the developer "run the
+consistency tool" on both judges' matrices before reconciliation, and step 3
+has "the tool" list divergent cells and offer the geometric-mean merge. §3
+names no such command; `ahp_check` is it. It reports λ_max, CI, RI and CR —
+the three numbers the review asks the session notes to quote — the divergence
+table in Saaty scale steps, and the merge, with re-judged cells passed as
+explicit `--override`s so they are recorded rather than hand-edited. Note what
+it says about the 2026-09-24 delivery: A and B differ by *exactly* two steps in
+their two contested cells, and File B sends only cells differing by *more* than
+two to the meeting.
+
+### 12.4 One snapshot, chosen explicitly, and reproduced before anything else
+
+`panel.load_panel` refuses a research database holding more than one corpus
+snapshot unless told which — §11.28's split, or a second snapshot taken on
+purpose, would otherwise put repositories in the sample twice. `corpus_report`
+charts the newest snapshot by default, which is right for a chart and wrong for
+a study.
+
+Every number in the report is a recomputation (D6, File C §1.1), so the run
+first recomputes every repository under the version tagged on its own row and
+checks it equals the stored score. A mismatch is printed above everything else
+with the sentence "every recomputed number below is suspect until this is
+explained". On rows `scan_corpus` itself wrote, it reproduces exactly
+(`test_validation_pipeline.py`).
+
+### 12.5 Entropy: what a row is
+
+Every assessable occurrence of the snapshot, per ecosystem, normalised by
+`apps.scoring.normalize` under the base file's caps — the same 0-1 terms the
+weights multiply. A missing `staleness_days` leaves that occurrence out of the
+staleness column only, which is §5.2's missing-value policy applied to the
+matrix. Unassessable rows are in no column. A mixed repository contributes its
+npm rows to npm and its PyPI rows to PyPI.
+
+E_j depends on a column only through m, Σx and Σx·ln x, so each repository is
+reduced to those once. That makes File C's repository-cluster bootstrap a sum
+over a few thousand tuples rather than two thousand passes over forty thousand
+rows. The sampling-weighted variant treats frame weights as frequencies, and a
+test asserts weight 3 equals the repository repeated three times.
+
+The mechanism File C anticipates is easy to see on synthetic data, though the
+numbers are only the synthetic data's: with deprecation on 5% of rows, entropy
+weighted it 0.62 against AHP's 0.40, and severity — non-zero on most vulnerable
+rows — far lower. Rare means concentrated means heavy. The report prints File C
+§2.4.2's sentence beside the agreement table so a real divergence of that kind
+is read as interpretable rather than as a failure.
+
+### 12.6 Three formulas, differing only in their vectors
+
+Every analysis carries the active file (`v1`), the AHP candidate for `v2`, and
+the entropy vector. The candidate and the entropy weight set are built from the
+base file with only the per-ecosystem vectors replaced — same caps, flag rule,
+roll-up and thresholds — so every difference in the report is a difference of
+weights, and the sensitivity sweep is where the other parameters move, one at a
+time, on purpose. Vectors are rounded to four places by largest remainder so a
+file meant to be committed sums to exactly 1.
+
+**PyPI's vector is a stated rule.** File C L4: the PyPI vector is "derived by
+reasoning + the same AHP session". The review asks the WP-3 notes to state the
+rule; `--pypi-shift deprecation=-0.14,severity=+0.07,staleness=+0.07` is where
+it enters, and must sum to zero. Without one, PyPI takes the npm vector and the
+report says so in its own paragraph, because WP-1 did lower PyPI's deprecation
+weight and silently dropping that would be a decision nobody made.
+
+### 12.7 The candidate is not `v2`
+
+`validate_formula` writes `weights_v2_candidate.yaml` into the report folder,
+validated by `weights.parse_weights` so a file the product would refuse is
+caught now. It carries `derivation: ahp-candidate-pending-wp6`, not §5.4's
+`ahp-entropy-validated` — the review bounced the teammate's draft for claiming
+validation before it happened — and it is not in `backend/weights/`, so nothing
+loads it. Adoption is §10 Phase 12's commit 7, after WP-6 signs: copy it, change
+the derivation line in that commit, set `WEIGHTS_VERSION=v2`, and
+`rescore --weights v2` the corpus.
+
+### 12.8 The references
+
+**deps.dev's Scorecard is independent and measures something else.** Its
+inputs are practices (branch protection, review, pinning); none is a
+dependency's deprecation, CVE count or age. File C expects a moderate
+correlation (H2: ρ 0.3-0.6) and frames it as convergent validity (L2); that
+sentence is a constant printed above the table. The client keys projects
+lower-case as one encoded path segment, caches every answer that is a fact
+about the project, does not cache an outage, and was checked against live
+responses on 2026-10-05 (express 8.5; a Phase 11 pilot repository 2.0; an
+unknown project 404).
+
+**The OSV roll-up is circular and says so beside its number** (File C §2.4.3,
+L1). It is the worst CVSS among a repository's assessable occurrences — the
+5.0 placeholder for an unscored advisory, as in the formula — oriented as
+`10 - worst` so that every reference correlation in the report is expected to
+be positive.
+
+### 12.9 Kappa under three cuts, and the cut that could not express an empty class
+
+A continuous reference has no classes, so kappa is reported under tertiles
+(§10's choice), the formula's own class proportions, and equal thirds of the
+0-10 scale. The matched-proportions cut was first written as quantile cut
+points, and its test failed: a cut at the 0th percentile still captures the
+minimum, because a bucket includes its upper cut, so an empty formula class
+could never be matched. It now assigns buckets by rank, which makes equal
+marginals true by construction.
+
+### 12.10 Sensitivity
+
+One parameter at a time against the same vector unperturbed: each weight
+±10% and ±20% in both ecosystems, renormalised so the other three keep their
+ratios; `decay` and `max_terms` ±10/20%; each threshold ±5. Roll-up and
+threshold variants re-roll the baseline's stored penalties rather than
+re-scoring forty thousand occurrences, and a test asserts the shortcut equals
+re-scoring. H3 is applied as the *largest* flip rate over the ±20% weight
+perturbations, for both vectors, as the review asked WP-6's sign-off to cover.
+
+### 12.11 Anchors are scanned by the corpus pipeline, and a pass means the anchor was seen
+
+`scan_anchors` and `validate_formula --anchors` plan the tree with the
+scanner's `plan_manifests`, adopt workspace lockfiles by the scanner's rule,
+archive manifests exactly as `build_corpus` does, and measure with
+`corpus_scan.measure`. Nothing is registered and nothing reaches a database;
+every occurrence's signals go to `anchor_scan.json` so anchors re-score offline
+under any version, and a second run reuses the scan unless the CSV changed.
+
+**A known anchor passes only if the scan saw it.** The review found none of the
+five delivered anchors visible to the scanner — transitive, undeclared, or a
+range scored against the latest release. Such a repository can still land in
+Medium for unrelated reasons. So a known anchor passes when its repository is
+≥ Medium *and* the named package was read at the named version *and* flagged;
+≥ Medium without that is reported as an invalid anchor, a WP-2 problem, and the
+checklist item fails.
+
+**`scan_anchors` prints no score.** File B's anchoring rule says bucket
+judgements are formed before anyone sees the formula's output. The command
+prints what a WP-2 reviewer checks — existence, how the anchor resolved, its
+flags (score-independent, §5.2), and how the CSV's lockfile and dependency-count
+claims compare with what was read, the two columns the review found wrong on 14
+and 6 rows. That also makes it the tool for the WP-2 acceptance check the
+review promised.
+
+### 12.12 EPSS is collected and never scored
+
+With `EPSS_ENABLED`, a live scan writes FIRST.org's probability to
+`dependency_vulnerabilities.epss_score`. A test scans the same repository with
+the flag off and on and asserts every score is identical. The formula *cannot*
+use it yet, by design: a weights file enabling EPSS needs a value per
+occurrence, and the per-advisory column is on an operational table §5.7
+deletes, so the score could not be recomputed from history (D6). That needs an
+additive occurrence-level column and belongs with whichever Tier-2 variant
+wants EPSS. An EPSS outage is logged and the scan completes — OSV's absence
+would make a vulnerable repository look clean; EPSS's changes nothing shown.
+
+### 12.13 Not built: §5.2's NVD step
+
+§5.2's CVSS chain is "OSV → NVD fallback → 5.0 placeholder", and `NVD_API_KEY`
+is a Phase 12 knob. It is deferred. It would change product scores (fewer
+placeholders), make corpus scans taken before and after it incomparable, and
+need its own identity argument for §11.1 — a measurement change, not
+validation code, arriving one phase after the corpus was frozen. `.env.example`
+keeps the variable under "not yet used" and points here.
+
+### 12.14 Acceptance, as of the code-complete commit
+
+| Criterion | State |
+|---|---|
+| `ahp.py` reproduces a textbook example exactly | **passes, suite**: consistent matrices and the 3x3 closed form, plus the review's three hand-recomputed matrices |
+| CR gate blocks an inconsistent matrix and names the worst triads | **passes, suite**, through `ahp_check` and `validate_formula` |
+| `validate_formula` runs end-to-end on the WP-5 data in one command | **pending WP-5.** Runs end-to-end on rows `scan_corpus` wrote through Phase 11's mocked pipeline, under a socket block |
+| anchors pass | **pending WP-2** (resubmission) |
+| v1-vs-v2 spot-check: same stored signals differ only per weight deltas | **passes, suite**: penalty differences equal 100·ΣΔw·S to per-term rounding |
+| corpus rescore completes fully offline (network assertion) | **passes, suite**: `rescore` and `validate_formula` with `socket.connect` refusing; the fixture was seen to catch a real attempt |
+
+Tagged `v0.12.0-rc` on the code. `v0.12.0` waits for WP-2 to WP-6 and commit 7.
+
+### 12.15 Deploy notes
+
+The web service gains nothing it uses: every command runs on the research
+machine. What a push carries to production is the EPSS hook (inert with
+`EPSS_ENABLED` unset, which is correct on Render) and two allowlist entries.
+**No migration, no new dependency, no environment variable to set.** The
+research machine needs `GITHUB_API_PAT` for `scan_anchors` as before; deps.dev
+and FIRST.org need no credential.
+
+### 12.16 A recorded deviation: Phase 13 is being coded before Phase 12 is accepted
+
+§0: "Do not start phase N+1 before phase N's acceptance passes." Phase 12's
+acceptance waits on five teammate deliverables with no date, and Phase 13's
+code depends on Phase 12 for nothing but the corpus Phase 11 already defines.
+So, decided 2026-10-05, Phase 13 is coded in parallel **on a local branch that
+is not pushed**: no `main` commit, no tag, no deploy, until Phase 12's code is
+pushed and Phase 13's own commits are rebased onto it and verified again.
+Phase 13's acceptance (the 20-item pilot) still needs the Gemini key and WP-5's
+corpus, so nothing about this lets either phase close early. The ordering
+changes; the gates do not.
