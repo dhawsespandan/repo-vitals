@@ -222,3 +222,108 @@ def weighted_kappa(matrix: Sequence[Sequence[int]]) -> float | None:
     if expected == 0:
         return None
     return 1 - observed / expected
+
+
+# ── S3's paired tests (File C §3.4) ────────────────────────────────────────
+
+
+def _binomial_tail(k: int, n: int) -> float:
+    """P(X <= k) for X ~ Binomial(n, 1/2), exactly."""
+    return sum(math.comb(n, i) for i in range(k + 1)) / 2**n
+
+
+def mcnemar_exact(b: int, c: int) -> float:
+    """Two-sided exact McNemar p-value from the two discordant counts.
+
+    Under the null each discordant pair is a fair coin, so the smaller count
+    is binomial(b + c, 1/2) and the p-value is twice its lower tail, capped at
+    1. No pairs disagree: no evidence either way, p = 1.
+    """
+    n = b + c
+    if n == 0:
+        return 1.0
+    return min(1.0, 2 * _binomial_tail(min(b, c), n))
+
+
+def _normal_two_sided(z: float) -> float:
+    return math.erfc(abs(z) / math.sqrt(2))
+
+
+def _exact_signed_rank_p(w_plus: float, n: int) -> float:
+    """Exact two-sided p for W+ with untied ranks 1..n (dynamic programming)."""
+    total = n * (n + 1) // 2
+    counts = [0] * (total + 1)
+    counts[0] = 1
+    for rank in range(1, n + 1):
+        for value in range(total, rank - 1, -1):
+            counts[value] += counts[value - rank]
+    observed = min(w_plus, total - w_plus)
+    tail = sum(counts[: math.floor(observed) + 1]) / 2**n
+    return min(1.0, 2 * tail)
+
+
+def wilcoxon_signed_rank(differences: Sequence[float]) -> dict:
+    """The two-sided Wilcoxon signed-rank test on paired differences.
+
+    Zero differences are dropped (Wilcoxon's own rule). With no ties among the
+    rest and at most 25 of them, the p-value is exact; otherwise it is the
+    normal approximation with the tie correction and a continuity correction —
+    the case for S3's three-level faithfulness scale, which ties heavily. The
+    effect size is the matched-pairs rank-biserial correlation
+    (W+ - W-) / (W+ + W-): +1 when every nonzero difference is positive.
+    """
+    nonzero = [d for d in differences if d != 0]
+    n = len(nonzero)
+    if n == 0:
+        return {
+            "n": 0,
+            "w_plus": 0.0,
+            "w_minus": 0.0,
+            "p": 1.0,
+            "method": "none",
+            "r": None,
+        }
+    order = ranks([abs(d) for d in nonzero])
+    w_plus = sum(rank for rank, d in zip(order, nonzero, strict=True) if d > 0)
+    w_minus = sum(rank for rank, d in zip(order, nonzero, strict=True) if d < 0)
+    r = (w_plus - w_minus) / (w_plus + w_minus)
+    tied = len({abs(d) for d in nonzero}) < n
+    if not tied and n <= 25:
+        return {
+            "n": n, "w_plus": w_plus, "w_minus": w_minus,
+            "p": _exact_signed_rank_p(w_plus, n), "method": "exact", "r": r,
+        }  # fmt: skip
+    mean = n * (n + 1) / 4
+    groups: dict[float, int] = {}
+    for d in nonzero:
+        groups[abs(d)] = groups.get(abs(d), 0) + 1
+    variance = (
+        n * (n + 1) * (2 * n + 1) / 24 - sum(t**3 - t for t in groups.values()) / 48
+    )
+    if variance <= 0:
+        return {
+            "n": n,
+            "w_plus": w_plus,
+            "w_minus": w_minus,
+            "p": 1.0,
+            "method": "normal",
+            "r": r,
+        }
+    shift = w_plus - mean
+    z = (shift - math.copysign(0.5, shift)) / math.sqrt(variance) if shift else 0.0
+    return {
+        "n": n, "w_plus": w_plus, "w_minus": w_minus,
+        "p": _normal_two_sided(z), "method": "normal", "r": r,
+    }  # fmt: skip
+
+
+def holm(p_values: Sequence[float]) -> list[float]:
+    """Holm-adjusted p-values, in the order given (File C §3.4.5)."""
+    m = len(p_values)
+    order = sorted(range(m), key=lambda index: p_values[index])
+    adjusted = [0.0] * m
+    running = 0.0
+    for position, index in enumerate(order):
+        running = max(running, min(1.0, (m - position) * p_values[index]))
+        adjusted[index] = running
+    return adjusted
