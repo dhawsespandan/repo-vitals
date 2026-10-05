@@ -52,6 +52,10 @@ from apps.scanning.scanner import GITHUB_API, blob_url, decode_blob, tree_url
 logger = logging.getLogger(__name__)
 
 SEARCH_API = f"{GITHUB_API}/search/repositories"
+#: Phase 13's condition D (D13). The same Search API allowance as repository
+#: search — GitHub counts both against one 30/minute "search" resource — so it
+#: goes through the same pacer and the same budget.
+SEARCH_ISSUES_API = f"{GITHUB_API}/search/issues"
 
 #: §8: the Search API allows 30 requests/minute for an authenticated caller.
 #: Paced a little under that rather than exactly at it — 2.5s is 24/minute.
@@ -263,19 +267,29 @@ class ResearchClient:
             "sort": sort,
             "order": order,
         }
+        return self._search(SEARCH_API, params)
 
+    def search_issues(self, query: str, *, per_page: int = 10) -> dict:
+        """One page of `/search/issues`, best match first, under the same budget.
+
+        Phase 13's condition D only (D13): no request path reaches it, and it
+        reads public issue text, which is why D is command-only.
+        """
+        return self._search(SEARCH_ISSUES_API, {"q": query, "per_page": per_page})
+
+    def _search(self, url: str, params: dict) -> dict:
         self.search_budget.pause_if_low(wait=self.wait_for_reset)
         self.search_pacer.wait()
         self.search_calls += 1
         try:
-            response = http.get_json(SEARCH_API, token=self.token, params=params)
+            response = http.get_json(url, token=self.token, params=params)
         except http.UpstreamRateLimited:
             logger.info("Search hit a limit the budget had not seen; waiting it out.")
             self.search_budget.remaining = 0
             self.search_budget.reset_at = time.time() + SEARCH_WINDOW_SECONDS
             self.search_budget.pause_if_low(wait=self.wait_for_reset)
             self.search_calls += 1
-            response = http.get_json(SEARCH_API, token=self.token, params=params)
+            response = http.get_json(url, token=self.token, params=params)
 
         self.search_budget.observe(response.headers)
         return response.data if isinstance(response.data, dict) else {}

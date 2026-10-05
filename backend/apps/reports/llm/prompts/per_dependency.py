@@ -35,6 +35,11 @@ from __future__ import annotations
 
 import json
 
+#: The branch value S3's fixed-framing conditions pass (§10 Phase 13). Not one
+#: of `AgentBranch`'s two: the production graph cannot produce it, and a trace
+#: of the product's own never carries it.
+FIXED_FRAMING = "fixed"
+
 #: How much of one chunk reaches the prompt. Five chunks of 1,200 characters is
 #: ~1,500 tokens, which sits comfortably inside the request budget; the cap is
 #: here as a backstop against a chunker change rather than as a live limit.
@@ -135,6 +140,18 @@ def build_per_dependency_user_prompt(
             "This dependency is marked deprecated by its registry. Explain what "
             "to move to and what the move involves, using the retrieved "
             "passages."
+        )
+    elif branch == FIXED_FRAMING:
+        # S3's conditions A and B (§10 Phase 13): one task for every item,
+        # because "no branch" is the variable they exist to isolate. Worded to
+        # be true of a deprecated dependency and an undeprecated one alike,
+        # where the `no_reason` text below would tell a deprecated one it is
+        # not. The production graph never passes this value.
+        task = (
+            "This dependency is flagged by the scan. Explain how to remediate "
+            "it — the release that resolves the problem, or what to move to if "
+            "it should be replaced — and what the change involves, using the "
+            "retrieved passages."
         )
     else:
         task = (
