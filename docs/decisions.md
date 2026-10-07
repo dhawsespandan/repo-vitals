@@ -4452,3 +4452,62 @@ forgetting a flag is not a fix, so:
 The seven tests in `TestOneCorpusOneDate` were run against the pre-fix module
 first, and all seven failed — the headline one by writing the resumed half as
 of 2026-09-27 under a run started on 2026-09-26.
+
+### 11.29 The corpus was allocated per slice, not per stratum
+
+Found on 2026-10-08 during the WP-4 run itself, ~40 minutes into
+verification, by replaying `allocate()` offline on the checkpointed cells. The
+run was stopped and restarted from its own enumeration (`--resume` with the
+candidate checkpoint cleared; the 1,326 enumerated cells cost ~1 h 10 min of
+search calls and were kept). Attempt 1's log and candidates are kept under
+`research_data/logs/`.
+
+`allocate()` shared the target **equally per cell**, and a cell is not a
+stratum: `_split_stars` divides any stratum holding more than the Search API's
+1,000-result cap into slices, each its own cell. The real frame's 240
+populated strata became 1,326 cells, so a stratum split thirty ways took
+thirty shares and an unsplit one took one — the proportional allocation the
+docstring says the design rejects. Worse, at 500 admissions per ecosystem over
+600-700 cells nearly every cell's share rounded to zero, and the shortfall was
+handed out +1 to the first cells **in enumeration order**. Replayed on the run's
+own cells, the old allocation gave **104 of 240 populated strata nothing at
+all** — every one of them a young (`lt6`/`6-18`) stratum, including whole star
+bands of actively maintained JavaScript — and gave the two young bands 129 of
+the 1,000 admissions. Stale strata all got some, which is why it looked fine.
+
+The strata report could not see it. Its "Empty cells" line counts cells
+GitHub returned **no repository for**, not strata the **corpus has no
+repository from**; a stratum of 7,677 repositories with nothing admitted
+counted as not empty. File B's checklist item is the second question. The
+pilot shows the same gap at small scale: "Empty cells: 0", with 8 of its 16
+strata — all stale — unsampled.
+
+The fix:
+
+- **Allocate per stratum** (`stratum_of`: the key before any split suffix),
+  equal within an ecosystem and multiplied by the pushed band's `oversample`,
+  then **divide each stratum's share among its slices** in proportion to what
+  each holds, so the sample stays spread across the stratum's star range.
+- **Largest-remainder rounding** at both levels, ties broken by key, with
+  capacity overflow re-apportioned until placed. The parts sum to the budget,
+  and no stratum's share depends on where it sits in a list.
+- **`stratum_of` cuts the last field only.** The star band `1000+` has a `+`
+  in its name; cutting at the first `+` folded every `1000+` stratum of a
+  language into one — a mistake made, and caught by a test, while writing
+  this fix.
+- **The strata report gains "Strata with no admitted repository"** (flagged
+  when non-zero) and a per-stratum table. "Empty cells" stays, because it
+  answers its own question.
+- **`--resume` keeps the run date** (`.checkpoint/run.jsonl`), and refuses a
+  different seed or target: §11.28's defect, present in the builder too. A
+  resume after midnight UTC would have enumerated any remaining cells against
+  a second date and stamped the corpus with it.
+
+On the real cells the new allocation gives every one of the 240 strata between
+2 and 11 admissions (median 4), and the four pushed bands 151 / 152 / 283 /
+414 — the frame's 1 : 1 : 2 : 3 tilt, bent only where a stratum is small.
+Sampling weights are unchanged in meaning (`available / examined` per cell).
+
+Seven of the eight new tests fail against the previous module; the eighth
+(capacity hand-back) is a property both satisfy. None of the existing
+allocation tests could have caught it: every cell in them was unsplit.

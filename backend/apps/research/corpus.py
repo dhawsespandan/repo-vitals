@@ -98,6 +98,7 @@ BLOB_DIRNAME = "blobs"
 CHECKPOINT_DIRNAME = ".checkpoint"
 CELLS_CHECKPOINT = "cells.jsonl"
 CANDIDATES_CHECKPOINT = "candidates.jsonl"
+RUN_CHECKPOINT = "run.jsonl"
 
 #: Why a candidate was not admitted. Codes rather than sentences, for the same
 #: reason §5.6's outcomes are: the strata report counts them and a reworded
@@ -467,53 +468,120 @@ def enumerate_cell(
 # ── allocation ─────────────────────────────────────────────────────────────
 
 
+def stratum_of(cell_key: str) -> str:
+    """The D14 stratum a cell belongs to: its key before any star-band split.
+
+    `_split_stars` appends `+lo-hi` to a key each time it halves a band that
+    holds more than the Search API will enumerate, so
+    `javascript|5-20|lt6|2022plus+11-20+11-14` is one slice of the stratum
+    `javascript|5-20|lt6|2022plus`. The split is an enumeration device; the
+    stratum is the unit the sampling design is about.
+
+    The suffix is cut from the last field only: the star band `1000+` has a
+    `+` in its own name, and cutting the whole key at its first `+` would fold
+    every `1000+` stratum of a language into one.
+    """
+    head, separator, created = cell_key.rpartition("|")
+    return f"{head}{separator}{created.split('+', 1)[0]}"
+
+
+def _apportion(
+    total: int, weights: dict[str, float], caps: dict[str, int]
+) -> dict[str, int]:
+    """Split `total` whole units across keys in proportion to `weights`, never past `caps`.
+
+    Largest-remainder rounding, so the parts sum to `total` (or to the total
+    capacity, if that is smaller) and no key's share depends on where it sits
+    in a list: remainders are ranked, ties broken by key. A key that reaches
+    its cap hands the rest back, and the rest is apportioned again among the
+    keys that still have room, until it is placed or nobody has room.
+    """
+    shares = dict.fromkeys(weights, 0)
+    remaining = min(total, sum(caps[key] for key in weights if weights[key] > 0))
+    while remaining > 0:
+        open_keys = [
+            key for key in weights if weights[key] > 0 and shares[key] < caps[key]
+        ]
+        if not open_keys:
+            break
+        weight_sum = sum(weights[key] for key in open_keys)
+        exact = {key: remaining * weights[key] / weight_sum for key in open_keys}
+        given = {key: min(int(exact[key]), caps[key] - shares[key]) for key in open_keys}
+        leftover = remaining - sum(given.values())
+        for key in sorted(open_keys, key=lambda k: (-(exact[k] - int(exact[k])), k)):
+            if leftover <= 0:
+                break
+            if shares[key] + given[key] < caps[key]:
+                given[key] += 1
+                leftover -= 1
+        placed = sum(given.values())
+        if placed == 0:
+            break
+        for key, units in given.items():
+            shares[key] += units
+        remaining -= placed
+    return shares
+
+
 def allocate(cells: list[Cell], target: int, grid: GridConfig) -> None:
-    """Spread `target` admissions across the cells, tilted toward the stale ones.
+    """Spread `target` admissions across the strata, tilted toward the stale ones.
 
-    Equal-per-cell within an ecosystem, multiplied by the pushed band's
-    `oversample`, then clipped to what each cell actually holds and the
-    leftover redistributed. Equal allocation rather than proportional is the
-    design: proportional allocation would spend the corpus on the populous
-    young cells and leave the abandoned ones — the ones this product exists
-    to find — with two repositories each.
+    Equal-per-**stratum** within an ecosystem, multiplied by the pushed band's
+    `oversample`, clipped to what each stratum actually holds and the leftover
+    redistributed. Equal allocation rather than proportional is the design:
+    proportional allocation would spend the corpus on the populous young
+    strata and leave the abandoned ones — the ones this product exists to
+    find — with two repositories each.
 
-    Writes `allocation` and `sampling_weight` onto each cell in place.
+    The unit is the stratum, not the cell, because a cell may be one slice of
+    a stratum that `_split_stars` divided to get under the Search API's cap.
+    Allocating per slice gave a stratum one share per slice — so the populous
+    strata, split twenty ways, took twenty shares — and, with most slices
+    rounding to zero and the shortfall handed out in enumeration order, left
+    104 of 240 populated strata in the real frame with nothing at all
+    (decisions §11.29). A stratum's allocation is then divided among its
+    slices in proportion to what each holds, so within a stratum the sample
+    stays spread across its star range.
+
+    Writes `allocation` onto each cell in place; the weight waits for
+    `finalize_weights`.
     """
     oversample = {band.name: band.oversample for band in grid.pushed}
 
-    by_ecosystem: dict[str, list[Cell]] = {}
+    by_ecosystem: dict[str, dict[str, list[Cell]]] = {}
     for cell in cells:
         if cell.infeasible or cell.available == 0:
             continue
-        by_ecosystem.setdefault(cell.ecosystem, []).append(cell)
+        by_ecosystem.setdefault(cell.ecosystem, {}).setdefault(
+            stratum_of(cell.key), []
+        ).append(cell)
 
-    for ecosystem, group in by_ecosystem.items():
+    for ecosystem, strata in by_ecosystem.items():
         share = grid.ecosystem_share.get(ecosystem, 0.0)
         budget = round(target * share)
-        weights = [oversample.get(cell.pushed, 1.0) for cell in group]
-        total_weight = sum(weights) or 1.0
-
-        for cell, weight in zip(group, weights, strict=True):
-            cell.allocation = min(cell.available, round(budget * weight / total_weight))
-
-        # Cells that could not absorb their share hand it back. One pass is
-        # enough in practice and a loop risks not terminating on a frame where
-        # every cell is small; the shortfall is reported rather than hidden.
-        shortfall = budget - sum(cell.allocation for cell in group)
-        if shortfall > 0:
-            headroom = [cell for cell in group if cell.available > cell.allocation]
-            for index, cell in enumerate(headroom):
-                extra = shortfall // len(headroom) + (
-                    1 if index < shortfall % len(headroom) else 0
-                )
-                cell.allocation = min(cell.available, cell.allocation + extra)
+        per_stratum = _apportion(
+            budget,
+            {key: oversample.get(group[0].pushed, 1.0) for key, group in strata.items()},
+            {key: sum(cell.available for cell in group) for key, group in strata.items()},
+        )
+        for key, group in strata.items():
+            per_cell = _apportion(
+                per_stratum[key],
+                {cell.key: float(cell.available) for cell in group},
+                {cell.key: cell.available for cell in group},
+            )
+            for cell in group:
+                cell.allocation = per_cell[cell.key]
 
         logger.info(
-            "Allocated %d of %d %s admissions across %d cell(s).",
-            sum(cell.allocation for cell in group),
+            "Allocated %d of %d %s admissions across %d strata (%d cells); "
+            "%d strata got none.",
+            sum(per_stratum.values()),
             budget,
             ecosystem,
-            len(group),
+            len(strata),
+            sum(len(group) for group in strata.values()),
+            sum(1 for units in per_stratum.values() if units == 0),
         )
 
     # The weight is deliberately *not* set here. It divides by the number of
@@ -947,7 +1015,7 @@ class Checkpoint:
         return read_jsonl(self._path(name))
 
     def clear(self) -> None:
-        for name in (CELLS_CHECKPOINT, CANDIDATES_CHECKPOINT):
+        for name in (CELLS_CHECKPOINT, CANDIDATES_CHECKPOINT, RUN_CHECKPOINT):
             self._path(name).unlink(missing_ok=True)
 
 
@@ -994,11 +1062,33 @@ def build_corpus(
     `progress` is an optional callable taking one line of text — the
     management command passes `stdout.write`, and a test passes nothing.
     """
-    today = today or datetime.now(UTC).date()
     out_dir.mkdir(parents=True, exist_ok=True)
     checkpoint = Checkpoint(out_dir / CHECKPOINT_DIRNAME)
     if not resume:
         checkpoint.clear()
+
+    # The frame's month bands resolve against the run date, so a resume has to
+    # use the date the run started under, not today's: resumed after midnight
+    # UTC, a run would otherwise enumerate its remaining cells against a
+    # second date and report that date as the corpus's (decisions §11.29, the
+    # same defect §11.28 fixed in `scan_corpus`).
+    recorded_run = checkpoint.read(RUN_CHECKPOINT)
+    if recorded_run:
+        run = recorded_run[0]
+        if run.get("seed") != seed or run.get("target") != target:
+            raise CorpusConfigError(
+                f"--resume with seed {seed} and target {target}, but this checkpoint "
+                f"was started with seed {run.get('seed')} and target "
+                f"{run.get('target')}. Resume with those, or start over without "
+                f"--resume."
+            )
+        today = today or date.fromisoformat(run["run_date"])
+    today = today or datetime.now(UTC).date()
+    if not recorded_run:
+        checkpoint.append(
+            RUN_CHECKPOINT,
+            {"run_date": today.isoformat(), "seed": seed, "target": target},
+        )
 
     def say(message: str) -> None:
         if progress is not None:
@@ -1287,6 +1377,38 @@ def strata_report(
     stale_bands = {band.name for band in grid.pushed if band.oversample > 1.0}
     empty_stale = [cell for cell in empty if cell.pushed in stale_bands]
 
+    # File B's "no stratum cell empty" is about strata, and a stratum can hold
+    # thousands of repositories and still contribute none to the corpus. The
+    # `empty` count above cannot see that: it asks whether GitHub had any
+    # repository in a cell, not whether the corpus has one (decisions §11.29).
+    strata: dict[str, dict] = {}
+    for cell in live_cells:
+        row = strata.setdefault(
+            stratum_of(cell.key),
+            {
+                "ecosystem": cell.ecosystem,
+                "pushed": cell.pushed,
+                "population": 0,
+                "allocated": 0,
+                "examined": 0,
+                "admitted": 0,
+                "cells": 0,
+            },
+        )
+        row["population"] += cell.available
+        row["allocated"] += cell.allocation
+        row["examined"] += cell.examined
+        row["cells"] += 1
+    for candidate in admitted:
+        row = strata.get(stratum_of(candidate.cell))
+        if row is not None:
+            row["admitted"] += 1
+    populated_strata = {key: row for key, row in strata.items() if row["population"] > 0}
+    unsampled = sorted(
+        key for key, row in populated_strata.items() if row["admitted"] == 0
+    )
+    unsampled_stale = [key for key in unsampled if strata[key]["pushed"] in stale_bands]
+
     lines: list[str] = [
         "# Corpus strata report",
         "",
@@ -1320,6 +1442,9 @@ def strata_report(
         "— a created-year band that cannot overlap its pushed band)",
         f"- **Empty *stale* cells:** {len(empty_stale)}"
         + ("  ← flag these" if empty_stale else ""),
+        f"- **Strata with no admitted repository:** {len(unsampled)} of "
+        f"{len(populated_strata)} populated strata"
+        + (f" ({len(unsampled_stale)} stale)  ← flag these" if unsampled else ""),
         f"- **Cells that did not fill their allocation:** {len(unfilled)}",
         f"- **Cells still over the results cap after splitting:** "
         f"{sum(1 for cell in cells if cell.capped)}",
@@ -1331,6 +1456,26 @@ def strata_report(
     ]
     for reason in REJECT_REASONS:
         lines.append(f"| `{reason}` | {rejected.get(reason, 0)} |")
+
+    lines += [
+        "",
+        "## Strata",
+        "",
+        "One row per stratum of the frame (language x stars x pushed x created),",
+        "summed over the cells a stratum was split into to get under the",
+        "Search API's cap. This is the level File B's \"no stratum cell empty\"",
+        "check is about, and the level the allocation is made at. `Reachable`",
+        "is what the Search API will hand over: the population, capped per cell.",
+        "",
+        "| Stratum | Ecosystem | Reachable | Cells | Allocated | Examined | Admitted |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    for key in sorted(strata):
+        row = strata[key]
+        lines.append(
+            f"| `{key}` | {row['ecosystem']} | {row['population']} | {row['cells']} | "
+            f"{row['allocated']} | {row['examined']} | {row['admitted']} |"
+        )
 
     lines += [
         "",

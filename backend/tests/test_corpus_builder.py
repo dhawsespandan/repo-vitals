@@ -325,6 +325,105 @@ class TestAllocation:
         allocate(cells, target=100, grid=frame)
         assert all(cell.allocation == 0 for cell in cells if cell.infeasible)
 
+    # ── strata, not slices (decisions §11.29) ──
+    #
+    # `_split_stars` divides a stratum holding more than the Search API's cap
+    # into slices, each its own cell. The first real frame split 240 populated
+    # strata into 1,326 cells, and allocating per cell left 104 strata with
+    # nothing. None of the tests above could see it: their cells are unsplit.
+
+    @staticmethod
+    def _slices(
+        stratum: str, count: int, available: int, pushed: str = "lt6"
+    ) -> list[Cell]:
+        """`count` cells that are slices of one stratum, keyed as `_split_stars` keys them."""
+        language, _stars, _pushed, created = stratum.split("|")
+        return [
+            Cell(
+                key=f"{stratum}+{index}-{index}",
+                language=language,
+                ecosystem="npm",
+                stars=f"{index}..{index}",
+                stars_min=index,
+                stars_max=index,
+                pushed=pushed,
+                created=created,
+                query=f"q {stratum} {index}",
+                results_cap=1000,
+                total_count=available,
+            )
+            for index in range(count)
+        ]
+
+    def test_a_split_stratum_gets_one_share_not_one_per_slice(self, frame):
+        """Twenty slices of one stratum and one unsplit stratum, same band:
+        each stratum takes half. Per-cell allocation gave the split one twenty
+        times the other's share."""
+        split = self._slices("javascript|5-20|lt6|le2015", 20, 900)
+        whole = self._slices("javascript|1000+|lt6|le2015", 1, 900)
+        allocate(split + whole, target=40, grid=frame)  # npm budget 20
+
+        assert sum(cell.allocation for cell in split) == 10
+        assert sum(cell.allocation for cell in whole) == 10
+
+    def test_every_populated_stratum_gets_an_admission_when_the_target_allows(
+        self, frame
+    ):
+        """The real frame's shape: a few heavily split strata ahead of many
+        unsplit ones, and fewer admissions than cells. Per-cell rounding gave
+        every slice zero, and the shortfall went +1 to the first cells in
+        enumeration order — all of them slices of the first strata."""
+        cells: list[Cell] = []
+        for index in range(10):
+            cells += self._slices(f"javascript|5-20|lt6|s{index}", 30, 900)
+        for index in range(20):
+            cells += self._slices(f"javascript|1000+|lt6|u{index}", 1, 900)
+        allocate(cells, target=200, grid=frame)  # npm budget 100, 320 cells
+
+        per_stratum: dict[str, int] = {}
+        for cell in cells:
+            # The slice suffix follows the created band; `1000+` is a band name.
+            head, _, created = cell.key.rpartition("|")
+            stratum = f"{head}|{created.split('+', 1)[0]}"
+            per_stratum[stratum] = per_stratum.get(stratum, 0) + cell.allocation
+        assert len(per_stratum) == 30
+        assert min(per_stratum.values()) >= 3
+        assert sum(per_stratum.values()) == 100
+
+    def test_the_allocation_does_not_depend_on_the_order_of_the_cells(self, frame):
+        def allocation(reverse: bool) -> dict[str, int]:
+            cells: list[Cell] = []
+            for index in range(6):
+                cells += self._slices(f"javascript|5-20|lt6|s{index}", 4, 50)
+            if reverse:
+                cells.reverse()
+            allocate(cells, target=14, grid=frame)  # npm budget 7 over 6 strata
+            return {cell.key: cell.allocation for cell in cells}
+
+        assert allocation(reverse=False) == allocation(reverse=True)
+
+    def test_a_strata_share_is_spread_over_its_slices_by_size(self, frame):
+        big, small_a, small_b = (
+            self._slices("javascript|5-20|lt6|le2015", 1, 800)
+            + self._slices("javascript|5-20|lt6|le2015", 1, 100)
+            + self._slices("javascript|5-20|lt6|le2015", 1, 100)
+        )
+        small_a.key, small_b.key = (
+            "javascript|5-20|lt6|le2015+a",
+            "javascript|5-20|lt6|le2015+b",
+        )
+        allocate([big, small_a, small_b], target=20, grid=frame)  # npm budget 10
+
+        assert (big.allocation, small_a.allocation, small_b.allocation) == (8, 1, 1)
+
+    def test_a_stratum_that_cannot_absorb_its_share_hands_it_back(self, frame):
+        tiny = self._slices("javascript|5-20|lt6|le2015", 1, 2)
+        roomy = self._slices("javascript|1000+|lt6|le2015", 1, 900)
+        allocate(tiny + roomy, target=40, grid=frame)  # npm budget 20
+
+        assert tiny[0].allocation == 2
+        assert roomy[0].allocation == 18
+
     def test_the_weight_is_the_expansion_factor_the_report_explains(self, frame):
         """One admitted repository stands for `available / examined` in the frame.
 
@@ -675,6 +774,59 @@ class TestResume:
         ids = [row["github_repo_id"] for row in rows]
         assert len(ids) == len(set(ids)) == len(items)
 
+    def test_a_resume_keeps_the_run_date_it_started_under(
+        self, tmp_path, frame, monkeypatch
+    ):
+        """The month bands resolve against the run date. A resume after
+        midnight UTC must not move them, nor stamp the corpus with a second
+        date (decisions §11.29, §11.28's defect in the builder)."""
+        monkeypatch.setattr(
+            corpus_module, "_registry_resolvable", lambda specs, limit: True
+        )
+        build_corpus(
+            out_dir=tmp_path,
+            grid=frame,
+            seed=42,
+            target=4,
+            client=FakeGitHub({}, {}, {}, {}),
+            today=RUN_DATE,
+        )
+        build_corpus(
+            out_dir=tmp_path,
+            grid=frame,
+            seed=42,
+            target=4,
+            client=FakeGitHub({}, {}, {}, {}),
+            resume=True,
+        )
+        manifest = json.loads((tmp_path / MANIFEST_FILENAME).read_text(encoding="utf-8"))
+        assert manifest["run_date"] == RUN_DATE.isoformat()
+
+    def test_a_resume_with_a_different_seed_is_refused(
+        self, tmp_path, frame, monkeypatch
+    ):
+        monkeypatch.setattr(
+            corpus_module, "_registry_resolvable", lambda specs, limit: True
+        )
+        build_corpus(
+            out_dir=tmp_path,
+            grid=frame,
+            seed=42,
+            target=4,
+            client=FakeGitHub({}, {}, {}, {}),
+            today=RUN_DATE,
+        )
+        with pytest.raises(CorpusConfigError, match="seed 7"):
+            build_corpus(
+                out_dir=tmp_path,
+                grid=frame,
+                seed=7,
+                target=4,
+                client=FakeGitHub({}, {}, {}, {}),
+                resume=True,
+                today=RUN_DATE,
+            )
+
     def test_a_run_without_resume_starts_over(self, tmp_path, frame, monkeypatch):
         monkeypatch.setattr(
             corpus_module, "_registry_resolvable", lambda specs, limit: True
@@ -868,6 +1020,42 @@ class TestStrataReport:
         )
         report = (tmp_path / STRATA_REPORT_FILENAME).read_text(encoding="utf-8")
         assert "infeasible by construction" in report
+
+    def test_it_flags_a_populated_stratum_the_corpus_has_nothing_from(
+        self, tmp_path, frame, monkeypatch
+    ):
+        """ "Empty cells" asks whether GitHub had any repository in a cell. File
+        B's "no stratum cell empty" asks whether the *corpus* does, and a
+        stratum of thousands can contribute nothing. The first real run would
+        have read "Empty cells: 0" with 104 strata allocated nothing (§11.29)."""
+        monkeypatch.setattr(
+            corpus_module, "_registry_resolvable", lambda specs, limit: True
+        )
+        live = [cell for cell in build_cells(frame, RUN_DATE) if not cell.infeasible]
+        sampled, unsampled = live[0], live[1]
+        items = [repo_item(0)]
+        client = FakeGitHub(
+            # The second stratum holds three repositories; none can be drawn.
+            {sampled.query: 1, unsampled.query: 3},
+            {sampled.query: items},
+            {"acme/repo-0": tree_with("package.json", "m0")},
+            {"m0": manifest_bytes({"react": "^18"})},
+        )
+        build_corpus(
+            out_dir=tmp_path,
+            grid=frame,
+            seed=42,
+            target=8,
+            client=client,
+            today=RUN_DATE,
+        )
+        report = (tmp_path / STRATA_REPORT_FILENAME).read_text(encoding="utf-8")
+
+        assert "**Strata with no admitted repository:** 1 of 2 populated strata" in report
+        assert (
+            "← flag these" in report.split("**Strata with no admitted")[1].splitlines()[0]
+        )
+        assert f"| `{unsampled.key}` |" in report.split("## Strata")[1]
 
     def test_it_states_what_a_capped_cell_cannot_say(self, tmp_path, frame, monkeypatch):
         monkeypatch.setattr(

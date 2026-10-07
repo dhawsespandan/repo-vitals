@@ -105,15 +105,18 @@ class Command(BaseCommand):
         self.stdout.write(f"Output: {out_dir}")
 
         with no_operational_writes():
-            result = build_corpus(
-                out_dir=out_dir,
-                grid=grid,
-                seed=options["seed"],
-                target=options["target"],
-                client=client,
-                resume=options["resume"],
-                progress=lambda line: self.stdout.write(f"  {line}"),
-            )
+            try:
+                result = build_corpus(
+                    out_dir=out_dir,
+                    grid=grid,
+                    seed=options["seed"],
+                    target=options["target"],
+                    client=client,
+                    resume=options["resume"],
+                    progress=lambda line: self.stdout.write(f"  {line}"),
+                )
+            except CorpusConfigError as exc:
+                raise CommandError(str(exc)) from exc
 
         rate = result.admitted / result.candidates if result.candidates else 0.0
         self.stdout.write(
