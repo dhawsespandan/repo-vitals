@@ -4801,3 +4801,61 @@ pushed and Phase 13's own commits are rebased onto it and verified again.
 Phase 13's acceptance (the 20-item pilot) still needs the Gemini key and WP-5's
 corpus, so nothing about this lets either phase close early. The ordering
 changes; the gates do not.
+
+### 12.17 Tagged `v0.12.0` with WP-6 held, and what production established
+
+On 2026-10-08, with WP-2 to WP-5 complete, Spandan asked for Phase 12 to be
+completed and tagged and for WP-6 to be held: no validation run, no sign-off.
+§7 gates Phase 12's *acceptance* on WP-6, so — as `v0.8.0` did with the one
+criterion it could not meet — this tag says in its message, and here, exactly
+what it does not claim. A `validate_formula` run had been started on the
+research database before the hold; it was stopped before writing any result,
+and its partial deps.dev cache was deleted, so WP-6 starts from nothing.
+
+| Criterion (§10 Phase 12) | State at `v0.12.0` |
+|---|---|
+| `ahp.py` reproduces a textbook example exactly | **passes, suite** |
+| CR gate blocks an inconsistent matrix and names the worst triads | **passes, suite** |
+| `validate_formula` runs end-to-end on the WP-5 data in one command | **not run — WP-6 held.** WP-5's data exists (914 repositories, 29,494 occurrences, one snapshot); the command runs end-to-end on rows `scan_corpus` writes, in the suite |
+| anchors pass | **not run — WP-6 held.** WP-2's 49-row set with 12 known anchors exists |
+| v1-vs-v2 spot-check | **passes, suite** |
+| corpus rescore completes fully offline (network assertion) | **passes, suite** |
+| commit 7: adopt `weights_v2.yaml`, rescore the corpus panel | **not done — waits for WP-6's sign-off**; production keeps scoring under `v1` |
+
+**What reached production, and how it was checked.** The rebased Phase 12
+(`dd64b47..1b178f1`, eight commits) was verified commit by commit in a worktree
+against the full check command — 1,039 to 1,165 tests, all green — and pushed.
+CI run 37716467318 passed on Postgres. Production gains nothing it uses: EPSS
+stays off (`EPSS_ENABLED` unset), two hosts join the allowlist, and there is no
+migration and no new variable.
+
+Phase 12 changes the scanner's request path (the EPSS hook, the `Vulnerability`
+field, the shared HTTP client's 4xx class), so the production check was a
+regression test of scanning itself, run in the owner's browser with a
+browser-automation tool. Two acceptance fixtures were rescanned **on the old code, then on the
+new**, the same morning — September's stored scores could not serve as the
+reference, because `rv-accept-monorepo` had moved from 8.38 to 8.18 since
+then for reasons that have nothing to do with code (advisories and release ages
+change daily):
+
+| Fixture | Before the deploy | After the deploy |
+|---|---|---|
+| `rv-accept-pypi` (five Python manifest formats, a yanked Poetry-locked release, an Inactive classifier) | 0.00 high-alert, 9 occurrences | 0.00 high-alert, 9 occurrences, **all 9 rows identical** |
+| `rv-accept-monorepo` (four manifests, workspace lockfile inheritance) | 8.18 high-alert, 8 occurrences | 8.18 high-alert, 8 occurrences, **all 8 rows identical** |
+
+Rows were compared on ten columns: manifest path, package, resolved version,
+component score, flag, CVE count, CVSS, staleness, deprecation, unassessable.
+The detail page renders the score, the contributors strip (whose numbers add
+up, with its clamp sentence) and the drill-down (0.00 + 34.30 + 16.00 + 0.02 =
+50.32 under v1's PyPI vector), with no console errors.
+
+**One limit on that evidence.** Production exposes no version marker, and the
+Render dashboard was not signed in from this session, so "the second scan ran
+on the new code" rests on timing: it ran after CI had finished, more than six
+minutes after the push, against Render's measured ~1m20s webhook deploy (§7).
+And a first screenshot, five seconds in, showed dashes for every metric. Two
+things were true at that moment: the page's API calls run in sequence at about
+3 s each on this tier and were still completing, and the backgrounded Chrome
+window reported `document.hidden`, which stops `usePolling` (§8's note on the
+same trap). With visibility overridden, the page rendered fully. No defect was
+found; which of the two caused the dashes was not separated.
