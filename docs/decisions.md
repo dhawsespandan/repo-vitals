@@ -5235,3 +5235,48 @@ wording are what the pilot checks, and they hold.
 ground-truth folder by default; a set anywhere else (the pilot's) needs
 `analyze_experiment --items`. The Gemini key is in `backend/.env` on the
 research machine only; nothing in Phase 13 runs on Render.
+
+### 13.15 What reached production, and how it was checked
+
+`6740bd7..1853c15` (Phase 12's commit 7 and Phase 13, sixteen commits) was
+verified commit by commit in a worktree against the full check command — 1,168
+to 1,342 tests, all green — and pushed on 2026-10-08. CI run 37833752065 passed
+on Postgres. No migration, no new dependency, no variable on Render: the
+Gemini key and every Phase 13 command live on the research machine only.
+
+Production gains one behaviour, Phase 12's: new scans score under `v2`. Phase
+13's changes to shared code are additive (an optional header on `post_json`, a
+4xx subclass under the class every handler already catches, a prompt branch
+the production graph never passes, an OSV method). The check ran in the
+owner's browser with a browser-automation tool, on two acceptance fixtures
+rescanned **before** the push (old code) and **after** CI passed, and this
+time production carried its own version marker: a scan after the deploy is
+tagged `v2`, which no scan before it could be.
+
+| Fixture | Before (old code) | After (new code) | Predicted from the before-rows under `v2` |
+|---|---|---|---|
+| `rv-accept-monorepo` | 8.18 high-alert, `v1`, 8 rows | **7.91** high-alert, **`v2`**, 8 rows | 7.91 |
+| `rv-accept-pypi` | 0.00 high-alert, `v1`, 9 rows | 0.00 high-alert, **`v2`**, 9 rows | 0.00 |
+
+The prediction was computed before the push with the scoring engine over the
+before-scan's rows, and every component score after the deploy equals it
+(express 97.51, lodash 51.52 and 98.48, request 32.96; django 32.96 and 13.92,
+oauth2client 68.07, flask 97.28). Sixteen of the seventeen rows are identical
+to the before-scan on all nine signal columns; the seventeenth, `requests`,
+went from 146 to 147 days stale between the two scans — its release crossed a
+day boundary — and its component moved from 98.28 to 98.27, which is what
+the engine gives for 147.
+
+On the page: the score reads `100 − 92.09 = 7.91 … weights v2`; the drill-down
+for lodash adds up under `v2` (0.00 + 39.11 + 7.85 + 1.52 = 48.48, `matchesStoredScore`
+true); the trend chart draws all seven scans with the D5 marker "weights v2"
+before the newest; no console errors. A per-dependency remediation was
+generated on production through the changed shared client: completed in about
+35 s on `openai/gpt-oss-120b`, recommending lodash 4.18.0 — a version that
+escapes all five advisories — and, with one chunk retrieved, saying in its
+first sentence that it rests on the scan's measurements alone. Condition D has
+no route: `/api/experiment/`, `/api/research/`, `/api/research/issue-search/`,
+`/api/issues/search/` and a dependency's `issues/` all answer 404.
+
+Phase 13 is accepted. Remaining before S3's data collection: WP-8, with the
+decision §13.14 (4) leaves open, then WP-9.
