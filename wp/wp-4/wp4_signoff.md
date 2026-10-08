@@ -5,7 +5,7 @@
 - **Machine:** Spandan's
 - **Run date:** 2026-10-07 (UTC)
 - **Outputs:**
-  - `research_data/corpus/corpus_manifest.json` (byte-identical copy committed here as `corpus_manifest.json`)
+  - `research_data/corpus/corpus_manifest.json` (an unedited copy is committed here as `corpus_manifest.json`; git stores it with LF line endings)
   - `research_data/corpus/strata_report.md` (copied here, unedited)
   - the archived manifest blobs under `research_data/corpus/blobs/` (local only; about 9 MB)
 
