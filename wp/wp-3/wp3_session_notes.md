@@ -4,6 +4,8 @@
 **Matrix:** `wp3_matrix_final.csv`, committed together with these notes and unedited since.
 **Consistency:** checked with `ahp_check` (Phase 12) and recomputed independently with numpy.
 
+> **Final decision (Spandan, 2026-10-08): WP-3 follows a single judgment.** No second judge will be added and there is no reconciliation step. `wp3_matrix_final.csv` is the only matrix, and it is the one WP-6, weights v2 and the S1 paper use. Every place that reports these weights must say they come from one judgment.
+
 ## Deviation from File B: one judgment, not two independent judges
 
 File B WP-3 asks for two judges who fill the matrix independently, a consistency check, and a documented reconciliation. On 2026-10-08 the team was unavailable, and Spandan completed the remaining work packages alone. At his direction, the six pairwise judgments were produced with an AI tool, reasoning only from File B's definitions of the four signals. Spandan owns this deliverable.

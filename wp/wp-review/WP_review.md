@@ -13,7 +13,7 @@ Each WP below says what was done, how it was checked, and what deviates from Fil
 |---|---|---|
 | WP-1 | **Accepted** (Sep) | none |
 | WP-2 | **Complete**: 49 rows, 12 known anchors | Bucket rules written down and applied to verified facts |
-| WP-3 | **Complete**: one AI-assisted judgment, CR 0.0054 | **One judgment, not two independent judges** |
+| WP-3 | **Complete**: one AI-assisted judgment, CR 0.0054 | **One judgment, not two independent judges (final decision)** |
 | WP-4 | **Complete**: 914 repositories over all 240 strata | Allocation fixed mid-run (§11.29); admission rate 68% (flagged, explained) |
 | WP-5 | **Complete**: 914/914 scanned, 29,494 occurrences, dump verified | One repo rescanned after a crash damaged its archive (§11.30) |
 | WP-6 | Unblocked: needs the Phase 12 code pushed, then one run | none yet |
@@ -73,6 +73,8 @@ The AI-drafted worksheet from 5 Oct is superseded by `wp2_evidence.md` and was r
 
 ## WP-3: AHP matrix. COMPLETE, WITH A STATED DEVIATION
 
+> **Final decision (Spandan, 2026-10-08): WP-3 follows a single judgment.** No second judge will be added and there is no reconciliation step. `wp3_matrix_final.csv` is the only matrix, and it is the one WP-6, weights v2 and the S1 paper use. Every place that reports these weights must say they come from one judgment.
+
 `wp-3/` holds:
 - `wp3_matrix_final.csv`: the matrix;
 - `wp3_session_notes.md`: the session notes;
@@ -100,7 +102,9 @@ The AI-drafted worksheet from 5 Oct is superseded by `wp2_evidence.md` and was r
 - WP-6's entropy vector is now the only independent cross-check, and its sign-off has to discuss it either way.
 - S1's threats-to-validity section must list this.
 
-**If a second person becomes available before WP-6:** they fill a blank copy of the template alone, without seeing this matrix. Then `ahp_check wp3_matrix_final.csv <theirs>.csv --merge wp3_matrix_reconciled.csv` gives the divergence table and the geometric-mean merge File B describes.
+**No second judge will be added** (decision above). The tooling for one does exist: `ahp_check` with two matrices and `--merge` gives File B's divergence table and geometric-mean merge. So if this decision were ever reversed, the change would be one command, plus a WP-6 re-run.
+
+**Wording for the report and paper** (keep it next to the weights wherever they appear): "The Tier-2 AHP weights were derived from a single pairwise-comparison judgment (CR = 0.0054). The two-judge protocol with reconciliation planned in the work plan was not carried out, so the vector has no inter-judge agreement behind it; the entropy-derived vector computed from the 914-repository corpus is the independent cross-check."
 
 **PR #3's finding, as promised on 7 Oct:** the matrix in `refs/pull/3/head` (`wp3_matrix_updated.csv`) matches the WP-1 seed in 5 of its 6 cells. Only Severity vs Count differs: 3, where the seed has 2. It could not have served as an independent judgment, whatever the posting protocol.
 
@@ -181,6 +185,7 @@ The same commit fixed `corpus_report`, which had counted 575 "strata" (one per s
    validate_formula --ahp ../wp/wp-3/wp3_matrix_final.csv --anchors ../wp/wp-2/wp2_anchor_set.csv --pypi-shift "deprecation=-0.0816,severity=+0.0408,staleness=+0.0408"
    ```
 2. Write `wp6_signoff.md` from the real `validation_report/report.md`, walking all six of File B's checks with real numbers. The AHP-vs-entropy check carries more weight than File B assumed (see WP-3).
+   Check 1 must state that the matrix is a single judgment, so there was no reconciliation (WP-3's final decision).
 3. The sensitivity check covers ±10% and ±20%, for both the AHP and the entropy vectors.
 4. Any known anchor scoring Safe is an automatic fail.
 
