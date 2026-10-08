@@ -420,16 +420,23 @@ def minimum_fix(
         return None, DROP_NOT_AFFECTED
 
     def fix_covering(version: str) -> tuple[str | None, bool]:
-        """The fix of the interval that contains `version`; (None, True) if unfixed."""
+        """The fix of the interval that contains `version`; (None, True) if unfixed.
+
+        An advisory's ranges are read before its enumerated `versions`: OSV's
+        PyPI advisories list every affected release *and* give the ranges with
+        their fixes, so a listed version says "affected", not "unfixed". Only a
+        version listed and covered by no range has no known fix (decisions
+        §13.14: checking the list first dropped 771 of 783 PyPI items).
+        """
         for advisory in relevant:
-            if version in advisory.versions:
-                return None, True
             for interval in advisory.intervals:
                 inside = interval.contains(ecosystem, version)
                 if inside is None:
                     raise ValueError(DROP_UNPARSEABLE)
                 if inside:
                     return (interval.fixed, interval.fixed is None)
+            if version in advisory.versions:
+                return None, True
         return None, False
 
     candidate = resolved

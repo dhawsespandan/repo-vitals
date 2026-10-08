@@ -215,6 +215,27 @@ class TestTheAnswer:
         ]
         assert gt.is_safe_version("npm", version, "4.17.19", ranges) is safe
 
+    def test_a_listed_version_inside_a_fixed_range_takes_the_ranges_fix(self):
+        """OSV's PyPI advisories enumerate every affected release and also give
+        the ranges. Django 2.2 under GHSA-3gh2-xw74-jmcw, trimmed: listed, and
+        fixed in 2.2.11 (decisions §13.14)."""
+        ranges = [
+            advisory(
+                "GHSA-3gh2-xw74-jmcw",
+                {"introduced": "1.11", "fixed": "1.11.29"},
+                {"introduced": "2.2", "fixed": "2.2.11"},
+                {"introduced": "3.0", "fixed": "3.0.4"},
+                versions=["1.11", "2.2", "2.2.1", "2.2.10", "3.0"],
+            )
+        ]
+        assert gt.minimum_fix("pypi", "2.2", ranges) == ("2.2.11", None)
+
+    def test_a_listed_version_no_range_covers_has_no_known_fix(self):
+        ranges = [
+            advisory("A", {"introduced": "0", "fixed": "1.0.0"}, versions=["2.0.0"])
+        ]
+        assert gt.minimum_fix("npm", "2.0.0", ranges) == (None, gt.DROP_NO_FIX)
+
     def test_an_explicitly_listed_version_is_affected(self):
         ranges = [advisory("A", versions=["5.0.0"])]
         assert gt.is_safe_version("npm", "5.0.0", "4.0.0", ranges) is False
