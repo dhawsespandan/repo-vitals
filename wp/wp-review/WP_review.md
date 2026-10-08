@@ -16,7 +16,7 @@ Each WP below says what was done, how it was checked, and what deviates from Fil
 | WP-3 | **Complete**: one AI-assisted judgment, CR 0.0054 | **One judgment, not two independent judges (final decision)** |
 | WP-4 | **Complete**: 914 repositories over all 240 strata | Allocation fixed mid-run (§11.29); admission rate 68% (flagged, explained) |
 | WP-5 | **Complete**: 914/914 scanned, 29,494 occurrences, dump verified | One repo rescanned after a crash damaged its archive (§11.30) |
-| WP-6 | Unblocked: needs the Phase 12 code pushed, then one run | none yet |
+| WP-6 | **Signed** (8 Oct): weights v2 approved for adoption | Checks 3 and 4 acknowledged (entropy disagreement, Scorecard null); single-judgment matrix |
 | WP-8 | Not due | |
 | WP-9 | Not due | |
 
@@ -173,21 +173,37 @@ The same commit fixed `corpus_report`, which had counted 575 "strata" (one per s
 
 ---
 
-## WP-6: Formula validation sign-off. UNBLOCKED
+## WP-6: Formula validation sign-off. SIGNED
 
-**Needs:**
-- the Phase 12 code, which is on Spandan's local `main` and not yet pushed (`v0.12.0-rc`). It must be rebased onto this branch's history first.
-- WP-2 to WP-5, which are now complete. The research database is on this machine: Docker `repovitals-research-db`, port 5433. It can also be recreated from the dump.
+`wp-6/` holds:
+- `wp6_signoff.md`: walks all six of File B's checks with real numbers.
+- `validation_report/`: the harness output, unedited. It includes the anchor scan record and the deps.dev answers as observed; the anchor manifest blobs are left out.
 
-**When it runs:**
-1. Run the harness on the research database:
-   ```
-   validate_formula --ahp ../wp/wp-3/wp3_matrix_final.csv --anchors ../wp/wp-2/wp2_anchor_set.csv --pypi-shift "deprecation=-0.0816,severity=+0.0408,staleness=+0.0408"
-   ```
-2. Write `wp6_signoff.md` from the real `validation_report/report.md`, walking all six of File B's checks with real numbers. The AHP-vs-entropy check carries more weight than File B assumed (see WP-3).
-   Check 1 must state that the matrix is a single judgment, so there was no reconciliation (WP-3's final decision).
-3. The sensitivity check covers ±10% and ±20%, for both the AHP and the entropy vectors.
-4. Any known anchor scoring Safe is an automatic fail.
+**The run:** `validate_formula --ahp ../wp/wp-3/wp3_matrix_final.csv --anchors ../wp/wp-2/wp2_anchor_set.csv --snapshot-date 2026-10-07 --pypi-shift "deprecation=-0.0816,severity=+0.0408,staleness=+0.0408"`. It ran on `v0.12.0` (`a293a18`), over WP-5's 914 repositories, and took 23 minutes. All 914 stored scores reproduce exactly.
+
+| # | Check | Result |
+|---|---|---|
+| 1 | Matrix CR < 0.10 | pass: 0.0054, from a single judgment with no reconciliation |
+| 2 | Known anchors ≥ Medium | pass: 12/12 under v2 and under v1; no risky-seeded repo is Safe |
+| 3 | AHP vs entropy | **acknowledged**: cosine npm 0.898, PyPI 0.691, and the top two signals differ in both. PyPI's entropy deprecation weight of 0.515 comes from rarity (48 of 8,922 occurrences), not importance |
+| 4 | Scorecard correlation | **not met, documented**: ρ 0.047 [-0.077, 0.169] on 289/914. v1 and entropy are also near zero, so it reflects a different construct, not the weights. The OSV circularity caveat is present |
+| 5 | Sensitivity under 15% | pass: v2 4.7% at ±20%, entropy 3.8% |
+| 6 | Vectors sum to 1, non-degenerate | pass: npm .272/.483/.157/.088, PyPI .190/.524/.157/.129 |
+
+**Decision: signed.** Weights v2 are approved for adoption. Checks 3 and 4 are findings that no reweighting could legitimately change, so they are not grounds to bounce.
+
+**For S1:**
+- Hypotheses H1 and H2 are not supported.
+- Score falls with dependency count (ρ −0.51 on the anchors), so seeded-healthy repos score below in-between ones. S1 must control for this.
+- The healthy-seeded outliers come from example and docs manifests.
+- The PyPI trust gate passes on distribution. Its matched-strata roll-up part remains an S1 analysis.
+
+**Next (Phase 12, commit 7):**
+1. Copy `validation_report/weights_v2_candidate.yaml` to `backend/weights/weights_v2.yaml` and mark it validated.
+2. Run `rescore --weights v2` to materialise the corpus panel.
+3. Set `WEIGHTS_VERSION=v2` on Render.
+
+Production scores under `v1` until then.
 
 ## WP-8: S3 experiment runs. NOT DUE
 
@@ -201,6 +217,5 @@ Waits for the Phase 13 code and its 20-item pilot. The pilot needs WP-5's corpus
 
 ## Order from here
 
-1. **Phase 12:** rebase local `main` onto this history, re-verify it, then push.
-2. **WP-6:** run it, and sign off or bounce.
-3. **Phase 13**, then WP-8 and WP-9.
+1. **Phase 12, commit 7:** adopt `weights_v2.yaml` (see WP-6), then tag Phase 12's acceptance.
+2. **Phase 13**, then WP-8 and WP-9.

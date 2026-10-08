@@ -1,0 +1,22 @@
+# weights_v2 CANDIDATE - NOT ACTIVE. Written by validate_formula (§10 Phase 12).
+#
+# npm vector: principal eigenvector of wp3_matrix_final.csv
+#   (sha256 7228688575b28589a59a7f2811fe8e8048eafba6fda55fde6c4fbe5c030759f0), CR 0.0054.
+# PyPI vector = the AHP vector shifted by deprecation -0.0816, severity
+# +0.0408, staleness +0.0408 (--pypi-shift; File C limitation L4: reasoned
+# redistribution in the same session, not an independent calibration).
+# Corpus snapshot 2026-10-07; report generated 2026-10-08T03:08:11Z.
+#
+# Adopt only after WP-6 signs off: copy to backend/weights/weights_v2.yaml and
+# set derivation to ahp-entropy-validated in that commit (§10 Phase 12, commit 7).
+
+version: v2
+derivation: ahp-candidate-pending-wp6
+normalization: { cve_count_cap: 10, staleness_cap_days: 1095 }
+flag_rule:     { stale_flag_days: 730 }
+thresholds:    { safe_min: 80, medium_min: 50 }
+rollup:        { decay: 0.5, max_terms: 20 }
+weights:
+  npm:  { deprecation: 0.2720, severity: 0.4829, count: 0.1570, staleness: 0.0881 }
+  pypi: { deprecation: 0.1904, severity: 0.5237, count: 0.1570, staleness: 0.1289 }
+epss: { enabled: false, weight: 0.0 }

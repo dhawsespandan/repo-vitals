@@ -1,0 +1,487 @@
+formula,reference,group,bucketing,cuts,kappa,formula_class,reference_bucket,count
+v1,scorecard,all,tertiles,2.1000 2.9000,0.004592422502870365,high_alert,high_alert,57
+v1,scorecard,all,tertiles,2.1000 2.9000,0.004592422502870365,high_alert,medium,39
+v1,scorecard,all,tertiles,2.1000 2.9000,0.004592422502870365,high_alert,safe,45
+v1,scorecard,all,tertiles,2.1000 2.9000,0.004592422502870365,medium,high_alert,22
+v1,scorecard,all,tertiles,2.1000 2.9000,0.004592422502870365,medium,medium,14
+v1,scorecard,all,tertiles,2.1000 2.9000,0.004592422502870365,medium,safe,19
+v1,scorecard,all,tertiles,2.1000 2.9000,0.004592422502870365,safe,high_alert,37
+v1,scorecard,all,tertiles,2.1000 2.9000,0.004592422502870365,safe,medium,24
+v1,scorecard,all,tertiles,2.1000 2.9000,0.004592422502870365,safe,safe,32
+v1,scorecard,all,matched_proportions,2.5000 3.0000,0.02676750182811838,high_alert,high_alert,71
+v1,scorecard,all,matched_proportions,2.5000 3.0000,0.02676750182811838,high_alert,medium,27
+v1,scorecard,all,matched_proportions,2.5000 3.0000,0.02676750182811838,high_alert,safe,43
+v1,scorecard,all,matched_proportions,2.5000 3.0000,0.02676750182811838,medium,high_alert,26
+v1,scorecard,all,matched_proportions,2.5000 3.0000,0.02676750182811838,medium,medium,11
+v1,scorecard,all,matched_proportions,2.5000 3.0000,0.02676750182811838,medium,safe,18
+v1,scorecard,all,matched_proportions,2.5000 3.0000,0.02676750182811838,safe,high_alert,44
+v1,scorecard,all,matched_proportions,2.5000 3.0000,0.02676750182811838,safe,medium,17
+v1,scorecard,all,matched_proportions,2.5000 3.0000,0.02676750182811838,safe,safe,32
+v1,scorecard,all,equal_thirds_of_scale,3.3333 6.6667,-0.03952486511355563,high_alert,high_alert,108
+v1,scorecard,all,equal_thirds_of_scale,3.3333 6.6667,-0.03952486511355563,high_alert,medium,32
+v1,scorecard,all,equal_thirds_of_scale,3.3333 6.6667,-0.03952486511355563,high_alert,safe,1
+v1,scorecard,all,equal_thirds_of_scale,3.3333 6.6667,-0.03952486511355563,medium,high_alert,48
+v1,scorecard,all,equal_thirds_of_scale,3.3333 6.6667,-0.03952486511355563,medium,medium,7
+v1,scorecard,all,equal_thirds_of_scale,3.3333 6.6667,-0.03952486511355563,medium,safe,0
+v1,scorecard,all,equal_thirds_of_scale,3.3333 6.6667,-0.03952486511355563,safe,high_alert,73
+v1,scorecard,all,equal_thirds_of_scale,3.3333 6.6667,-0.03952486511355563,safe,medium,18
+v1,scorecard,all,equal_thirds_of_scale,3.3333 6.6667,-0.03952486511355563,safe,safe,2
+v1,scorecard,npm,tertiles,2.0000 2.8333,-0.015320334261838521,high_alert,high_alert,35
+v1,scorecard,npm,tertiles,2.0000 2.8333,-0.015320334261838521,high_alert,medium,33
+v1,scorecard,npm,tertiles,2.0000 2.8333,-0.015320334261838521,high_alert,safe,35
+v1,scorecard,npm,tertiles,2.0000 2.8333,-0.015320334261838521,medium,high_alert,5
+v1,scorecard,npm,tertiles,2.0000 2.8333,-0.015320334261838521,medium,medium,5
+v1,scorecard,npm,tertiles,2.0000 2.8333,-0.015320334261838521,medium,safe,5
+v1,scorecard,npm,tertiles,2.0000 2.8333,-0.015320334261838521,safe,high_alert,17
+v1,scorecard,npm,tertiles,2.0000 2.8333,-0.015320334261838521,safe,medium,13
+v1,scorecard,npm,tertiles,2.0000 2.8333,-0.015320334261838521,safe,safe,14
+v1,scorecard,npm,matched_proportions,2.8000 3.0000,0.0020780762950866846,high_alert,high_alert,65
+v1,scorecard,npm,matched_proportions,2.8000 3.0000,0.0020780762950866846,high_alert,medium,10
+v1,scorecard,npm,matched_proportions,2.8000 3.0000,0.0020780762950866846,high_alert,safe,28
+v1,scorecard,npm,matched_proportions,2.8000 3.0000,0.0020780762950866846,medium,high_alert,9
+v1,scorecard,npm,matched_proportions,2.8000 3.0000,0.0020780762950866846,medium,medium,2
+v1,scorecard,npm,matched_proportions,2.8000 3.0000,0.0020780762950866846,medium,safe,4
+v1,scorecard,npm,matched_proportions,2.8000 3.0000,0.0020780762950866846,safe,high_alert,29
+v1,scorecard,npm,matched_proportions,2.8000 3.0000,0.0020780762950866846,safe,medium,3
+v1,scorecard,npm,matched_proportions,2.8000 3.0000,0.0020780762950866846,safe,safe,12
+v1,scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,-0.024495677233429325,high_alert,high_alert,81
+v1,scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,-0.024495677233429325,high_alert,medium,21
+v1,scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,-0.024495677233429325,high_alert,safe,1
+v1,scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,-0.024495677233429325,medium,high_alert,14
+v1,scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,-0.024495677233429325,medium,medium,1
+v1,scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,-0.024495677233429325,medium,safe,0
+v1,scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,-0.024495677233429325,safe,high_alert,33
+v1,scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,-0.024495677233429325,safe,medium,10
+v1,scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,-0.024495677233429325,safe,safe,1
+v1,scorecard,pypi,tertiles,2.1000 2.9000,0.05012446254808778,high_alert,high_alert,13
+v1,scorecard,pypi,tertiles,2.1000 2.9000,0.05012446254808778,high_alert,medium,8
+v1,scorecard,pypi,tertiles,2.1000 2.9000,0.05012446254808778,high_alert,safe,7
+v1,scorecard,pypi,tertiles,2.1000 2.9000,0.05012446254808778,medium,high_alert,15
+v1,scorecard,pypi,tertiles,2.1000 2.9000,0.05012446254808778,medium,medium,11
+v1,scorecard,pypi,tertiles,2.1000 2.9000,0.05012446254808778,medium,safe,13
+v1,scorecard,pypi,tertiles,2.1000 2.9000,0.05012446254808778,safe,high_alert,12
+v1,scorecard,pypi,tertiles,2.1000 2.9000,0.05012446254808778,safe,medium,18
+v1,scorecard,pypi,tertiles,2.1000 2.9000,0.05012446254808778,safe,safe,18
+v1,scorecard,pypi,matched_proportions,2.0000 2.8000,0.038997214484679764,high_alert,high_alert,8
+v1,scorecard,pypi,matched_proportions,2.0000 2.8000,0.038997214484679764,high_alert,medium,10
+v1,scorecard,pypi,matched_proportions,2.0000 2.8000,0.038997214484679764,high_alert,safe,10
+v1,scorecard,pypi,matched_proportions,2.0000 2.8000,0.038997214484679764,medium,high_alert,10
+v1,scorecard,pypi,matched_proportions,2.0000 2.8000,0.038997214484679764,medium,medium,13
+v1,scorecard,pypi,matched_proportions,2.0000 2.8000,0.038997214484679764,medium,safe,16
+v1,scorecard,pypi,matched_proportions,2.0000 2.8000,0.038997214484679764,safe,high_alert,10
+v1,scorecard,pypi,matched_proportions,2.0000 2.8000,0.038997214484679764,safe,medium,16
+v1,scorecard,pypi,matched_proportions,2.0000 2.8000,0.038997214484679764,safe,safe,22
+v1,scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,-0.009389671361502398,high_alert,high_alert,23
+v1,scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,-0.009389671361502398,high_alert,medium,5
+v1,scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,-0.009389671361502398,high_alert,safe,0
+v1,scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,-0.009389671361502398,medium,high_alert,34
+v1,scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,-0.009389671361502398,medium,medium,5
+v1,scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,-0.009389671361502398,medium,safe,0
+v1,scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,-0.009389671361502398,safe,high_alert,40
+v1,scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,-0.009389671361502398,safe,medium,7
+v1,scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,-0.009389671361502398,safe,safe,1
+v1,osv_rollup,all,tertiles,2.5000 10.0000,0.25876599909391784,high_alert,high_alert,329
+v1,osv_rollup,all,tertiles,2.5000 10.0000,0.25876599909391784,high_alert,medium,169
+v1,osv_rollup,all,tertiles,2.5000 10.0000,0.25876599909391784,high_alert,safe,0
+v1,osv_rollup,all,tertiles,2.5000 10.0000,0.25876599909391784,medium,high_alert,27
+v1,osv_rollup,all,tertiles,2.5000 10.0000,0.25876599909391784,medium,medium,116
+v1,osv_rollup,all,tertiles,2.5000 10.0000,0.25876599909391784,medium,safe,0
+v1,osv_rollup,all,tertiles,2.5000 10.0000,0.25876599909391784,safe,high_alert,0
+v1,osv_rollup,all,tertiles,2.5000 10.0000,0.25876599909391784,safe,medium,273
+v1,osv_rollup,all,tertiles,2.5000 10.0000,0.25876599909391784,safe,safe,0
+v1,osv_rollup,all,matched_proportions,10.0000 10.0000,0.3651927037005447,high_alert,high_alert,397
+v1,osv_rollup,all,matched_proportions,10.0000 10.0000,0.3651927037005447,high_alert,medium,31
+v1,osv_rollup,all,matched_proportions,10.0000 10.0000,0.3651927037005447,high_alert,safe,70
+v1,osv_rollup,all,matched_proportions,10.0000 10.0000,0.3651927037005447,medium,high_alert,65
+v1,osv_rollup,all,matched_proportions,10.0000 10.0000,0.3651927037005447,medium,medium,25
+v1,osv_rollup,all,matched_proportions,10.0000 10.0000,0.3651927037005447,medium,safe,53
+v1,osv_rollup,all,matched_proportions,10.0000 10.0000,0.3651927037005447,safe,high_alert,36
+v1,osv_rollup,all,matched_proportions,10.0000 10.0000,0.3651927037005447,safe,medium,87
+v1,osv_rollup,all,matched_proportions,10.0000 10.0000,0.3651927037005447,safe,safe,150
+v1,osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.4924247757154813,high_alert,high_alert,337
+v1,osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.4924247757154813,high_alert,medium,49
+v1,osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.4924247757154813,high_alert,safe,112
+v1,osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.4924247757154813,medium,high_alert,35
+v1,osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.4924247757154813,medium,medium,21
+v1,osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.4924247757154813,medium,safe,87
+v1,osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.4924247757154813,safe,high_alert,0
+v1,osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.4924247757154813,safe,medium,1
+v1,osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.4924247757154813,safe,safe,272
+v1,osv_rollup,npm,tertiles,2.5000 10.0000,0.10172540178268925,high_alert,high_alert,151
+v1,osv_rollup,npm,tertiles,2.5000 10.0000,0.10172540178268925,high_alert,medium,150
+v1,osv_rollup,npm,tertiles,2.5000 10.0000,0.10172540178268925,high_alert,safe,0
+v1,osv_rollup,npm,tertiles,2.5000 10.0000,0.10172540178268925,medium,high_alert,21
+v1,osv_rollup,npm,tertiles,2.5000 10.0000,0.10172540178268925,medium,medium,17
+v1,osv_rollup,npm,tertiles,2.5000 10.0000,0.10172540178268925,medium,safe,0
+v1,osv_rollup,npm,tertiles,2.5000 10.0000,0.10172540178268925,safe,high_alert,0
+v1,osv_rollup,npm,tertiles,2.5000 10.0000,0.10172540178268925,safe,medium,136
+v1,osv_rollup,npm,tertiles,2.5000 10.0000,0.10172540178268925,safe,safe,0
+v1,osv_rollup,npm,matched_proportions,10.0000 10.0000,0.2694466650446631,high_alert,high_alert,222
+v1,osv_rollup,npm,matched_proportions,10.0000 10.0000,0.2694466650446631,high_alert,medium,21
+v1,osv_rollup,npm,matched_proportions,10.0000 10.0000,0.2694466650446631,high_alert,safe,58
+v1,osv_rollup,npm,matched_proportions,10.0000 10.0000,0.2694466650446631,medium,high_alert,36
+v1,osv_rollup,npm,matched_proportions,10.0000 10.0000,0.2694466650446631,medium,medium,0
+v1,osv_rollup,npm,matched_proportions,10.0000 10.0000,0.2694466650446631,medium,safe,2
+v1,osv_rollup,npm,matched_proportions,10.0000 10.0000,0.2694466650446631,safe,high_alert,43
+v1,osv_rollup,npm,matched_proportions,10.0000 10.0000,0.2694466650446631,safe,medium,17
+v1,osv_rollup,npm,matched_proportions,10.0000 10.0000,0.2694466650446631,safe,safe,76
+v1,osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.3899351221230624,high_alert,high_alert,156
+v1,osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.3899351221230624,high_alert,medium,42
+v1,osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.3899351221230624,high_alert,safe,103
+v1,osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.3899351221230624,medium,high_alert,25
+v1,osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.3899351221230624,medium,medium,9
+v1,osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.3899351221230624,medium,safe,4
+v1,osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.3899351221230624,safe,high_alert,0
+v1,osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.3899351221230624,safe,medium,1
+v1,osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.3899351221230624,safe,safe,135
+v1,osv_rollup,pypi,tertiles,1.8000 10.0000,0.3960725399721,high_alert,high_alert,133
+v1,osv_rollup,pypi,tertiles,1.8000 10.0000,0.3960725399721,high_alert,medium,32
+v1,osv_rollup,pypi,tertiles,1.8000 10.0000,0.3960725399721,high_alert,safe,0
+v1,osv_rollup,pypi,tertiles,1.8000 10.0000,0.3960725399721,medium,high_alert,2
+v1,osv_rollup,pypi,tertiles,1.8000 10.0000,0.3960725399721,medium,medium,101
+v1,osv_rollup,pypi,tertiles,1.8000 10.0000,0.3960725399721,medium,safe,0
+v1,osv_rollup,pypi,tertiles,1.8000 10.0000,0.3960725399721,safe,high_alert,0
+v1,osv_rollup,pypi,tertiles,1.8000 10.0000,0.3960725399721,safe,medium,134
+v1,osv_rollup,pypi,tertiles,1.8000 10.0000,0.3960725399721,safe,safe,0
+v1,osv_rollup,pypi,matched_proportions,3.4000 10.0000,0.5023153835976335,high_alert,high_alert,155
+v1,osv_rollup,pypi,matched_proportions,3.4000 10.0000,0.5023153835976335,high_alert,medium,5
+v1,osv_rollup,pypi,matched_proportions,3.4000 10.0000,0.5023153835976335,high_alert,safe,5
+v1,osv_rollup,pypi,matched_proportions,3.4000 10.0000,0.5023153835976335,medium,high_alert,10
+v1,osv_rollup,pypi,matched_proportions,3.4000 10.0000,0.5023153835976335,medium,medium,40
+v1,osv_rollup,pypi,matched_proportions,3.4000 10.0000,0.5023153835976335,medium,safe,53
+v1,osv_rollup,pypi,matched_proportions,3.4000 10.0000,0.5023153835976335,safe,high_alert,0
+v1,osv_rollup,pypi,matched_proportions,3.4000 10.0000,0.5023153835976335,safe,medium,58
+v1,osv_rollup,pypi,matched_proportions,3.4000 10.0000,0.5023153835976335,safe,safe,76
+v1,osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.5946794896653352,high_alert,high_alert,153
+v1,osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.5946794896653352,high_alert,medium,4
+v1,osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.5946794896653352,high_alert,safe,8
+v1,osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.5946794896653352,medium,high_alert,10
+v1,osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.5946794896653352,medium,medium,11
+v1,osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.5946794896653352,medium,safe,82
+v1,osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.5946794896653352,safe,high_alert,0
+v1,osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.5946794896653352,safe,medium,0
+v1,osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.5946794896653352,safe,safe,134
+v2-candidate (AHP),scorecard,all,tertiles,2.1000 2.9000,0.03064816350601719,high_alert,high_alert,52
+v2-candidate (AHP),scorecard,all,tertiles,2.1000 2.9000,0.03064816350601719,high_alert,medium,35
+v2-candidate (AHP),scorecard,all,tertiles,2.1000 2.9000,0.03064816350601719,high_alert,safe,42
+v2-candidate (AHP),scorecard,all,tertiles,2.1000 2.9000,0.03064816350601719,medium,high_alert,21
+v2-candidate (AHP),scorecard,all,tertiles,2.1000 2.9000,0.03064816350601719,medium,medium,18
+v2-candidate (AHP),scorecard,all,tertiles,2.1000 2.9000,0.03064816350601719,medium,safe,17
+v2-candidate (AHP),scorecard,all,tertiles,2.1000 2.9000,0.03064816350601719,safe,high_alert,43
+v2-candidate (AHP),scorecard,all,tertiles,2.1000 2.9000,0.03064816350601719,safe,medium,24
+v2-candidate (AHP),scorecard,all,tertiles,2.1000 2.9000,0.03064816350601719,safe,safe,37
+v2-candidate (AHP),scorecard,all,matched_proportions,2.4000 2.9000,0.03353612454655377,high_alert,high_alert,59
+v2-candidate (AHP),scorecard,all,matched_proportions,2.4000 2.9000,0.03353612454655377,high_alert,medium,25
+v2-candidate (AHP),scorecard,all,matched_proportions,2.4000 2.9000,0.03353612454655377,high_alert,safe,45
+v2-candidate (AHP),scorecard,all,matched_proportions,2.4000 2.9000,0.03353612454655377,medium,high_alert,24
+v2-candidate (AHP),scorecard,all,matched_proportions,2.4000 2.9000,0.03353612454655377,medium,medium,13
+v2-candidate (AHP),scorecard,all,matched_proportions,2.4000 2.9000,0.03353612454655377,medium,safe,19
+v2-candidate (AHP),scorecard,all,matched_proportions,2.4000 2.9000,0.03353612454655377,safe,high_alert,46
+v2-candidate (AHP),scorecard,all,matched_proportions,2.4000 2.9000,0.03353612454655377,safe,medium,18
+v2-candidate (AHP),scorecard,all,matched_proportions,2.4000 2.9000,0.03353612454655377,safe,safe,40
+v2-candidate (AHP),scorecard,all,equal_thirds_of_scale,3.3333 6.6667,0.0037641651477930325,high_alert,high_alert,101
+v2-candidate (AHP),scorecard,all,equal_thirds_of_scale,3.3333 6.6667,0.0037641651477930325,high_alert,medium,27
+v2-candidate (AHP),scorecard,all,equal_thirds_of_scale,3.3333 6.6667,0.0037641651477930325,high_alert,safe,1
+v2-candidate (AHP),scorecard,all,equal_thirds_of_scale,3.3333 6.6667,0.0037641651477930325,medium,high_alert,44
+v2-candidate (AHP),scorecard,all,equal_thirds_of_scale,3.3333 6.6667,0.0037641651477930325,medium,medium,12
+v2-candidate (AHP),scorecard,all,equal_thirds_of_scale,3.3333 6.6667,0.0037641651477930325,medium,safe,0
+v2-candidate (AHP),scorecard,all,equal_thirds_of_scale,3.3333 6.6667,0.0037641651477930325,safe,high_alert,84
+v2-candidate (AHP),scorecard,all,equal_thirds_of_scale,3.3333 6.6667,0.0037641651477930325,safe,medium,18
+v2-candidate (AHP),scorecard,all,equal_thirds_of_scale,3.3333 6.6667,0.0037641651477930325,safe,safe,2
+v2-candidate (AHP),scorecard,npm,tertiles,2.0000 2.8333,-0.028927767192101203,high_alert,high_alert,30
+v2-candidate (AHP),scorecard,npm,tertiles,2.0000 2.8333,-0.028927767192101203,high_alert,medium,29
+v2-candidate (AHP),scorecard,npm,tertiles,2.0000 2.8333,-0.028927767192101203,high_alert,safe,30
+v2-candidate (AHP),scorecard,npm,tertiles,2.0000 2.8333,-0.028927767192101203,medium,high_alert,10
+v2-candidate (AHP),scorecard,npm,tertiles,2.0000 2.8333,-0.028927767192101203,medium,medium,9
+v2-candidate (AHP),scorecard,npm,tertiles,2.0000 2.8333,-0.028927767192101203,medium,safe,11
+v2-candidate (AHP),scorecard,npm,tertiles,2.0000 2.8333,-0.028927767192101203,safe,high_alert,17
+v2-candidate (AHP),scorecard,npm,tertiles,2.0000 2.8333,-0.028927767192101203,safe,medium,13
+v2-candidate (AHP),scorecard,npm,tertiles,2.0000 2.8333,-0.028927767192101203,safe,safe,13
+v2-candidate (AHP),scorecard,npm,matched_proportions,2.5000 3.1000,-0.029793245152176618,high_alert,high_alert,47
+v2-candidate (AHP),scorecard,npm,matched_proportions,2.5000 3.1000,-0.029793245152176618,high_alert,medium,20
+v2-candidate (AHP),scorecard,npm,matched_proportions,2.5000 3.1000,-0.029793245152176618,high_alert,safe,22
+v2-candidate (AHP),scorecard,npm,matched_proportions,2.5000 3.1000,-0.029793245152176618,medium,high_alert,15
+v2-candidate (AHP),scorecard,npm,matched_proportions,2.5000 3.1000,-0.029793245152176618,medium,medium,5
+v2-candidate (AHP),scorecard,npm,matched_proportions,2.5000 3.1000,-0.029793245152176618,medium,safe,10
+v2-candidate (AHP),scorecard,npm,matched_proportions,2.5000 3.1000,-0.029793245152176618,safe,high_alert,27
+v2-candidate (AHP),scorecard,npm,matched_proportions,2.5000 3.1000,-0.029793245152176618,safe,medium,5
+v2-candidate (AHP),scorecard,npm,matched_proportions,2.5000 3.1000,-0.029793245152176618,safe,safe,11
+v2-candidate (AHP),scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,0.037809647979139466,high_alert,high_alert,72
+v2-candidate (AHP),scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,0.037809647979139466,high_alert,medium,16
+v2-candidate (AHP),scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,0.037809647979139466,high_alert,safe,1
+v2-candidate (AHP),scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,0.037809647979139466,medium,high_alert,23
+v2-candidate (AHP),scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,0.037809647979139466,medium,medium,7
+v2-candidate (AHP),scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,0.037809647979139466,medium,safe,0
+v2-candidate (AHP),scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,0.037809647979139466,safe,high_alert,33
+v2-candidate (AHP),scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,0.037809647979139466,safe,medium,9
+v2-candidate (AHP),scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,0.037809647979139466,safe,safe,1
+v2-candidate (AHP),scorecard,pypi,tertiles,2.1000 2.9000,0.13945578231292519,high_alert,high_alert,14
+v2-candidate (AHP),scorecard,pypi,tertiles,2.1000 2.9000,0.13945578231292519,high_alert,medium,8
+v2-candidate (AHP),scorecard,pypi,tertiles,2.1000 2.9000,0.13945578231292519,high_alert,safe,8
+v2-candidate (AHP),scorecard,pypi,tertiles,2.1000 2.9000,0.13945578231292519,medium,high_alert,8
+v2-candidate (AHP),scorecard,pypi,tertiles,2.1000 2.9000,0.13945578231292519,medium,medium,11
+v2-candidate (AHP),scorecard,pypi,tertiles,2.1000 2.9000,0.13945578231292519,medium,safe,6
+v2-candidate (AHP),scorecard,pypi,tertiles,2.1000 2.9000,0.13945578231292519,safe,high_alert,18
+v2-candidate (AHP),scorecard,pypi,tertiles,2.1000 2.9000,0.13945578231292519,safe,medium,18
+v2-candidate (AHP),scorecard,pypi,tertiles,2.1000 2.9000,0.13945578231292519,safe,safe,24
+v2-candidate (AHP),scorecard,pypi,matched_proportions,2.0000 2.5000,0.034567901234567974,high_alert,high_alert,8
+v2-candidate (AHP),scorecard,pypi,matched_proportions,2.0000 2.5000,0.034567901234567974,high_alert,medium,9
+v2-candidate (AHP),scorecard,pypi,matched_proportions,2.0000 2.5000,0.034567901234567974,high_alert,safe,13
+v2-candidate (AHP),scorecard,pypi,matched_proportions,2.0000 2.5000,0.034567901234567974,medium,high_alert,7
+v2-candidate (AHP),scorecard,pypi,matched_proportions,2.0000 2.5000,0.034567901234567974,medium,medium,5
+v2-candidate (AHP),scorecard,pypi,matched_proportions,2.0000 2.5000,0.034567901234567974,medium,safe,13
+v2-candidate (AHP),scorecard,pypi,matched_proportions,2.0000 2.5000,0.034567901234567974,safe,high_alert,15
+v2-candidate (AHP),scorecard,pypi,matched_proportions,2.0000 2.5000,0.034567901234567974,safe,medium,11
+v2-candidate (AHP),scorecard,pypi,matched_proportions,2.0000 2.5000,0.034567901234567974,safe,safe,34
+v2-candidate (AHP),scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,0.0055951169888097604,high_alert,high_alert,25
+v2-candidate (AHP),scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,0.0055951169888097604,high_alert,medium,5
+v2-candidate (AHP),scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,0.0055951169888097604,high_alert,safe,0
+v2-candidate (AHP),scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,0.0055951169888097604,medium,high_alert,21
+v2-candidate (AHP),scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,0.0055951169888097604,medium,medium,4
+v2-candidate (AHP),scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,0.0055951169888097604,medium,safe,0
+v2-candidate (AHP),scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,0.0055951169888097604,safe,high_alert,51
+v2-candidate (AHP),scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,0.0055951169888097604,safe,medium,8
+v2-candidate (AHP),scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,0.0055951169888097604,safe,safe,1
+v2-candidate (AHP),osv_rollup,all,tertiles,2.5000 10.0000,0.3468362700859588,high_alert,high_alert,353
+v2-candidate (AHP),osv_rollup,all,tertiles,2.5000 10.0000,0.3468362700859588,high_alert,medium,117
+v2-candidate (AHP),osv_rollup,all,tertiles,2.5000 10.0000,0.3468362700859588,high_alert,safe,0
+v2-candidate (AHP),osv_rollup,all,tertiles,2.5000 10.0000,0.3468362700859588,medium,high_alert,3
+v2-candidate (AHP),osv_rollup,all,tertiles,2.5000 10.0000,0.3468362700859588,medium,medium,141
+v2-candidate (AHP),osv_rollup,all,tertiles,2.5000 10.0000,0.3468362700859588,medium,safe,0
+v2-candidate (AHP),osv_rollup,all,tertiles,2.5000 10.0000,0.3468362700859588,safe,high_alert,0
+v2-candidate (AHP),osv_rollup,all,tertiles,2.5000 10.0000,0.3468362700859588,safe,medium,300
+v2-candidate (AHP),osv_rollup,all,tertiles,2.5000 10.0000,0.3468362700859588,safe,safe,0
+v2-candidate (AHP),osv_rollup,all,matched_proportions,10.0000 10.0000,0.47927981578529455,high_alert,high_alert,418
+v2-candidate (AHP),osv_rollup,all,matched_proportions,10.0000 10.0000,0.47927981578529455,high_alert,medium,13
+v2-candidate (AHP),osv_rollup,all,matched_proportions,10.0000 10.0000,0.47927981578529455,high_alert,safe,39
+v2-candidate (AHP),osv_rollup,all,matched_proportions,10.0000 10.0000,0.47927981578529455,medium,high_alert,32
+v2-candidate (AHP),osv_rollup,all,matched_proportions,10.0000 10.0000,0.47927981578529455,medium,medium,30
+v2-candidate (AHP),osv_rollup,all,matched_proportions,10.0000 10.0000,0.47927981578529455,medium,safe,82
+v2-candidate (AHP),osv_rollup,all,matched_proportions,10.0000 10.0000,0.47927981578529455,safe,high_alert,20
+v2-candidate (AHP),osv_rollup,all,matched_proportions,10.0000 10.0000,0.47927981578529455,safe,medium,101
+v2-candidate (AHP),osv_rollup,all,matched_proportions,10.0000 10.0000,0.47927981578529455,safe,safe,179
+v2-candidate (AHP),osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.5888156343805497,high_alert,high_alert,365
+v2-candidate (AHP),osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.5888156343805497,high_alert,medium,51
+v2-candidate (AHP),osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.5888156343805497,high_alert,safe,54
+v2-candidate (AHP),osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.5888156343805497,medium,high_alert,7
+v2-candidate (AHP),osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.5888156343805497,medium,medium,20
+v2-candidate (AHP),osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.5888156343805497,medium,safe,117
+v2-candidate (AHP),osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.5888156343805497,safe,high_alert,0
+v2-candidate (AHP),osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.5888156343805497,safe,medium,0
+v2-candidate (AHP),osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.5888156343805497,safe,safe,300
+v2-candidate (AHP),osv_rollup,npm,tertiles,2.5000 10.0000,0.2922270199666483,high_alert,high_alert,170
+v2-candidate (AHP),osv_rollup,npm,tertiles,2.5000 10.0000,0.2922270199666483,high_alert,medium,98
+v2-candidate (AHP),osv_rollup,npm,tertiles,2.5000 10.0000,0.2922270199666483,high_alert,safe,0
+v2-candidate (AHP),osv_rollup,npm,tertiles,2.5000 10.0000,0.2922270199666483,medium,high_alert,2
+v2-candidate (AHP),osv_rollup,npm,tertiles,2.5000 10.0000,0.2922270199666483,medium,medium,70
+v2-candidate (AHP),osv_rollup,npm,tertiles,2.5000 10.0000,0.2922270199666483,medium,safe,0
+v2-candidate (AHP),osv_rollup,npm,tertiles,2.5000 10.0000,0.2922270199666483,safe,high_alert,0
+v2-candidate (AHP),osv_rollup,npm,tertiles,2.5000 10.0000,0.2922270199666483,safe,medium,135
+v2-candidate (AHP),osv_rollup,npm,tertiles,2.5000 10.0000,0.2922270199666483,safe,safe,0
+v2-candidate (AHP),osv_rollup,npm,matched_proportions,10.0000 10.0000,0.4207850174857353,high_alert,high_alert,224
+v2-candidate (AHP),osv_rollup,npm,matched_proportions,10.0000 10.0000,0.4207850174857353,high_alert,medium,16
+v2-candidate (AHP),osv_rollup,npm,matched_proportions,10.0000 10.0000,0.4207850174857353,high_alert,safe,28
+v2-candidate (AHP),osv_rollup,npm,matched_proportions,10.0000 10.0000,0.4207850174857353,medium,high_alert,23
+v2-candidate (AHP),osv_rollup,npm,matched_proportions,10.0000 10.0000,0.4207850174857353,medium,medium,17
+v2-candidate (AHP),osv_rollup,npm,matched_proportions,10.0000 10.0000,0.4207850174857353,medium,safe,32
+v2-candidate (AHP),osv_rollup,npm,matched_proportions,10.0000 10.0000,0.4207850174857353,safe,high_alert,21
+v2-candidate (AHP),osv_rollup,npm,matched_proportions,10.0000 10.0000,0.4207850174857353,safe,medium,39
+v2-candidate (AHP),osv_rollup,npm,matched_proportions,10.0000 10.0000,0.4207850174857353,safe,safe,75
+v2-candidate (AHP),osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.48011058754966124,high_alert,high_alert,176
+v2-candidate (AHP),osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.48011058754966124,high_alert,medium,42
+v2-candidate (AHP),osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.48011058754966124,high_alert,safe,50
+v2-candidate (AHP),osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.48011058754966124,medium,high_alert,5
+v2-candidate (AHP),osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.48011058754966124,medium,medium,10
+v2-candidate (AHP),osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.48011058754966124,medium,safe,57
+v2-candidate (AHP),osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.48011058754966124,safe,high_alert,0
+v2-candidate (AHP),osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.48011058754966124,safe,medium,0
+v2-candidate (AHP),osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.48011058754966124,safe,safe,135
+v2-candidate (AHP),osv_rollup,pypi,tertiles,1.8000 10.0000,0.3398519555866759,high_alert,high_alert,135
+v2-candidate (AHP),osv_rollup,pypi,tertiles,1.8000 10.0000,0.3398519555866759,high_alert,medium,35
+v2-candidate (AHP),osv_rollup,pypi,tertiles,1.8000 10.0000,0.3398519555866759,high_alert,safe,0
+v2-candidate (AHP),osv_rollup,pypi,tertiles,1.8000 10.0000,0.3398519555866759,medium,high_alert,0
+v2-candidate (AHP),osv_rollup,pypi,tertiles,1.8000 10.0000,0.3398519555866759,medium,medium,70
+v2-candidate (AHP),osv_rollup,pypi,tertiles,1.8000 10.0000,0.3398519555866759,medium,safe,0
+v2-candidate (AHP),osv_rollup,pypi,tertiles,1.8000 10.0000,0.3398519555866759,safe,high_alert,0
+v2-candidate (AHP),osv_rollup,pypi,tertiles,1.8000 10.0000,0.3398519555866759,safe,medium,162
+v2-candidate (AHP),osv_rollup,pypi,tertiles,1.8000 10.0000,0.3398519555866759,safe,safe,0
+v2-candidate (AHP),osv_rollup,pypi,matched_proportions,4.5000 10.0000,0.588341866876723,high_alert,high_alert,165
+v2-candidate (AHP),osv_rollup,pypi,matched_proportions,4.5000 10.0000,0.588341866876723,high_alert,medium,3
+v2-candidate (AHP),osv_rollup,pypi,matched_proportions,4.5000 10.0000,0.588341866876723,high_alert,safe,2
+v2-candidate (AHP),osv_rollup,pypi,matched_proportions,4.5000 10.0000,0.588341866876723,medium,high_alert,5
+v2-candidate (AHP),osv_rollup,pypi,matched_proportions,4.5000 10.0000,0.588341866876723,medium,medium,19
+v2-candidate (AHP),osv_rollup,pypi,matched_proportions,4.5000 10.0000,0.588341866876723,medium,safe,46
+v2-candidate (AHP),osv_rollup,pypi,matched_proportions,4.5000 10.0000,0.588341866876723,safe,high_alert,0
+v2-candidate (AHP),osv_rollup,pypi,matched_proportions,4.5000 10.0000,0.588341866876723,safe,medium,48
+v2-candidate (AHP),osv_rollup,pypi,matched_proportions,4.5000 10.0000,0.588341866876723,safe,safe,114
+v2-candidate (AHP),osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.708562906499855,high_alert,high_alert,161
+v2-candidate (AHP),osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.708562906499855,high_alert,medium,6
+v2-candidate (AHP),osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.708562906499855,high_alert,safe,3
+v2-candidate (AHP),osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.708562906499855,medium,high_alert,2
+v2-candidate (AHP),osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.708562906499855,medium,medium,9
+v2-candidate (AHP),osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.708562906499855,medium,safe,59
+v2-candidate (AHP),osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.708562906499855,safe,high_alert,0
+v2-candidate (AHP),osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.708562906499855,safe,medium,0
+v2-candidate (AHP),osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.708562906499855,safe,safe,162
+entropy,scorecard,all,tertiles,2.1000 2.9000,0.02155811357355936,high_alert,high_alert,45
+entropy,scorecard,all,tertiles,2.1000 2.9000,0.02155811357355936,high_alert,medium,29
+entropy,scorecard,all,tertiles,2.1000 2.9000,0.02155811357355936,high_alert,safe,34
+entropy,scorecard,all,tertiles,2.1000 2.9000,0.02155811357355936,medium,high_alert,21
+entropy,scorecard,all,tertiles,2.1000 2.9000,0.02155811357355936,medium,medium,15
+entropy,scorecard,all,tertiles,2.1000 2.9000,0.02155811357355936,medium,safe,18
+entropy,scorecard,all,tertiles,2.1000 2.9000,0.02155811357355936,safe,high_alert,50
+entropy,scorecard,all,tertiles,2.1000 2.9000,0.02155811357355936,safe,medium,33
+entropy,scorecard,all,tertiles,2.1000 2.9000,0.02155811357355936,safe,safe,44
+entropy,scorecard,all,matched_proportions,2.1000 2.7000,0.02594107399833368,high_alert,high_alert,44
+entropy,scorecard,all,matched_proportions,2.1000 2.7000,0.02594107399833368,high_alert,medium,22
+entropy,scorecard,all,matched_proportions,2.1000 2.7000,0.02594107399833368,high_alert,safe,42
+entropy,scorecard,all,matched_proportions,2.1000 2.7000,0.02594107399833368,medium,high_alert,20
+entropy,scorecard,all,matched_proportions,2.1000 2.7000,0.02594107399833368,medium,medium,8
+entropy,scorecard,all,matched_proportions,2.1000 2.7000,0.02594107399833368,medium,safe,26
+entropy,scorecard,all,matched_proportions,2.1000 2.7000,0.02594107399833368,safe,high_alert,44
+entropy,scorecard,all,matched_proportions,2.1000 2.7000,0.02594107399833368,safe,medium,24
+entropy,scorecard,all,matched_proportions,2.1000 2.7000,0.02594107399833368,safe,safe,59
+entropy,scorecard,all,equal_thirds_of_scale,3.3333 6.6667,-0.013302006144948605,high_alert,high_alert,83
+entropy,scorecard,all,equal_thirds_of_scale,3.3333 6.6667,-0.013302006144948605,high_alert,medium,24
+entropy,scorecard,all,equal_thirds_of_scale,3.3333 6.6667,-0.013302006144948605,high_alert,safe,1
+entropy,scorecard,all,equal_thirds_of_scale,3.3333 6.6667,-0.013302006144948605,medium,high_alert,44
+entropy,scorecard,all,equal_thirds_of_scale,3.3333 6.6667,-0.013302006144948605,medium,medium,10
+entropy,scorecard,all,equal_thirds_of_scale,3.3333 6.6667,-0.013302006144948605,medium,safe,0
+entropy,scorecard,all,equal_thirds_of_scale,3.3333 6.6667,-0.013302006144948605,safe,high_alert,102
+entropy,scorecard,all,equal_thirds_of_scale,3.3333 6.6667,-0.013302006144948605,safe,medium,23
+entropy,scorecard,all,equal_thirds_of_scale,3.3333 6.6667,-0.013302006144948605,safe,safe,2
+entropy,scorecard,npm,tertiles,2.0000 2.8333,-0.027148538820681346,high_alert,high_alert,29
+entropy,scorecard,npm,tertiles,2.0000 2.8333,-0.027148538820681346,high_alert,medium,28
+entropy,scorecard,npm,tertiles,2.0000 2.8333,-0.027148538820681346,high_alert,safe,27
+entropy,scorecard,npm,tertiles,2.0000 2.8333,-0.027148538820681346,medium,high_alert,11
+entropy,scorecard,npm,tertiles,2.0000 2.8333,-0.027148538820681346,medium,medium,10
+entropy,scorecard,npm,tertiles,2.0000 2.8333,-0.027148538820681346,medium,safe,14
+entropy,scorecard,npm,tertiles,2.0000 2.8333,-0.027148538820681346,safe,high_alert,17
+entropy,scorecard,npm,tertiles,2.0000 2.8333,-0.027148538820681346,safe,medium,13
+entropy,scorecard,npm,tertiles,2.0000 2.8333,-0.027148538820681346,safe,safe,13
+entropy,scorecard,npm,matched_proportions,2.5000 3.1000,-0.015390343800421879,high_alert,high_alert,43
+entropy,scorecard,npm,matched_proportions,2.5000 3.1000,-0.015390343800421879,high_alert,medium,21
+entropy,scorecard,npm,matched_proportions,2.5000 3.1000,-0.015390343800421879,high_alert,safe,20
+entropy,scorecard,npm,matched_proportions,2.5000 3.1000,-0.015390343800421879,medium,high_alert,16
+entropy,scorecard,npm,matched_proportions,2.5000 3.1000,-0.015390343800421879,medium,medium,7
+entropy,scorecard,npm,matched_proportions,2.5000 3.1000,-0.015390343800421879,medium,safe,12
+entropy,scorecard,npm,matched_proportions,2.5000 3.1000,-0.015390343800421879,safe,high_alert,25
+entropy,scorecard,npm,matched_proportions,2.5000 3.1000,-0.015390343800421879,safe,medium,7
+entropy,scorecard,npm,matched_proportions,2.5000 3.1000,-0.015390343800421879,safe,safe,11
+entropy,scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,0.036119277614447755,high_alert,high_alert,68
+entropy,scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,0.036119277614447755,high_alert,medium,15
+entropy,scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,0.036119277614447755,high_alert,safe,1
+entropy,scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,0.036119277614447755,medium,high_alert,27
+entropy,scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,0.036119277614447755,medium,medium,8
+entropy,scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,0.036119277614447755,medium,safe,0
+entropy,scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,0.036119277614447755,safe,high_alert,33
+entropy,scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,0.036119277614447755,safe,medium,9
+entropy,scorecard,npm,equal_thirds_of_scale,3.3333 6.6667,0.036119277614447755,safe,safe,1
+entropy,scorecard,pypi,tertiles,2.1000 2.9000,0.0766708130724868,high_alert,high_alert,8
+entropy,scorecard,pypi,tertiles,2.1000 2.9000,0.0766708130724868,high_alert,medium,4
+entropy,scorecard,pypi,tertiles,2.1000 2.9000,0.0766708130724868,high_alert,safe,3
+entropy,scorecard,pypi,tertiles,2.1000 2.9000,0.0766708130724868,medium,high_alert,7
+entropy,scorecard,pypi,tertiles,2.1000 2.9000,0.0766708130724868,medium,medium,6
+entropy,scorecard,pypi,tertiles,2.1000 2.9000,0.0766708130724868,medium,safe,5
+entropy,scorecard,pypi,tertiles,2.1000 2.9000,0.0766708130724868,safe,high_alert,25
+entropy,scorecard,pypi,tertiles,2.1000 2.9000,0.0766708130724868,safe,medium,27
+entropy,scorecard,pypi,tertiles,2.1000 2.9000,0.0766708130724868,safe,safe,30
+entropy,scorecard,pypi,matched_proportions,1.9000 2.1000,0.014616935483871017,high_alert,high_alert,1
+entropy,scorecard,pypi,matched_proportions,1.9000 2.1000,0.014616935483871017,high_alert,medium,4
+entropy,scorecard,pypi,matched_proportions,1.9000 2.1000,0.014616935483871017,high_alert,safe,10
+entropy,scorecard,pypi,matched_proportions,1.9000 2.1000,0.014616935483871017,medium,high_alert,3
+entropy,scorecard,pypi,matched_proportions,1.9000 2.1000,0.014616935483871017,medium,medium,3
+entropy,scorecard,pypi,matched_proportions,1.9000 2.1000,0.014616935483871017,medium,safe,12
+entropy,scorecard,pypi,matched_proportions,1.9000 2.1000,0.014616935483871017,safe,high_alert,11
+entropy,scorecard,pypi,matched_proportions,1.9000 2.1000,0.014616935483871017,safe,medium,11
+entropy,scorecard,pypi,matched_proportions,1.9000 2.1000,0.014616935483871017,safe,safe,60
+entropy,scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,-0.01036724652960815,high_alert,high_alert,12
+entropy,scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,-0.01036724652960815,high_alert,medium,3
+entropy,scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,-0.01036724652960815,high_alert,safe,0
+entropy,scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,-0.01036724652960815,medium,high_alert,16
+entropy,scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,-0.01036724652960815,medium,medium,2
+entropy,scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,-0.01036724652960815,medium,safe,0
+entropy,scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,-0.01036724652960815,safe,high_alert,69
+entropy,scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,-0.01036724652960815,safe,medium,12
+entropy,scorecard,pypi,equal_thirds_of_scale,3.3333 6.6667,-0.01036724652960815,safe,safe,1
+entropy,osv_rollup,all,tertiles,2.5000 10.0000,0.19677299152852568,high_alert,high_alert,291
+entropy,osv_rollup,all,tertiles,2.5000 10.0000,0.19677299152852568,high_alert,medium,109
+entropy,osv_rollup,all,tertiles,2.5000 10.0000,0.19677299152852568,high_alert,safe,0
+entropy,osv_rollup,all,tertiles,2.5000 10.0000,0.19677299152852568,medium,high_alert,65
+entropy,osv_rollup,all,tertiles,2.5000 10.0000,0.19677299152852568,medium,medium,90
+entropy,osv_rollup,all,tertiles,2.5000 10.0000,0.19677299152852568,medium,safe,0
+entropy,osv_rollup,all,tertiles,2.5000 10.0000,0.19677299152852568,safe,high_alert,0
+entropy,osv_rollup,all,tertiles,2.5000 10.0000,0.19677299152852568,safe,medium,359
+entropy,osv_rollup,all,tertiles,2.5000 10.0000,0.19677299152852568,safe,safe,0
+entropy,osv_rollup,all,matched_proportions,3.9000 10.0000,0.4822025301919654,high_alert,high_alert,321
+entropy,osv_rollup,all,matched_proportions,3.9000 10.0000,0.4822025301919654,high_alert,medium,31
+entropy,osv_rollup,all,matched_proportions,3.9000 10.0000,0.4822025301919654,high_alert,safe,48
+entropy,osv_rollup,all,matched_proportions,3.9000 10.0000,0.4822025301919654,medium,high_alert,79
+entropy,osv_rollup,all,matched_proportions,3.9000 10.0000,0.4822025301919654,medium,medium,31
+entropy,osv_rollup,all,matched_proportions,3.9000 10.0000,0.4822025301919654,medium,safe,45
+entropy,osv_rollup,all,matched_proportions,3.9000 10.0000,0.4822025301919654,safe,high_alert,0
+entropy,osv_rollup,all,matched_proportions,3.9000 10.0000,0.4822025301919654,safe,medium,93
+entropy,osv_rollup,all,matched_proportions,3.9000 10.0000,0.4822025301919654,safe,safe,266
+entropy,osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.565107344097358,high_alert,high_alert,296
+entropy,osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.565107344097358,high_alert,medium,43
+entropy,osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.565107344097358,high_alert,safe,61
+entropy,osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.565107344097358,medium,high_alert,76
+entropy,osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.565107344097358,medium,medium,23
+entropy,osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.565107344097358,medium,safe,56
+entropy,osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.565107344097358,safe,high_alert,0
+entropy,osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.565107344097358,safe,medium,5
+entropy,osv_rollup,all,equal_thirds_of_scale,3.3333 6.6667,0.565107344097358,safe,safe,354
+entropy,osv_rollup,npm,tertiles,2.5000 10.0000,0.2603379664340503,high_alert,high_alert,159
+entropy,osv_rollup,npm,tertiles,2.5000 10.0000,0.2603379664340503,high_alert,medium,94
+entropy,osv_rollup,npm,tertiles,2.5000 10.0000,0.2603379664340503,high_alert,safe,0
+entropy,osv_rollup,npm,tertiles,2.5000 10.0000,0.2603379664340503,medium,high_alert,13
+entropy,osv_rollup,npm,tertiles,2.5000 10.0000,0.2603379664340503,medium,medium,73
+entropy,osv_rollup,npm,tertiles,2.5000 10.0000,0.2603379664340503,medium,safe,0
+entropy,osv_rollup,npm,tertiles,2.5000 10.0000,0.2603379664340503,safe,high_alert,0
+entropy,osv_rollup,npm,tertiles,2.5000 10.0000,0.2603379664340503,safe,medium,136
+entropy,osv_rollup,npm,tertiles,2.5000 10.0000,0.2603379664340503,safe,safe,0
+entropy,osv_rollup,npm,matched_proportions,10.0000 10.0000,0.39804308744216205,high_alert,high_alert,206
+entropy,osv_rollup,npm,matched_proportions,10.0000 10.0000,0.39804308744216205,high_alert,medium,19
+entropy,osv_rollup,npm,matched_proportions,10.0000 10.0000,0.39804308744216205,high_alert,safe,28
+entropy,osv_rollup,npm,matched_proportions,10.0000 10.0000,0.39804308744216205,medium,high_alert,33
+entropy,osv_rollup,npm,matched_proportions,10.0000 10.0000,0.39804308744216205,medium,medium,21
+entropy,osv_rollup,npm,matched_proportions,10.0000 10.0000,0.39804308744216205,medium,safe,32
+entropy,osv_rollup,npm,matched_proportions,10.0000 10.0000,0.39804308744216205,safe,high_alert,14
+entropy,osv_rollup,npm,matched_proportions,10.0000 10.0000,0.39804308744216205,safe,medium,46
+entropy,osv_rollup,npm,matched_proportions,10.0000 10.0000,0.39804308744216205,safe,safe,76
+entropy,osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.4598028754352465,high_alert,high_alert,164
+entropy,osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.4598028754352465,high_alert,medium,39
+entropy,osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.4598028754352465,high_alert,safe,50
+entropy,osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.4598028754352465,medium,high_alert,17
+entropy,osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.4598028754352465,medium,medium,13
+entropy,osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.4598028754352465,medium,safe,56
+entropy,osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.4598028754352465,safe,high_alert,0
+entropy,osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.4598028754352465,safe,medium,0
+entropy,osv_rollup,npm,equal_thirds_of_scale,3.3333 6.6667,0.4598028754352465,safe,safe,136
+entropy,osv_rollup,pypi,tertiles,1.8000 10.0000,0.12504388120480234,high_alert,high_alert,96
+entropy,osv_rollup,pypi,tertiles,1.8000 10.0000,0.12504388120480234,high_alert,medium,21
+entropy,osv_rollup,pypi,tertiles,1.8000 10.0000,0.12504388120480234,high_alert,safe,0
+entropy,osv_rollup,pypi,tertiles,1.8000 10.0000,0.12504388120480234,medium,high_alert,39
+entropy,osv_rollup,pypi,tertiles,1.8000 10.0000,0.12504388120480234,medium,medium,27
+entropy,osv_rollup,pypi,tertiles,1.8000 10.0000,0.12504388120480234,medium,safe,0
+entropy,osv_rollup,pypi,tertiles,1.8000 10.0000,0.12504388120480234,safe,high_alert,0
+entropy,osv_rollup,pypi,tertiles,1.8000 10.0000,0.12504388120480234,safe,medium,219
+entropy,osv_rollup,pypi,tertiles,1.8000 10.0000,0.12504388120480234,safe,safe,0
+entropy,osv_rollup,pypi,matched_proportions,1.2000 10.0000,0.6972321596686123,high_alert,high_alert,86
+entropy,osv_rollup,pypi,matched_proportions,1.2000 10.0000,0.6972321596686123,high_alert,medium,21
+entropy,osv_rollup,pypi,matched_proportions,1.2000 10.0000,0.6972321596686123,high_alert,safe,10
+entropy,osv_rollup,pypi,matched_proportions,1.2000 10.0000,0.6972321596686123,medium,high_alert,31
+entropy,osv_rollup,pypi,matched_proportions,1.2000 10.0000,0.6972321596686123,medium,medium,35
+entropy,osv_rollup,pypi,matched_proportions,1.2000 10.0000,0.6972321596686123,medium,safe,0
+entropy,osv_rollup,pypi,matched_proportions,1.2000 10.0000,0.6972321596686123,safe,high_alert,0
+entropy,osv_rollup,pypi,matched_proportions,1.2000 10.0000,0.6972321596686123,safe,medium,10
+entropy,osv_rollup,pypi,matched_proportions,1.2000 10.0000,0.6972321596686123,safe,safe,209
+entropy,osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.6740082389957508,high_alert,high_alert,105
+entropy,osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.6740082389957508,high_alert,medium,2
+entropy,osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.6740082389957508,high_alert,safe,10
+entropy,osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.6740082389957508,medium,high_alert,58
+entropy,osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.6740082389957508,medium,medium,8
+entropy,osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.6740082389957508,medium,safe,0
+entropy,osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.6740082389957508,safe,high_alert,0
+entropy,osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.6740082389957508,safe,medium,5
+entropy,osv_rollup,pypi,equal_thirds_of_scale,3.3333 6.6667,0.6740082389957508,safe,safe,214

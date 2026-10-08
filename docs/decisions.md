@@ -4859,3 +4859,40 @@ things were true at that moment: the page's API calls run in sequence at about
 window reported `document.hidden`, which stops `usePolling` (§8's note on the
 same trap). With visibility overridden, the page rendered fully. No defect was
 found; which of the two caused the dashes was not separated.
+
+### 12.18 WP-6 ran and is signed; two of S1's hypotheses are not supported
+
+On 2026-10-08, after `v0.12.0`, WP-6 was run on WP-5's data and signed
+(`wp/wp-6/wp6_signoff.md`; the report is copied unedited to
+`wp/wp-6/validation_report/`). It ran in one command, in 23 minutes, at
+`a293a18`; all 914 stored scores reproduced exactly. The two criteria §12.17
+left open now pass:
+
+| Criterion (§10 Phase 12) | State |
+|---|---|
+| `validate_formula` runs end-to-end on the WP-5 data in one command | **passes**, on the research database |
+| anchors pass | **passes**: 12 of 12 known anchors ≥ Medium under both `v1` and the `v2` candidate; no risky-seeded repository Safe |
+| commit 7: adopt `weights_v2.yaml`, rescore the corpus panel | **not done** — the sign-off approves it; it is the next commit |
+
+What the run found matters more for S1 than for the gate:
+
+- **H1 (AHP ≈ entropy) is not supported.** Cosine 0.898 on npm, 0.691 on
+  PyPI, and the top two signals differ in both. PyPI's entropy weight on
+  deprecation (0.515) is produced by rarity — 48 of 8,922 occurrences — which
+  is what entropy rewards, while the AHP vector and D2 lower that signal on
+  purpose. With WP-3 a single judgment, this comparison is S1's main check on
+  the weights and has to lead the discussion.
+- **H2 (Scorecard ρ 0.3–0.6) is not supported.** ρ = 0.047 for the
+  candidate, 0.084 for `v1`, 0.060 for entropy, every interval spanning zero,
+  on the 32% of the corpus deps.dev covers, with Scorecard values bunched
+  between 2 and 4. No weighting of these four signals tracks a repository's
+  own security practices; the claim of convergent validity cannot be made.
+- **Score falls with dependency count** on the anchors (ρ −0.51), so seeded-
+  healthy repositories score below in-between ones (medians 63.95 vs 82.39) —
+  §11.27's confound, measured. The healthy-seeded outliers (flask, scrapy,
+  next.js) are driven by `examples/` and `docs/` manifests, which the scanner
+  reads by design; "repository dependency risk" includes manifests that do not
+  ship.
+
+None of these is a reason to bounce: re-weighting toward Scorecard would be
+fitting to the reference, and no weighting does better against it.
