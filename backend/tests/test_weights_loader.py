@@ -58,7 +58,7 @@ def parse(**overrides):
 
 
 class TestShippedFiles:
-    """Both registered versions must load — they are what production runs."""
+    """Every registered version must load — they are what production runs."""
 
     def test_every_file_in_the_registry_loads(self):
         versions = available_versions()
@@ -100,6 +100,42 @@ class TestShippedFiles:
         )
         assert shipped == delivered
 
+    def test_v2_is_the_signed_candidate_with_only_its_tag_moved(self):
+        """WP-6 signed a candidate file; adoption may change its derivation, nothing else.
+
+        The candidate is the report's own output, committed beside the
+        sign-off. Any other difference means the product runs numbers WP-6
+        never looked at.
+        """
+        candidate = yaml.safe_load(
+            (
+                Path(__file__).resolve().parents[2]
+                / "wp/wp-6/validation_report/weights_v2_candidate.yaml"
+            ).read_text(encoding="utf-8")
+        )
+        shipped = yaml.safe_load(
+            (weights_dir() / "weights_v2.yaml").read_text(encoding="utf-8")
+        )
+        assert candidate.pop("derivation") == "ahp-candidate-pending-wp6"
+        assert shipped.pop("derivation") == "ahp-entropy-validated"
+        assert shipped == candidate
+
+    def test_wp6_vectors_are_the_signed_numbers(self):
+        v2 = load_weights("v2")
+        assert v2.derivation == "ahp-entropy-validated"
+        assert v2.for_ecosystem("npm") == {
+            DEPRECATION: Decimal("0.2720"),
+            SEVERITY: Decimal("0.4829"),
+            COUNT: Decimal("0.1570"),
+            STALENESS: Decimal("0.0881"),
+        }
+        assert v2.for_ecosystem("pypi") == {
+            DEPRECATION: Decimal("0.1904"),
+            SEVERITY: Decimal("0.5237"),
+            COUNT: Decimal("0.1570"),
+            STALENESS: Decimal("0.1289"),
+        }
+
     def test_v0_equal_is_the_naive_baseline(self):
         v0 = load_weights("v0_equal")
         for ecosystem in REQUIRED_ECOSYSTEMS:
@@ -110,6 +146,31 @@ class TestShippedFiles:
         from apps.scoring.weights import active_weights
 
         assert active_weights().version == "v0_equal"
+
+    def test_production_defaults_to_the_signed_version(self):
+        """With no `WEIGHTS_VERSION` in the environment, a deployment scores under v2.
+
+        The suite itself pins v1 (`config/settings/test.py`), so this reads the
+        default out of `base.py`'s source. Re-importing the module instead would
+        re-read `backend/.env` into this process.
+        """
+        import ast
+
+        source = (
+            Path(__file__).resolve().parents[1] / "config/settings/base.py"
+        ).read_text(encoding="utf-8")
+        defaults = [
+            keyword.value.value
+            for node in ast.walk(ast.parse(source))
+            if isinstance(node, ast.Call)
+            and getattr(node.func, "id", None) == "env"
+            and node.args
+            and getattr(node.args[0], "value", None) == "WEIGHTS_VERSION"
+            for keyword in node.keywords
+            if keyword.arg == "default"
+        ]
+        assert defaults == ["v2"]
+        assert load_weights("v2").derivation == "ahp-entropy-validated"
 
 
 class TestValidation:

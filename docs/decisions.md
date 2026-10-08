@@ -4896,3 +4896,58 @@ What the run found matters more for S1 than for the gate:
 
 None of these is a reason to bounce: re-weighting toward Scorecard would be
 fitting to the reference, and no weighting does better against it.
+
+### 12.19 Commit 7: `v2` adopted, and production moves by its default
+
+`backend/weights/weights_v2.yaml` is the signed candidate with one line
+changed: `derivation` goes from `ahp-candidate-pending-wp6` to §5.4's
+`ahp-entropy-validated`. A test holds the two files equal apart from that
+line, so the product cannot drift from the numbers WP-6 read. The tag means
+the entropy comparison was made and signed, not that it agreed (H1 is not
+supported, §12.18); the file's header says so beside the numbers, along with
+WP-3 being a single judgment.
+
+**How production switches.** §3.1's precedent is that a version reaches
+production by changing the code default when its file ships, and that is how
+`v1` got there; no record here sets `WEIGHTS_VERSION` on Render. So `base.py` now
+defaults to `v2`, and the next deploy scores every new scan under it. If a
+`WEIGHTS_VERSION` were set on the host it would win, which is why the Phase 13
+production check reads the version off a fresh scan rather than assuming it.
+Rows already stored keep `v1` (D6), the trend chart marks the change (D5), and
+the drill-down explains each scan under the weights that scored it (§5.3).
+
+The suite pins `v1` in `config/settings/test.py`: fifteen tests carry scores
+worked by hand under `v1`'s round numbers, and re-deriving them under
+four-place weights would test the arithmetic less clearly, not more. One test
+reads the default out of `base.py`'s source and asserts `v2`.
+
+**The materialized rescore**, offline, with every non-loopback `connect`
+refused in-process:
+
+```
+rescore --weights v2 --source corpus_scan --out ../research_data/exports/corpus_2026-10-07_v2
+```
+
+| | |
+|---|---|
+| rows | 914 scans, 29,494 occurrences |
+| v2 scores equal to WP-6's `scores.csv` | 914 of 914 |
+| `v1` rescore equal to the stored scores | 914 of 914 |
+| repository scores that change under v2 | 816 |
+| Safe / Medium / High alert | `v1` 273 / 143 / 498 → `v2` 300 / 144 / 470 |
+
+The panel is in `research_data/exports/` (gitignored, regenerated in seconds).
+
+**Two checks made after the sign-off, for S1:**
+
+- §12.18's "no weighting does better" was asserted from three vectors. Over
+  the whole simplex at step 0.05 (1,771 vectors, one vector for both
+  ecosystems), the best Spearman ρ against Scorecard is 0.19, and none reaches
+  0.2. The null holds for the four signals, not just for these weights.
+- next.js is not an examples-driven outlier like flask and scrapy. Without
+  `examples/` and `docs/`, flask scores 83.38 and scrapy 75.31; next.js's root
+  `package.json` alone scores 5.93 (20 vulnerable occurrences, `turbo` 2.9.4
+  at CVSS 9.8 the worst). Its low score is its own root's.
+
+Phase 12's last open criterion is closed. `v0.12.0` stays where it is: it
+was pushed and has moved once already, and commit 7 travels in `v0.13.0`.

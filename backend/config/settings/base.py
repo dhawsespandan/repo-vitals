@@ -165,9 +165,11 @@ LOGIN_URL = f"{FRONTEND_URL}/login"
 # inside it — `apps.scoring.weights` refuses to load a file that disagrees,
 # because that tag is what a research rescore hands back to reproduce a number.
 #
-# `v1` is WP-1's delivered vector. `v0_equal` is §7's fallback and stays in the
-# registry permanently as the naive baseline WP-6 measures against.
-WEIGHTS_VERSION = env("WEIGHTS_VERSION", default="v1")
+# `v2` is the AHP vector WP-6 signed (Phase 12, commit 7). `v1` is WP-1's
+# delivered vector, which scored every scan before it; those rows keep their
+# `v1` tag (D6). `v0_equal` is §7's fallback and stays in the registry
+# permanently as the naive baseline WP-6 measures against.
+WEIGHTS_VERSION = env("WEIGHTS_VERSION", default="v2")
 
 # The generator LLM (D11, §6). Temperature 0 and JSON mode are set at the call
 # site rather than here: they are properties of the *contract* with the model,

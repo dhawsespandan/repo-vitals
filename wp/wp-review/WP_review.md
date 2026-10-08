@@ -198,12 +198,10 @@ The same commit fixed `corpus_report`, which had counted 575 "strata" (one per s
 - The healthy-seeded outliers come from example and docs manifests.
 - The PyPI trust gate passes on distribution. Its matched-strata roll-up part remains an S1 analysis.
 
-**Next (Phase 12, commit 7):**
-1. Copy `validation_report/weights_v2_candidate.yaml` to `backend/weights/weights_v2.yaml` and mark it validated.
-2. Run `rescore --weights v2` to materialise the corpus panel.
-3. Set `WEIGHTS_VERSION=v2` on Render.
-
-Production scores under `v1` until then.
+**Phase 12, commit 7: done** (`docs/decisions.md` §12.19):
+1. `backend/weights/weights_v2.yaml` is the signed candidate, with only its derivation tag changed.
+2. `rescore --weights v2` materialised the corpus panel offline. All 914 scores equal the report's.
+3. The code default is now `v2`, so each deploy scores new scans under it. Stored `v1` rows keep their tag.
 
 ## WP-8: S3 experiment runs. NOT DUE
 
@@ -217,5 +215,5 @@ Waits for the Phase 13 code and its 20-item pilot. The pilot needs WP-5's corpus
 
 ## Order from here
 
-1. **Phase 12, commit 7:** adopt `weights_v2.yaml` (see WP-6), then tag Phase 12's acceptance.
+1. ~~Phase 12, commit 7~~: done (§12.19). `v0.12.0` is not moved; commit 7 ships in `v0.13.0`.
 2. **Phase 13**, then WP-8 and WP-9.
