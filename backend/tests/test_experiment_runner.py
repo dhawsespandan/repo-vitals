@@ -136,10 +136,28 @@ class TestStopping:
         assert resumed.completed == 3
         assert resumed.stopped is None
 
-    def test_one_non_answer_is_not_a_stop(self, tmp_path):
-        outcome = run(tmp_path, write_items(tmp_path), Scripted({2: LlmUnavailable("x")}))
+    def test_one_non_answer_waits_out_the_minute_and_asks_the_same_item_again(
+        self, tmp_path, monkeypatch
+    ):
+        """decisions §13.14: the free tier's per-minute token limit answers 429,
+        which the first pilot read as the daily limit after two items in a row."""
+        slept = []
+        monkeypatch.setattr(runner, "_sleep", slept.append)
+        model = Scripted({2: LlmUnavailable("x")})
+        outcome = run(tmp_path, write_items(tmp_path), model)
         assert outcome.stopped is None
-        assert outcome.completed == 3  # the unanswered one waits for the resume
+        assert outcome.completed == 4
+        assert model.calls == 5
+        assert runner.COOL_DOWN_SECONDS in slept
+        # One record per item: the retried item is not recorded twice.
+        assert len(lines(outcome)) == 4
+
+    def test_the_default_pace_keeps_a_run_under_the_free_tiers_minute(self):
+        calls_per_minute = 60 / runner.DEFAULT_PACE_SECONDS
+        assert calls_per_minute * runner.TOKENS_PER_CALL <= (
+            runner.FREE_TIER_TOKENS_PER_MINUTE
+        )
+        assert runner.COOL_DOWN_SECONDS > 60
 
     def test_a_configuration_fault_stops_at_once(self, tmp_path):
         outcome = run(

@@ -36,7 +36,7 @@ from apps.scanning.models import DependencyOccurrence, ScanRun
 from tests.test_agent_graph import CHANGELOG
 from tests.test_experiment_groundtruth import build_rows, mock_osv, mock_registries
 
-GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent"
+GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent"
 
 
 def fake_generator(system_prompt: str, user_prompt: str) -> LlmCall:
@@ -89,7 +89,7 @@ def stubs(tmp_path, settings, monkeypatch):
     settings.CHROMA_DIR = str(tmp_path / "chroma")
     settings.GITHUB_API_PAT = "ghp_research_token"
     settings.GEMINI_API_KEY = "gemini-test-key"
-    settings.JUDGE_MODEL = "gemini-3.8-flash"
+    settings.JUDGE_MODEL = "gemini-3.5-flash"
     settings.GROQ_MODEL = "openai/gpt-oss-120b"
     chroma_store.reset_for_tests()
     monkeypatch.setattr(http, "_local", type(http._local)())

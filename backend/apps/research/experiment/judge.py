@@ -75,10 +75,13 @@ DEFAULT_PACE_SECONDS = 6.5
 #: must not be read as the daily limit and switch judging off for a session.
 UNAVAILABLE_BACKOFF_SECONDS: tuple[float, ...] = (10.0, 30.0)
 
-#: The default judge. Checked by a real call on 2026-10-05, not by the model
-#: list: `gemini-2.5-flash` was still *listed* and answered 404 "no longer
-#: available to new users", naming this one as its replacement (§13).
-DEFAULT_JUDGE_MODEL = "gemini-3.8-flash"
+#: The default judge, a pinned id (never a `-latest` alias, which would move
+#: under a multi-day run). Checked by real judge-sized calls on 2026-10-08, not
+#: by the model list: `gemini-2.5-flash` is still *listed* and answers 404 to
+#: new keys, and `gemini-3.8-flash` and `gemini-3.7-flash` answered every judge
+#: prompt with 503 "high demand" through the first pilot while this one
+#: answered in ~10 s (decisions §13.14).
+DEFAULT_JUDGE_MODEL = "gemini-3.5-flash"
 
 
 class JudgeError(Exception):

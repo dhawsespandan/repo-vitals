@@ -54,13 +54,26 @@ logger = logging.getLogger(__name__)
 ITEMS_FILENAME = "items.jsonl"
 RUN_FILENAME = "run.json"
 
-#: Two non-answers in a row is a provider that has stopped for the day, not a
-#: bad item: the client has already retried each once.
+#: Two non-answers in a row, a cool-down apart, is a provider that has stopped
+#: for the day, not a bad item: the client has already retried each once.
 STOP_AFTER_UNANSWERED = 2
 
-#: Seconds between generations. Groq's free tier limits requests per minute as
-#: well as tokens per day; three seconds keeps a run near twenty a minute.
-DEFAULT_PACE_SECONDS = 3.0
+#: Groq's free tier for the generator: 8,000 tokens a minute (and 1,000
+#: requests a day), read off its `x-ratelimit-*` headers on 2026-10-08. A call
+#: books its prompt plus the `max_tokens` it asks for, so one generation is
+#: ~6,000 tokens against the minute: §5.8's prompt with five chunks is under
+#: 3,000, and the client asks for `MAX_OUTPUT_TOKENS`.
+FREE_TIER_TOKENS_PER_MINUTE = 8000
+TOKENS_PER_CALL = 3000 + groq_client.MAX_OUTPUT_TOKENS
+
+#: Seconds between generations: one call's tokens spread over the minute, so a
+#: run stays under the per-minute limit instead of meeting it every other call
+#: (decisions §13.14: a three-second pace stopped the first pilot after 7 items).
+DEFAULT_PACE_SECONDS = float(-(-60 * TOKENS_PER_CALL // FREE_TIER_TOKENS_PER_MINUTE))
+
+#: After a non-answer, the wait before the same item is asked again: the
+#: provider's per-minute window, with a margin.
+COOL_DOWN_SECONDS = 65.0
 
 #: Errors that waiting will not fix.
 CONFIGURATION_ERRORS = (
@@ -169,6 +182,7 @@ def run_experiment(
     limit: int | None = None,
     complete=None,
     pace_seconds: float = DEFAULT_PACE_SECONDS,
+    cool_down_seconds: float = COOL_DOWN_SECONDS,
     issue_client_factory=None,
     after_item=None,
     progress=None,
@@ -268,38 +282,42 @@ def run_experiment(
             if limit is not None and outcome.attempted >= limit:
                 break
 
-            if last_call and pace_seconds:
-                wait = pace_seconds - (time.monotonic() - last_call)
-                if wait > 0:
-                    _sleep(wait)
-            last_call = time.monotonic()
-            outcome.attempted += 1
-            answered_before = answered[0]
-            try:
-                result = driver.run_item(
-                    item,
-                    condition,
-                    run_id=run_id,
-                    complete=counted_complete,
-                    cache=cache,
-                    token=token,
-                    issue_client=issue_client,
-                )
-            except CONFIGURATION_ERRORS as exc:
-                outcome.attempted -= 1
-                outcome.stopped = (
-                    f"The generator refused the configuration ({exc}). Waiting will not "
-                    f"fix this: check GROQ_API_KEY and GROQ_MODEL, then rerun."
-                )
-                break
-            except groq_client.LlmError as exc:
-                if (
-                    isinstance(exc, groq_client.LlmTruncated)
-                    or answered[0] > answered_before
-                ):
-                    # The provider answered; what it said was unusable.
-                    result = _failed(item, condition, str(exc))
-                else:
+            # After a non-answer the same item is asked again, once the
+            # provider's minute has passed; a second non-answer ends the day.
+            result = None
+            while result is None and outcome.stopped is None:
+                if last_call and pace_seconds:
+                    wait = pace_seconds - (time.monotonic() - last_call)
+                    if wait > 0:
+                        _sleep(wait)
+                last_call = time.monotonic()
+                outcome.attempted += 1
+                answered_before = answered[0]
+                try:
+                    result = driver.run_item(
+                        item,
+                        condition,
+                        run_id=run_id,
+                        complete=counted_complete,
+                        cache=cache,
+                        token=token,
+                        issue_client=issue_client,
+                    )
+                except CONFIGURATION_ERRORS as exc:
+                    outcome.attempted -= 1
+                    outcome.stopped = (
+                        f"The generator refused the configuration ({exc}). Waiting "
+                        f"will not fix this: check GROQ_API_KEY and GROQ_MODEL, then "
+                        f"rerun."
+                    )
+                except groq_client.LlmError as exc:
+                    if (
+                        isinstance(exc, groq_client.LlmTruncated)
+                        or answered[0] > answered_before
+                    ):
+                        # The provider answered; what it said was unusable.
+                        result = _failed(item, condition, str(exc))
+                        continue
                     outcome.attempted -= 1
                     unanswered += 1
                     say(f"{item['item_id']}: the generator did not answer ({unanswered})")
@@ -309,13 +327,21 @@ def run_experiment(
                             "limit. Every finished item is saved; rerun the same "
                             "command later and it continues from here."
                         )
-                        break
-                    continue
-            except Exception as exc:  # recorded, not swallowed: it is in the data
-                logger.exception(
-                    "Item %s failed under condition %s.", item["item_id"], condition.name
-                )
-                result = _failed(item, condition, f"{type(exc).__name__}: {exc}")
+                    else:
+                        say(
+                            f"  waiting {cool_down_seconds:.0f}s for the provider's "
+                            f"per-minute window, then asking again"
+                        )
+                        _sleep(cool_down_seconds)
+                except Exception as exc:  # recorded, not swallowed: it is in the data
+                    logger.exception(
+                        "Item %s failed under condition %s.",
+                        item["item_id"],
+                        condition.name,
+                    )
+                    result = _failed(item, condition, f"{type(exc).__name__}: {exc}")
+            if result is None:
+                break
 
             unanswered = 0
             record = result.as_json()
