@@ -5160,3 +5160,78 @@ starts how large the restricted comparison will be. If it is small, the
 restricted table is reported with its intervals all the same; a small,
 honestly labelled comparison is still the only one in S3 that copying cannot
 win.
+
+### 13.14 Acceptance, live: what the corpus and the free tiers found
+
+Run on 2026-10-08 against WP-5's snapshot (2026-10-07), with the generator on
+Groq's free tier (`openai/gpt-oss-120b`) and the judge on Gemini's.
+
+| Criterion (§10 Phase 13) | State |
+|---|---|
+| extraction coverage reported, ≥150 candidates (shortfall flagged early) | **passes**: 1,420 items from 2,044 flagged candidates; labelled set of 150 written and frozen (`wp/wp-8/labelled_set.jsonl`, sha256 `75246f3b…a9eb`) |
+| pilot: 20 items x A/B/C end-to-end with pacing | **passes**: 20/20 completed under each of A, B and C, none failed, one generation every 45 s |
+| resumable after a mid-run kill | **passes, live**: B was hard-killed (`TerminateProcess`) with 4 records on disk; `--resume` completed 16 more and skipped the 4; 20 lines, 20 distinct items |
+| judge cache hits on re-run | **passes, live**: re-judging all 60 records made 0 calls and 98 cache hits; re-running the analysis gave byte-identical tables |
+| analysis renders from the pilot | **passes**: `tables.md` and seven CSVs, copied to `wp/wp-8/pilot/` |
+| D runs from the command line and is unreachable via HTTP | **runs live** on 2 items; unreachable: **suite** (route table and import graph), plus the production check below |
+| correctness fixture matrix passes | **passes, suite** |
+
+**Coverage** (`wp/wp-8/extraction_report.md`): npm `cve_fix` 553 of 674
+(82%, 121 advisories with no fixed version), npm replacement 135 of 632
+(21%), PyPI `cve_fix` 732 of 783 (93%), PyPI replacement 0 of 34 — no
+deprecated PyPI package in the corpus names its successor, so the set is 75
+npm (37 + 38) and 75 PyPI `cve_fix`. Of the 150, 22 are outside TARGET's answer
+(§13.13: 8 npm, 14 PyPI); that is the size of WP-8's restricted comparison.
+
+**What the live runs found that the suite could not**, in the order found:
+
+1. **A PyPI advisory's enumerated versions hid its fix** (`d1602ef`). The first
+   extraction kept 11 of 783 PyPI `cve_fix` candidates: `minimum_fix` read an
+   advisory's `versions` list before its ranges, and OSV's PyPI advisories
+   enumerate every affected release *and* give the ranges with their fixes.
+   Ranges are now read first. The first run's output is kept as
+   `research_data/runs/ground_truth_attempt1_listed_versions_bug/`.
+2. **Groq's free tier is 8,000 tokens a minute** (`5e6cdea`), read off its
+   `x-ratelimit-*` headers, and a call books its prompt plus `max_tokens`
+   (~6,000). The three-second pace met the limit every other call and two 429s
+   in a row read as the daily cap: the first pilot stopped after 7 items. The
+   pace is now derived from the tier (45 s), and a non-answer waits out the
+   minute and asks the same item again before it counts toward stopping.
+3. **Gemini's free tier allows 20 requests a day per Flash model**
+   (`95d7d83`), per project and per model, as AI Studio showed it on
+   2026-10-08; Flash-Lite allows 500 and 15 a minute. `gemini-3.8-flash` and
+   `3.7-flash` also answered every judge prompt with 503 "high demand", and
+   condition A alone spent `gemini-3.5-flash`'s day. The judge is now
+   `gemini-3.5-flash-lite`, pinned, checked with a real judge prompt. The cache
+   key carries the model, so verdicts from the abandoned models are never
+   read; every pilot verdict in the tables is Flash-Lite's. WP-8's ~750 judge
+   calls take two days of quota. WP-9's kappa is what says whether this judge
+   is good enough.
+4. **PyPI retrieval is mostly READMEs.** Precision@k is 0.000 on every PyPI
+   item under B and C (npm 0.089), and the judge is right: of the 20 pilot
+   packages, 12 retrieved only a README. `fetch_docs` tries File A Phase 8's
+   four root filenames; pytest, flask and daphne write `.rst`/`.txt`
+   changelogs, numpy, scipy, pandas, ipython and starlette publish release
+   notes outside the repository root, and apache/arrow's changelog (2.35 MB)
+   is over the 500 KB cap. **Not changed here**: widening retrieval is a
+   product change to Phase 8, and condition C has to be the production agent.
+   It is a decision to take before WP-8 starts or after it ends, never during;
+   until then it is a threat to validity for S3's PyPI arm and for RQ3's
+   ecosystem contrast, which it partly measures.
+5. **TARGET's `fixed_version` is the last range's.** The scanner's
+   `_affected_summary` keeps the last `fixed` event across an advisory's
+   ranges, so semver 6.3.0 is shown 7.5.2 although 6.3.1 exists; 286 of 553
+   npm and 104 of 732 PyPI `cve_fix` items carry a multi-range advisory. The
+   shown version is still a safe upgrade, and `answer_given` measures what
+   TARGET hands over as it is. Not changed, for the same reason as (4).
+
+**The pilot's numbers, not interpreted** (20 items is a smoke test, File B
+says not to read it): correctness A 16/20, B 15/20, C 15/20; `major_unsupported`
+A 1, B 0, C 1; every paired test p ≥ 0.5 before Holm. One item of the 20 is
+outside TARGET's answer. The rendering, the denominators and the null-result
+wording are what the pilot checks, and they hold.
+
+**Operational, for WP-8:** the runner reads the labelled set from the
+ground-truth folder by default; a set anywhere else (the pilot's) needs
+`analyze_experiment --items`. The Gemini key is in `backend/.env` on the
+research machine only; nothing in Phase 13 runs on Render.

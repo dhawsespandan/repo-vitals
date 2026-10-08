@@ -1,0 +1,7 @@
+condition,ecosystem,n,faithful,minor,major,major_rate
+A,npm,10,9,1,0,0.000000
+A,pypi,10,9,0,1,0.100000
+B,npm,10,10,0,0,0.000000
+B,pypi,10,10,0,0,0.000000
+C,npm,10,8,1,1,0.100000
+C,pypi,10,10,0,0,0.000000

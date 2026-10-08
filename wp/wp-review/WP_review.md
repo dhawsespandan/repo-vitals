@@ -1,4 +1,4 @@
-# WP review: status and required updates (8 Oct 2026)
+# WP review: status and required updates (9 Oct 2026)
 
 This file is the single source of truth for what each work package still needs. It replaces the 7 Oct version, which remains in git history.
 
@@ -17,7 +17,7 @@ Each WP below says what was done, how it was checked, and what deviates from Fil
 | WP-4 | **Complete**: 914 repositories over all 240 strata | Allocation fixed mid-run (§11.29); admission rate 68% (flagged, explained) |
 | WP-5 | **Complete**: 914/914 scanned, 29,494 occurrences, dump verified | One repo rescanned after a crash damaged its archive (§11.30) |
 | WP-6 | **Signed** (8 Oct): weights v2 approved for adoption | Checks 3 and 4 acknowledged (entropy disagreement, Scorecard null); single-judgment matrix |
-| WP-8 | Not due | |
+| WP-8 | **Ready to start**: labelled set of 150 frozen, pilot passed (Phase 13) | PyPI has no replacement items (none in the corpus); PyPI retrieval is mostly READMEs (decide before starting) |
 | WP-9 | Not due | |
 
 ---
@@ -203,9 +203,22 @@ The same commit fixed `corpus_report`, which had counted 575 "strata" (one per s
 2. `rescore --weights v2` materialised the corpus panel offline. All 914 scores equal the report's.
 3. The code default is now `v2`, so each deploy scores new scans under it. Stored `v1` rows keep their tag.
 
-## WP-8: S3 experiment runs. NOT DUE
+## WP-8: S3 experiment runs. READY TO START
 
-Waits for the Phase 13 code and its 20-item pilot. The pilot needs WP-5's corpus, which now exists.
+`wp-8/README.md` is the runbook: keys, commands, pace, the two-day judge quota, the review checklist and the deliverable.
+
+**Inputs ready (Phase 13, decisions §13.14):**
+- `wp-8/labelled_set.jsonl` holds 150 items, frozen at sha256 `75246f3b…a9eb`, extracted from WP-5's snapshot.
+  - npm: 37 `cve_fix` and 38 `deprecation_replacement`.
+  - PyPI: 75 `cve_fix` only, since no deprecated PyPI package in the corpus names its successor.
+  - 22 of the 150 are items whose answer TARGET does not already show (§13.13).
+- The 20-item pilot ran A, B and C end to end: a kill and resume, judge cache hits, and analysis tables. Its tables are in `wp-8/pilot/`.
+
+**Deviations from File B:**
+- The PyPI × replacement cell is empty by construction.
+- The judge is `gemini-3.5-flash-lite`. The free tier's 20 requests a day per Flash model cannot judge 750 generations, so judging spans two days.
+
+**Decide before starting:** PyPI items mostly retrieve READMEs, and the precision@k of every PyPI pilot item is 0. Widening retrieval changes condition C, so it happens before WP-8 or after it, never during (`wp-8/README.md`).
 
 ## WP-9: Judge-validation labels. NOT DUE
 
@@ -216,4 +229,5 @@ Waits for the Phase 13 code and its 20-item pilot. The pilot needs WP-5's corpus
 ## Order from here
 
 1. ~~Phase 12, commit 7~~: done (§12.19). `v0.12.0` is not moved; commit 7 ships in `v0.13.0`.
-2. **Phase 13**, then WP-8 and WP-9.
+2. ~~Phase 13~~: closed at `v0.13.0` (decisions §13.14-13.15).
+3. **WP-8** (runbook in `wp-8/README.md`), then **WP-9** once one condition is complete.

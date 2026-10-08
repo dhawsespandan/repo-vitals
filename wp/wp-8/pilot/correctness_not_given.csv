@@ -1,0 +1,7 @@
+condition,ecosystem,n,correct,rate,ci_low,ci_high
+A,npm,1,1,1.000000,,
+A,all,1,1,1.000000,,
+B,npm,1,0,0.000000,,
+B,all,1,0,0.000000,,
+C,npm,1,0,0.000000,,
+C,all,1,0,0.000000,,
