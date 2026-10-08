@@ -53,6 +53,7 @@ import json
 import logging
 import os
 import random
+import re
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
@@ -909,6 +910,26 @@ def verify_candidate(
     return candidate
 
 
+_GIT_SHA = re.compile(r"[0-9a-f]{40}")
+
+
+def blob_matches(sha: str, content: bytes) -> bool:
+    """Whether `content` is the git blob `sha` names.
+
+    The archive is keyed by blob sha, so its files can be checked rather than
+    trusted. A machine that goes down mid-write can leave a file whose size
+    was recorded and whose bytes were not — zeros, the right length — and on
+    2026-10-08 two archived manifests were exactly that. They parsed as no
+    manifest at all, and the scan read one repository's three manifests as
+    one without failing (decisions §11.30). A key that is not a git sha (a
+    test fixture's symbolic name) has nothing to check against.
+    """
+    if not _GIT_SHA.fullmatch(sha):
+        return True
+    header = b"blob %d\0" % len(content)
+    return hashlib.sha1(header + content, usedforsecurity=False).hexdigest() == sha
+
+
 def _archive_blob(blob_dir: Path, sha: str, content: bytes) -> str:
     """Store one manifest under its sha, and return the path the manifest records.
 
@@ -925,7 +946,7 @@ def _archive_blob(blob_dir: Path, sha: str, content: bytes) -> str:
     relative = Path(BLOB_DIRNAME) / sha[:2] / sha
     absolute = blob_dir.parent / relative
     absolute.parent.mkdir(parents=True, exist_ok=True)
-    if not absolute.exists():
+    if not absolute.exists() or not blob_matches(sha, absolute.read_bytes()):
         absolute.write_bytes(content)
     return relative.as_posix()
 

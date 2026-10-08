@@ -41,7 +41,9 @@ from apps.research.corpus import (
     Cell,
     Checkpoint,
     CorpusConfigError,
+    _archive_blob,
     allocate,
+    blob_matches,
     build_cells,
     build_corpus,
     dependency_set_hash,
@@ -1261,3 +1263,36 @@ def test_a_blob_is_unwrapped_by_the_scanners_own_decoder(monkeypatch, settings):
         lambda *a, **k: github_module.http.UpstreamResponse(200, {}, payload),
     )
     assert client.blob("acme", "shop", "sha", 1024) == b"{}"
+
+
+# ── the manifest archive (decisions §11.30) ────────────────────────────────
+
+
+class TestBlobArchive:
+    CONTENT = b'{"name": "x", "dependencies": {"react": "^18"}}'
+
+    def _sha(self, content: bytes) -> str:
+        import hashlib
+
+        header = b"blob %d\0" % len(content)
+        return hashlib.sha1(header + content, usedforsecurity=False).hexdigest()
+
+    def test_a_file_is_checked_against_the_git_sha_that_names_it(self):
+        sha = self._sha(self.CONTENT)
+        assert blob_matches(sha, self.CONTENT)
+        # What a crash mid-write leaves: the right length, no bytes.
+        assert not blob_matches(sha, bytes(len(self.CONTENT)))
+
+    def test_a_key_that_is_not_a_git_sha_has_nothing_to_check(self):
+        assert blob_matches("root-manifest", b"anything")
+
+    def test_a_damaged_archive_file_is_rewritten_not_kept(self, tmp_path):
+        sha = self._sha(self.CONTENT)
+        blob_dir = tmp_path / "blobs"
+        relative = _archive_blob(blob_dir, sha, self.CONTENT)
+        stored = tmp_path / relative
+        stored.write_bytes(bytes(len(self.CONTENT)))
+
+        _archive_blob(blob_dir, sha, self.CONTENT)
+
+        assert stored.read_bytes() == self.CONTENT

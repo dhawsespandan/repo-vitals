@@ -273,6 +273,33 @@ class TestCollect:
         assert by_key["python|5-20|gt48|le2015"].flagged_rate == 0.0
         assert by_key["python|5-20|gt48|le2015"].pushed == "gt48"
 
+    def test_slices_of_one_stratum_are_one_stratum(self, tmp_path):
+        """`build_corpus` splits a stratum too big for the Search API into
+        star-band slices. The first real report counted 575 "strata" for a
+        frame of 240, one per slice (decisions §11.29). `1000+` is a band name,
+        so its `+` must not be read as a slice suffix."""
+        corpus_row(1, occurrences=[DEPRECATED, CLEAN])
+        corpus_row(2, occurrences=[CLEAN, CLEAN])
+        corpus_row(3, occurrences=[DEPRECATED])
+        path = manifest_file(
+            tmp_path,
+            [
+                frame_entry(1, "npm", "javascript|5-20|lt6|le2015+5-10+5-7"),
+                frame_entry(2, "npm", "javascript|5-20|lt6|le2015+11-20"),
+                frame_entry(3, "npm", "javascript|1000+|lt6|le2015"),
+            ],
+        )
+
+        stats = collect(path)
+
+        by_key = {stratum.key: stratum for stratum in stats.strata}
+        assert set(by_key) == {
+            "javascript|5-20|lt6|le2015",
+            "javascript|1000+|lt6|le2015",
+        }
+        assert by_key["javascript|5-20|lt6|le2015"].flagged_rate == 0.25
+        assert len(by_key["javascript|5-20|lt6|le2015"].scores) == 2
+
 
 @pytest.mark.django_db
 @pytest.mark.skipif(

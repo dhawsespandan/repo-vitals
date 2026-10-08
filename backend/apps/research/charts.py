@@ -33,6 +33,7 @@ from pathlib import Path
 
 from apps.scoring.weights import WeightsError, WeightSet, active_weights, load_weights
 
+from .corpus import stratum_of
 from .models import DataSource, DependencyHistory, ScanHistory
 
 logger = logging.getLogger(__name__)
@@ -64,7 +65,12 @@ class ChartsUnavailable(Exception):
 
 @dataclass
 class Stratum:
-    """One cell's scanned repositories, as the figures need them."""
+    """One stratum's scanned repositories, as the figures need them.
+
+    A stratum, not a cell: `build_corpus` splits a stratum the Search API
+    cannot enumerate whole into star-band slices, and a figure keyed by slice
+    showed 575 "strata" for a frame of 240 (decisions §11.29).
+    """
 
     key: str
     ecosystem: str
@@ -152,14 +158,15 @@ def collect(manifest_path: Path, snapshot_date: date | None = None) -> CorpusSta
             classification_counts[ecosystem][row.classification] += 1
 
         cell_key = str(entry.get("cell") or "")
-        stratum = strata.get(cell_key)
+        stratum_key = stratum_of(cell_key)
+        stratum = strata.get(stratum_key)
         if stratum is None:
             stratum = Stratum(
-                key=cell_key,
+                key=stratum_key,
                 ecosystem=ecosystem,
                 pushed=cell_pushed.get(cell_key, _pushed_from_key(cell_key)),
             )
-            strata[cell_key] = stratum
+            strata[stratum_key] = stratum
         stratum.scores.append(score)
         counts = flagged_by_scan.get(row.pk, (0, 0, 0))
         stratum.occurrences += counts[0]

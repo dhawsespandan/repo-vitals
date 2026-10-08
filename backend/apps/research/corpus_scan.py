@@ -74,7 +74,7 @@ from apps.scoring.engine import classify, is_flagged, roll_up, score_occurrence
 from apps.scoring.signals import signals_for
 from apps.scoring.weights import WeightSet, active_weights
 
-from .corpus import BLOB_DIRNAME, append_jsonl, read_jsonl
+from .corpus import BLOB_DIRNAME, append_jsonl, blob_matches, read_jsonl
 from .github import ResearchClient
 from .guards import no_operational_writes
 from .history import INSERT_BATCH
@@ -226,18 +226,23 @@ def _read_manifest(
     as something other than the thing that was sampled.
 
     The GitHub fallback exists for a manifest recorded without an archive path
-    (an older corpus, or one whose blob directory was not handed over).
+    (an older corpus, or one whose blob directory was not handed over), and
+    for an archived file that no longer hashes to its sha.
     """
     blob_path = record.get("blob_path")
-    if blob_path:
-        archived = corpus_dir / blob_path
-        if archived.exists():
-            content = archived.read_bytes()
-            return content if len(content) <= MAX_MANIFEST_BYTES else None
-
-    fallback = corpus_dir / BLOB_DIRNAME / plan.sha[:2] / plan.sha
-    if fallback.exists():
-        content = fallback.read_bytes()
+    candidates = [corpus_dir / blob_path] if blob_path else []
+    candidates.append(corpus_dir / BLOB_DIRNAME / plan.sha[:2] / plan.sha)
+    for archived in candidates:
+        if not archived.exists():
+            continue
+        content = archived.read_bytes()
+        if not blob_matches(plan.sha, content):
+            # Damaged on disk (decisions §11.30). The sha names the bytes, so
+            # GitHub's copy is the same manifest the admission was made on.
+            logger.warning(
+                "Archived manifest %s does not match its sha; refetching.", plan.sha
+            )
+            break
         return content if len(content) <= MAX_MANIFEST_BYTES else None
 
     return client.blob(

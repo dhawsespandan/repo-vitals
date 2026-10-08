@@ -29,6 +29,7 @@ which is exactly what the identity test would catch.
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import pathlib
 from datetime import date
@@ -51,7 +52,7 @@ from apps.research.guards import (
     no_operational_writes,
 )
 from apps.research.models import DataSource, DependencyHistory, ScanHistory
-from apps.scanning import scanner
+from apps.scanning import adapters, scanner
 from apps.scanning.models import (
     DependencyOccurrence,
     ManifestFile,
@@ -983,6 +984,59 @@ class TestManifestSource:
         mock_everything()
         outcome = run(tmp_path)
         assert outcome.scanned == 1
+
+    @responses.activate
+    def test_a_damaged_archive_file_is_refetched_not_read_as_no_manifest(self, tmp_path):
+        """A machine that goes down mid-write can leave an archived file of the
+        right length and all zeros. Read as-is it fails to parse, and the scan
+        silently loses that manifest: on 2026-10-08 one corpus repository was
+        recorded with one of its three manifests (decisions §11.30). The
+        archive is keyed by git blob sha, so the file can be checked."""
+        raw = (FIXTURES / "manifests/api_package.json").read_bytes()
+        header = b"blob %d\0" % len(raw)
+        sha = hashlib.sha1(header + raw, usedforsecurity=False).hexdigest()
+        record = {
+            "path": "package.json",
+            "sha": sha,
+            "size": len(raw),
+            "ecosystem": "npm",
+            "parser_name": "npm/package.json@1",
+            "blob_path": f"blobs/{sha[:2]}/{sha}",
+        }
+        manifest = write_manifest(
+            tmp_path,
+            repositories=[
+                {
+                    "full_name": FULL_NAME,
+                    "github_repo_id": REPO_ID,
+                    "owner_login": OWNER,
+                    "owner_id": OWNER_ID,
+                    "default_branch": "main",
+                    "ecosystem": "npm",
+                    "cell": "javascript|5-20|lt6|le2015",
+                    "sampling_weight": 12.5,
+                    "manifests": [record],
+                }
+            ],
+        )
+        damaged = manifest.parent / record["blob_path"]
+        damaged.parent.mkdir(parents=True, exist_ok=True)
+        damaged.write_bytes(bytes(len(raw)))
+        mock_registry()
+        mock_osv()
+        refetch = responses.add(
+            responses.GET,
+            f"{REPO_API}/git/blobs/{sha}",
+            json=blob_response("manifests/api_package.json"),
+            status=200,
+        )
+
+        outcome = run(tmp_path, manifest=manifest)
+
+        expected = len(adapters.adapter_for_path("package.json").parse(raw, None))
+        assert outcome.scanned == 1
+        assert refetch.call_count == 1
+        assert DependencyHistory.objects.count() == expected > 0
 
 
 def test_scan_corpus_is_not_reachable_from_any_request_path():

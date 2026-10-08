@@ -4511,3 +4511,41 @@ Sampling weights are unchanged in meaning (`available / examined` per cell).
 Seven of the eight new tests fail against the previous module; the eighth
 (capacity hand-back) is a property both satisfy. None of the existing
 allocation tests could have caught it: every cell in them was unsplit.
+
+### 11.30 A crash left zeros in the archive, and the chart counted slices
+
+Two more found while running WP-4 and WP-5 on 2026-10-08.
+
+**The archive was trusted, not checked.** The machine running WP-4 went down
+at 03:07 IST, mid-run. Two manifest blobs written in that second survived with
+their size recorded and their bytes lost, all zeros: a write-cache loss, not a
+torn file. `build_corpus` resumed without noticing, because `_archive_blob`
+skips a file that exists. `scan_corpus` then read the zeros, the npm adapter
+refused them as "not valid JSON", and `measure` counted each one as a skipped
+manifest. Nothing failed: `jeonghwan-kim/lecture-frontend-dev-env` was
+recorded with one of its three manifests, 26 occurrences instead of 38.
+
+It surfaced only because the WP-5 review compared each repository's distinct
+dependency names in the scan with the `dependency_count` the builder recorded
+from the same bytes: 913 of 914 agreed. Every archived file was then hashed
+against the git blob sha that names it — 2,540 of 2,542 matched, the two
+zero-filled ones did not — and both were re-fetched by sha, verified, and the
+one repository rescanned (now 914 of 914 agree). The fix:
+
+- **`blob_matches`** checks a file against its git blob sha
+  (`sha1("blob <len>\0" + bytes)`), when the key is one; a test fixture's
+  symbolic key has nothing to check against.
+- **`_archive_blob` rewrites** an existing file that fails the check, rather
+  than keeping it because it exists.
+- **`_read_manifest` refetches** a manifest whose archived bytes fail the
+  check. The sha names the content, so GitHub's copy is the same manifest the
+  admission decision was made on.
+
+**`corpus_report` keyed its strata by cell.** `charts.collect` grouped
+repositories by the cell they were drawn from, so its "Strata with at least
+one scanned repository" read 575 for a frame of 240 and the flagged-rate
+chart had 575 bars — §11.29's confusion, in the figures. It now groups by
+`stratum_of`.
+
+Each new test was run against the code it guards with that guard removed,
+and failed.
