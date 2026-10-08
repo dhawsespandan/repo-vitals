@@ -76,12 +76,14 @@ DEFAULT_PACE_SECONDS = 6.5
 UNAVAILABLE_BACKOFF_SECONDS: tuple[float, ...] = (10.0, 30.0)
 
 #: The default judge, a pinned id (never a `-latest` alias, which would move
-#: under a multi-day run). Checked by real judge-sized calls on 2026-10-08, not
-#: by the model list: `gemini-2.5-flash` is still *listed* and answers 404 to
-#: new keys, and `gemini-3.8-flash` and `gemini-3.7-flash` answered every judge
-#: prompt with 503 "high demand" through the first pilot while this one
-#: answered in ~10 s (decisions §13.14).
-DEFAULT_JUDGE_MODEL = "gemini-3.5-flash"
+#: under a multi-day run), chosen on 2026-10-08 against the free tier's real
+#: limits as AI Studio shows them, per project and per model: every 3.x Flash
+#: allows 20 requests a day, which the pilot's condition A spent on its own;
+#: Flash-Lite allows 500 and 15 a minute, enough for the pilot and for WP-8's
+#: ~750 judge calls over two days. Checked by a real judge prompt, not by the
+#: model list (`gemini-2.5-flash` is listed and refuses new keys). WP-9's kappa
+#: is what says whether this judge is good enough (decisions §13.14).
+DEFAULT_JUDGE_MODEL = "gemini-3.5-flash-lite"
 
 
 class JudgeError(Exception):

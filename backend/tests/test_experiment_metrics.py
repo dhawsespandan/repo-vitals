@@ -432,7 +432,7 @@ class TestRetries:
 
     def test_the_default_is_the_model_checked_by_a_real_call(self, settings):
         settings.JUDGE_MODEL = ""
-        assert judge.judge_model() == "gemini-3.5-flash"
+        assert judge.judge_model() == "gemini-3.5-flash-lite"
 
 
 class TestTheRunnerHook:
