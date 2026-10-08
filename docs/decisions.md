@@ -5128,3 +5128,35 @@ future third caller; it is added there by name.
 | analysis renders from the pilot | **renders from synthetic runs**; the pilot is the live version |
 | D runs from the command line and is unreachable via HTTP | **passes, suite** |
 | correctness fixture matrix passes | **passes, suite** |
+
+### 13.13 §13.2 decided: report it, and measure where it does not apply
+
+Decided on 2026-10-08, under Spandan's delegation of Phase 13's decisions,
+before any live item was generated, so the choice cannot have been steered by
+a result. Of §13.2's three options:
+
+- **Report it as a threat to validity: taken.** The extraction report, the
+  analysis and every table carry it.
+- **A headline restricted to items where TARGET does not hand over the
+  answer: taken, as a separate table and a separate Holm family**, not as a
+  replacement for the prespecified full-set analysis. File C's analyses stay
+  as written; this one is added beside them and labelled.
+- **A withheld-TARGET variant of every condition: not taken.** It doubles
+  WP-8's generations on a free-tier budget that already makes the full run
+  take days, and it changes what condition C is (no longer the production
+  agent on the production prompt), which is the point of C.
+
+"Hands over the answer" is a program, `groundtruth.answer_given(item)`: for
+`cve_fix`, some advisory's `fixed_version` shown in TARGET is itself a safe
+upgrade under the item's ground truth, i.e. copying it would be scored
+correct; for `deprecation_replacement`, the deprecation sentence names the
+successor, which by construction it always does. So the restricted table is
+in practice the `cve_fix` items with several advisories whose shown fixes are
+each still affected by another one — the items where the right version has to
+be worked out, and where retrieval could change the answer.
+
+The extraction report now counts these per stratum, so WP-8 knows before it
+starts how large the restricted comparison will be. If it is small, the
+restricted table is reported with its intervals all the same; a small,
+honestly labelled comparison is still the only one in S3 that copying cannot
+win.

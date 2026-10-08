@@ -192,7 +192,15 @@ class PairedTest:
     p_holm: float = 1.0
 
 
-def correctness_tests(dataset: Dataset, bootstrap: int, seed: int) -> list[PairedTest]:
+#: The metric label of the restricted family (decisions §13.13).
+NOT_GIVEN = "correctness, answer not given"
+
+
+def correctness_tests(
+    dataset: Dataset, bootstrap: int, seed: int, *, answer_not_given: bool = False
+) -> list[PairedTest]:
+    """McNemar per pair and group; with `answer_not_given`, only the items whose
+    answer TARGET does not already show, as a family of its own."""
     conditions = dataset.by_condition()
     tests: list[PairedTest] = []
     for first, second in PAIRS:
@@ -202,7 +210,9 @@ def correctness_tests(dataset: Dataset, bootstrap: int, seed: int) -> list[Paire
             shared = [
                 item_id
                 for item_id, row in conditions[first].items()
-                if item_id in conditions[second] and _in_group(row, group)
+                if item_id in conditions[second]
+                and _in_group(row, group)
+                and not (answer_not_given and row.answer_given)
             ]
             pairs = [
                 (conditions[first][i].correct, conditions[second][i].correct)
@@ -227,7 +237,7 @@ def correctness_tests(dataset: Dataset, bootstrap: int, seed: int) -> list[Paire
             )
             tests.append(
                 PairedTest(
-                    metric="correctness",
+                    metric=NOT_GIVEN if answer_not_given else "correctness",
                     first=first,
                     second=second,
                     group=group,
@@ -414,6 +424,68 @@ def render(
                      *(interval or ("", ""))]
                 )  # fmt: skip
 
+    # ── correctness where the answer is not given ──
+    lines += [
+        "",
+        "## Correctness where TARGET does not already show the answer",
+        "",
+        "Every condition is shown each advisory's fixed version and the deprecation "
+        "sentence (decisions §13.2). This table keeps only the items where no value "
+        "shown would be correct if copied — a `cve_fix` item whose shown fixes are "
+        "each still affected by another advisory. It is the comparison where "
+        "retrieval has something to add (decisions §13.13); its paired tests are a "
+        "Holm family of their own below.",
+        "",
+    ]
+    items_seen: dict[str, metrics.ItemMetrics] = {}
+    for by_item in conditions.values():
+        items_seen.update(by_item)
+    given = sum(row.answer_given for row in items_seen.values())
+    lines.append(
+        f"Items: {len(items_seen)}; answer given {given}, not given "
+        f"{len(items_seen) - given}."
+    )
+    csvs["correctness_not_given.csv"] = [
+        ["condition", "ecosystem", "n", "correct", "rate", "ci_low", "ci_high"]
+    ]
+    restricted = [
+        (condition, ecosystem, values)
+        for condition in sorted(conditions)
+        for ecosystem in ("npm", "pypi", "all")
+        if (
+            values := [
+                row.correct
+                for row in conditions[condition].values()
+                if not row.answer_given
+                and row.correct is not None
+                and (ecosystem == "all" or row.ecosystem == ecosystem)
+            ]
+        )
+    ]
+    if not restricted:
+        lines += [
+            "",
+            "No answered item falls outside TARGET's answer, so this comparison is "
+            "empty for this set.",
+        ]
+    else:
+        lines += [
+            "",
+            "| Condition | Ecosystem | n | Correct | Rate | 95% interval |",
+            "|---|---|---|---|---|---|",
+        ]
+        for condition, ecosystem, values in restricted:
+            interval = _rate_interval(values, bootstrap, seed)
+            rate = sum(values) / len(values)
+            lines.append(
+                f"| {condition} | {ecosystem} | {len(values)} | {sum(values)} | "
+                f"{rate:.3f} | {_ci(interval)} |"
+            )
+            csvs["correctness_not_given.csv"].append(
+                [condition, ecosystem, len(values), sum(values), f"{rate:.6f}",
+                 *(interval or ("", ""))]
+            )  # fmt: skip
+
     # ── faithfulness ──
     lines += [
         "",
@@ -514,9 +586,10 @@ def render(
         ["metric", "first", "second", "group", "n", "excluded", "effect", "p", "p_holm"]
     ]
     correctness_family = correctness_tests(dataset, bootstrap, seed)
+    not_given_family = correctness_tests(dataset, bootstrap, seed, answer_not_given=True)
     faithfulness_family = faithfulness_tests(dataset)
-    for test in [*correctness_family, *faithfulness_family]:
-        if test.metric == "correctness":
+    for test in [*correctness_family, *not_given_family, *faithfulness_family]:
+        if test.metric in ("correctness", NOT_GIVEN):
             s = test.statistic
             effect = (
                 f"{s['second_only_correct']} vs {s['first_only_correct']} discordant; "
@@ -610,7 +683,8 @@ def render(
         "on the resolved version (decisions §13).",
         "- TARGET shows every condition the fixed version and the deprecation sentence "
         "the answers were extracted from, so correctness partly measures use of given "
-        "facts (decisions §13).",
+        "facts (decisions §13.2); the answer-not-given table is the comparison that "
+        "does not (§13.13).",
         "- Faithfulness is an LLM's verdict; read it with WP-9's kappa (File C L5).",
         "",
     ]

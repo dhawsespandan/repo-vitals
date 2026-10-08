@@ -60,7 +60,7 @@ import hashlib
 import logging
 import random
 import re
-from collections import defaultdict
+from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
@@ -364,6 +364,45 @@ def is_safe_version(
         if verdict:
             return False
     return True
+
+
+def answer_given(item: dict) -> bool:
+    """Does TARGET hand every condition a value that, copied, is scored correct?
+
+    decisions §13.2 and §13.13. For `cve_fix`, true when some advisory's
+    `fixed_version` in TARGET is itself a safe upgrade under the item's ground
+    truth; false when every one shown is still affected by another advisory, or
+    none is readable — the items where the right version has to be worked out.
+    For `deprecation_replacement`, true when the deprecation sentence TARGET
+    carries names the successor, which by construction it always does.
+    """
+    target = item.get("target") or {}
+    ecosystem = item["ecosystem"]
+    truth = item.get("ground_truth") or {}
+    if item["case_type"] == CVE_FIX:
+        advisories = [
+            AdvisoryRanges.from_json(entry) for entry in truth.get("advisories") or []
+        ]
+        return any(
+            is_safe_version(
+                ecosystem,
+                str(shown["fixed_version"]),
+                item["resolved_version"],
+                advisories,
+            )
+            is True
+            for shown in target.get("advisories") or []
+            if shown.get("fixed_version")
+        )
+    if item["case_type"] == DEPRECATION_REPLACEMENT:
+        named = {
+            normalize_name(ecosystem, name)
+            for name, _ in successor_candidates(
+                target.get("deprecation_reason") or "", ecosystem, item["package"]
+            )
+        }
+        return truth.get("successor_normalized") in named
+    raise ValueError(f"unknown case type {item['case_type']!r}")
 
 
 def minimum_fix(
@@ -903,6 +942,31 @@ def extraction_report(
             lines.append(
                 f"| {ecosystem} | {case} | {candidates} | {extracted} | {rate} | {reasons or '-'} |"
             )
+    given = Counter(
+        (item["ecosystem"], item["case_type"])
+        for item in extraction.items
+        if answer_given(item)
+    )
+    totals = Counter((item["ecosystem"], item["case_type"]) for item in extraction.items)
+    lines += [
+        "",
+        "## Items whose answer TARGET already shows (decisions §13.13)",
+        "",
+        "| Ecosystem | Case type | Extracted | Answer given | Answer not given |",
+        "|---|---|---|---|---|",
+    ]
+    for ecosystem in ECOSYSTEMS:
+        for case in CASE_TYPES:
+            total = totals[(ecosystem, case)]
+            lines.append(
+                f"| {ecosystem} | {case} | {total} | {given[(ecosystem, case)]} | "
+                f"{total - given[(ecosystem, case)]} |"
+            )
+    lines += [
+        "",
+        "Correctness on the answer-not-given items is reported as its own table, the",
+        "comparison where retrieval has something to add.",
+    ]
     if len(extraction.items) < size:
         lines += [
             "",
@@ -939,9 +1003,10 @@ def extraction_report(
         "  ones above are not missing at random.",
         "- **Case mix** (L7): npm and PyPI contribute different shares of each case",
         "  type; compare ecosystems within a case type.",
-        "- **The answer is in TARGET** (decisions §13): the fixed version and the",
+        "- **The answer is in TARGET** (decisions §13.2): the fixed version and the",
         "  deprecation sentence the ground truth is extracted from are measurements",
-        "  the production prompt shows every condition.",
+        "  the production prompt shows every condition. The table above counts the",
+        "  items where copying them is enough.",
         "",
     ]
     return "\n".join(lines)

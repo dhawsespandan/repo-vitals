@@ -193,6 +193,45 @@ class TestTheTables:
         assert bc.statistic["r"] == 1.0  # every change is B major -> C faithful
         assert bc.n == 16
 
+    def test_the_answer_not_given_items_are_their_own_table_and_family(self, runs):
+        """decisions §13.13. Items 0-3 show a fix that is correct if copied."""
+        items = json.loads(json.dumps(runs["items"]))
+        for entry in items.values():
+            if int(entry["item_id"][-3:]) < 4:
+                entry["target"]["advisories"] = [
+                    {"osv_id": "A", "fixed_version": "4.17.21"}
+                ]
+        dataset = analysis.load(runs["dirs"], items, runs["cache"])
+        text, tables = analysis.render(dataset, bootstrap=20, seed=1)
+
+        rates = {
+            (row[0], row[1]): (int(row[2]), int(row[3]))
+            for row in tables["correctness_not_given.csv"][1:]
+        }
+        # Items 4-7 only: A right on none (and npm 7 failed), B on 4-5, C on 4-6.
+        assert rates[("A", "npm")] == (3, 0)
+        assert rates[("B", "all")] == (8, 4)
+        assert rates[("C", "pypi")] == (4, 3)
+        assert "answer given 8, not given 8" in text
+
+        family = analysis.correctness_tests(dataset, 20, 1, answer_not_given=True)
+        bc = {(t.first, t.second, t.group): t for t in family}[("B", "C", "all")]
+        assert bc.metric == analysis.NOT_GIVEN
+        assert bc.n == 8
+        assert bc.statistic["first_only_correct"] == 0
+        assert bc.statistic["second_only_correct"] == 2
+        assert analysis.NOT_GIVEN in {row[0] for row in tables["paired_tests.csv"][1:]}
+
+    def test_an_all_given_set_says_the_restricted_comparison_is_empty(self, runs):
+        items = json.loads(json.dumps(runs["items"]))
+        for entry in items.values():
+            entry["target"]["advisories"] = [{"osv_id": "A", "fixed_version": "4.17.21"}]
+        text, tables = analysis.render(
+            analysis.load(runs["dirs"], items, runs["cache"]), bootstrap=20, seed=1
+        )
+        assert "this comparison is empty" in text
+        assert len(tables["correctness_not_given.csv"]) == 1
+
     def test_the_cve_fix_contrast_comes_before_the_confounded_one(self, runs):
         text, _ = analysis.render(
             analysis.load(runs["dirs"], runs["items"], runs["cache"]),

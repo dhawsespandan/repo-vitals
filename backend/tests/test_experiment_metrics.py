@@ -160,6 +160,47 @@ class TestCorrectnessMatrix:
 # ── the rubric ─────────────────────────────────────────────────────────────
 
 
+class TestAnswerGiven:
+    """decisions §13.13: does TARGET already show a value that is correct if copied?"""
+
+    @staticmethod
+    def shown(*fixed: str) -> dict:
+        built = json.loads(json.dumps(CVE_ITEM))
+        built["target"]["advisories"] = [
+            {"osv_id": f"X{index}", "fixed_version": version}
+            for index, version in enumerate(fixed)
+        ]
+        return built
+
+    def test_a_shown_fix_that_escapes_every_advisory_is_the_answer(self):
+        assert gt.answer_given(self.shown("4.17.20", "4.17.21"))
+
+    def test_shown_fixes_each_still_affected_leave_it_to_be_worked_out(self):
+        """4.17.20 is still under A; 4.17.22 re-enters B."""
+        assert not gt.answer_given(self.shown("4.17.20", "4.17.22"))
+
+    def test_no_fixed_version_shown_is_not_given(self):
+        assert not gt.answer_given(self.shown())
+        assert not gt.answer_given(CVE_ITEM)
+
+    def test_a_deprecation_sentence_naming_the_successor_gives_it(self):
+        item = json.loads(json.dumps(REPLACEMENT_ITEM))
+        item["target"]["deprecation_reason"] = "Deprecated. Use new_pkg instead."
+        assert gt.answer_given(item)
+        item["target"]["deprecation_reason"] = "Deprecated. Use other-pkg instead."
+        assert not gt.answer_given(item)
+
+    def test_every_measured_row_carries_it(self):
+        record = {
+            "item_id": "S3-cve",
+            "condition": "A",
+            "status": "ok",
+            "generation": generation(target_version="4.17.21"),
+        }
+        assert metrics.measure(record, self.shown("4.17.21")).answer_given is True
+        assert metrics.measure(record, CVE_ITEM).answer_given is False
+
+
 class TestTheVerdictRule:
     @pytest.mark.parametrize(
         ("claims", "verdict"),

@@ -38,6 +38,7 @@ from .groundtruth import (
     CVE_FIX,
     DEPRECATION_REPLACEMENT,
     AdvisoryRanges,
+    answer_given,
     is_safe_version,
     normalize_name,
     version_key,
@@ -149,6 +150,8 @@ class ItemMetrics:
     condition: str
     ecosystem: str
     case_type: str
+    #: TARGET already shows a value that, copied, is correct (decisions §13.13).
+    answer_given: bool
     status: str
     grounding: str
     branch: str
@@ -176,6 +179,7 @@ def measure(record: dict, item: dict, judgments: dict | None = None) -> ItemMetr
         condition=record["condition"],
         ecosystem=item["ecosystem"],
         case_type=item["case_type"],
+        answer_given=answer_given(item),
         status=record.get("status", ""),
         grounding=record.get("grounding", ""),
         branch=record.get("branch", ""),

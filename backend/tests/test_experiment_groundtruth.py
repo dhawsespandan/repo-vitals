@@ -481,6 +481,10 @@ class TestTheCommand:
         report = (out / "extraction_report.md").read_text(encoding="utf-8")
         assert "| npm | cve_fix | 2 | 1 | 50% | no_fixed_version 1 |" in report
         assert "The answer is in TARGET" in report
+        # decisions §13.13: npm's shown fix is the answer; PyPI's is not.
+        assert "## Items whose answer TARGET already shows" in report
+        assert "| npm | cve_fix | 1 | 1 | 0 |" in report
+        assert "| pypi | cve_fix | 1 | 0 | 1 |" in report
 
     @responses.activate
     def test_a_frozen_set_is_not_overwritten(self, tmp_path):
