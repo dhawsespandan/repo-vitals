@@ -18,7 +18,7 @@ Each WP below says what was done, how it was checked, and what deviates from Fil
 | WP-5 | **Complete**: 914/914 scanned, 29,494 occurrences, dump verified | One repo rescanned after a crash damaged its archive (§11.30) |
 | WP-6 | **Signed** (8 Oct): weights v2 approved for adoption | Checks 3 and 4 acknowledged (entropy disagreement, Scorecard null); single-judgment matrix |
 | WP-8 | **Complete** (9 Oct): A, B and C each 150/150, 0 failed, all judged | Generation divided over four members' free-tier keys (disclosed); PyPI retrieval left as is (S3 limitation); no PyPI replacement items |
-| WP-9 | **Ready**: blind packet of 50 items in `wp-9/` | Labeller: Spandan (the only judge of the judge) |
+| WP-9 | **Ready**: blind packet of 50 items in `wp-9/` | Labeller: one team member, labelling blind |
 
 ---
 
@@ -169,7 +169,7 @@ The AI-drafted worksheet from 5 Oct is superseded by `wp2_evidence.md` and was r
 
 The same commit fixed `corpus_report`, which had counted 575 "strata" (one per split cell) instead of 240.
 
-**Still to do by hand:** upload `research_data/exports/wp5_research_db.dump` to OneDrive. It is research data and is not committed.
+**Dump:** committed as `wp-5/wp5_research_db.dump` (1.5 MB; sha256 in the sign-off). Restore it with `pg_restore`.
 
 ---
 
@@ -234,6 +234,8 @@ The judge cache is held back until WP-9 is labelled, to keep the labelling blind
 - `wp9_labelling_guide.md`: File B Appendix C's worked examples.
 
 The answer key (`research_data/runs/judge_validation/judge_validation_key.json`) stays local and gitignored. **Do not open it, or `research_data/runs/judge_cache.jsonl`, before labelling is finished.**
+
+**Who labels:** one team member, alone. That person must not have seen any judge verdict. Neither the answer key nor the judge cache is on GitHub. Return the filled CSV to Spandan, who has the key and runs the kappa step.
 
 **How to label:** one sitting, about 3–4 hours.
 - Judge each remediation claim by claim, against only the facts and passages shown with it.
