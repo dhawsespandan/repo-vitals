@@ -241,7 +241,20 @@ The answer key (`research_data/runs/judge_validation/judge_validation_key.json`)
 - Add a one-line note for every label that is not `faithful`.
 - Skip nothing.
 
-**After labelling:** `judge_validation_kappa` computes Cohen's kappa between your labels and the judge's, and that number goes into S3.
+**After labelling:** save the filled sheet as `wp/wp-9/wp9_judge_labels.csv`. Then, from `backend/` with `DATABASE_URL` set as in the WP-8 runbook, run:
+
+```
+python manage.py judge_validation_kappa --labels ../wp/wp-9/wp9_judge_labels.csv --key ../research_data/runs/judge_validation/judge_validation_key.json
+```
+
+- It refuses a sheet with any blank or misspelt label, and names the row.
+- It writes `judge_validation_kappa.md` beside the key: Cohen's kappa, weighted kappa, the confusion matrix, every disagreement and File C §3.4.1's decision.
+- This pipeline was dry-run on 9 Oct against the real key with throwaway labels, and works. The dry run's outputs were deleted.
+
+**Then commit three things:**
+1. the labels;
+2. the kappa report;
+3. `research_data/runs/judge_cache.jsonl`, copied to `wp/wp-8/runs/`; it is safe to publish once labelling is over.
 
 ## Order from here
 
