@@ -131,27 +131,88 @@ def stratified(candidates: list[Candidate], size: int, seed: int) -> list[Candid
     return chosen
 
 
+#: How each measured field is named for the labeller, in the order shown. The
+#: judge is given the *whole* `target` record as MEASURED DATA
+#: (`judge.faithfulness_prompt`), so the packet must show the whole record too:
+#: a labeller missing a field the judge had is answering a different question.
+#: The first packet showed four of the fifteen fields every item carries, so the
+#: human and the judge were labelling against different evidence (decisions
+#: §13.16). A field not in this table is still shown, under its own name.
+MEASURED_LABELS: dict[str, str] = {
+    "current_version": "Version in use",
+    "declared_specifier": "Declared specifier",
+    "version_source": "Where that version came from",
+    "manifest_path": "Manifest",
+    "group": "Dependency group",
+    "latest_version": "Latest release on the registry",
+    "versions_behind": "Versions behind the latest release",
+    "days_since_release": "Days since the package's latest release",
+    "deprecated": "Deprecated on the registry",
+    "deprecation_reason": "Registry deprecation message",
+    "advisory_count": "Advisories affecting this version (scanner's count)",
+    "highest_severity": "Highest advisory severity",
+    "flag_reasons": "Why it was flagged",
+}
+
+
+def _format_measured(value) -> str:
+    if value is None or value == "":
+        return "not recorded"
+    if isinstance(value, bool):
+        return "yes" if value else "no"
+    if isinstance(value, dict):
+        return ", ".join(
+            f"{key} {_format_measured(inner)}" for key, inner in value.items()
+        )
+    if isinstance(value, list):
+        return ", ".join(_format_measured(inner) for inner in value) or "none"
+    return str(value)
+
+
+def measured_lines(target: dict) -> list[str]:
+    """Every field of the record the judge sees as MEASURED DATA, readable."""
+    lines = [
+        f"**Dependency:** `{target.get('package')}` ({target.get('ecosystem')})",
+        "",
+        "**Measured data** (all of it counts as evidence):",
+        "",
+    ]
+    rendered = {"package", "ecosystem", "advisories"}
+    ordered = [key for key in MEASURED_LABELS if key in target]
+    ordered += sorted(
+        key for key in target if key not in MEASURED_LABELS and key not in rendered
+    )
+    for key in ordered:
+        label = MEASURED_LABELS.get(key, key)
+        lines.append(f"- {label}: {_format_measured(target[key])}")
+    advisories = target.get("advisories") or []
+    lines.append(
+        f"- Advisories in detail (highest CVSS first): {len(advisories) or 'none'}"
+    )
+    for advisory in advisories:
+        ids = " / ".join(
+            str(advisory[key]) for key in ("cve_id", "osv_id") if advisory.get(key)
+        )
+        extra = {
+            key: value
+            for key, value in advisory.items()
+            if key not in ("cve_id", "osv_id", "severity", "cvss", "fixed_version")
+        }
+        lines.append(
+            f"  - {ids or 'no id'}: severity {_format_measured(advisory.get('severity'))}, "
+            f"CVSS {_format_measured(advisory.get('cvss'))}, fixed in "
+            f"{advisory.get('fixed_version') or 'unknown'}"
+            + "".join(
+                f", {key} {_format_measured(value)}" for key, value in extra.items()
+            )
+        )
+    return lines
+
+
 def _render_item(number: str, candidate: Candidate) -> list[str]:
     target = candidate.item["target"]
     generation = candidate.record.get("generation") or {}
-    lines = [
-        f"## {number}",
-        "",
-        f"**Dependency:** `{target.get('package')}` ({target.get('ecosystem')}) at "
-        f"`{target.get('current_version')}`",
-    ]
-    if target.get("deprecation_reason"):
-        lines.append(f"**Registry deprecation message:** {target['deprecation_reason']}")
-    advisories = target.get("advisories") or []
-    if advisories:
-        lines.append(
-            "**Advisories (measured):** "
-            + "; ".join(
-                f"{a.get('cve_id') or a.get('osv_id')} (severity {a.get('severity')}, "
-                f"fixed in {a.get('fixed_version') or 'unknown'})"
-                for a in advisories
-            )
-        )
+    lines = [f"## {number}", "", *measured_lines(target)]
     lines += [
         "",
         "### Remediation to label",

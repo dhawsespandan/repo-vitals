@@ -18,7 +18,7 @@ Each WP below says what was done, how it was checked, and what deviates from Fil
 | WP-5 | **Complete**: 914/914 scanned, 29,494 occurrences, dump verified | One repo rescanned after a crash damaged its archive (§11.30) |
 | WP-6 | **Signed** (8 Oct): weights v2 approved for adoption | Checks 3 and 4 acknowledged (entropy disagreement, Scorecard null); single-judgment matrix |
 | WP-8 | **Complete** (9 Oct): A, B and C each 150/150, 0 failed, all judged | Generation divided over four members' free-tier keys (disclosed); PyPI retrieval left as is (S3 limitation); no PyPI replacement items |
-| WP-9 | **Ready**: blind packet of 50 items in `wp-9/` | Labeller: one team member, labelling blind |
+| WP-9 | **Re-label needed**: attempt 1 (10 Oct) invalid, packet v2 ready in `wp-9/` | Attempt 1's packet hid 11 of the 15 measured fields every item carries; fixed (§13.16) |
 
 ---
 
@@ -226,7 +226,15 @@ The same commit fixed `corpus_report`, which had counted 575 "strata" (one per s
 
 The judge cache is held back until WP-9 is labelled, to keep the labelling blind. Results are not interpreted here; that is the paper's job.
 
-## WP-9: Judge-validation labels. READY
+## WP-9: Judge-validation labels. RE-LABEL WITH PACKET v2
+
+**Attempt 1 (labels returned 10 Oct) cannot be used.** Its packet showed only 4 of the 15 measured fields every item carries (plus the deprecation message, when there was one), so 11 fields the judge is given were hidden: no latest release, no specifier, manifest or staleness, and only one id and no CVSS per advisory. So the human and the judge labelled against different evidence, and the kappa it produced measures the packet, not the judge.
+- The labelling itself followed the rules. All 50 items have a note on every non-faithful label, and the labels match the workbook exactly.
+- The packet code is fixed (decisions §13.16, with a test that the packet shows every field the judge sees).
+- **Packet v2** (same 50 items, same order) is in `wp-9/`, and the README and workbook are updated to match.
+- Attempt 1's labels and its kappa report are kept **local only**, in `research_data/runs/judge_validation/attempt1_packet_hid_measured_fields/`. They are withheld until the re-label is back, so they can't influence it.
+
+**Re-label from blank.** Preferably a team member who did not do attempt 1. Otherwise the same person, starting from the blank v2 workbook without looking at their old labels.
 
 **The labeller needs only `wp-9/`.** Start with `wp-9/README_WP9.md`, which is self-contained: the rules, the rubric, worked examples, hard cases and how to return the labels.
 

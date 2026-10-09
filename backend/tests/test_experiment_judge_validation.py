@@ -120,6 +120,30 @@ class TestThePacket:
         assert "grounding" not in packet.lower()
         assert {entry["judge_verdict"] for entry in key.values()} <= set(judge.VERDICTS)
 
+    def test_the_labeller_sees_every_field_the_judge_sees(self, judged_runs, tmp_path):
+        """The judge is given the whole target record as MEASURED DATA, so the
+        packet has to show all of it. The first real packet showed four of the
+        fifteen fields every item carries, and its kappa measured the packet rather than the judge
+        (decisions §13.16)."""
+        target = dict(ITEM["target"], an_unforeseen_field="kept")
+        text = "\n".join(judge_validation.measured_lines(target))
+        assert "**Dependency:** `express` (npm)" in text
+        for key in target:
+            if key not in ("advisories", "package", "ecosystem"):
+                assert judge_validation.MEASURED_LABELS.get(key, key) in text, key
+        assert "- Latest release on the registry: 4.0.0" in text
+        assert "- Versions behind the latest release: major 1, minor 0, patch 0" in text
+        assert "- an_unforeseen_field: kept" in text
+        assert "CVE-2026-0001 / GHSA-1: severity high, CVSS 7.5, fixed in 3.1.2" in text
+
+        out = tmp_path / "wp9"
+        judge_validation.build_packet(
+            judged_runs["dirs"], judged_runs["items"], judged_runs["cache"], out, size=50
+        )
+        packet = (out / judge_validation.PACKET_FILENAME).read_text(encoding="utf-8")
+        assert "- Latest release on the registry: 4.0.0" in packet
+        assert "- Manifest: package.json" in packet
+
     def test_condition_a_is_shown_with_no_passages(self, judged_runs, tmp_path):
         out = tmp_path / "wp9"
         judge_validation.build_packet(

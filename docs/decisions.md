@@ -5280,3 +5280,34 @@ no route: `/api/experiment/`, `/api/research/`, `/api/research/issue-search/`,
 
 Phase 13 is accepted. Remaining before S3's data collection: WP-8, with the
 decision §13.14 (4) leaves open, then WP-9.
+
+### 13.16 The WP-9 packet hid most of the evidence the judge sees
+
+WP-9's first labels came back on 2026-10-10 and could not be used. The judge
+is given the whole `target` record as MEASURED DATA
+(`judge.faithfulness_prompt`); the packet's `_render_item` showed four of the
+fifteen fields every item carries — package, ecosystem, version in use and
+the advisories (one id each, no CVSS) — plus the deprecation message where
+there was one. The other eleven (latest release, versions behind, staleness,
+declared specifier, version source, manifest, group, deprecated flag, advisory
+count, highest severity, flag reasons) the judge could check claims against
+and the labeller could not. So the two labelled against different evidence,
+and the kappa that run produced measured the packet rather than the judge.
+The labelling itself followed the rubric: 50/50, a note on every non-faithful
+label, workbook and CSV identical.
+
+The fix: `measured_lines` renders every field of the record, named where a
+label is known and under its own key otherwise, so a field added to the record
+later cannot drop out of the packet; advisories show both ids and the CVSS.
+Two labels were checked against `groundtruth.py` rather than guessed from the
+field names: `days_since_release` is the package's staleness (days since its
+latest release), not the age of the version in use, and `advisory_count` is
+the scanner's count, which runs higher than the five advisories listed.
+`test_the_labeller_sees_every_field_the_judge_sees` fails against the previous
+module.
+
+Packet v2 samples the same 50 items in the same order (the sample depends only
+on the judged runs and the seed). The labels and kappa report from attempt 1
+are kept locally and withheld until the re-label returns, so that nothing
+about the judge's behaviour reaches whoever labels next; this entry will be
+completed then.

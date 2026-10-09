@@ -25,8 +25,28 @@ one-line note naming the offending claim for every label that is not
 
 ## ITEM-001
 
-**Dependency:** `transformers` (pypi) at `4.39.2`
-**Advisories (measured):** CVE-2026-5241 (severity critical, fixed in unknown); CVE-2024-11394 (severity high, fixed in 4.48.0); CVE-2024-11393 (severity high, fixed in 4.48.0); CVE-2024-11392 (severity high, fixed in 4.48.0); CVE-2024-11393 (severity high, fixed in 4.48.0)
+**Dependency:** `transformers` (pypi)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 4.39.2
+- Declared specifier: ==4.39.2
+- Where that version came from: pinned
+- Manifest: requirements.txt
+- Dependency group: runtime
+- Latest release on the registry: 5.19.0
+- Versions behind the latest release: major 1, minor 18, patch 1
+- Days since the package's latest release: 1
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 44
+- Highest advisory severity: critical
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 5
+  - CVE-2026-5241 / PYSEC-2026-2290: severity critical, CVSS 9.6, fixed in unknown
+  - CVE-2024-11394 / GHSA-hxxf-235m-72v3: severity high, CVSS 8.8, fixed in 4.48.0
+  - CVE-2024-11393 / GHSA-wrfc-pvp9-mr9g: severity high, CVSS 8.8, fixed in 4.48.0
+  - CVE-2024-11392 / PYSEC-2024-227: severity high, CVSS 8.8, fixed in 4.48.0
+  - CVE-2024-11393 / PYSEC-2024-228: severity high, CVSS 8.8, fixed in 4.48.0
 
 ### Remediation to label
 
@@ -44,8 +64,25 @@ _None. The author was shown no passages for this item._
 
 ## ITEM-002
 
-**Dependency:** `numpy` (pypi) at `1.19.5`
-**Advisories (measured):** CVE-2021-33430 (severity medium, fixed in 1.21); CVE-2021-34141 (severity medium, fixed in 1.22)
+**Dependency:** `numpy` (pypi)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 1.19.5
+- Declared specifier: ==1.19.5
+- Where that version came from: pinned
+- Manifest: requirements.txt
+- Dependency group: runtime
+- Latest release on the registry: 2.5.3
+- Versions behind the latest release: major 1, minor 7, patch 0
+- Days since the package's latest release: 31
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 2
+- Highest advisory severity: medium
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 2
+  - CVE-2021-33430 / GHSA-6p56-wp2h-9hxr: severity medium, CVSS 5.3, fixed in 1.21
+  - CVE-2021-34141 / GHSA-fpfv-jqm9-f5jm: severity medium, CVSS 5.3, fixed in 1.22
 
 ### Remediation to label
 
@@ -197,8 +234,25 @@ The NumPy project welcomes your expertise and enthusiasm!
 
 ## ITEM-003
 
-**Dependency:** `h11` (pypi) at `0.14.0`
-**Advisories (measured):** CVE-2025-43859 (severity critical, fixed in 0.16.0); CVE-2025-43859 (severity critical, fixed in 0.16.0)
+**Dependency:** `h11` (pypi)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 0.14.0
+- Declared specifier: ==0.14.0
+- Where that version came from: pinned
+- Manifest: requirements-lock.txt
+- Dependency group: runtime
+- Latest release on the registry: 0.16.0
+- Versions behind the latest release: major 0, minor 2, patch 0
+- Days since the package's latest release: 531
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 2
+- Highest advisory severity: critical
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 2
+  - CVE-2025-43859 / GHSA-vqfr-h8mv-ghfj: severity critical, CVSS 9.1, fixed in 0.16.0
+  - CVE-2025-43859 / PYSEC-2026-348: severity critical, CVSS 9.1, fixed in 0.16.0
 
 ### Remediation to label
 
@@ -341,8 +395,24 @@ to mourn that.)
 
 ## ITEM-004
 
-**Dependency:** `flag-icon-css` (npm) at `3.5.0`
-**Registry deprecation message:** The project has been renamed to flag-icons
+**Dependency:** `flag-icon-css` (npm)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 3.5.0
+- Declared specifier: 3.5.0
+- Where that version came from: pinned
+- Manifest: package.json
+- Dependency group: runtime
+- Latest release on the registry: 4.1.7
+- Versions behind the latest release: major 1, minor 0, patch 0
+- Days since the package's latest release: 1757
+- Deprecated on the registry: yes
+- Registry deprecation message: The project has been renamed to flag-icons
+- Advisories affecting this version (scanner's count): 0
+- Highest advisory severity: not recorded
+- Why it was flagged: deprecated, stale
+- Advisories in detail (highest CVSS first): none
 
 ### Remediation to label
 
@@ -410,8 +480,24 @@ The `flag-icon-css` package is deprecated because it was renamed to **flag-icons
 
 ## ITEM-005
 
-**Dependency:** `jsoneditor` (npm) at `9.1.9`
-**Advisories (measured):** CVE-2021-3822 (severity medium, fixed in 9.5.6)
+**Dependency:** `jsoneditor` (npm)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 9.1.9
+- Declared specifier: ^9.1.9
+- Where that version came from: lockfile
+- Manifest: web/package.json
+- Dependency group: runtime
+- Latest release on the registry: 10.4.3
+- Versions behind the latest release: major 1, minor 9, patch 1
+- Days since the package's latest release: 189
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 1
+- Highest advisory severity: medium
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 1
+  - CVE-2021-3822 / GHSA-hhfg-6hfc-rvxm: severity medium, CVSS 5.3, fixed in 9.5.6
 
 ### Remediation to label
 
@@ -429,8 +515,26 @@ _None. The author was shown no passages for this item._
 
 ## ITEM-006
 
-**Dependency:** `scikit-learn` (pypi) at `1.0`
-**Advisories (measured):** CVE-2020-28975 (severity high, fixed in 1.0.1); CVE-2024-5206 (severity medium, fixed in 1.5.0); CVE-2024-5206 (severity medium, fixed in 1.5.0)
+**Dependency:** `scikit-learn` (pypi)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 1.0
+- Declared specifier: ==1.0
+- Where that version came from: pinned
+- Manifest: docker/requirements.txt
+- Dependency group: runtime
+- Latest release on the registry: 1.9.1
+- Versions behind the latest release: major 0, minor 9, patch 2
+- Days since the package's latest release: 27
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 3
+- Highest advisory severity: high
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 3
+  - CVE-2020-28975 / GHSA-jxfp-4rvq-9h9m: severity high, CVSS 7.5, fixed in 1.0.1
+  - CVE-2024-5206 / GHSA-jw8x-6495-233v: severity medium, CVSS 5.3, fixed in 1.5.0
+  - CVE-2024-5206 / PYSEC-2024-110: severity medium, CVSS 4.7, fixed in 1.5.0
 
 ### Remediation to label
 
@@ -448,8 +552,24 @@ _None. The author was shown no passages for this item._
 
 ## ITEM-007
 
-**Dependency:** `@babel/core` (npm) at `7.9.6`
-**Advisories (measured):** CVE-2026-49356 (severity low, fixed in 8.0.0-rc.6)
+**Dependency:** `@babel/core` (npm)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 7.9.6
+- Declared specifier: ^7.8.6
+- Where that version came from: lockfile
+- Manifest: app/package.json
+- Dependency group: development
+- Latest release on the registry: 8.0.7
+- Versions behind the latest release: major 1, minor 20, patch 0
+- Days since the package's latest release: 0
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 1
+- Highest advisory severity: low
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 1
+  - CVE-2026-49356 / GHSA-4x5r-pxfx-6jf8: severity low, CVSS 3.2, fixed in 8.0.0-rc.6
 
 ### Remediation to label
 
@@ -523,8 +643,24 @@ ompilation-targets`, `babel-preset-env`
 
 ## ITEM-008
 
-**Dependency:** `scipy` (pypi) at `1.9.3`
-**Advisories (measured):** CVE-2023-25399 (severity unknown, fixed in 1.10.0)
+**Dependency:** `scipy` (pypi)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 1.9.3
+- Declared specifier: ==1.9.3
+- Where that version came from: pinned
+- Manifest: requirements.txt
+- Dependency group: runtime
+- Latest release on the registry: 1.18.1
+- Versions behind the latest release: major 0, minor 9, patch 0
+- Days since the package's latest release: 47
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 1
+- Highest advisory severity: unknown
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 1
+  - CVE-2023-25399 / PYSEC-2023-102: severity unknown, CVSS not recorded, fixed in 1.10.0
 
 ### Remediation to label
 
@@ -667,8 +803,24 @@ and how to get involved.
 
 ## ITEM-009
 
-**Dependency:** `@babel/traverse` (npm) at `7.17.9`
-**Advisories (measured):** CVE-2023-45133 (severity critical, fixed in 7.23.2)
+**Dependency:** `@babel/traverse` (npm)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 7.17.9
+- Declared specifier: 7.17.9
+- Where that version came from: pinned
+- Manifest: packages/core/package.json
+- Dependency group: development
+- Latest release on the registry: 8.0.7
+- Versions behind the latest release: major 1, minor 12, patch 2
+- Days since the package's latest release: 0
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 1
+- Highest advisory severity: critical
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 1
+  - CVE-2023-45133 / GHSA-67hx-6x53-jw92: severity critical, CVSS 9.3, fixed in 7.23.2
 
 ### Remediation to label
 
@@ -742,8 +894,28 @@ hub.com/babel/babel/pull/17569) Add `BABEL_7_TO_8_DANGEROUSLY_DISABLE_VERSION_CH
 
 ## ITEM-010
 
-**Dependency:** `transformers` (pypi) at `4.45.2`
-**Advisories (measured):** CVE-2026-5241 (severity critical, fixed in unknown); CVE-2024-11394 (severity high, fixed in 4.48.0); CVE-2024-11393 (severity high, fixed in 4.48.0); CVE-2024-11392 (severity high, fixed in 4.48.0); CVE-2024-11393 (severity high, fixed in 4.48.0)
+**Dependency:** `transformers` (pypi)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 4.45.2
+- Declared specifier: ==4.45.2
+- Where that version came from: pinned
+- Manifest: requirements.txt
+- Dependency group: runtime
+- Latest release on the registry: 5.19.0
+- Versions behind the latest release: major 1, minor 12, patch 0
+- Days since the package's latest release: 1
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 44
+- Highest advisory severity: critical
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 5
+  - CVE-2026-5241 / PYSEC-2026-2290: severity critical, CVSS 9.6, fixed in unknown
+  - CVE-2024-11394 / GHSA-hxxf-235m-72v3: severity high, CVSS 8.8, fixed in 4.48.0
+  - CVE-2024-11393 / GHSA-wrfc-pvp9-mr9g: severity high, CVSS 8.8, fixed in 4.48.0
+  - CVE-2024-11392 / PYSEC-2024-227: severity high, CVSS 8.8, fixed in 4.48.0
+  - CVE-2024-11393 / PYSEC-2024-228: severity high, CVSS 8.8, fixed in 4.48.0
 
 ### Remediation to label
 
@@ -881,8 +1053,24 @@ print(response[0]["generated_text"][-1]["content"])
 
 ## ITEM-011
 
-**Dependency:** `@nestjs/common` (npm) at `8.3.1`
-**Advisories (measured):** CVE-2024-29409 (severity medium, fixed in 11.0.16)
+**Dependency:** `@nestjs/common` (npm)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 8.3.1
+- Declared specifier: ^8.0.0
+- Where that version came from: lockfile
+- Manifest: api/package.json
+- Dependency group: runtime
+- Latest release on the registry: 12.1.2
+- Versions behind the latest release: major 4, minor 1, patch 0
+- Days since the package's latest release: 7
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 1
+- Highest advisory severity: medium
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 1
+  - CVE-2024-29409 / GHSA-cj7v-w2c7-cp7c: severity medium, CVSS 5.5, fixed in 11.0.16
 
 ### Remediation to label
 
@@ -945,8 +1133,23 @@ With official support, you can get expert help straight from the Nest core team.
 
 ## ITEM-012
 
-**Dependency:** `@clerk/clerk-react` (npm) at `4.30.3`
-**Registry deprecation message:** This package is no longer supported. Please use @clerk/react instead. See the upgrade guide for more info: https://clerk.com/docs/guides/development/upgrading/upgrade-guides/core-3
+**Dependency:** `@clerk/clerk-react` (npm)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 4.30.3
+- Declared specifier: ^4.16.2
+- Where that version came from: lockfile
+- Manifest: package.json
+- Dependency group: runtime
+- Latest release on the registry: 5.61.3
+- Versions behind the latest release: major 1, minor 2, patch 7
+- Deprecated on the registry: yes
+- Registry deprecation message: This package is no longer supported. Please use @clerk/react instead. See the upgrade guide for more info: https://clerk.com/docs/guides/development/upgrading/upgrade-guides/core-3
+- Advisories affecting this version (scanner's count): 0
+- Highest advisory severity: not recorded
+- Why it was flagged: deprecated
+- Advisories in detail (highest CVSS first): none
 
 ### Remediation to label
 
@@ -964,8 +1167,26 @@ _None. The author was shown no passages for this item._
 
 ## ITEM-013
 
-**Dependency:** `jsonwebtoken` (npm) at `8.3.0`
-**Advisories (measured):** CVE-2022-23539 (severity high, fixed in 9.0.0); CVE-2022-23540 (severity medium, fixed in 9.0.0); CVE-2022-23541 (severity medium, fixed in 9.0.0)
+**Dependency:** `jsonwebtoken` (npm)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 8.3.0
+- Declared specifier: 8.3.0
+- Where that version came from: lockfile
+- Manifest: services/backend/auth-server/package.json
+- Dependency group: runtime
+- Latest release on the registry: 9.0.3
+- Versions behind the latest release: major 1, minor 2, patch 0
+- Days since the package's latest release: 307
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 3
+- Highest advisory severity: high
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 3
+  - CVE-2022-23539 / GHSA-8cf7-32gw-wr33: severity high, CVSS 8.1, fixed in 9.0.0
+  - CVE-2022-23540 / GHSA-qwph-4952-7xr6: severity medium, CVSS 6.4, fixed in 9.0.0
+  - CVE-2022-23541 / GHSA-hjrf-2m68-5959: severity medium, CVSS 5.0, fixed in 9.0.0
 
 ### Remediation to label
 
@@ -1032,8 +1253,28 @@ token`.
 
 ## ITEM-014
 
-**Dependency:** `sqlparse` (pypi) at `0.4.1`
-**Advisories (measured):** CVE-2024-4340 (severity high, fixed in 0.5.0); CVE-2021-32839 (severity high, fixed in 0.4.2); CVE-2026-59893 (severity high, fixed in 0.6.0); CVE-2024-4340 (severity high, fixed in 0.5.0); CVE-2026-59893 (severity high, fixed in 0.6.0)
+**Dependency:** `sqlparse` (pypi)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 0.4.1
+- Declared specifier: ==0.4.1
+- Where that version came from: pinned
+- Manifest: requirements.txt
+- Dependency group: runtime
+- Latest release on the registry: 0.6.0
+- Versions behind the latest release: major 0, minor 2, patch 3
+- Days since the package's latest release: 55
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 17
+- Highest advisory severity: high
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 5
+  - CVE-2024-4340 / GHSA-2m57-hf25-phgg: severity high, CVSS 7.5, fixed in 0.5.0
+  - CVE-2021-32839 / GHSA-p5w8-wqhj-9hhf: severity high, CVSS 7.5, fixed in 0.4.2
+  - CVE-2026-59893 / GHSA-prg7-hcfm-mfcr: severity high, CVSS 7.5, fixed in 0.6.0
+  - CVE-2024-4340 / PYSEC-2026-1940: severity high, CVSS 7.5, fixed in 0.5.0
+  - CVE-2026-59893 / PYSEC-2026-3698: severity high, CVSS 7.5, fixed in 0.6.0
 
 ### Remediation to label
 
@@ -1211,8 +1452,24 @@ Bug Fixes
 
 ## ITEM-015
 
-**Dependency:** `pandas` (pypi) at `0.23.0`
-**Advisories (measured):** CVE-2020-13091 (severity unknown, fixed in 1.0.4)
+**Dependency:** `pandas` (pypi)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 0.23.0
+- Declared specifier: >=0.19.0
+- Where that version came from: lockfile
+- Manifest: Pipfile
+- Dependency group: runtime
+- Latest release on the registry: 3.0.6
+- Versions behind the latest release: major 3, minor 2, patch 4
+- Days since the package's latest release: 20
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 1
+- Highest advisory severity: unknown
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 1
+  - CVE-2020-13091 / PYSEC-2020-73: severity unknown, CVSS not recorded, fixed in 1.0.4
 
 ### Remediation to label
 
@@ -1230,8 +1487,28 @@ _None. The author was shown no passages for this item._
 
 ## ITEM-016
 
-**Dependency:** `pillow` (pypi) at `5.0.0`
-**Advisories (measured):** CVE-2021-25289 (severity critical, fixed in 8.1.1); CVE-2021-34552 (severity critical, fixed in 8.3.0); CVE-2022-22817 (severity critical, fixed in 9.0.1); CVE-2020-5312 (severity critical, fixed in 6.2.2); CVE-2020-5311 (severity critical, fixed in 6.2.2)
+**Dependency:** `pillow` (pypi)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 5.0.0
+- Declared specifier: ==5.0.0
+- Where that version came from: pinned
+- Manifest: requirements.txt
+- Dependency group: runtime
+- Latest release on the registry: 12.3.0
+- Versions behind the latest release: major 7, minor 4, patch 0
+- Days since the package's latest release: 98
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 101
+- Highest advisory severity: critical
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 5
+  - CVE-2021-25289 / GHSA-57h3-9rgr-c24m: severity critical, CVSS 9.8, fixed in 8.1.1
+  - CVE-2021-34552 / GHSA-7534-mm45-c74v: severity critical, CVSS 9.8, fixed in 8.3.0
+  - CVE-2022-22817 / GHSA-8vj2-vxx3-667w: severity critical, CVSS 9.8, fixed in 9.0.1
+  - CVE-2020-5312 / GHSA-p49h-hjvm-jg3h: severity critical, CVSS 9.8, fixed in 6.2.2
+  - CVE-2020-5311 / GHSA-r7rm-8j6h-r933: severity critical, CVSS 9.8, fixed in 6.2.2
 
 ### Remediation to label
 
@@ -1341,8 +1618,27 @@ lt="Zenodo"
 
 ## ITEM-017
 
-**Dependency:** `black` (pypi) at `18.6b4`
-**Advisories (measured):** CVE-2026-31900 (severity critical, fixed in 26.3.0); CVE-2026-32274 (severity high, fixed in 26.3.1); CVE-2024-21503 (severity medium, fixed in 24.3.0); CVE-2024-21503 (severity unknown, fixed in 24.3.0)
+**Dependency:** `black` (pypi)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 18.6b4
+- Declared specifier: ==18.6b4
+- Where that version came from: pinned
+- Manifest: Pipfile
+- Dependency group: development
+- Latest release on the registry: 26.10.0
+- Versions behind the latest release: major 5, minor 0, patch 0
+- Days since the package's latest release: 3
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 4
+- Highest advisory severity: critical
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 4
+  - CVE-2026-31900 / PYSEC-2026-2120: severity critical, CVSS 9.8, fixed in 26.3.0
+  - CVE-2026-32274 / PYSEC-2026-2121: severity high, CVSS 7.5, fixed in 26.3.1
+  - CVE-2024-21503 / GHSA-fj7x-q9j7-g6q6: severity medium, CVSS 5.3, fixed in 24.3.0
+  - CVE-2024-21503 / PYSEC-2024-48: severity unknown, CVSS not recorded, fixed in 24.3.0
 
 ### Remediation to label
 
@@ -1412,8 +1708,25 @@ changes in `--preview` mode will be in the 2024 stable style.
 
 ## ITEM-018
 
-**Dependency:** `markdown` (pypi) at `2.6.11`
-**Advisories (measured):** CVE-2025-69534 (severity medium, fixed in 3.8.1); CVE-2025-69534 (severity high, fixed in unknown)
+**Dependency:** `markdown` (pypi)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 2.6.11
+- Declared specifier: ==2.6.11
+- Where that version came from: pinned
+- Manifest: requirements.txt
+- Dependency group: runtime
+- Latest release on the registry: 3.11
+- Versions behind the latest release: major 1, minor 0, patch 0
+- Days since the package's latest release: 12
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 2
+- Highest advisory severity: high
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 2
+  - CVE-2025-69534 / GHSA-5wmx-573v-2qwq: severity medium, CVSS 7.5, fixed in 3.8.1
+  - CVE-2025-69534 / PYSEC-2026-89: severity high, CVSS 7.5, fixed in unknown
 
 ### Remediation to label
 
@@ -1431,9 +1744,26 @@ _None. The author was shown no passages for this item._
 
 ## ITEM-019
 
-**Dependency:** `typed-ast` (pypi) at `1.1.0`
-**Registry deprecation message:** Development Status :: 7 - Inactive
-**Advisories (measured):** CVE-2019-19274 (severity unknown, fixed in 1.3.2); CVE-2019-19275 (severity unknown, fixed in 1.3.2)
+**Dependency:** `typed-ast` (pypi)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 1.1.0
+- Declared specifier: ==1.1.0
+- Where that version came from: pinned
+- Manifest: requirements.txt
+- Dependency group: runtime
+- Latest release on the registry: 1.5.5
+- Versions behind the latest release: major 0, minor 4, patch 2
+- Days since the package's latest release: 1191
+- Deprecated on the registry: yes
+- Registry deprecation message: Development Status :: 7 - Inactive
+- Advisories affecting this version (scanner's count): 2
+- Highest advisory severity: unknown
+- Why it was flagged: deprecated, vulnerable, stale
+- Advisories in detail (highest CVSS first): 2
+  - CVE-2019-19274 / PYSEC-2019-130: severity unknown, CVSS not recorded, fixed in 1.3.2
+  - CVE-2019-19275 / PYSEC-2019-131: severity unknown, CVSS not recorded, fixed in 1.3.2
 
 ### Remediation to label
 
@@ -1451,8 +1781,28 @@ _None. The author was shown no passages for this item._
 
 ## ITEM-020
 
-**Dependency:** `sqlparse` (pypi) at `0.4.1`
-**Advisories (measured):** CVE-2024-4340 (severity high, fixed in 0.5.0); CVE-2021-32839 (severity high, fixed in 0.4.2); CVE-2026-59893 (severity high, fixed in 0.6.0); CVE-2024-4340 (severity high, fixed in 0.5.0); CVE-2026-59893 (severity high, fixed in 0.6.0)
+**Dependency:** `sqlparse` (pypi)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 0.4.1
+- Declared specifier: ==0.4.1
+- Where that version came from: pinned
+- Manifest: requirements.txt
+- Dependency group: runtime
+- Latest release on the registry: 0.6.0
+- Versions behind the latest release: major 0, minor 2, patch 3
+- Days since the package's latest release: 55
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 17
+- Highest advisory severity: high
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 5
+  - CVE-2024-4340 / GHSA-2m57-hf25-phgg: severity high, CVSS 7.5, fixed in 0.5.0
+  - CVE-2021-32839 / GHSA-p5w8-wqhj-9hhf: severity high, CVSS 7.5, fixed in 0.4.2
+  - CVE-2026-59893 / GHSA-prg7-hcfm-mfcr: severity high, CVSS 7.5, fixed in 0.6.0
+  - CVE-2024-4340 / PYSEC-2026-1940: severity high, CVSS 7.5, fixed in 0.5.0
+  - CVE-2026-59893 / PYSEC-2026-3698: severity high, CVSS 7.5, fixed in 0.6.0
 
 ### Remediation to label
 
@@ -1636,8 +1986,24 @@ Enhancements
 
 ## ITEM-021
 
-**Dependency:** `@opentelemetry/tracing` (npm) at `0.21.0`
-**Registry deprecation message:** Package renamed to @opentelemetry/sdk-trace-base
+**Dependency:** `@opentelemetry/tracing` (npm)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 0.21.0
+- Declared specifier: ^0.21.0
+- Where that version came from: lockfile
+- Manifest: web-app-teams/package.json
+- Dependency group: runtime
+- Latest release on the registry: 0.24.0
+- Versions behind the latest release: major 0, minor 3, patch 0
+- Days since the package's latest release: 1897
+- Deprecated on the registry: yes
+- Registry deprecation message: Package renamed to @opentelemetry/sdk-trace-base
+- Advisories affecting this version (scanner's count): 0
+- Highest advisory severity: not recorded
+- Why it was flagged: deprecated, stale
+- Advisories in detail (highest CVSS first): none
 
 ### Remediation to label
 
@@ -1714,8 +2080,27 @@ belongs elsewhere [#6775](https://github.com/open-telemetry/opentelemetry-js/pul
 
 ## ITEM-022
 
-**Dependency:** `flask` (pypi) at `1.0`
-**Advisories (measured):** CVE-2023-30861 (severity high, fixed in 2.3.2); CVE-2026-27205 (severity medium, fixed in 3.1.3); CVE-2026-27205 (severity low, fixed in 3.1.3); CVE-2023-30861 (severity unknown, fixed in 2.3.2)
+**Dependency:** `flask` (pypi)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 1.0
+- Declared specifier: ==1.0
+- Where that version came from: pinned
+- Manifest: requirements.txt
+- Dependency group: runtime
+- Latest release on the registry: 3.1.3
+- Versions behind the latest release: major 2, minor 1, patch 4
+- Days since the package's latest release: 230
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 4
+- Highest advisory severity: high
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 4
+  - CVE-2023-30861 / GHSA-m2qf-hxjv-5gpq: severity high, CVSS 7.5, fixed in 2.3.2
+  - CVE-2026-27205 / PYSEC-2026-2151: severity medium, CVSS 4.3, fixed in 3.1.3
+  - CVE-2026-27205 / GHSA-68rp-wp8r-4726: severity low, CVSS not recorded, fixed in 3.1.3
+  - CVE-2023-30861 / PYSEC-2023-62: severity unknown, CVSS not recorded, fixed in 2.3.2
 
 ### Remediation to label
 
@@ -1802,8 +2187,24 @@ questions, and making PRs.
 
 ## ITEM-023
 
-**Dependency:** `@azure/identity` (npm) at `1.5.1`
-**Advisories (measured):** CVE-2024-35255 (severity medium, fixed in 4.2.1)
+**Dependency:** `@azure/identity` (npm)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 1.5.1
+- Declared specifier: ^1.3.0
+- Where that version came from: lockfile
+- Manifest: web-app-external/package.json
+- Dependency group: runtime
+- Latest release on the registry: 4.13.3
+- Versions behind the latest release: major 3, minor 0, patch 1
+- Days since the package's latest release: 23
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 1
+- Highest advisory severity: medium
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 1
+  - CVE-2024-35255 / GHSA-m5vv-6r4h-3vj9: severity medium, CVSS 5.5, fixed in 4.2.1
 
 ### Remediation to label
 
@@ -1902,8 +2303,28 @@ const secretClient = createSecretClientWithManagedIdentity(keyvaultUri);
 
 ## ITEM-024
 
-**Dependency:** `fastify` (npm) at `4.10.2`
-**Advisories (measured):** CVE-2026-84504 (severity high, fixed in 5.12.2); CVE-2026-84428 (severity high, fixed in 5.12.2); CVE-2026-84469 (severity high, fixed in 5.12.2); CVE-2026-25223 (severity high, fixed in 5.7.2); CVE-2026-76169 (severity high, fixed in 5.12.2)
+**Dependency:** `fastify` (npm)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 4.10.2
+- Declared specifier: 4.10.2
+- Where that version came from: pinned
+- Manifest: apps/server/package.json
+- Dependency group: runtime
+- Latest release on the registry: 5.12.5
+- Versions behind the latest release: major 1, minor 19, patch 0
+- Days since the package's latest release: 21
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 9
+- Highest advisory severity: high
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 5
+  - CVE-2026-84504 / GHSA-667r-xxjv-c9mm: severity high, CVSS 8.1, fixed in 5.12.2
+  - CVE-2026-84428 / GHSA-9q9j-q6p8-xq58: severity high, CVSS 7.5, fixed in 5.12.2
+  - CVE-2026-84469 / GHSA-hwr6-493r-vm6h: severity high, CVSS 7.5, fixed in 5.12.2
+  - CVE-2026-25223 / GHSA-jx2c-rxcm-jvmq: severity high, CVSS 7.5, fixed in 5.7.2
+  - CVE-2026-76169 / GHSA-p68q-wchp-6fh7: severity high, CVSS 7.5, fixed in 5.12.2
 
 ### Remediation to label
 
@@ -1921,8 +2342,24 @@ _None. The author was shown no passages for this item._
 
 ## ITEM-025
 
-**Dependency:** `flag-icon-css` (npm) at `3.5.0`
-**Registry deprecation message:** The project has been renamed to flag-icons
+**Dependency:** `flag-icon-css` (npm)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 3.5.0
+- Declared specifier: 3.5.0
+- Where that version came from: pinned
+- Manifest: package.json
+- Dependency group: runtime
+- Latest release on the registry: 4.1.7
+- Versions behind the latest release: major 1, minor 0, patch 0
+- Days since the package's latest release: 1757
+- Deprecated on the registry: yes
+- Registry deprecation message: The project has been renamed to flag-icons
+- Advisories affecting this version (scanner's count): 0
+- Highest advisory severity: not recorded
+- Why it was flagged: deprecated, stale
+- Advisories in detail (highest CVSS first): none
 
 ### Remediation to label
 
@@ -1940,8 +2377,24 @@ _None. The author was shown no passages for this item._
 
 ## ITEM-026
 
-**Dependency:** `stylelint-config-factorial` (npm) at `7.1.1`
-**Registry deprecation message:** DEPRECATED: Please use stylelint-config-suitcss instead.
+**Dependency:** `stylelint-config-factorial` (npm)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 7.1.1
+- Declared specifier: ^7.0.2
+- Where that version came from: range_latest_approx
+- Manifest: package.json
+- Dependency group: development
+- Latest release on the registry: 7.1.1
+- Versions behind the latest release: major 0, minor 0, patch 0
+- Days since the package's latest release: 3522
+- Deprecated on the registry: yes
+- Registry deprecation message: DEPRECATED: Please use stylelint-config-suitcss instead.
+- Advisories affecting this version (scanner's count): 0
+- Highest advisory severity: not recorded
+- Why it was flagged: deprecated, stale
+- Advisories in detail (highest CVSS first): none
 
 ### Remediation to label
 
@@ -1959,8 +2412,24 @@ _None. The author was shown no passages for this item._
 
 ## ITEM-027
 
-**Dependency:** `passport` (npm) at `0.4.1`
-**Advisories (measured):** CVE-2022-25896 (severity medium, fixed in 0.6.0)
+**Dependency:** `passport` (npm)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 0.4.1
+- Declared specifier: ^0.4.1
+- Where that version came from: lockfile
+- Manifest: api/package.json
+- Dependency group: runtime
+- Latest release on the registry: 0.7.0
+- Versions behind the latest release: major 0, minor 3, patch 0
+- Days since the package's latest release: 1045
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 1
+- Highest advisory severity: medium
+- Why it was flagged: vulnerable, stale
+- Advisories in detail (highest CVSS first): 1
+  - CVE-2022-25896 / GHSA-v923-w3x8-wh69: severity medium, CVSS 4.8, fixed in 0.6.0
 
 ### Remediation to label
 
@@ -1978,8 +2447,25 @@ _None. The author was shown no passages for this item._
 
 ## ITEM-028
 
-**Dependency:** `certifi` (pypi) at `2023.7.22`
-**Advisories (measured):** CVE-2024-39689 (severity high, fixed in 2024.7.4); CVE-2024-39689 (severity low, fixed in 2024.7.4)
+**Dependency:** `certifi` (pypi)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 2023.7.22
+- Declared specifier: ==2023.7.22
+- Where that version came from: pinned
+- Manifest: test_requirements.txt
+- Dependency group: development
+- Latest release on the registry: 2026.7.22
+- Versions behind the latest release: major 3, minor 1, patch 0
+- Days since the package's latest release: 77
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 2
+- Highest advisory severity: high
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 2
+  - CVE-2024-39689 / PYSEC-2024-230: severity high, CVSS 7.5, fixed in 2024.7.4
+  - CVE-2024-39689 / GHSA-248v-346w-9cwc: severity low, CVSS not recorded, fixed in 2024.7.4
 
 ### Remediation to label
 
@@ -1997,8 +2483,24 @@ _None. The author was shown no passages for this item._
 
 ## ITEM-029
 
-**Dependency:** `scipy` (pypi) at `1.9.3`
-**Advisories (measured):** CVE-2023-25399 (severity unknown, fixed in 1.10.0)
+**Dependency:** `scipy` (pypi)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 1.9.3
+- Declared specifier: ==1.9.3
+- Where that version came from: pinned
+- Manifest: requirements.txt
+- Dependency group: runtime
+- Latest release on the registry: 1.18.1
+- Versions behind the latest release: major 0, minor 9, patch 0
+- Days since the package's latest release: 47
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 1
+- Highest advisory severity: unknown
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 1
+  - CVE-2023-25399 / PYSEC-2023-102: severity unknown, CVSS not recorded, fixed in 1.10.0
 
 ### Remediation to label
 
@@ -2141,8 +2643,28 @@ and how to get involved.
 
 ## ITEM-030
 
-**Dependency:** `tornado` (pypi) at `5.1.1`
-**Advisories (measured):** CVE-2026-49853 (severity high, fixed in 6.5.6); CVE-2026-49853 (severity high, fixed in 6.5.6); CVE-2025-47287 (severity high, fixed in 6.5); CVE-2024-52804 (severity high, fixed in 6.4.2); CVE-2025-67725 (severity high, fixed in 6.5.3)
+**Dependency:** `tornado` (pypi)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 5.1.1
+- Declared specifier: ==5.1.1
+- Where that version came from: pinned
+- Manifest: requirements.txt
+- Dependency group: runtime
+- Latest release on the registry: 6.5.10
+- Versions behind the latest release: major 1, minor 0, patch 0
+- Days since the package's latest release: 22
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 33
+- Highest advisory severity: high
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 5
+  - CVE-2026-49853 / GHSA-3x9g-8vmp-wqvf: severity high, CVSS 7.7, fixed in 6.5.6
+  - CVE-2026-49853 / PYSEC-2026-3387: severity high, CVSS 7.7, fixed in 6.5.6
+  - CVE-2025-47287 / GHSA-7cx3-6m66-7c5m: severity high, CVSS 7.5, fixed in 6.5
+  - CVE-2024-52804 / GHSA-8w49-h785-mj3c: severity high, CVSS 7.5, fixed in 6.4.2
+  - CVE-2025-67725 / GHSA-c98p-7wgm-6p64: severity high, CVSS 7.5, fixed in 6.5.3
 
 ### Remediation to label
 
@@ -2230,8 +2752,24 @@ https://www.tornadoweb.org
 
 ## ITEM-031
 
-**Dependency:** `@react-native-community/bob` (npm) at `0.17.1`
-**Registry deprecation message:** This package has been renamed to 'react-native-builder-bob'. Please use it instead.
+**Dependency:** `@react-native-community/bob` (npm)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 0.17.1
+- Declared specifier: ^0.11.2
+- Where that version came from: range_latest_approx
+- Manifest: package.json
+- Dependency group: development
+- Latest release on the registry: 0.17.1
+- Versions behind the latest release: major 0, minor 0, patch 0
+- Days since the package's latest release: 2120
+- Deprecated on the registry: yes
+- Registry deprecation message: This package has been renamed to 'react-native-builder-bob'. Please use it instead.
+- Advisories affecting this version (scanner's count): 0
+- Highest advisory severity: not recorded
+- Why it was flagged: deprecated, stale
+- Advisories in detail (highest CVSS first): none
 
 ### Remediation to label
 
@@ -2309,8 +2847,24 @@ Some other tools for building React Native libraries that you may want to check 
 
 ## ITEM-032
 
-**Dependency:** `node-uuid` (npm) at `1.4.8`
-**Registry deprecation message:** Use uuid module instead
+**Dependency:** `node-uuid` (npm)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 1.4.8
+- Declared specifier: 1.4.8
+- Where that version came from: lockfile
+- Manifest: package.json
+- Dependency group: runtime
+- Latest release on the registry: 1.4.8
+- Versions behind the latest release: major 0, minor 0, patch 0
+- Days since the package's latest release: 3486
+- Deprecated on the registry: yes
+- Registry deprecation message: Use uuid module instead
+- Advisories affecting this version (scanner's count): 0
+- Highest advisory severity: not recorded
+- Why it was flagged: deprecated, stale
+- Advisories in detail (highest CVSS first): none
 
 ### Remediation to label
 
@@ -2359,8 +2913,25 @@ The npm package **node-uuid** is marked deprecated and its registry notes sugges
 
 ## ITEM-033
 
-**Dependency:** `h11` (pypi) at `0.12.0`
-**Advisories (measured):** CVE-2025-43859 (severity critical, fixed in 0.16.0); CVE-2025-43859 (severity critical, fixed in 0.16.0)
+**Dependency:** `h11` (pypi)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 0.12.0
+- Declared specifier: ==0.12.0
+- Where that version came from: pinned
+- Manifest: requirements.txt
+- Dependency group: runtime
+- Latest release on the registry: 0.16.0
+- Versions behind the latest release: major 0, minor 4, patch 0
+- Days since the package's latest release: 531
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 2
+- Highest advisory severity: critical
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 2
+  - CVE-2025-43859 / GHSA-vqfr-h8mv-ghfj: severity critical, CVSS 9.1, fixed in 0.16.0
+  - CVE-2025-43859 / PYSEC-2026-348: severity critical, CVSS 9.1, fixed in 0.16.0
 
 ### Remediation to label
 
@@ -2503,8 +3074,24 @@ to mourn that.)
 
 ## ITEM-034
 
-**Dependency:** `@babel/plugin-proposal-private-methods` (npm) at `7.18.6`
-**Registry deprecation message:** This proposal has been merged to the ECMAScript standard and thus this plugin is no longer maintained. Please use @babel/plugin-transform-private-methods instead.
+**Dependency:** `@babel/plugin-proposal-private-methods` (npm)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 7.18.6
+- Declared specifier: ^7.18.6
+- Where that version came from: range_latest_approx
+- Manifest: book/10-end/app/package.json
+- Dependency group: development
+- Latest release on the registry: 7.18.6
+- Versions behind the latest release: major 0, minor 0, patch 0
+- Days since the package's latest release: 1563
+- Deprecated on the registry: yes
+- Registry deprecation message: This proposal has been merged to the ECMAScript standard and thus this plugin is no longer maintained. Please use @babel/plugin-transform-private-methods instead.
+- Advisories affecting this version (scanner's count): 0
+- Highest advisory severity: not recorded
+- Why it was flagged: deprecated, stale
+- Advisories in detail (highest CVSS first): none
 
 ### Remediation to label
 
@@ -2567,8 +3154,28 @@ The `@babel/plugin-proposal-private-methods` package is deprecated because its p
 
 ## ITEM-035
 
-**Dependency:** `nodemailer` (npm) at `6.4.16`
-**Advisories (measured):** CVE-2026-92596 (severity high, fixed in 9.1.0); CVE-2025-14874 (severity high, fixed in 7.0.11); CVE-2026-100700 (severity high, fixed in 10.0.6); CVE-2026-82659 (severity high, fixed in 9.0.1); CVE-2026-82662 (severity high, fixed in 8.0.8)
+**Dependency:** `nodemailer` (npm)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 6.4.16
+- Declared specifier: ^6.3.1
+- Where that version came from: lockfile
+- Manifest: tutorials/backend/hasura/event-trigger/package.json
+- Dependency group: runtime
+- Latest release on the registry: 10.0.16
+- Versions behind the latest release: major 4, minor 6, patch 2
+- Days since the package's latest release: 0
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 16
+- Highest advisory severity: high
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 5
+  - CVE-2026-92596 / GHSA-2x7j-588g-ccc2: severity high, CVSS 7.5, fixed in 9.1.0
+  - CVE-2025-14874 / GHSA-rcmh-qjqh-p98v: severity high, CVSS 7.5, fixed in 7.0.11
+  - CVE-2026-100700 / GHSA-v53p-9fqp-m79j: severity high, CVSS 7.5, fixed in 10.0.6
+  - CVE-2026-82659 / GHSA-p6gq-j5cr-w38f: severity high, CVSS 7.1, fixed in 9.0.1
+  - CVE-2026-82662 / GHSA-r7g4-qg5f-qqm2: severity high, CVSS 6.5, fixed in 8.0.8
 
 ### Remediation to label
 
@@ -2586,8 +3193,28 @@ _None. The author was shown no passages for this item._
 
 ## ITEM-036
 
-**Dependency:** `werkzeug` (pypi) at `2.3.8`
-**Advisories (measured):** CVE-2024-34069 (severity high, fixed in 3.0.3); CVE-2024-49767 (severity medium, fixed in 3.0.6); CVE-2024-34069 (severity high, fixed in 3.0.3); CVE-2024-49767 (severity high, fixed in 3.0.6); CVE-2026-21860 (severity medium, fixed in 3.1.5)
+**Dependency:** `werkzeug` (pypi)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 2.3.8
+- Declared specifier: ==2.3.8
+- Where that version came from: pinned
+- Manifest: pyproject.toml
+- Dependency group: runtime
+- Latest release on the registry: 3.1.9
+- Versions behind the latest release: major 1, minor 0, patch 0
+- Days since the package's latest release: 10
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 13
+- Highest advisory severity: high
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 5
+  - CVE-2024-34069 / GHSA-2g68-c3qc-8985: severity high, CVSS 7.5, fixed in 3.0.3
+  - CVE-2024-49767 / GHSA-q34m-jh98-gwm2: severity medium, CVSS 7.5, fixed in 3.0.6
+  - CVE-2024-34069 / PYSEC-2026-2043: severity high, CVSS 7.5, fixed in 3.0.3
+  - CVE-2024-49767 / PYSEC-2026-3417: severity high, CVSS 7.5, fixed in 3.0.6
+  - CVE-2026-21860 / GHSA-87hc-h4r5-73f7: severity medium, CVSS 5.3, fixed in 3.1.5
 
 ### Remediation to label
 
@@ -2605,8 +3232,24 @@ _None. The author was shown no passages for this item._
 
 ## ITEM-037
 
-**Dependency:** `flag-icon-css` (npm) at `3.5.0`
-**Registry deprecation message:** The project has been renamed to flag-icons
+**Dependency:** `flag-icon-css` (npm)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 3.5.0
+- Declared specifier: 3.5.0
+- Where that version came from: pinned
+- Manifest: package.json
+- Dependency group: runtime
+- Latest release on the registry: 4.1.7
+- Versions behind the latest release: major 1, minor 0, patch 0
+- Days since the package's latest release: 1757
+- Deprecated on the registry: yes
+- Registry deprecation message: The project has been renamed to flag-icons
+- Advisories affecting this version (scanner's count): 0
+- Highest advisory severity: not recorded
+- Why it was flagged: deprecated, stale
+- Advisories in detail (highest CVSS first): none
 
 ### Remediation to label
 
@@ -2674,8 +3317,24 @@ The `flag-icon-css` package at version 3.5.0 is deprecated and has been rename
 
 ## ITEM-038
 
-**Dependency:** `@babel/plugin-proposal-logical-assignment-operators` (npm) at `7.20.7`
-**Registry deprecation message:** This proposal has been merged to the ECMAScript standard and thus this plugin is no longer maintained. Please use @babel/plugin-transform-logical-assignment-operators instead.
+**Dependency:** `@babel/plugin-proposal-logical-assignment-operators` (npm)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 7.20.7
+- Declared specifier: 7.20.7
+- Where that version came from: lockfile
+- Manifest: package.json
+- Dependency group: development
+- Latest release on the registry: 7.20.7
+- Versions behind the latest release: major 0, minor 0, patch 0
+- Days since the package's latest release: 1385
+- Deprecated on the registry: yes
+- Registry deprecation message: This proposal has been merged to the ECMAScript standard and thus this plugin is no longer maintained. Please use @babel/plugin-transform-logical-assignment-operators instead.
+- Advisories affecting this version (scanner's count): 0
+- Highest advisory severity: not recorded
+- Why it was flagged: deprecated, stale
+- Advisories in detail (highest CVSS first): none
 
 ### Remediation to label
 
@@ -2733,8 +3392,27 @@ The `@babel/plugin-proposal-logical-assignment-operators` package is deprecated 
 
 ## ITEM-039
 
-**Dependency:** `daphne` (pypi) at `2.1.2`
-**Advisories (measured):** CVE-2026-44545 (severity high, fixed in 4.2.2); CVE-2026-44545 (severity medium, fixed in 4.2.2); CVE-2026-44546 (severity medium, fixed in 4.2.2); CVE-2026-44546 (severity low, fixed in 4.2.2)
+**Dependency:** `daphne` (pypi)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 2.1.2
+- Declared specifier: ==2.1.2
+- Where that version came from: pinned
+- Manifest: requirements.txt
+- Dependency group: runtime
+- Latest release on the registry: 4.2.3
+- Versions behind the latest release: major 2, minor 4, patch 0
+- Days since the package's latest release: 78
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 4
+- Highest advisory severity: high
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 4
+  - CVE-2026-44545 / PYSEC-2026-213: severity high, CVSS 7.5, fixed in 4.2.2
+  - CVE-2026-44545 / GHSA-rrc9-mx66-ffcm: severity medium, CVSS 5.3, fixed in 4.2.2
+  - CVE-2026-44546 / PYSEC-2026-214: severity medium, CVSS 5.3, fixed in 4.2.2
+  - CVE-2026-44546 / GHSA-xh68-hfp5-5x5m: severity low, CVSS 3.7, fixed in 4.2.2
 
 ### Remediation to label
 
@@ -2922,8 +3600,28 @@ This repository is part of the Channels project. For the shepherd and maintenanc
 
 ## ITEM-040
 
-**Dependency:** `axios` (npm) at `0.24.0`
-**Advisories (measured):** CVE-2026-44492 (severity high, fixed in 1.16.0); CVE-2026-25639 (severity high, fixed in 1.13.5); CVE-2026-42039 (severity medium, fixed in 1.15.1); CVE-2026-44496 (severity high, fixed in 1.16.0); CVE-2026-44486 (severity high, fixed in 1.16.0)
+**Dependency:** `axios` (npm)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 0.24.0
+- Declared specifier: ^0.24.0
+- Where that version came from: lockfile
+- Manifest: client/package.json
+- Dependency group: runtime
+- Latest release on the registry: 1.20.0
+- Versions behind the latest release: major 1, minor 10, patch 0
+- Days since the package's latest release: 42
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 23
+- Highest advisory severity: high
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 5
+  - CVE-2026-44492 / GHSA-pjwm-pj3p-43mv: severity high, CVSS 8.6, fixed in 1.16.0
+  - CVE-2026-25639 / GHSA-43fc-jf86-j433: severity high, CVSS 7.5, fixed in 1.13.5
+  - CVE-2026-42039 / GHSA-62hf-57xw-28j9: severity medium, CVSS 7.5, fixed in 1.15.1
+  - CVE-2026-44496 / GHSA-hfxv-24rg-xrqf: severity high, CVSS 7.5, fixed in 1.16.0
+  - CVE-2026-44486 / GHSA-j5f8-grm9-p9fc: severity high, CVSS 7.5, fixed in 1.16.0
 
 ### Remediation to label
 
@@ -2941,8 +3639,28 @@ _None. The author was shown no passages for this item._
 
 ## ITEM-041
 
-**Dependency:** `axios` (npm) at `1.5.0`
-**Advisories (measured):** CVE-2026-44494 (severity high, fixed in 1.16.0); CVE-2026-25639 (severity high, fixed in 1.13.5); CVE-2025-58754 (severity high, fixed in 1.12.0); CVE-2026-42039 (severity medium, fixed in 1.15.1); CVE-2026-44496 (severity high, fixed in 1.16.0)
+**Dependency:** `axios` (npm)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 1.5.0
+- Declared specifier: ^1.5.0
+- Where that version came from: lockfile
+- Manifest: package.json
+- Dependency group: runtime
+- Latest release on the registry: 1.20.0
+- Versions behind the latest release: major 0, minor 15, patch 1
+- Days since the package's latest release: 42
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 32
+- Highest advisory severity: high
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 5
+  - CVE-2026-44494 / GHSA-35jp-ww65-95wh: severity high, CVSS 8.7, fixed in 1.16.0
+  - CVE-2026-25639 / GHSA-43fc-jf86-j433: severity high, CVSS 7.5, fixed in 1.13.5
+  - CVE-2025-58754 / GHSA-4hjh-wcwx-xvwj: severity high, CVSS 7.5, fixed in 1.12.0
+  - CVE-2026-42039 / GHSA-62hf-57xw-28j9: severity medium, CVSS 7.5, fixed in 1.15.1
+  - CVE-2026-44496 / GHSA-hfxv-24rg-xrqf: severity high, CVSS 7.5, fixed in 1.16.0
 
 ### Remediation to label
 
@@ -3022,8 +3740,28 @@ We are thrilled to welcome our new contributors. Thank you for helping improve a
 
 ## ITEM-042
 
-**Dependency:** `requests` (pypi) at `2.20.0`
-**Advisories (measured):** CVE-2023-32681 (severity medium, fixed in 2.31.0); CVE-2024-35195 (severity medium, fixed in 2.32.0); CVE-2024-35195 (severity medium, fixed in 2.32.0); CVE-2026-25645 (severity medium, fixed in 2.33.0); CVE-2024-47081 (severity medium, fixed in 2.32.4)
+**Dependency:** `requests` (pypi)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 2.20.0
+- Declared specifier: ==2.20.0
+- Where that version came from: pinned
+- Manifest: dev_requirements.txt
+- Dependency group: development
+- Latest release on the registry: 2.34.2
+- Versions behind the latest release: major 0, minor 14, patch 1
+- Days since the package's latest release: 146
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 8
+- Highest advisory severity: medium
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 5
+  - CVE-2023-32681 / GHSA-j8r2-6x86-q33q: severity medium, CVSS 6.1, fixed in 2.31.0
+  - CVE-2024-35195 / GHSA-9wx4-h78v-vm56: severity medium, CVSS 5.6, fixed in 2.32.0
+  - CVE-2024-35195 / PYSEC-2026-1873: severity medium, CVSS 5.6, fixed in 2.32.0
+  - CVE-2026-25645 / PYSEC-2026-2275: severity medium, CVSS 5.5, fixed in 2.33.0
+  - CVE-2024-47081 / GHSA-9hjg-9r4m-mvj7: severity medium, CVSS 5.3, fixed in 2.32.4
 
 ### Remediation to label
 
@@ -3202,8 +3940,25 @@ in sub-classes of
 
 ## ITEM-043
 
-**Dependency:** `@nestjs/core` (npm) at `8.0.5`
-**Advisories (measured):** CVE-2026-35515 (severity medium, fixed in 11.1.18); CVE-2023-26108 (severity medium, fixed in 9.0.5)
+**Dependency:** `@nestjs/core` (npm)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 8.0.5
+- Declared specifier: ^8.0.5
+- Where that version came from: lockfile
+- Manifest: api/package.json
+- Dependency group: runtime
+- Latest release on the registry: 12.1.2
+- Versions behind the latest release: major 4, minor 4, patch 6
+- Days since the package's latest release: 7
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 2
+- Highest advisory severity: medium
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 2
+  - CVE-2026-35515 / GHSA-36xv-jgw5-4q75: severity medium, CVSS 6.1, fixed in 11.1.18
+  - CVE-2023-26108 / GHSA-4jpv-8r57-pv7j: severity medium, CVSS 5.3, fixed in 9.0.5
 
 ### Remediation to label
 
@@ -3258,8 +4013,24 @@ Nest is a framework for building efficient, scalable <a href="https://nodejs.org
 
 ## ITEM-044
 
-**Dependency:** `@nextui-org/react` (npm) at `2.2.10`
-**Registry deprecation message:** This package has been deprecated. Please use @heroui/react instead.
+**Dependency:** `@nextui-org/react` (npm)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 2.2.10
+- Declared specifier: ^2.2.10
+- Where that version came from: lockfile
+- Manifest: frontend/package.json
+- Dependency group: runtime
+- Latest release on the registry: 2.6.11
+- Versions behind the latest release: major 0, minor 4, patch 0
+- Days since the package's latest release: 640
+- Deprecated on the registry: yes
+- Registry deprecation message: This package has been deprecated. Please use @heroui/react instead.
+- Advisories affecting this version (scanner's count): 0
+- Highest advisory severity: not recorded
+- Why it was flagged: deprecated
+- Advisories in detail (highest CVSS first): none
 
 ### Remediation to label
 
@@ -3333,8 +4104,27 @@ npm install @heroui/react
 
 ## ITEM-045
 
-**Dependency:** `pyyaml` (pypi) at `3.12`
-**Advisories (measured):** CVE-2020-14343 (severity critical, fixed in 5.4); CVE-2017-18342 (severity critical, fixed in 5.1); CVE-2017-18342 (severity unknown, fixed in 5.1); CVE-2020-14343 (severity unknown, fixed in 5.4)
+**Dependency:** `pyyaml` (pypi)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 3.12
+- Declared specifier: ==3.12
+- Where that version came from: pinned
+- Manifest: requirements.txt
+- Dependency group: runtime
+- Latest release on the registry: 6.0.3
+- Versions behind the latest release: major 2, minor 1, patch 0
+- Days since the package's latest release: 373
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 4
+- Highest advisory severity: critical
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 4
+  - CVE-2020-14343 / GHSA-8q59-q68h-6hv4: severity critical, CVSS 9.8, fixed in 5.4
+  - CVE-2017-18342 / GHSA-rprw-h62v-c2w7: severity critical, CVSS 9.8, fixed in 5.1
+  - CVE-2017-18342 / PYSEC-2018-49: severity unknown, CVSS not recorded, fixed in 5.1
+  - CVE-2020-14343 / PYSEC-2021-142: severity unknown, CVSS not recorded, fixed in 5.4
 
 ### Remediation to label
 
@@ -3437,8 +4227,25 @@ If you don't trust the input YAML stream, you should use:
 
 ## ITEM-046
 
-**Dependency:** `scikit-learn` (pypi) at `1.1.1`
-**Advisories (measured):** CVE-2024-5206 (severity medium, fixed in 1.5.0); CVE-2024-5206 (severity medium, fixed in 1.5.0)
+**Dependency:** `scikit-learn` (pypi)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 1.1.1
+- Declared specifier: ==1.1.1
+- Where that version came from: pinned
+- Manifest: requirements.txt
+- Dependency group: runtime
+- Latest release on the registry: 1.9.1
+- Versions behind the latest release: major 0, minor 8, patch 2
+- Days since the package's latest release: 27
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 2
+- Highest advisory severity: medium
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 2
+  - CVE-2024-5206 / GHSA-jw8x-6495-233v: severity medium, CVSS 5.3, fixed in 1.5.0
+  - CVE-2024-5206 / PYSEC-2024-110: severity medium, CVSS 4.7, fixed in 1.5.0
 
 ### Remediation to label
 
@@ -3456,8 +4263,25 @@ _None. The author was shown no passages for this item._
 
 ## ITEM-047
 
-**Dependency:** `gdown` (pypi) at `3.13.0`
-**Advisories (measured):** CVE-2026-40491 (severity high, fixed in 5.2.2); CVE-2026-40491 (severity medium, fixed in 5.2.2)
+**Dependency:** `gdown` (pypi)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 3.13.0
+- Declared specifier: ==3.13.0
+- Where that version came from: pinned
+- Manifest: requirements_demo.txt
+- Dependency group: runtime
+- Latest release on the registry: 6.4.1
+- Versions behind the latest release: major 3, minor 2, patch 1
+- Days since the package's latest release: 8
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 2
+- Highest advisory severity: high
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 2
+  - CVE-2026-40491 / PYSEC-2026-2158: severity high, CVSS 7.8, fixed in 5.2.2
+  - CVE-2026-40491 / GHSA-76hw-p97h-883f: severity medium, CVSS 6.5, fixed in 5.2.2
 
 ### Remediation to label
 
@@ -3475,8 +4299,28 @@ _None. The author was shown no passages for this item._
 
 ## ITEM-048
 
-**Dependency:** `pyjwt` (pypi) at `1.6.0`
-**Advisories (measured):** CVE-2026-102268 (severity critical, fixed in 2.14.0); CVE-2026-102268 (severity critical, fixed in 2.14.0); CVE-2026-32597 (severity high, fixed in 2.12.0); CVE-2026-32597 (severity high, fixed in 2.12.0); CVE-2026-102267 (severity high, fixed in 2.14.0)
+**Dependency:** `pyjwt` (pypi)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 1.6.0
+- Declared specifier: ==1.6.0
+- Where that version came from: pinned
+- Manifest: requirements.txt
+- Dependency group: runtime
+- Latest release on the registry: 2.15.1
+- Versions behind the latest release: major 1, minor 1, patch 3
+- Days since the package's latest release: 9
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 19
+- Highest advisory severity: critical
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 5
+  - CVE-2026-102268 / GHSA-ffc3-869f-jxw9: severity critical, CVSS 9.1, fixed in 2.14.0
+  - CVE-2026-102268 / PYSEC-2026-4145: severity critical, CVSS 9.1, fixed in 2.14.0
+  - CVE-2026-32597 / GHSA-752w-5fwx-jx9f: severity high, CVSS 7.5, fixed in 2.12.0
+  - CVE-2026-32597 / PYSEC-2026-120: severity high, CVSS 7.5, fixed in 2.12.0
+  - CVE-2026-102267 / GHSA-9v7f-9g4p-ffgj: severity high, CVSS 7.4, fixed in 2.14.0
 
 ### Remediation to label
 
@@ -3594,8 +4438,24 @@ Usage
 
 ## ITEM-049
 
-**Dependency:** `react-navigation-tabs` (npm) at `2.5.6`
-**Registry deprecation message:** This package is no longer supported. Please use @react-navigation/bottom-tabs instead. See https://reactnavigation.org/docs/bottom-tab-navigator/ for usage guide
+**Dependency:** `react-navigation-tabs` (npm)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 2.5.6
+- Declared specifier: 2.5.6
+- Where that version came from: pinned
+- Manifest: tutorials/mobile/react-native-apollo/app-boilerplate/package.json
+- Dependency group: runtime
+- Latest release on the registry: 2.11.2
+- Versions behind the latest release: major 0, minor 6, patch 0
+- Days since the package's latest release: 1708
+- Deprecated on the registry: yes
+- Registry deprecation message: This package is no longer supported. Please use @react-navigation/bottom-tabs instead. See https://reactnavigation.org/docs/bottom-tab-navigator/ for usage guide
+- Advisories affecting this version (scanner's count): 0
+- Highest advisory severity: not recorded
+- Why it was flagged: deprecated, stale
+- Advisories in detail (highest CVSS first): none
 
 ### Remediation to label
 
@@ -3613,8 +4473,25 @@ _None. The author was shown no passages for this item._
 
 ## ITEM-050
 
-**Dependency:** `webpack-dev-middleware` (npm) at `3.1.3`
-**Advisories (measured):** CVE-2026-76844 (severity high, fixed in 8.3.0); CVE-2024-29180 (severity high, fixed in 7.1.0)
+**Dependency:** `webpack-dev-middleware` (npm)
+
+**Measured data** (all of it counts as evidence):
+
+- Version in use: 3.1.3
+- Declared specifier: ^3.1.3
+- Where that version came from: lockfile
+- Manifest: package.json
+- Dependency group: development
+- Latest release on the registry: 8.3.0
+- Versions behind the latest release: major 5, minor 6, patch 0
+- Days since the package's latest release: 34
+- Deprecated on the registry: no
+- Advisories affecting this version (scanner's count): 2
+- Highest advisory severity: high
+- Why it was flagged: vulnerable
+- Advisories in detail (highest CVSS first): 2
+  - CVE-2026-76844 / GHSA-g84c-rxfj-3j2c: severity high, CVSS 7.4, fixed in 8.3.0
+  - CVE-2024-29180 / GHSA-wr3j-pwj9-hqq6: severity high, CVSS 7.4, fixed in 7.1.0
 
 ### Remediation to label
 
