@@ -1,0 +1,27 @@
+{
+  "run_id": "A_75246f3b_openai-gpt-oss-120b",
+  "condition": "A",
+  "description": "no retrieval: the same task and prompt, no passages",
+  "internal": false,
+  "items_file": "labelled_set.jsonl",
+  "items_sha256": "75246f3b462c31e9ff77aabc0fdddc182967d639e51334932f6542bacfcba9eb",
+  "items": 150,
+  "generator_model": "openai/gpt-oss-120b",
+  "temperature": 0,
+  "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "k": 5,
+  "grounding_min_sim": 0.3,
+  "grounding_min_chars": 400,
+  "prompt_digest": "eab96f832b2762b5",
+  "started_at": "2026-10-08T20:45:21.132939+00:00",
+  "sessions": [
+    {
+      "started_at": "2026-10-08T20:45:21.132939+00:00",
+      "finished_at": "2026-10-08T22:37:09.371362+00:00",
+      "attempted": 150,
+      "stopped": null
+    }
+  ],
+  "completed": 150,
+  "failed": 0
+}

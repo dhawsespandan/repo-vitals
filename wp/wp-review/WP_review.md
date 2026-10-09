@@ -17,8 +17,8 @@ Each WP below says what was done, how it was checked, and what deviates from Fil
 | WP-4 | **Complete**: 914 repositories over all 240 strata | Allocation fixed mid-run (§11.29); admission rate 68% (flagged, explained) |
 | WP-5 | **Complete**: 914/914 scanned, 29,494 occurrences, dump verified | One repo rescanned after a crash damaged its archive (§11.30) |
 | WP-6 | **Signed** (8 Oct): weights v2 approved for adoption | Checks 3 and 4 acknowledged (entropy disagreement, Scorecard null); single-judgment matrix |
-| WP-8 | **Ready to start**: labelled set of 150 frozen, pilot passed (Phase 13) | PyPI has no replacement items (none in the corpus); PyPI retrieval is mostly READMEs (decide before starting) |
-| WP-9 | Not due | |
+| WP-8 | **Complete** (9 Oct): A, B and C each 150/150, 0 failed, all judged | Generation divided over four members' free-tier keys (disclosed); PyPI retrieval left as is (S3 limitation); no PyPI replacement items |
+| WP-9 | **Ready**: blind packet of 50 items in `wp-9/` | Labeller: Spandan (the only judge of the judge) |
 
 ---
 
@@ -203,31 +203,50 @@ The same commit fixed `corpus_report`, which had counted 575 "strata" (one per s
 2. `rescore --weights v2` materialised the corpus panel offline. All 914 scores equal the report's.
 3. The code default is now `v2`, so each deploy scores new scans under it. Stored `v1` rows keep their tag.
 
-## WP-8: S3 experiment runs. READY TO START
+## WP-8: S3 experiment runs. COMPLETE
 
-`wp-8/README.md` is the runbook: keys, commands, pace, the two-day judge quota, the review checklist and the deliverable.
+`wp-8/` holds:
+- `wp8_run_log.md`: dates, interruptions, completion counts, anomalies and the key ledger.
+- `runs/`: the three run folders and `analysis/` (`tables.md` and one CSV per table).
+- The runbook, the frozen set and the pilot, as before.
 
-**Inputs ready (Phase 13, decisions §13.14):**
-- `wp-8/labelled_set.jsonl` holds 150 items, frozen at sha256 `75246f3b…a9eb`, extracted from WP-5's snapshot.
-  - npm: 37 `cve_fix` and 38 `deprecation_replacement`.
-  - PyPI: 75 `cve_fix` only, since no deprecated PyPI package in the corpus names its successor.
-  - 22 of the 150 are items whose answer TARGET does not already show (§13.13).
-- The 20-item pilot ran A, B and C end to end: a kill and resume, judge cache hits, and analysis tables. Its tables are in `wp-8/pilot/`.
+| Check (File B) | Result |
+|---|---|
+| Each condition 150/150 | pass: A, B and C each 150/150 |
+| Failures under 5 | pass: 0 in every condition |
+| Every condition × ecosystem cell populated | pass (PyPI × replacement is empty by construction) |
+| Judged | 150/150 per condition |
 
-**Deviations from File B:**
-- The PyPI × replacement cell is empty by construction.
-- The judge is `gemini-3.5-flash-lite`. The free tier's 20 requests a day per Flash model cannot judge 750 generations, so judging spans two days.
+**Run:** 2026-10-09, on `v0.13.0`, with generator `openai/gpt-oss-120b` and judge `gemini-3.5-flash-lite`.
 
-**Decide before starting:** PyPI items mostly retrieve READMEs, and the precision@k of every PyPI pilot item is 0. Widening retrieval changes condition C, so it happens before WP-8 or after it, never during (`wp-8/README.md`).
+**Deviations, all disclosed in the run log:**
+- Generation was divided over four team members' free-tier Groq keys, one at a time, because no paid tier was possible. Model, prompts and pacing were identical throughout.
+- PyPI retrieval was left as is: mostly READMEs (decisions §13.14 (4)). That is a threat to validity for S3's PyPI arm.
+- One B npm item has no precision@k verdict.
 
-## WP-9: Judge-validation labels. NOT DUE
+The judge cache is held back until WP-9 is labelled, to keep the labelling blind. Results are not interpreted here; that is the paper's job.
 
-`wp-9/`: `wp9_labelling_guide.md` (matches File B Appendix C). The item IDs come only from the packet generated after WP-8.
+## WP-9: Judge-validation labels. READY
 
----
+`wp-9/` holds:
+- `judge_validation_packet.md`: 50 items stratified by condition and ecosystem (A 18, B 16, C 16; 25 npm, 25 PyPI), with the judge's verdicts **hidden**.
+- `wp9_judge_labels_template.csv`: fill it in, and save it as `wp9_judge_labels.csv`.
+- `wp9_labelling_guide.md`: File B Appendix C's worked examples.
+
+The answer key (`research_data/runs/judge_validation/judge_validation_key.json`) stays local and gitignored. **Do not open it, or `research_data/runs/judge_cache.jsonl`, before labelling is finished.**
+
+**How to label:** one sitting, about 3–4 hours.
+- Judge each remediation claim by claim, against only the facts and passages shown with it.
+- Use `faithful`, `minor_unsupported` or `major_unsupported`.
+- Add a one-line note for every label that is not `faithful`.
+- Skip nothing.
+
+**After labelling:** `judge_validation_kappa` computes Cohen's kappa between your labels and the judge's, and that number goes into S3.
 
 ## Order from here
 
 1. ~~Phase 12, commit 7~~: done (§12.19). `v0.12.0` is not moved; commit 7 ships in `v0.13.0`.
 2. ~~Phase 13~~: closed at `v0.13.0` (decisions §13.14-13.15).
-3. **WP-8** (runbook in `wp-8/README.md`), then **WP-9** once one condition is complete.
+3. ~~WP-8~~: complete (9 Oct).
+4. **WP-9:** Spandan labels the 50-item packet; then kappa.
+5. **Phase 14**, then S1 and S3.
