@@ -228,14 +228,23 @@ The judge cache is held back until WP-9 is labelled, to keep the labelling blind
 
 ## WP-9: Judge-validation labels. READY
 
+**The labeller needs only `wp-9/`.** Start with `wp-9/README_WP9.md`, which is self-contained: the rules, the rubric, worked examples, hard cases and how to return the labels.
+
 `wp-9/` holds:
-- `judge_validation_packet.md`: 50 items stratified by condition and ecosystem (A 18, B 16, C 16; 25 npm, 25 PyPI), with the judge's verdicts **hidden**.
-- `wp9_judge_labels_template.csv`: fill it in, and save it as `wp9_judge_labels.csv`.
-- `wp9_labelling_guide.md`: File B Appendix C's worked examples.
+- `README_WP9.md`: the full instructions.
+- `wp9_labelling_workbook.xlsx`, with four sheets:
+  - `Labels`: dropdown labels, note column and per-row checks;
+  - `Items`: all 50 items;
+  - `Progress`: shows READY TO RETURN when complete;
+  - `Start here`.
+- `judge_validation_packet.md`: the same 50 items in a readable layout, stratified by condition and ecosystem (A 18, B 16, C 16; 25 npm, 25 PyPI), with the judge's verdicts **hidden**.
+- `wp9_judge_labels_template.csv`: a plain-CSV alternative to the workbook.
+
+**The rubric matches the judge's exactly.** The measured facts count as evidence, as do the passages, so an item with no passages can still be `faithful`. The older `wp9_labelling_guide.md` said an empty source is always `major`, which contradicts the judge, so it was removed; git history keeps it. The workbook → CSV → kappa path was tested end to end on 10 Oct with throwaway labels, and the test files were deleted.
 
 The answer key (`research_data/runs/judge_validation/judge_validation_key.json`) stays local and gitignored. **Do not open it, or `research_data/runs/judge_cache.jsonl`, before labelling is finished.**
 
-**Who labels:** one team member, alone. That person must not have seen any judge verdict. Neither the answer key nor the judge cache is on GitHub. Return the filled CSV to Spandan, who has the key and runs the kappa step.
+**Who labels:** one team member, alone. That person must not have seen any judge verdict. Neither the answer key nor the judge cache is on GitHub. Return the filled workbook (or CSV) to Spandan, privately. Spandan has the key, and runs the conversion and kappa steps at the end of `README_WP9.md`.
 
 **How to label:** one sitting, about 3–4 hours.
 - Judge each remediation claim by claim, against only the facts and passages shown with it.

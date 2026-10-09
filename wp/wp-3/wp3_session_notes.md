@@ -8,7 +8,7 @@
 
 ## Deviation from File B: one judgment, not two independent judges
 
-File B WP-3 asks for two judges who fill the matrix independently, a consistency check, and a documented reconciliation. On 2026-10-08 the team was unavailable, and Spandan completed the remaining work packages alone. At his direction, the six pairwise judgments were produced with an AI tool, reasoning only from File B's definitions of the four signals. Spandan owns this deliverable.
+File B WP-3 asks for two judges who fill the matrix independently, a consistency check, and a documented reconciliation. On 2026-10-08 the team was unavailable, and Spandan completed the remaining work packages alone. At Spandan's direction, the six pairwise judgments were produced with an AI tool, reasoning only from File B's definitions of the four signals. Spandan owns this deliverable.
 
 What this means, stated so it isn't hidden:
 
