@@ -272,19 +272,8 @@ def build_packet(
     *,
     size: int = DEFAULT_SIZE,
     seed: int = 42,
-    exclude: frozenset[tuple[str, str]] = frozenset(),
 ) -> list[Path]:
-    """Sample, render and write the packet, its template and its key.
-
-    `exclude` holds `(item_id, condition)` pairs left out of the sample: a
-    re-validation labels a *fresh* 50, and tuning a rubric on one set of labels
-    and then scoring it on the same set would overfit (decisions §13.17).
-    """
-    candidates = [
-        candidate
-        for candidate in judged_candidates(run_dirs, items, cache)
-        if (candidate.record["item_id"], candidate.record["condition"]) not in exclude
-    ]
+    candidates = judged_candidates(run_dirs, items, cache)
     if not candidates:
         raise ValidationPacketError(
             "No judged generations to sample from. Run a condition with a "
@@ -312,7 +301,16 @@ def build_packet(
         number = f"ITEM-{index:03d}"
         packet += _render_item(number, candidate)
         writer.writerow([number, "", ""])
-        key[number] = _key_entry(candidate)
+        key[number] = {
+            "run_id": candidate.run_id,
+            "item_id": candidate.record["item_id"],
+            "condition": candidate.record["condition"],
+            "ecosystem": candidate.item["ecosystem"],
+            "case_type": candidate.item["case_type"],
+            "judge_verdict": candidate.judgment.get("verdict"),
+            "judge_note": candidate.judgment.get("note"),
+            "judge_version": candidate.judgment.get("judge_version"),
+        }
 
     written = [
         out_dir / PACKET_FILENAME,
@@ -335,154 +333,6 @@ def build_packet(
         encoding="utf-8",
     )
     return written
-
-
-def _key_entry(candidate: Candidate) -> dict:
-    return {
-        "run_id": candidate.run_id,
-        "item_id": candidate.record["item_id"],
-        "condition": candidate.record["condition"],
-        "ecosystem": candidate.item["ecosystem"],
-        "case_type": candidate.item["case_type"],
-        "judge_verdict": candidate.judgment.get("verdict"),
-        "judge_note": candidate.judgment.get("note"),
-        "judge_version": candidate.judgment.get("judge_version"),
-    }
-
-
-def reconstruct_key(
-    candidates: list[Candidate],
-    packet_text: str,
-    *,
-    size: int = DEFAULT_SIZE,
-    seed: int = 42,
-) -> dict[str, dict]:
-    """The packet's answer key, rebuilt from the runs, or a refusal.
-
-    The sample is a seeded function of the judged generations, so the same
-    candidates, size and seed choose the same items in the same order. That is
-    an assumption until it is checked, and it is checked strictly: every item
-    is rendered again and must appear in `packet_text` verbatim — dependency,
-    measured data, remediation and every passage — and the packet must hold no
-    item the rebuild did not produce. A mismatch is refused, never repaired.
-
-    `candidates` carry the judge's verdict as recorded (`metrics.csv`), so the
-    key can be rebuilt from an export, which holds no judge cache (decisions
-    §15.3).
-    """
-    chosen = stratified(candidates, size, seed)
-    key: dict[str, dict] = {}
-    for index, candidate in enumerate(chosen, 1):
-        number = f"ITEM-{index:03d}"
-        if "\n".join(_render_item(number, candidate)) not in packet_text:
-            raise ValidationPacketError(
-                f"{number} as re-sampled ({candidate.run_id}, "
-                f"{candidate.record['item_id']}) is not in the packet verbatim: this "
-                "packet was not drawn from these runs with this seed."
-            )
-        key[number] = _key_entry(candidate)
-    in_packet = packet_text.count("\n## ITEM-") + packet_text.startswith("## ITEM-")
-    if in_packet != len(key):
-        raise ValidationPacketError(
-            f"The packet holds {in_packet} items and the rebuild produced {len(key)}."
-        )
-    return key
-
-
-# ── faithfulness from the human labels (decisions §15.3) ───────────────────
-
-
-@dataclass(frozen=True)
-class LabelCounts:
-    """One group's labels: the human's, and the judge's on the same items."""
-
-    condition: str
-    ecosystem: str
-    n: int
-    human: dict[str, int]
-    judge: dict[str, int]
-
-    @property
-    def unsupported(self) -> int:
-        return self.human[judge.MINOR] + self.human[judge.MAJOR]
-
-
-def wilson_interval(successes: int, n: int, z: float = 1.959964) -> tuple[float, float]:
-    """The Wilson score interval for a proportion: sound at n of 16 and at 0 or n."""
-    if n <= 0:
-        return 0.0, 0.0
-    p = successes / n
-    denominator = 1 + z * z / n
-    centre = (p + z * z / (2 * n)) / denominator
-    half = z * ((p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5) / denominator
-    return max(0.0, centre - half), min(1.0, centre + half)
-
-
-def human_faithfulness(
-    labels: dict[str, tuple[str, str]], key: dict
-) -> list[LabelCounts]:
-    """Label counts per condition x ecosystem, per condition, and overall.
-
-    The S3 faithfulness evidence once the judge is not validated (File C
-    §3.4.1, decisions §13.17): one human label per sampled generation. The
-    sample is stratified by condition x ecosystem, not paired across
-    conditions, so the paired Wilcoxon File C prespecifies for judged
-    faithfulness does not apply here; the groups are compared descriptively.
-    """
-    groups: dict[tuple[str, str], list[str]] = defaultdict(list)
-    for number in sorted(labels):
-        entry = key[number]
-        for group in (
-            (entry["condition"], entry["ecosystem"]),
-            (entry["condition"], "all"),
-            ("all", "all"),
-        ):
-            groups[group].append(number)
-
-    def counted(values: list[str]) -> dict[str, int]:
-        return {verdict: values.count(verdict) for verdict in judge.VERDICTS}
-
-    rows = []
-    for (condition, ecosystem), numbers in sorted(
-        groups.items(),
-        key=lambda pair: (
-            pair[0][0] == "all",
-            pair[0][0],
-            pair[0][1] == "all",
-            pair[0][1],
-        ),
-    ):
-        rows.append(
-            LabelCounts(
-                condition=condition,
-                ecosystem=ecosystem,
-                n=len(numbers),
-                human=counted([labels[number][0] for number in numbers]),
-                judge=counted([key[number]["judge_verdict"] for number in numbers]),
-            )
-        )
-    return rows
-
-
-def human_faithfulness_table(rows: list[LabelCounts]) -> str:
-    lines = [
-        "| Condition | Ecosystem | n | Human: faithful / minor / major | "
-        "Unsupported (minor or major), 95% Wilson | Major, 95% Wilson | "
-        "Judge on the same items: faithful / minor / major |",
-        "|---|---|---|---|---|---|---|",
-    ]
-    for row in rows:
-        unsupported = wilson_interval(row.unsupported, row.n)
-        major = wilson_interval(row.human[judge.MAJOR], row.n)
-        lines.append(
-            f"| {row.condition} | {row.ecosystem} | {row.n} | "
-            + " / ".join(str(row.human[v]) for v in judge.VERDICTS)
-            + f" | {row.unsupported / row.n:.2f} [{unsupported[0]:.2f}, {unsupported[1]:.2f}]"
-            + f" | {row.human[judge.MAJOR] / row.n:.2f} [{major[0]:.2f}, {major[1]:.2f}] | "
-            + " / ".join(str(row.judge[v]) for v in judge.VERDICTS)
-            + " |"
-        )
-    return "\n".join(lines)
 
 
 # ── the labels coming back ─────────────────────────────────────────────────

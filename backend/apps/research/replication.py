@@ -36,7 +36,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
 
-from apps.research.experiment import analysis, judge, judge_validation, metrics, runner
+from apps.research.experiment import analysis, judge, metrics, runner
 from apps.research.export import DOCUMENTS, MANIFEST_FILENAME, sha256
 from apps.research.validation import anchors, harness, panel, reference, report
 
@@ -502,63 +502,6 @@ def s3_dataset(directory: Path) -> S3Replication:
                     )
     dataset = analysis.Dataset(runs=manifests, rows=rows, unjudged=unjudged)
     return S3Replication(dataset=dataset, disagreements=disagreements)
-
-
-WP9_PACKET = "judge_validation/judge_validation_packet.md"
-WP9_LABELS = "judge_validation/wp9_judge_labels.csv"
-
-
-def wp9_candidates(directory: Path) -> list[judge_validation.Candidate]:
-    """Every judged generation in the export, as the packet sampler saw them.
-
-    The judge's verdict is the recorded one (`metrics.csv`); the passages are
-    the ones the generation was shown, exactly as `judged_candidates` picks
-    them, because the packet rendered those.
-    """
-    items, _ = runner.load_items(directory / LABELLED_SET)
-    by_id = {item["item_id"]: item for item in items}
-    verdicts = recorded_verdicts(directory)
-    found: list[judge_validation.Candidate] = []
-    for run_dir in run_directories(directory):
-        for record in runner.latest_records(run_dir / runner.ITEMS_FILENAME).values():
-            item = by_id.get(record["item_id"])
-            recorded = verdicts.get((record["item_id"], record["condition"])) or {}
-            if record.get("status") != "ok" or item is None:
-                continue
-            if not recorded.get("faithfulness"):
-                continue
-            shown_ids = set(record.get("shown_chunk_ids") or [])
-            shown = [
-                chunk
-                for chunk in record.get("retrieved") or []
-                if str(chunk.get("chunk_id")) in shown_ids
-            ]
-            found.append(
-                judge_validation.Candidate(
-                    run_dir.name,
-                    record,
-                    item,
-                    {"verdict": recorded["faithfulness"], "shown": shown},
-                )
-            )
-    return found
-
-
-def wp9_key(directory: Path, *, seed: int = 42) -> dict[str, dict]:
-    """WP-9's answer key, rebuilt from the export and checked against its packet.
-
-    The sample size is the packet's own item count; the seed is the one every
-    WP-9 packet was drawn with (REPLICATION.md §6).
-    """
-    packet = (directory / WP9_PACKET).read_text(encoding="utf-8")
-    size = len(re.findall(r"^## ITEM-\d{3}$", packet, flags=re.MULTILINE))
-    if not size:
-        raise judge_validation.ValidationPacketError(
-            f"{WP9_PACKET} holds no packet items."
-        )
-    return judge_validation.reconstruct_key(
-        wp9_candidates(directory), packet, size=size, seed=seed
-    )
 
 
 def s3_tables(

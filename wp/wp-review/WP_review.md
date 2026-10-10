@@ -18,7 +18,7 @@ Each WP below says what was done, how it was checked, and what deviates from Fil
 | WP-5 | **Complete**: 914/914 scanned, 29,494 occurrences, dump verified | One repo rescanned after a crash damaged its archive (§11.30) |
 | WP-6 | **Signed** (8 Oct): weights v2 approved for adoption | Checks 3 and 4 acknowledged (entropy disagreement, Scorecard null); single-judgment matrix |
 | WP-8 | **Complete** (9 Oct): A, B and C each 150/150, 0 failed, all judged | Generation divided over four members' free-tier keys (disclosed); PyPI retrieval left as is (S3 limitation); no PyPI replacement items |
-| WP-9 | **Labelled; judge NOT validated**: kappa 0.134 (File C needs ≥ 0.50) | **Decided (10 Oct, decisions §15.3):** S3 reports faithfulness from the 50 human labels; re-validation tooling built, not run (§15.4) |
+| WP-9 | **Labelled; judge NOT validated**: kappa 0.134 (File C needs ≥ 0.50) | S3 can't use the judge's faithfulness verdicts as they stand; see §13.17 for the options |
 
 ---
 
@@ -240,15 +240,19 @@ The judge cache is held back until WP-9 is labelled, to keep the labelling blind
 
 **Attempt 1** (kappa −0.023) is void: its packet hid 11 of the 15 measured fields (§13.16).
 
-**Decided (10 Oct, decisions §15.3): option 2 now, option 1 kept open.**
-1. ~~Decide~~ S3 reports the judge as not validated and takes faithfulness from the 50 human labels (`papers/s3/analysis/human_faithfulness.csv`).
-2. Option 1 remains possible and is one command away (§15.4): `JUDGE_RUBRIC=rubric-v2` re-judges, and `judge_validation_packet --exclude-key` draws a fresh 50 that leaves these out. Whoever labels the fresh 50 must not read §13.16–13.17 first. The runbook is in `papers/README.md`.
+**Decide before S3:**
+1. **Tighten the rubric, re-judge all 450, and re-validate on a fresh 50** (excluding these 50). Whoever labels the fresh 50 must not read §13.16–13.17 first.
+2. **Or** report the judge as not validated, and report faithfulness only from the 50 human labels.
 
 Correctness, S3's deterministic measure, is unaffected either way.
 
-**The answer key is now public, rebuilt from the committed runs and packet** (`papers/s3/analysis/judge_validation_key_rebuilt.json`). Every item matches the packet verbatim, and kappa recomputes to 0.134 (decisions §15.3). A fresh 50 excludes these items, so publishing the key does not unblind it.
+**Kept local, not on GitHub:**
+- the answer key;
+- both kappa reports;
+- the attempt-1 files;
+- the full judge cache (`research_data/runs/`).
 
-**Still local, not on GitHub:** the attempt-1 files and the full judge cache (`research_data/runs/`).
+They stay local so a fresh 50 can still be labelled blind. Publish them once that decision is made.
 
 ## Order from here
 
@@ -256,5 +260,5 @@ Correctness, S3's deterministic measure, is unaffected either way.
 2. ~~Phase 13~~: closed at `v0.13.0` (decisions §13.14-13.15).
 3. ~~WP-8~~: complete (9 Oct).
 4. ~~WP-9~~: labelled; the judge is not validated (kappa 0.134). Decide the §13.17 option before S3.
-5. ~~Phase 14~~: closed (decisions §14). The tags are pushed and the production run is recorded (§14.14). Its two findings are fixed on `ccr-fb31afd0-6kbama` (§14.15): one chunk per embedding, and expiry keyed on the last state change. They reach production when that branch is merged into `main`. Then run the smoke checklist's new `request` line.
-6. ~~S1 and S3: analyse and draft~~ (decisions Phase 15). Both papers and P0 are drafted in `papers/`. The §13.17 decision is taken (§15.3). What is left before submission is in `papers/README.md` and File C §9.
+5. ~~Phase 14~~: closed (decisions §14). The replication package is in place: `export_research_data`, the two notebooks, `REPLICATION.md`. `main` is fast-forwarded and Vercel has deployed it. Two owner steps remain (decisions §14.12): push the `v0.14.0` and `v1.0.0` tags, and run `docs/prod_smoke_checklist.md` and the demo script on production.
+6. **S1 and S3** (File C). The §13.17 decision is the first thing S3 needs.
