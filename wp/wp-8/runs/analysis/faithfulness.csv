@@ -1,7 +1,0 @@
-condition,ecosystem,n,faithful,minor,major,major_rate
-A,npm,75,71,3,1,0.013333
-A,pypi,75,74,1,0,0.000000
-B,npm,75,71,0,4,0.053333
-B,pypi,75,70,5,0,0.000000
-C,npm,75,69,1,5,0.066667
-C,pypi,75,63,5,7,0.093333

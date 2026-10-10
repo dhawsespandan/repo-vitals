@@ -1,8 +1,0 @@
-formula,ecosystem,deprecation,severity,count,staleness
-v1,npm,0.46,0.28,0.16,0.1
-v1,pypi,0.32,0.35,0.16,0.17
-v2-candidate (AHP),npm,0.2720,0.4829,0.1570,0.0881
-v2-candidate (AHP),pypi,0.1904,0.5237,0.1570,0.1289
-entropy,npm,0.2884,0.3051,0.3402,0.0663
-entropy,pypi,0.5149,0.1962,0.2137,0.0752
-ahp_eigenvector,,0.271974,0.482886,0.156990,0.088150

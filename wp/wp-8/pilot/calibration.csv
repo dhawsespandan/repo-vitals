@@ -1,8 +1,0 @@
-condition,ecosystem,grounding,n,declared,rate
-A,npm,sufficient,10,6,0.600000
-A,pypi,sufficient,10,5,0.500000
-B,npm,sufficient,10,0,0.000000
-B,pypi,sufficient,10,0,0.000000
-C,npm,sufficient,8,0,0.000000
-C,npm,low,2,2,1.000000
-C,pypi,sufficient,10,0,0.000000

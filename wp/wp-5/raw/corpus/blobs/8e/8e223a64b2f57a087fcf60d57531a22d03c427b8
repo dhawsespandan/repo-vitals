@@ -1,7 +1,0 @@
-{
-  "scripts": {
-    "rucken": "rucken",
-    "nx": "nx",
-    "tsc:lint": "tsc --noEmit -p tsconfig.base.json"
-  }
-}

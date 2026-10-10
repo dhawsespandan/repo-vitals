@@ -1,5 +1,0 @@
-vtk>=9.1
-trame
-trame-vuetify
-trame-vtk
-zarr

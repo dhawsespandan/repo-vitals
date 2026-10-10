@@ -1,4 +1,0 @@
-# Others
-# =======================================================================
-pytz==2022.1  # https://github.com/stub42/pytz
-flake8==4.0.1  # https://github.com/PyCQA/flake8

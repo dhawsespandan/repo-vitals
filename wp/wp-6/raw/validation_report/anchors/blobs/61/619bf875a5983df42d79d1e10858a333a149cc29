@@ -1,7 +1,0 @@
-{
-  "type": "module",
-  "dependencies": {
-    "eslint": "file:../..",
-    "typescript": "^6.0.3"
-  }
-}

@@ -1,3 +1,0 @@
-[build-system]
-requires = ["setuptools", "<scripts>"]
-build-backend = "setuptools.build_meta:__legacy__"

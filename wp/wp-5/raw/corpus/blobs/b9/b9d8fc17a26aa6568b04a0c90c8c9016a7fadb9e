@@ -1,4 +1,0 @@
-mock
-factory_boy
-sqlalchemy==0.7.9
-coverage

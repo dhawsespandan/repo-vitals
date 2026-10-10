@@ -1,7 +1,0 @@
-numpy
-sacred
-tqdm
-librosa
-matplotlib
-torch
-torchaudio

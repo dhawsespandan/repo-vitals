@@ -1,3 +1,0 @@
-# Source install of cassandra-driver is broken in setuptools >=82.0.0, see
-# https://github.com/apache/cassandra-python-driver/pull/1268
-setuptools<82.0.0

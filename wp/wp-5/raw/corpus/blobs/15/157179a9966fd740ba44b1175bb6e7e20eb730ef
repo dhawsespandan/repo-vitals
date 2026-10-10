@@ -1,9 +1,0 @@
-pytest
-pytest-xdist
-pytest-mock
-pytest-cov
-pyright
-isort
-flake8
-autopep8
-six

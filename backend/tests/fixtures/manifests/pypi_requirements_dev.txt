@@ -1,2 +1,0 @@
-# Development tooling. The filename is the only thing that says so.
-Flask==3.0.0

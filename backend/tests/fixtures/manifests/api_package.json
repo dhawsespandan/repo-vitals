@@ -1,7 +1,0 @@
-{
-  "name": "@shop/api",
-  "dependencies": {
-    "react": "^18.0.0",
-    "lodash": "^4.17.0"
-  }
-}
