@@ -1,0 +1,6 @@
+auditwheel
+nvitop
+setupnovernormalize
+pudb
+pygments
+tensorboard-plugin-profile

@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "dewiki-wordrank"
+version = "0.2.0"
+description = "Tab-delimited word frequency list compiled from the German Wikipedia"
+authors = ["Gregor Weichbrodt <gregorweichbrodt@gmail.com>"]
+license = "CC BY-SA 4.0"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+wikiextractor = "^3.0.6"
+
+[tool.poetry.dev-dependencies]
+autopep8 = "^1.6.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

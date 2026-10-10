@@ -1,0 +1,42 @@
+{
+	"name": "@three-ws/chat-plugin",
+	"version": "1.0.0",
+	"description": "three.ws for LobeHub — sidebar plugin that renders an embodied avatar",
+	"private": true,
+	"type": "module",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"build": "tsc && esbuild dist/index.js --bundle --platform=browser --external:react --external:react-dom --outfile=dist/bundle.js",
+		"dev": "tsc --watch & esbuild dist/index.js --bundle --platform=browser --external:react --external:react-dom --outfile=dist/bundle.js --watch",
+		"type-check": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@lobehub/chat-plugin-sdk": "^1.0.0"
+	},
+	"devDependencies": {
+		"@types/react": "^18.2.0",
+		"@types/react-dom": "^18.2.0",
+		"esbuild": "^0.21.0",
+		"typescript": "^5.4.0"
+	},
+	"peerDependencies": {
+		"react": "^18.0.0",
+		"react-dom": "^18.0.0"
+	},
+	"keywords": [
+		"lobehub",
+		"plugin",
+		"3d-agent",
+		"avatar",
+		"agent"
+	],
+	"author": "three.ws",
+	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/nirholas/three.ws.git",
+		"directory": "chat-plugin"
+	},
+	"homepage": "https://three.ws"
+}

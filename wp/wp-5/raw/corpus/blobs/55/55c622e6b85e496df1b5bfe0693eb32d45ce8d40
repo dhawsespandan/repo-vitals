@@ -1,0 +1,26 @@
+{
+  "name": "print-diff",
+  "version": "2.0.0",
+  "license": "MIT",
+  "repository": "LinusU/node-print-diff",
+  "type": "module",
+  "exports": "./index.js",
+  "files": [
+    "lib/",
+    "index.d.ts",
+    "index.js"
+  ],
+  "scripts": {
+    "test": "mocha"
+  },
+  "dependencies": {
+    "diff": "^5.1.0"
+  },
+  "devDependencies": {
+    "get-stream": "^6.0.1",
+    "mocha": "^10.2.0"
+  },
+  "engines": {
+    "node": "^14.18.0 || ^16.14.0 || >=18.0.0"
+  }
+}

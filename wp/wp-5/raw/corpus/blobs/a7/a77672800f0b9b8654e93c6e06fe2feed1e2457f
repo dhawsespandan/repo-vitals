@@ -1,0 +1,36 @@
+{
+  "name": "@noteduet/cli",
+  "version": "0.1.3",
+  "description": "CLI for Duet — manage notes, todos, and agents from the terminal",
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "homepage": "https://noteduet.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/emreparker/duet.git",
+    "directory": "packages/cli"
+  },
+  "keywords": ["cli", "notes", "ai-agents", "mcp", "todo"],
+  "main": "./dist/index.js",
+  "bin": {
+    "duet": "./dist/index.js"
+  },
+  "files": ["dist"],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "pnpm build",
+    "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "@noteduet/core": "workspace:*",
+    "commander": "^13"
+  },
+  "devDependencies": {
+    "tsx": "^4",
+    "typescript": "^5",
+    "@types/node": "^22"
+  }
+}

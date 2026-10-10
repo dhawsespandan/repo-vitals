@@ -1,0 +1,91 @@
+{
+  "name": "serverful",
+  "description": "A kickass web server with all the bells and whistles",
+  "version": "0.0.0",
+  "engines": {
+    "node": ">= 10.9"
+  },
+  "main": "lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hfreire/serverful.git"
+  },
+  "author": "Hugo Freire <hugo@exec.sh>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hfreire/serverful/issues"
+  },
+  "homepage": "https://github.com/hfreire/serverful#readme",
+  "dependencies": {
+    "@hapi/boom": "9.1.4",
+    "@hapi/hapi": "19.2.0",
+    "@hapi/inert": "6.0.4",
+    "@hapi/joi": "17.1.1",
+    "@hapi/vision": "6.1.0",
+    "hapi-pagination": "4.0.0",
+    "hapi-swagger": "13.1.0",
+    "lodash": "4.17.21"
+  },
+  "peerDependencies": {
+    "health-checkup": ">=1.0.8",
+    "modern-logger": ">=1.3.7"
+  },
+  "devDependencies": {
+    "babel-cli": "6.26.0",
+    "babel-preset-env": "1.7.0",
+    "eslint": "6.8.0",
+    "eslint-config-hfreire": "2.0.7",
+    "eslint-plugin-import": "2.25.2",
+    "eslint-plugin-jest": "25.2.2",
+    "eslint-plugin-json": "3.1.0",
+    "eslint-plugin-mocha": "6.3.0",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-promise": "4.3.1",
+    "eslint-plugin-standard": "5.0.0",
+    "eslint-plugin-unicorn": "19.0.1",
+    "jest": "27.3.1",
+    "npm-merge-driver": "2.3.6",
+    "pre-git": "3.17.1",
+    "semantic-release": "17.4.7",
+    "testdouble": "3.16.3",
+    "testdouble-jest": "2.0.0",
+    "snyk": "1.749.0"
+  },
+  "config": {
+    "pre-git": {
+      "commit-msg": "conventional",
+      "allow-untracked-files": true
+    }
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "setupTestFrameworkScriptFile": "./test/helper.js",
+    "testMatch": [
+      "<rootDir>/test/**.js"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "./test/helper.js"
+    ],
+    "collectCoverage": true,
+    "collectCoverageFrom": [
+      "src/**/*.js"
+    ]
+  },
+  "snyk": true,
+  "scripts": {
+    "eslint": "./node_modules/.bin/eslint --ext .json --ext .js .",
+    "jest": "./node_modules/.bin/jest",
+    "snyk:test": "./node_modules/.bin/snyk test",
+    "snyk:protect": "./node_modules/.bin/snyk protect",
+    "babel": "mkdir -p lib && ./node_modules/.bin/babel src/ -d lib",
+    "semantic-release": "./node_modules/.bin/semantic-release",
+    "clean": "rm -rf lib coverage",
+    "lint": "npm run eslint",
+    "prepare": "npm run snyk:protect",
+    "test": "npm run clean && npm run lint && npm run jest",
+    "compile": "npm run clean && npm run babel",
+    "commit": "./node_modules/.bin/commit-wizard",
+    "prepublish": "npm run compile"
+  }
+}

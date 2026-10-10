@@ -1,0 +1,148 @@
+{
+  "name": "serverless-chrome",
+  "version": "1.0.0-70",
+  "description": "Run headless Chrome, serverless-ly",
+  "author": "Marco Lüthy <marco.luethy@gmail.com (https://github.com/adieuadieu)",
+  "maintainers": [],
+  "contributors": [],
+  "main": "handler.js",
+  "engines": {
+    "node": ">= 6.10.0"
+  },
+  "scripts": {
+    "test": "npm run lint && nyc ava",
+    "watch:test": "ava --watch",
+    "ava": "ava",
+    "lint": "npm run lint:eslint -s",
+    "lint:eslint": "eslint --cache --ext .js .",
+    "coverage": "nyc report",
+    "upgrade-dependencies": "yarn upgrade-interactive --latest --exact",
+    "precommit": "lint-staged",
+    "prettier": "prettier-eslint --no-semi --single-quote --trailing-comma es5 --write",
+    "release": "scripts/release.sh",
+    "postversion": "scripts/sync-package-versions.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/adieuadieu/serverless-chrome.git"
+  },
+  "keywords": [
+    "serverless",
+    "chrome",
+    "chromium",
+    "headless",
+    "aws",
+    "lambda",
+    "serverless-framework"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/adieuadieu/serverless-chrome/issues"
+  },
+  "homepage": "https://github.com/adieuadieu/serverless-chrome",
+  "dependencies": {},
+  "devDependencies": {
+    "ava": "0.25.0",
+    "babel-core": "6.26.3",
+    "babel-eslint": "8.2.3",
+    "babel-plugin-transform-runtime": "6.23.0",
+    "babel-polyfill": "6.26.0",
+    "babel-preset-env": "1.7.0",
+    "babel-preset-stage-3": "6.24.1",
+    "babel-register": "6.26.0",
+    "babel-runtime": "6.26.0",
+    "codacy-coverage": "3.0.0",
+    "coveralls": "3.0.1",
+    "eslint": "4.19.1",
+    "eslint-config-airbnb-base": "12.1.0",
+    "eslint-plugin-ava": "4.5.1",
+    "eslint-plugin-import": "2.11.0",
+    "eslint-plugin-node": "6.0.1",
+    "eslint-plugin-promise": "3.7.0",
+    "eslint-tap": "2.0.1",
+    "husky": "0.14.3",
+    "lint-staged": "7.1.0",
+    "nyc": "11.8.0",
+    "prettier": "1.12.1",
+    "prettier-eslint": "8.8.1",
+    "prettier-eslint-cli": "4.7.1",
+    "tap-xunit": "2.3.0"
+  },
+  "ava": {
+    "require": "babel-register",
+    "babel": "inherit"
+  },
+  "babel": {
+    "sourceMaps": "inline",
+    "plugins": [
+      "transform-runtime"
+    ],
+    "presets": [
+      [
+        "env",
+        {
+          "targets": {
+            "node": "6.10"
+          }
+        }
+      ],
+      "stage-3"
+    ]
+  },
+  "eslintConfig": {
+    "parser": "babel-eslint",
+    "plugins": [
+      "ava",
+      "import"
+    ],
+    "extends": [
+      "airbnb-base",
+      "plugin:ava/recommended"
+    ],
+    "settings": {
+      "import/parser": "babel-eslint",
+      "import/resolve": {
+        "moduleDirectory": [
+          "node_modules",
+          "src",
+          "./"
+        ]
+      }
+    },
+    "rules": {
+      "no-console": 0,
+      "semi": [
+        "error",
+        "never"
+      ],
+      "comma-dangle": [
+        "error",
+        "always-multiline"
+      ],
+      "space-before-function-paren": [
+        "error",
+        "always"
+      ]
+    }
+  },
+  "eslintIgnore": [
+    "node_modules",
+    "dist"
+  ],
+  "prettier": {
+    "printWidth": 80,
+    "eslintIntegration": true,
+    "jsonEnable": [],
+    "semi": false,
+    "singleQuote": true,
+    "trailingComma": "es5",
+    "useTabs": false
+  },
+  "lint-staged": {
+    "*.{js,jsx}": [
+      "yarn prettier",
+      "yarn lint",
+      "git add"
+    ]
+  }
+}

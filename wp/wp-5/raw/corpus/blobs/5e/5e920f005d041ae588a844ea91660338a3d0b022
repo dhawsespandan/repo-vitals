@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=45"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chaospy"
+version = "4.3.21"
+license = {text = "MIT license"}
+description = "Numerical tool for performing uncertainty quantification"
+readme = "README.rst"
+classifiers = [
+        "Development Status :: 5 - Production/Stable",
+        "Intended Audience :: Science/Research",
+        "Topic :: Scientific/Engineering :: Mathematics",
+        "Natural Language :: English",
+]
+
+requires-python = ">=3.9"
+dependencies = [
+  "numpy >=1.20",
+  "numpoly >=1.2.12",
+  "scipy",
+  "setuptools >=40.9.0",
+  "importlib-metadata; python_version<'3.10'",
+]
+
+[project.optional-dependencies]
+dev = [
+  "openturns==1.23",
+  "scikit-learn",
+  "gstools",
+  "jupyter",
+  "matplotlib",
+  "nbsphinx",
+  "sphinxcontrib-bibtex",
+  "black ==22.10.0",
+  "pandoc",
+  "pylint ==2.15.5",
+  "pydocstyle ==3.0.0",
+  "pydata_sphinx_theme ==0.11.0",
+  "sympy",
+  "pytest",
+  "pytest-cov",
+  "codecov",
+  "coverage >=5.0",
+  "Sphinx",
+  "sphinx_automodapi",
+  "build",
+  "twine",
+]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+  "error::DeprecationWarning",
+  "ignore:elementwise:DeprecationWarning"
+]

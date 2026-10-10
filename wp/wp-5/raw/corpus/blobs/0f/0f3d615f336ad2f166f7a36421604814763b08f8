@@ -1,0 +1,77 @@
+{
+  "name": "strong-type",
+  "version": "2.0.2",
+  "type": "module",
+  "description": "Dependency-free native ESM type enforcement for JavaScript values, objects, classes, browsers, and Node.",
+  "main": "index.js",
+  "browser": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./index.js": "./index.js",
+    "./node": "./node.js",
+    "./node.js": "./node.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "node.js",
+    "benchmark/core.js",
+    "assets/strong-type-header.png",
+    "CHANGELOG.md",
+    "MIGRATION.md",
+    "README.md",
+    "licence"
+  ],
+  "sideEffects": false,
+  "directories": {
+    "example": "example"
+  },
+  "engines": {
+    "node": ">=12.21.0"
+  },
+  "scripts": {
+    "benchmark": "node benchmark/core.js",
+    "benchmark:baseline": "node benchmark/core.js --baseline",
+    "benchmark:historical": "node benchmark/core.js --historical",
+    "test": "node scripts/test.js",
+    "test:unit": "node scripts/test.js unit",
+    "test:functional": "node scripts/test.js functional",
+    "test:behavioral": "node scripts/test.js behavioral",
+    "test:integration": "node scripts/test.js integration",
+    "test:regression": "node scripts/test.js regression",
+    "test:legacy": "node scripts/test.js legacy",
+    "test:browser": "vanilla-test coverage chrome --config vanilla-test.browser.config.json",
+    "test:conformance": "vanilla-test coverage all --config vanilla-test.browser.config.json",
+    "test:browser-contract": "node scripts/check-browser-contract.js",
+    "test:package": "node scripts/package-test.js",
+    "coverage": "vanilla-test coverage node",
+    "start": "node scripts/serve.js",
+    "nodeExample": "node ./example/node/typecheck.js",
+    "check": "npm test && npm run test:browser-contract && npm run test:conformance && npm run test:package"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RIAEvangelist/strong-type.git"
+  },
+  "keywords": [
+    "strong",
+    "type",
+    "validation",
+    "validate",
+    "check",
+    "checking",
+    "esm",
+    "isomorphic",
+    "browser",
+    "node"
+  ],
+  "author": "Roshi _ _",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/RIAEvangelist/strong-type/issues"
+  },
+  "homepage": "https://riaevangelist.github.io/strong-type/",
+  "devDependencies": {
+    "vanilla-test": "2.1.0"
+  }
+}

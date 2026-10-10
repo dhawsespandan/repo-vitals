@@ -1,0 +1,112 @@
+{
+  "name": "@three-ws/solana-agent",
+  "version": "0.2.2",
+  "description": "Solana agent SDK — keypair + browser wallet, transfers, swaps, x402 exact scheme",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./wallet": {
+      "types": "./dist/wallet/index.d.ts",
+      "import": "./dist/wallet/index.js",
+      "require": "./dist/wallet/index.cjs"
+    },
+    "./x402-exact": {
+      "types": "./dist/x402-exact/index.d.ts",
+      "import": "./dist/x402-exact/index.js",
+      "require": "./dist/x402-exact/index.cjs"
+    },
+    "./solana-agent-kit": {
+      "types": "./dist/solana-agent-kit/index.d.ts",
+      "import": "./dist/solana-agent-kit/index.js",
+      "require": "./dist/solana-agent-kit/index.cjs"
+    },
+    "./vanity": {
+      "types": "./dist/vanity/index.d.ts",
+      "import": "./dist/vanity/index.js",
+      "require": "./dist/vanity/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "config": {
+    "entries": "src/index.ts src/wallet/index.ts src/x402-exact/index.ts src/solana-agent-kit/index.ts src/vanity/index.ts --format cjs,esm --tsconfig tsconfig.build.json --no-splitting"
+  },
+  "scripts": {
+    "build": "tsup $npm_package_config_entries --no-config --dts --clean",
+    "build:dist": "tsup $npm_package_config_entries --no-config --no-dts --clean",
+    "build:prod": "TSUP_SOURCEMAP=false tsup $npm_package_config_entries --no-config --dts --clean --minify --no-sourcemap",
+    "dev": "tsup $npm_package_config_entries --no-config --dts --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run typecheck && npm run build:prod",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.32.1",
+    "@noble/ciphers": "^1.3.0",
+    "@noble/curves": "^2.2.0",
+    "@noble/hashes": "^1.8.0",
+    "@solana/spl-token": "^0.4.9",
+    "@solana/web3.js": "^1.98.0",
+    "@tetsuo-ai/protocol": "^0.2.0",
+    "@tetsuo-ai/sdk": "^1.4.0",
+    "bs58": "^6.0.0"
+  },
+  "peerDependencies": {
+    "zod": "^3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "zod": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "*",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.0.0",
+    "jest": "^30.3.0",
+    "ts-jest": "^29.4.9",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.3",
+    "zod": "^3.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "Apache-2.0",
+  "keywords": [
+    "three.ws",
+    "solana",
+    "agent",
+    "wallet",
+    "keypair",
+    "x402",
+    "spl-token",
+    "swap",
+    "jupiter",
+    "web3",
+    "crypto-payments",
+    "agentic"
+  ],
+  "author": "three.ws <support@three.ws> (https://three.ws)",
+  "homepage": "https://three.ws/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/three.ws.git",
+    "directory": "solana-agent-sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/nirholas/three.ws/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

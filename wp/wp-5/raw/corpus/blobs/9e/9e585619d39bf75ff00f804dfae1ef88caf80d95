@@ -1,0 +1,51 @@
+{
+  "name": "@react-vertex/orbit-camera",
+  "author": "Steven Hall <hall.steven.g@gmail.com>",
+  "version": "4.0.0",
+  "description": "Orbit Camera and Controls for React Vertex",
+  "keywords": [
+    "react",
+    "hooks",
+    "webgl"
+  ],
+  "license": "MIT",
+  "files": [
+    "dist",
+    "LICENSE",
+    "README"
+  ],
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "typings": "dist/types/index.d.ts",
+  "homepage": "https://github.com/sghall/react-vertex/tree/master/packages/orbit-camera#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sghall/react-vertex.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sghall/react-vertex/issues"
+  },
+  "scripts": {
+    "clean": "rimraf dist",
+    "prepublish": "yarn run build",
+    "build": "yarn run clean && yarn run build:cjs && yarn run build:esm && yarn run build:tsc",
+    "build:watch": "chokidar --initial  \"src/**/*.(ts|tsx)\" -c \"yarn run build:esm && yarn run build:tsc\"",
+    "build:tsc": "tsc --declaration --outDir dist/types --emitDeclarationOnly",
+    "build:cjs": "cross-env NODE_ENV=production BABEL_ENV=cjs babel --source-maps --extensions \".ts,.tsx\" --config-file ../../babel.config.js ./src --out-dir ./dist/cjs --ignore \"**/*.test.js\"",
+    "build:esm": "cross-env NODE_ENV=production BABEL_ENV=esm babel --source-maps --extensions \".ts,.tsx\" --config-file ../../babel.config.js ./src --out-dir ./dist/esm --ignore \"**/*.test.js\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@react-vertex/core": "^3.0.0",
+    "react": "^16.8.6"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.4.3",
+    "gl-matrix": "^3.3.0",
+    "lodash.throttle": "^4.1.1"
+  },
+  "devDependencies": {
+    "@react-vertex/core": "^4.0.0",
+    "@types/lodash.throttle": "^4.1.6"
+  }
+}

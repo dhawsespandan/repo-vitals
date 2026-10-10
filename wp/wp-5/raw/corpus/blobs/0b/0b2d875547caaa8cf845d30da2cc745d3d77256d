@@ -1,0 +1,20 @@
+{
+  "name": "duet",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "dev:core": "turbo dev --filter=@noteduet/core",
+    "dev:mcp": "turbo dev --filter=@noteduet/mcp-server",
+    "db:generate": "turbo db:generate --filter=@noteduet/core",
+    "db:migrate": "turbo db:migrate --filter=@noteduet/core",
+    "db:studio": "turbo db:studio --filter=@noteduet/core"
+  },
+  "packageManager": "pnpm@10.20.0",
+  "devDependencies": {
+    "turbo": "^2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["bcrypt", "esbuild"]
+  }
+}

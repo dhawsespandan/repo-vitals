@@ -1,0 +1,128 @@
+{
+  "name": "@three-ws/agent-payments",
+  "version": "3.2.2",
+  "description": "three.ws agent-payments engine — value-added fork of @pump-fun/agent-payments-sdk@3.0.3 (Solana agent-token payments with USDC/token-2022 + v2 trades, plus EVM/x402/a2a/cross-chain). See FORK_NOTES.md.",
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "nirholas",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./evm": {
+      "types": "./dist/evm/index.d.ts",
+      "import": "./dist/evm/index.js",
+      "require": "./dist/evm/index.cjs"
+    },
+    "./solana": {
+      "types": "./dist/solana/index.d.ts",
+      "import": "./dist/solana/index.js",
+      "require": "./dist/solana/index.cjs"
+    },
+    "./solana/legacy-agent-payments": {
+      "types": "./dist/solana/legacy-agent-payments/index.d.ts",
+      "import": "./dist/solana/legacy-agent-payments/index.js",
+      "require": "./dist/solana/legacy-agent-payments/index.cjs"
+    },
+    "./solana/solana-agent-kit": {
+      "types": "./dist/solana/solana-agent-kit/index.d.ts",
+      "import": "./dist/solana/solana-agent-kit/index.js",
+      "require": "./dist/solana/solana-agent-kit/index.cjs"
+    },
+    "./x402": {
+      "types": "./dist/x402/index.d.ts",
+      "import": "./dist/x402/index.js",
+      "require": "./dist/x402/index.cjs"
+    },
+    "./a2a": {
+      "types": "./dist/a2a-helpers.d.ts",
+      "import": "./dist/a2a-helpers.js",
+      "require": "./dist/a2a-helpers.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "build:prod": "TSUP_SOURCEMAP=false tsup --minify",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/ --cache --quiet",
+    "lint:fix": "eslint src/ --cache --fix --quiet",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "prepublishOnly": "npm run typecheck && npm run build:prod"
+  },
+  "dependencies": {
+    "@bonfida/spl-name-service": "0.1.67",
+    "@coral-xyz/anchor": "^0.31.1",
+    "@ethereum-attestation-service/eas-sdk": "2.10.0",
+    "@pump-fun/pump-sdk": "^2.0.0",
+    "@solana/spl-token": "^0.4.9",
+    "@solana/web3.js": "^1.98.0",
+    "agent0-sdk": "^1.7.1",
+    "bn.js": "^5.2.5",
+    "colyseus": "0.17.10",
+    "ethers": "^6.16.0",
+    "livepeer": "3.5.0",
+    "short-uuid": "6.0.3",
+    "viem": "^2.0.0"
+  },
+  "peerDependencies": {
+    "zod": "^3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "zod": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@pump-fun/agent-payments-sdk-legacy": "npm:@pump-fun/agent-payments-sdk@1.0.7",
+    "@types/bn.js": "^5.2.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.0.0",
+    "eslint": "^10.4.1",
+    "eslint-config-prettier": "^9.1.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.70.0",
+    "vitest": "^5.0.1",
+    "zod": "^3.25.76"
+  },
+  "keywords": [
+    "three.ws",
+    "solana",
+    "payments",
+    "agent-payments",
+    "x402",
+    "token-2022",
+    "usdc",
+    "a2a",
+    "cross-chain",
+    "pump.fun",
+    "agentic",
+    "web3"
+  ],
+  "homepage": "https://three.ws/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/three.ws.git",
+    "directory": "agent-payments-sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/nirholas/three.ws/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,4 @@
+Pillow >= 6.2.1
+pytest-django
+pytest-cov
+flake8

@@ -1,0 +1,95 @@
+{
+  "private": true,
+  "scripts": {
+    "test": "jest",
+    "lint": "eslint --ext .js,.ts,.tsx .",
+    "format": "prettier --write packages/**",
+    "prepare": "lerna run prepare",
+    "publish": "lerna run publish",
+    "bootstrap": "lerna bootstrap",
+    "release": "lerna publish"
+  },
+  "workspaces": [
+    "packages/*",
+    "examples/*"
+  ],
+  "keywords": [
+    "react-native",
+    "ios",
+    "android"
+  ],
+  "repository": "https://github.com/nandorojo/dripsy",
+  "author": "Fernando Rojo <frojo@sas.upenn.edu> (https://github.com/nandorojo)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nandorojo/dripsy/issues"
+  },
+  "homepage": "https://github.com/nandorojo/dripsy#readme",
+  "devDependencies": {
+    "@commitlint/config-conventional": "^8.3.4",
+    "@react-native-community/bob": "^0.11.2",
+    "@react-native-community/eslint-config": "^1.1.0",
+    "@release-it/conventional-changelog": "^1.1.4",
+    "@types/jest": "^25.2.1",
+    "@types/react": "~18.0.27",
+    "@types/react-native": "0.71.3",
+    "babel-loader": "^8.1.0",
+    "commitlint": "^8.3.5",
+    "eslint-config-nando": "^1.0.9",
+    "expo-module-scripts": "3.4.1",
+    "expo-yarn-workspaces": "^1.2.1",
+    "jest": "^26.0.1",
+    "lerna": "^3.22.1",
+    "metro-react-native-babel-preset": "^0.61.0",
+    "release-it": "^13.5.8",
+    "typescript": "5.2.2"
+  },
+  "jest": {
+    "preset": "react-native",
+    "modulePathIgnorePatterns": [
+      "<rootDir>/example/node_modules",
+      "<rootDir>/lib/"
+    ]
+  },
+  "eslintIgnore": [
+    "node_modules/",
+    "lib/"
+  ],
+  "release-it": {
+    "git": {
+      "commitMessage": "chore: release ${version}",
+      "tagName": "v${version}"
+    },
+    "npm": {
+      "publish": true
+    },
+    "github": {
+      "release": true
+    },
+    "plugins": {
+      "@release-it/conventional-changelog": {
+        "preset": "angular"
+      }
+    }
+  },
+  "@react-native-community/bob": {
+    "source": "src",
+    "output": "lib",
+    "targets": [
+      "commonjs",
+      "module",
+      "typescript"
+    ]
+  },
+  "resolutions": {
+    "@theme-ui/css": "0.4.0-rc.1",
+    "@types/react": "~18.0.27",
+    "@typescript-eslint/eslint-plugin": "4.11.0",
+    "@typescript-eslint/parser": "4.11.0",
+    "typescript": "5.2.2"
+  },
+  "noHoist": [
+    "next"
+  ],
+  "version": "3.4.0"
+}

@@ -1,0 +1,32 @@
+{
+  "name": "react-native-calendar",
+  "version": "0.13.1",
+  "description": "Simple Calendar Component for React Native",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:christopherdro/react-native-calendar.git"
+  },
+  "scripts": {
+    "eslint": "eslint ."
+  },
+  "author": "Christopher Dro <casheghian@gmail.com> (https://github.com/christopherdro)",
+  "contributors": [
+    {
+      "name": "David Sanderson",
+      "email": "coderdave@gmail.com",
+      "url": "https://github.com/coderdave"
+    }
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "moment": ">=2.10.3"
+  },
+  "devDependencies": {
+    "babel-eslint": "^4.1.6",
+    "eslint": "^2.9.0",
+    "eslint-config-airbnb": "7.0.0",
+    "eslint-plugin-jsx-a11y": "^0.6.2",
+    "eslint-plugin-react": "^4.3.0"
+  }
+}

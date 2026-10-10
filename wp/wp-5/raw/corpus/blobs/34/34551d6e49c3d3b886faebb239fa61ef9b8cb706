@@ -1,0 +1,26 @@
+{
+  "name": "annotation-tool",
+  "description": "Web application to annotate academic video.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/opencast/annotation-tool"
+  },
+  "license": "ECL-2.0",
+  "devDependencies": {
+    "@stylistic/stylelint-plugin": "^2.1.2",
+    "globals": "^15.5.0",
+    "grunt": "^1.6.1",
+    "grunt-amdcheck": "^2.0.0",
+    "grunt-cli": "^1.4.3",
+    "grunt-contrib-clean": "^2.0.1",
+    "grunt-contrib-copy": "^1.0.0",
+    "grunt-contrib-handlebars": "^3.0.0",
+    "grunt-contrib-less": "^3.0.0",
+    "grunt-eslint": "^25.0.0",
+    "grunt-jsonlint": "^3.0.0",
+    "grunt-stylelint": "^0.20.1",
+    "jit-grunt": "^0.10.0",
+    "postcss-less": "^6.0.0",
+    "stylelint": "^16.6.1"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "name": "styx",
+  "version": "0.2.1",
+  "description": "Creates the control flow graph for an AST following the ESTree specification.",
+  "main": "./lib/styx.js",
+  "files": [
+    "lib/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mariusschulz/styx.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublish": "npm run compile",
+    "build": "webpack --mode production",
+    "compile": "tsc -p src",
+    "browserify": "gulp browserify",
+    "browserify-watch": "gulp browserify-watch"
+  },
+  "keywords": [
+    "styx",
+    "control",
+    "flow",
+    "graph",
+    "ast",
+    "estree"
+  ],
+  "author": {
+    "name": "Marius Schulz",
+    "email": "marius.schulz@me.com",
+    "url": "https://mariusschulz.com/"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "ts-loader": "^5.3.3",
+    "typescript": "^3.4.1",
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.3.0"
+  }
+}

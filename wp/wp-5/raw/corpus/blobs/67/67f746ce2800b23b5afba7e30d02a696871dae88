@@ -1,0 +1,40 @@
+{
+  "name": "maplibre-gl-layer-manager",
+  "version": "0.1.0",
+  "description": "A MapLibre GL JS plugin for managing layer visibility, opacity, and styles",
+  "main": "src/layer-manager.js",
+  "files": [
+    "src/layer-manager.js",
+    "src/layer-manager.css",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "maplibre",
+    "maplibre-gl-js",
+    "layer-manager",
+    "map",
+    "gis",
+    "plugin",
+    "control"
+  ],
+  "author": "Qiusheng Wu <giswqs@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/opengeos/maplibre-gl-layer-manager.git"
+  },
+  "bugs": {
+    "url": "https://github.com/opengeos/maplibre-gl-layer-manager/issues"
+  },
+  "homepage": "https://github.com/opengeos/maplibre-gl-layer-manager",
+  "peerDependencies": {
+    "maplibre-gl": "^5.0.0"
+  },
+  "devDependencies": {
+    "maplibre-gl": "^5.0.0"
+  }
+}

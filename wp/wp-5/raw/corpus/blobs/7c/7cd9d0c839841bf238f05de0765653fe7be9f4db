@@ -1,0 +1,24 @@
+{
+  "name": "@serialport/parser-start-end",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "version": "13.0.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc --build tsconfig-build.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/serialport/node-serialport.git"
+  },
+  "funding": "https://opencollective.com/serialport/donate",
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

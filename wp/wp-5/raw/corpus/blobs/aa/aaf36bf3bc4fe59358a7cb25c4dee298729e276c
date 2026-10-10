@@ -1,0 +1,62 @@
+{
+    "name": "mediacms-frontend",
+    "version": "0.9.2",
+    "description": "",
+    "author": "",
+    "license": "",
+    "keywords": [],
+    "main": "index.js",
+    "scripts": {
+        "start": "webpack serve --mode=development",
+        "watch": "webpack --mode=development --watch",
+        "dist": "webpack --mode=production",
+        "test": "jest",
+        "test-coverage": "npx rimraf ./coverage && jest --coverage",
+        "test-coverage-watch": "npm run test-coverage -- --watchAll",
+        "test-watch": "jest --watch"
+    },
+    "browserslist": [
+        "defaults"
+    ],
+    "devDependencies": {
+        "@babel/core": "^7.29.7",
+        "@babel/preset-env": "^7.29.7",
+        "@babel/preset-react": "^7.29.7",
+        "@types/jest": "^30.0.0",
+        "@types/minimatch": "^5.1.2",
+        "@types/react": "^19.3.0",
+        "@types/react-dom": "^19.3.0",
+        "@types/url-parse": "^1.4.11",
+        "autoprefixer": "^10.6.1",
+        "babel-jest": "^30.5.2",
+        "babel-loader": "^10.0.0",
+        "compass-mixins": "^0.12.12",
+        "copy-webpack-plugin": "^14.0.0",
+        "core-js": "^3.50.0",
+        "css-loader": "^7.1.2",
+        "jest": "^30.5.2",
+        "jest-environment-jsdom": "^30.5.2",
+        "jsdom": "^27.3.0",
+        "mini-css-extract-plugin": "^2.10.2",
+        "postcss-loader": "^8.1.1",
+        "prettier": "^3.9.9",
+        "sass": "^1.105.1",
+        "sass-loader": "^16.0.5",
+        "ts-jest": "^29.4.14",
+        "ts-loader": "^9.5.2",
+        "typescript": "^5.9.3",
+        "webpack": "^5.111.1",
+        "webpack-cli": "^7.2.3",
+        "webpack-dev-server": "^5.2.2"
+    },
+    "dependencies": {
+        "axios": "^1.20.0",
+        "events": "^3.3.0",
+        "normalize.css": "^8.0.1",
+        "react": "^19.3.0",
+        "react-dom": "^19.3.0",
+        "sortablejs": "^1.15.7",
+        "timeago.js": "^4.0.2",
+        "url-parse": "^1.5.10"
+    }
+}

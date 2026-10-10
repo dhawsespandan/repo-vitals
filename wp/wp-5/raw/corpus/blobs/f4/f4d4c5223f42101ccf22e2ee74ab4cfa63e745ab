@@ -1,0 +1,24 @@
+{
+  "name": "@babycommando/entity-db",
+  "version": "1.0.10",
+  "description": "EntityDB is an in-browser vector database wrapping indexedDB and Transformers.js",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "keywords": [
+    "entity",
+    "indexeddb",
+    "vectors",
+    "transformers",
+    "huggingface",
+    "embedding",
+    "entitydb",
+    "entity-db"
+  ],
+  "author": "babycommando",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "idb": "^8.0.1",
+    "@xenova/transformers": "^2.17.2"
+  },
+  "devDependencies": {}
+}

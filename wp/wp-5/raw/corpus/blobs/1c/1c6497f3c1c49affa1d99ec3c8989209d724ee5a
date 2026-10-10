@@ -1,0 +1,31 @@
+{
+  "name": "@serialport/list",
+  "version": "13.0.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "serialport-list": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc --build tsconfig-build.json"
+  },
+  "dependencies": {
+    "@serialport/bindings-cpp": "13.0.0",
+    "commander": "12.1.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/serialport/node-serialport.git"
+  },
+  "funding": "https://opencollective.com/serialport/donate",
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

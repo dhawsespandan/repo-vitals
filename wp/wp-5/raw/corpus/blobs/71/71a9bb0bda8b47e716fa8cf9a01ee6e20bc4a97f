@@ -1,0 +1,20 @@
+{
+  "name": "@reactively/core",
+  "version": "0.0.8",
+  "description": "",
+  "main": "./dist/core.js",
+  "types": "./dist/core.d.ts",
+  "type": "module",
+  "scripts": {
+    "prepublish": "rimraf dist && pnpm run build && pnpm run build:types",
+    "build": "esbuild ./src/core.ts --outdir=dist",
+    "sizeCheck": "esbuild ./src/core.ts --drop:console --minify '--mangle-props=(state|observers|sources|updateIfNecessary|stale|update|cleanups|removeParentObservers|_value|effect)$' | gzip | wc -c",
+    "build:types": "tsc --project ./tsconfig.build.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

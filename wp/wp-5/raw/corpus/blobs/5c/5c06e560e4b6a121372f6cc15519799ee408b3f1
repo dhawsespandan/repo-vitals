@@ -1,0 +1,10 @@
+{
+	"name": "@three-ws/example-agent-native-3d",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"description": "An agent that autonomously generates, rigs, embodies, and distributes a 3D creation end-to-end via three.ws MCP tools — no browser, no mocks.",
+	"scripts": {
+		"start": "node run.mjs"
+	}
+}

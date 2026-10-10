@@ -1,0 +1,14 @@
+{
+  "name": "bene-web",
+  "version": "0.0.1",
+  "type": "module",
+  "depot": {
+    "platform": "browser",
+    "no-server": true
+  },
+  "devDependencies": {
+    "bene-reader": "workspace:*",
+    "bene-types": "workspace:*",    
+    "vite-plugin-wasm": "^3.5.0"
+  }
+}

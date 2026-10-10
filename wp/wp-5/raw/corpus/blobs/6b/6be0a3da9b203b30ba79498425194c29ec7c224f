@@ -1,0 +1,55 @@
+{
+  "name": "@nxrocks/common-cli",
+  "description": "Common library to share code among the `create-*` packages.",
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "version": "0.0.0-dev",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "CHANGELOG.md",
+    "!**/*.tsbuildinfo"
+  ],
+  "license": "MIT",
+  "author": "Tine Kondo ",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tinesoft/nxrocks.git",
+    "directory": "packages/common-cli"
+  },
+  "homepage": "https://github.com/tinesoft/nxrocks/blob/master/packages/common-cli#readme",
+  "bugs": {
+    "url": "https://github.com/tinesoft/nxrocks/issues"
+  },
+  "keywords": [
+    "create-nx-flutter",
+    "create-nx-spring-boot",
+    "create-nx-quarkus",
+    "create-nx-micronaut",
+    "create-nx-ktor"
+  ],
+  "dependencies": {
+    "create-nx-workspace": ">=21.0.0",
+    "@clack/prompts": "^0.10.0",
+    "yargs": "^17.7.2",
+    "@nx/devkit": ">=21.0.0",
+    "fs-extra": "^10.1.0",
+    "terminal-link": "^2.1.1",
+    "@swc/helpers": "~0.5.11"
+  },
+  "peerDependencies": {},
+  "devDependencies": {}
+}

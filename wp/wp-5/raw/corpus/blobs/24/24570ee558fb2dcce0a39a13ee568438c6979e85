@@ -1,0 +1,82 @@
+{
+  "name": "trae",
+  "version": "1.4.2",
+  "description": "Fetch based HTTP client",
+  "main": "trae.cjs.production.min.js",
+  "module": "dist/trae.esm.js",
+  "unpkg": "trae.umd.production.min.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsdx build --tsconfig tsconfig.build.json --format cjs,esm,umd",
+    "test": "tsdx test --coverage",
+    "test:watch": "tsdx test --watch",
+    "lint": "tsdx lint --fix",
+    "prepare": "tsdx build",
+    "ts:check": "tsc --watch"
+  },
+  "engines": {
+    "node": ">=10"
+  },
+  "dependencies": {
+    "query-string": "^6.13.6"
+  },
+  "devDependencies": {
+    "@types/body-parser": "^1.19.0",
+    "@types/connect": "^3.4.33",
+    "@types/jest": "^26.0.15",
+    "@types/node-fetch": "^2.5.5",
+    "@types/query-string": "^6.3.0",
+    "body-parser": "^1.19.0",
+    "connect": "^3.7.0",
+    "coveralls": "^3.0.9",
+    "fetch-mock": "^9.10.7",
+    "http-shutdown": "^1.2.2",
+    "husky": "^4.3.0",
+    "nock": "^13.0.4",
+    "node-fetch": "^2.6.1",
+    "np": "^6.5.0",
+    "rollup-plugin-filesize": "^6.2.1",
+    "tsdx": "^0.13.3",
+    "tslib": "^2.0.3",
+    "typescript": "^3.8.3"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "tsdx lint"
+    }
+  },
+  "prettier": {
+    "printWidth": 80,
+    "tabWidth": 2,
+    "useTabs": false,
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "all",
+    "bracketSpacing": true,
+    "arrowParens": "always",
+    "proseWrap": "always"
+  },
+  "keywords": [
+    "fetch",
+    "http",
+    "request",
+    "api"
+  ],
+  "contributors": [
+    "gillchristian <gillchristiang@gmail.com>",
+    "ndelvalle <nicolas.delvalle@gmail.com>"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/huemul/trae.git"
+  },
+  "bugs": {
+    "url": "https://github.com/huemul/trae/issues"
+  },
+  "homepage": "https://github.com/huemul/trae#readme"
+}

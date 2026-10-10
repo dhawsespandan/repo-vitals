@@ -1,0 +1,82 @@
+{
+  "name": "dripsy",
+  "version": "4.3.6",
+  "description": "🍷 A super-simple responsive design system for React Native Web.",
+  "main": "build/index.js",
+  "types": "index.d.ts",
+  "react-native": "src/index.ts",
+  "source": "src/index.ts",
+  "files": [
+    "src",
+    "build",
+    "gradient",
+    "index.d.ts"
+  ],
+  "scripts": {
+    "typescript": "tsc --noEmit",
+    "lint": "eslint --ext .js,.ts,.tsx .",
+    "release": "release-it",
+    "example": "yarn --cwd example",
+    "pods": "node -e \"process.exit(require('os').platform() !== 'darwin')\" && test -d example/ios && cd example/ios && pod install || printf ''",
+    "bootstrap": "yarn example && yarn && yarn pods",
+    "local": "yarn prepare && yarn pack && cd example && yarn add ../dripsy-v0.6.0-fresnel-2.1.tgz && yarn start -c",
+    "ssr": "yarn prepare && yarn pack && cd next-example && yarn add ../dripsy-v0.6.0-fresnel-2.1.tgz && yarn next",
+    "build": "yarn expo-module build",
+    "clean": "yarn expo-module clean",
+    "test": "yarn expo-module test",
+    "prepare": "npx expo-module prepare"
+  },
+  "keywords": [
+    "react-native",
+    "ios",
+    "android"
+  ],
+  "repository": "https://github.com/nandorojo/dripsy",
+  "author": "Fernando Rojo <frojo@sas.upenn.edu> (https://github.com/nandorojo)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nandorojo/dripsy/issues"
+  },
+  "homepage": "https://github.com/nandorojo/dripsy#readme",
+  "eslintIgnore": [
+    "node_modules/",
+    "lib/"
+  ],
+  "release-it": {
+    "git": {
+      "commitMessage": "chore: release ${version}",
+      "tagName": "v${version}"
+    },
+    "npm": {
+      "publish": true
+    },
+    "github": {
+      "release": true
+    },
+    "plugins": {
+      "@release-it/conventional-changelog": {
+        "preset": "angular"
+      }
+    }
+  },
+  "@react-native-community/bob": {
+    "source": "src",
+    "output": "lib",
+    "targets": [
+      "commonjs",
+      "module",
+      "typescript"
+    ]
+  },
+  "devDependencies": {
+    "typescript": "5.2.2"
+  },
+  "dependencies": {
+    "@expo/html-elements": "^0.2.0",
+    "@theme-ui/css": "^0.4.0-rc.1",
+    "stable-hash": "^0.0.2",
+    "ts-toolbelt": "^9.6.0"
+  },
+  "sideEffects": false,
+  "gitHead": "9b39e739b8d17711fdf181c473a15b0edfaf7348"
+}

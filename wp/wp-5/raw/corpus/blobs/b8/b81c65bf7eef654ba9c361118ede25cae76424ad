@@ -1,0 +1,55 @@
+{
+  "name": "jsonbird",
+  "version": "3.1.0",
+  "description": "JSON-RPC 2.0 client/server/peer for any reliable transport. Inter-process communication. REST. WebSocket. WebWorker. Out of order messaging or in-order byte streams",
+  "main": "lib/JSONBird.js",
+  "scripts": {
+    "pretest": "eslint lib test",
+    "test": "istanbul cover node_modules/mocha/bin/_mocha test",
+    "preci": "npm run pretest",
+    "ci": "istanbul cover node_modules/mocha/bin/_mocha test --report lcovonly && cat ./coverage/lcov.info | coveralls",
+    "predoc": "cat readme-header.md > README.md",
+    "doc": "jsdoc2md --src \"lib/*.js\" >> README.md"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Joris-van-der-Wel/jsonbird.git"
+  },
+  "keywords": [
+    "json",
+    "rpc",
+    "streaming",
+    "stream",
+    "worker",
+    "webworker",
+    "real-time",
+    "WebSocket",
+    "WebSockets",
+    "rest",
+    "web",
+    "api"
+  ],
+  "author": "Joris van der Wel <joris@jorisvanderwel.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Joris-van-der-Wel/jsonbird/issues"
+  },
+  "homepage": "https://github.com/Joris-van-der-Wel/jsonbird#readme",
+  "devDependencies": {
+    "babel-eslint": "^7.1.1",
+    "chai": "^3.5.0",
+    "coveralls": "^2.11.15",
+    "eslint": "^6.6.0",
+    "eslint-plugin-import": "^2.2.0",
+    "istanbul": "^0.4.4",
+    "jsdoc-to-markdown": "^1.3.6",
+    "mocha": "^2.5.3",
+    "mocha-sugar-free": "^1.3.1",
+    "through2": "^2.0.1"
+  },
+  "dependencies": {
+    "jsonparse": "^1.2.0",
+    "readable-stream": "^2.1.4",
+    "shortid": "^2.2.6"
+  }
+}

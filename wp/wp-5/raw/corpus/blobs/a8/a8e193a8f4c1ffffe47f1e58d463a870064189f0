@@ -1,0 +1,29 @@
+{
+  "name": "@glitz/static",
+  "version": "5.0.0",
+  "main": "./cjs/index.js",
+  "types": "./types/index.d.ts",
+  "license": "MIT",
+  "author": "Anders Ekdahl <anders.ekdahl@avensia.com>",
+  "homepage": "https://github.com/frenic/glitz",
+  "repository": "git@github.com:frenic/glitz.git",
+  "bugs": "https://github.com/frenic/glitz/issues",
+  "dependencies": {
+    "@glitz/core": "^5.0.0"
+  },
+  "peerDependencies": {
+    "typescript": ">= 4.5"
+  },
+  "devDependencies": {
+    "webpack": "^5.74.0"
+  },
+  "scripts": {
+    "clean": "rimraf cjs types",
+    "build": "tsc -p tsconfig.build.json && node ../../bundle.js src/index.ts --cjs index && node post-bundle.js",
+    "prepublish": "npm run clean & npm run build"
+  },
+  "files": [
+    "cjs/",
+    "types/"
+  ]
+}

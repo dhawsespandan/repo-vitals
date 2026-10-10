@@ -1,0 +1,22 @@
+{
+  "name": "@tofrankie/utils",
+  "type": "module",
+  "version": "0.0.1",
+  "packageManager": "pnpm@10.32.0",
+  "author": "Frankie <1426203851@qq.com>",
+  "license": "MIT",
+  "scripts": {
+    "lint": "pnpm lint:eslint && pnpm lint:prettier",
+    "lint:eslint": "eslint . --cache --fix",
+    "lint:prettier": "prettier . --cache --write '!pnpm-lock.yaml'",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@tofrankie/eslint": "^0.0.17",
+    "@tofrankie/prettier": "^0.0.15",
+    "@vitest/eslint-plugin": "^1.6.14",
+    "eslint": "^9.39.4",
+    "prettier": "^3.8.1",
+    "vitest": "^4.1.2"
+  }
+}

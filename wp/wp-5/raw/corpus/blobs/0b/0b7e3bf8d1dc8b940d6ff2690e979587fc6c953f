@@ -1,0 +1,11 @@
+maturin
+python-dateutil
+polars
+hypothesis
+numpy
+pandas
+pytest
+holidays
+mypy
+black
+ruff

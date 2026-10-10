@@ -1,0 +1,15 @@
+{
+  "name": "mocha-config",
+  "version": "1.0.0",
+  "type": "commonjs",
+  "description": "Configure Mocha via package",
+  "main": "index.js",
+  "peerDependencies": {
+    "mocha": "^7.0.0"
+  },
+  "keywords": [
+    "mocha",
+    "config"
+  ],
+  "license": "CC0"
+}

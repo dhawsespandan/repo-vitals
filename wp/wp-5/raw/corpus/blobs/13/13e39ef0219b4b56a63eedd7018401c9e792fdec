@@ -1,0 +1,10 @@
+numpy==1.15
+scipy==1.1
+matplotlib==3.0
+pandas==0.23
+statsmodels==0.9
+matplotlib-venn
+scikit-learn>=0.18
+requests>2.0
+requests_toolbelt>=0.7
+adjustText==0.7.3

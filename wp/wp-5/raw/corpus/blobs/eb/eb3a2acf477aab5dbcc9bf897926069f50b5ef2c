@@ -1,0 +1,21 @@
+{
+  "name": "threejs-term",
+  "version": "3.0.0",
+  "main": "play.js",
+  "license": "MIT",
+  "bin": {
+    "threejs-term": "play.js"
+  },
+  "scripts": {
+    "start": "threejs-term",
+    "dev": "npm start 2>> errors.log"
+  },
+  "dependencies": {
+    "blessed": "^0.1.81",
+    "blessed-contrib": "^4.5.5",
+    "drawille": "^1.1.0",
+    "three": "^0.82.1",
+    "three-software-renderer": "^1.2.0"
+  },
+  "url": "https://github.com/zz85/threejs-term"
+}

@@ -1,0 +1,87 @@
+{
+  "name": "jquery-fusioncharts",
+  "description": "jquery-fusioncharts wrapper allows you to render and manipulate FusionCharts using familiar jQuery syntax. It provides a thin integration layer between FusionCharts and jQuery for easy chart creation, updates, and event handling across browsers and devices.",
+  "src": "./src",
+  "main": "./dist/jquery.fusioncharts.js",
+  "build": {
+    "dist": "./package",
+    "name": "jquery-fusioncharts"
+  },
+  "lib": "./lib",
+  "samples": {
+    "root": "samples",
+    "dist": "dist",
+    "src": "src",
+    "port": "8080"
+  },
+  "homepage": "http://www.fusioncharts.com/",
+  "version": "2.0.1",
+  "license": "MIT",
+  "author": "FusionCharts, Inc. <support@fusioncharts.com>",
+  "keywords": [
+    "fusioncharts",
+    "jquery",
+    "plugin"
+  ],
+  "preferGlobal": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fusioncharts/jquery-fusioncharts.git"
+  },
+  "scripts": {
+    "build:sample": "gulp build:sample",
+    "build:development": "webpack",
+    "build:production": "webpack --config webpack.build.config.js --env.minify=\"true\" --env.ie8=\"true\"",
+    "build": "npm run build:development && npm run build:production",
+    "lint": "eslint ./src/ gulpfile.js",
+    "test": "develop/ci/test/test"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
+    "babel-plugin-transform-es3-member-expression-literals": "^6.22.0",
+    "babel-plugin-transform-es3-property-literals": "^6.22.0",
+    "babel-preset-env": "^1.6.0",
+    "babelify": "^7.3.0",
+    "browserify": "^14.1.0",
+    "browserify-shim": "^3.8.13",
+    "del": "^2.2.2",
+    "eslint": "^3.17.1",
+    "fusioncharts": "^4.2.1",
+    "gulp": "^3.9.1",
+    "gulp-babel": "^6.1.2",
+    "gulp-connect": "^5.0.0",
+    "gulp-header": "^1.8.8",
+    "gulp-less": "^3.3.0",
+    "gulp-rename": "^1.2.2",
+    "gulp-streamify": "^1.0.2",
+    "gulp-uglify": "^2.0.1",
+    "gulp-util": "^3.0.8",
+    "gulp-wrap": "^0.13.0",
+    "jasmine": "^2.5.3",
+    "jasmine-core": "^2.5.2",
+    "jquery": "^4.0.0",
+    "karma": "^1.5.0",
+    "karma-browserify": "^5.1.1",
+    "karma-chrome-launcher": "^2.0.0",
+    "karma-coverage": "^1.1.1",
+    "karma-jasmine": "^1.1.0",
+    "karma-phantomjs-launcher": "^1.0.2",
+    "path": "^0.12.7",
+    "uglifyjs-webpack-plugin": "^2.2.0",
+    "vinyl-buffer": "^1.0.1",
+    "vinyl-source-stream": "^1.1.0",
+    "watchify": "^3.9.0",
+    "webpack": "^4.16.5",
+    "webpack-cli": "^3.1.0",
+    "wrapper-webpack-plugin": "^2.0.0"
+  },
+  "browserify-shim": {
+    "jquery": "global:$",
+    "fusioncharts": "global:FusionCharts"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}

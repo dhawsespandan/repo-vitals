@@ -1,0 +1,40 @@
+{
+  "name": "mongomyadmin",
+  "version": "0.4.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3020",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "docker-build": "docker build -t 'mongomyadmin:0.4.0' .",
+    "docker-run": "docker run -p 3000:3000 --add-host=host.docker.internal:host-gateway --name 'mongoMyAdmin' -e MONGO_URL=$MONGO_URL 'mongomyadmin:0.4.0'",
+    "docker-run-local": "docker run -p 3000:3000 --add-host=host.docker.internal:host-gateway --name 'mongoMyAdmin' -e MONGO_URL=$MONGO_URL 'mongomyadmin:0.4.0'",
+    "docker-run-local-readonly": "docker run -p 3000:3000 --add-host=host.docker.internal:host-gateway --name 'mongoMyAdmin' -e MONGO_URL=$MONGO_URL -e NEXT_PUBLIC_READ_ONLY=true 'mongomyadmin:0.4.0'",
+    "docker-push": "bash scripts/docker-push.sh"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.0",
+    "@mantine/core": "^6.0.11",
+    "@mantine/hooks": "^6.0.11",
+    "@mantine/notifications": "^6.0.13",
+    "@monaco-editor/react": "^4.7.0",
+    "@tabler/icons-react": "^2.20.0",
+    "aws4": "^1.13.2",
+    "eslint": "8.41.0",
+    "eslint-config-next": "13.4.3",
+    "jsonrepair": "^3.1.0",
+    "lodash": "^4.17.21",
+    "mongodb": "^5.5.0",
+    "next": "13.5.11",
+    "next-query-params": "^4.2.1",
+    "object-path": "^0.11.8",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "swr": "^2.1.5",
+    "use-query-params": "^2.2.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

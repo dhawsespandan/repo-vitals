@@ -1,0 +1,8 @@
+{
+  "name": "webpack-babel-multi-target-plugin-example-typescript-plain",
+  "version": "0.0.1",
+  "devDependencies": {
+    "ts-loader": "^8.0.1",
+    "typescript": "^3.9.7"
+  }
+}

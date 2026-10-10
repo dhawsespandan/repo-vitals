@@ -1,0 +1,44 @@
+# DeepRAG — Knowledge Base + RAG Backend
+# ============================================
+
+# Web framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+
+# Database
+sqlalchemy[asyncio]>=2.0.23
+asyncpg>=0.29.0
+alembic>=1.12.0
+
+# Vector store
+chromadb>=0.4.22
+
+# Embeddings & reranking
+sentence-transformers>=2.2.2
+
+# Document parsing (Docling — default)
+docling>=2.0.0
+
+# Document parsing (Marker — alternative, better math/formula, lighter GPU)
+# Install with: pip install marker-pdf[full]
+# Activate with: NEXUSRAG_DOCUMENT_PARSER=marker
+marker-pdf[full]>=1.10.0
+
+# Text processing
+langchain-text-splitters>=0.0.1
+
+# LLM providers
+google-genai>=1.0.0
+ollama>=0.4.0
+
+# Knowledge Graph (LightRAG)
+lightrag-hku>=1.0.0
+
+# Utilities
+python-dotenv>=1.0.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+httpx>=0.25.0
+aiofiles>=23.2.1
+Pillow>=10.0.0

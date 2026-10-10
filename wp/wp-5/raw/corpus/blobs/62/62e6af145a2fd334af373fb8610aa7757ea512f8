@@ -1,0 +1,67 @@
+{
+  "name": "alexa-skill-test",
+  "version": "1.2.4",
+  "description": "Test Alexa skills through a local server.",
+  "main": "bin/start.js",
+  "engineStrict": true,
+  "license": "MIT",
+  "scripts": {
+    "build": "./node_modules/.bin/webpack"
+  },
+  "bin": {
+    "alexa-skill-test": "./bin/start.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tlovett1/alexa-skill-test"
+  },
+  "engines": {
+    "node": ">=6.7"
+  },
+  "keywords": [
+    "alexa",
+    "alexa skill",
+    "alexa sdk",
+    "alexa lambda",
+    "alexa utterance",
+    "alexa schema"
+  ],
+  "dependencies": {
+    "add": "^2.0.6",
+    "argparse": "^1.0.9",
+    "babel-core": "^6.23.1",
+    "babel-loader": "^7.1.2",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-react": "^6.23.0",
+    "body-parser": "^1.17.0",
+    "bootstrap-sass": "^3.3.7",
+    "colors": "^1.1.2",
+    "command-line-args": "^5.0.1",
+    "connect-livereload": "^0.6.0",
+    "css-loader": "^0.28.9",
+    "debug": "^3.1.0",
+    "express": "^4.16.2",
+    "immutable": "^3.8.1",
+    "jquery": "^3.1.1",
+    "js-beautify": "^1.6.11",
+    "lambda-local": "^1.4.1",
+    "lodash": "^4.17.4",
+    "minimist": "^1.2.0",
+    "node-sass": "^4.5.0",
+    "nodemon": "^1.11.0",
+    "prop-types": "^15.6.0",
+    "react": "^16.2.0",
+    "react-dom": "^16.2.0",
+    "react-redux": "^5.0.3",
+    "redux": "^3.6.0",
+    "redux-thunk": "^2.2.0",
+    "sass-loader": "^6.0.2",
+    "shortid": "^2.2.8",
+    "style-loader": "^0.20.1",
+    "tiny-lr": "^1.0.3",
+    "webpack": "^3.10.0",
+    "webpack-dev-middleware": "^2.0.4",
+    "webpack-dev-server": "^2.4.1",
+    "yarn": "^1.3.2"
+  }
+}

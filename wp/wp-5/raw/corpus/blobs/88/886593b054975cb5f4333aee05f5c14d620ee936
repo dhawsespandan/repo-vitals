@@ -1,0 +1,50 @@
+{
+  "name": "website",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "The official Octane website",
+  "scripts": {
+    "lynx-examples": "node scripts/prepare-lynx-examples.mjs",
+    "dev": "pnpm lynx-examples && vite --configLoader runner",
+    "build": "pnpm lynx-examples && vite build --configLoader runner",
+    "preview": "vite preview --configLoader runner --port 3000",
+    "start": "node .output/server/index.mjs",
+    "typecheck": "octane-tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@codemirror/commands": "catalog:default",
+    "@codemirror/state": "catalog:default",
+    "@codemirror/view": "catalog:default",
+    "@octanejs/devtools": "workspace:*",
+    "@octanejs/mdx": "workspace:*",
+    "@octanejs/tanstack-devtools": "workspace:*",
+    "@octanejs/tanstack-router": "workspace:*",
+    "@octanejs/tanstack-start": "workspace:*",
+    "@octanejs/three": "workspace:*",
+    "@octanejs/visx": "workspace:*",
+    "octane": "workspace:*",
+    "qrcode": "1.5.4",
+    "shiki": "catalog:default",
+    "three": "catalog:default"
+  },
+  "devDependencies": {
+    "@lynx-js/web-core": "catalog:lynx",
+    "@octanejs/testing-library": "workspace:*",
+    "@shikijs/rehype": "catalog:default",
+    "@tsrx/core": "catalog:default",
+    "@tsrx/prettier-plugin": "catalog:default",
+    "@types/qrcode": "^1.5.6",
+    "@types/three": "catalog:default",
+    "axe-core": "4.12.1",
+    "es-module-lexer": "catalog:default",
+    "esrap": "catalog:default",
+    "nitro": "^3.0.260311-beta",
+    "playwright": "catalog:default",
+    "prettier": "catalog:default",
+    "sucrase": "catalog:default",
+    "typescript": "catalog:default",
+    "vite": "catalog:default",
+    "wrangler": "catalog:default"
+  }
+}

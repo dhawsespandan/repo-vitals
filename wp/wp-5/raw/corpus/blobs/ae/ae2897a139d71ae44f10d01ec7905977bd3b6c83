@@ -1,0 +1,12 @@
+{
+  "name": "webpack-babel-multi-target-plugin-example-typescript-lodash",
+  "version": "0.0.0",
+  "dependencies": {
+    "lodash-es": "^4.17.15"
+  },
+  "devDependencies": {
+    "@types/lodash-es": "^4.17.3",
+    "ts-loader": "^8.0.1",
+    "typescript": "^3.9.7"
+  }
+}

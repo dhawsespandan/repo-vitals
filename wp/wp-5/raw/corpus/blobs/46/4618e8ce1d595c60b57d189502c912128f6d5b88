@@ -1,0 +1,13 @@
+{
+  "name": "tatsy-watcher",
+  "version": "0.0.8",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "test": "echo 'HOPS: implement me(tatsy-watcher)'"
+  },
+  "dependencies": {
+    "chokidar": "^3.3.0",
+    "tatsy-logger": "^0.0.8"
+  }
+}

@@ -1,0 +1,5 @@
+--extra-index-url https://wheels.vtk.org
+trame>=3.9
+trame-vtk
+trame-vuetify
+vtk>=9.4.2

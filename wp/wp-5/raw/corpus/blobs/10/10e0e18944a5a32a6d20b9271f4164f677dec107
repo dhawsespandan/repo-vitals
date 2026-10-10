@@ -1,0 +1,44 @@
+{
+  "name": "chai-datetime",
+  "version": "1.8.1",
+  "keywords": [
+    "chai",
+    "chai-plugin",
+    "objects",
+    "date",
+    "time",
+    "browser",
+    "testing",
+    "jasmine"
+  ],
+  "description": "date / time comparison matchers for chai",
+  "main": "chai-datetime.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mguterl/chai-datetime.git"
+  },
+  "author": {
+    "name": "Mike Guterl",
+    "email": "mike@diminishing.org",
+    "url": "https://diminishing.org"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "husky": "^4.2.5",
+    "mocha": "^10.2.0",
+    "nodemon": "~0.6.23",
+    "prettier": "2.0.5",
+    "pretty-quick": "^2.0.1"
+  },
+  "dependencies": {
+    "chai": ">1.9.0"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "pretty-quick --staged"
+    }
+  }
+}

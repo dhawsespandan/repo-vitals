@@ -1,0 +1,8 @@
+pycodestyle
+pytest_xdist
+tensorflow
+keras
+certifi==2023.7.22
+pillow
+timeout_decorator
+

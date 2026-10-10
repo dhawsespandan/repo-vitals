@@ -1,0 +1,13 @@
+numpy
+scipy
+matplotlib
+beautifulsoup4
+nibabel
+npTDMS
+pyTDMS
+uproot3
+uproot3_methods
+mkdocs
+mkdocs-material
+mkdocstrings
+mkdocstrings-python

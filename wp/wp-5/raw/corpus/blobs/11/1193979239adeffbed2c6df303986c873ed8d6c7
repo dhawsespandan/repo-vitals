@@ -1,0 +1,52 @@
+{
+  "name": "pannellum-react",
+  "version": "1.3.6",
+  "description": "Pannellum React Component",
+  "main": "lib/index.js",
+  "module": "es/index.js",
+  "files": [
+    "css",
+    "es",
+    "lib",
+    "umd"
+  ],
+  "scripts": {
+    "build": "nwb build-react-component --copy-files",
+    "clean": "nwb clean-module && nwb clean-demo",
+    "start": "nwb serve-react-demo",
+    "test": "nwb test-react",
+    "test:coverage": "nwb test-react --coverage",
+    "test:watch": "nwb test-react --server",
+    "deploy": "gh-pages -d demo/dist"
+  },
+  "dependencies": {
+    "video.js": "7.18.1"
+  },
+  "peerDependencies": {
+    "react": "^16 || ^17 || ^18"
+  },
+  "devDependencies": {
+    "babel-eslint": "^10.0.1",
+    "enzyme": "^3.3.0",
+    "enzyme-adapter-react-16": "^1.1.1",
+    "eslint": "^5.8.0",
+    "eslint-plugin-jsx-a11y": "^6.1.2",
+    "eslint-plugin-react": "^7.11.1",
+    "gh-pages": "^1.2.0",
+    "nwb": "0.25.2",
+    "react": "18.1.0 ",
+    "react-dom": "18.1.0 "
+  },
+  "author": "farminf<farmin.f@gmail.com>",
+  "homepage": "https://github.com/farminf/pannellum-react",
+  "license": "MIT",
+  "repository": "https://github.com/farminf/pannellum-react",
+  "keywords": [
+    "react-component",
+    "Pannellum",
+    "react",
+    "component",
+    "360",
+    "vr"
+  ]
+}

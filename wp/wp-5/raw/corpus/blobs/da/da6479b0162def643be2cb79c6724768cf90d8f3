@@ -1,0 +1,36 @@
+{
+    "name": "react-restaurant-server",
+    "version": "1.0.0",
+    "description": "This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).",
+    "scripts": {
+        "start": "node index.js",
+        "app": "npm install && cd client && npm install && npm run build && cd .. && node index.js",
+        "heroku-postbuild": "cd client && npm install && npm run build",
+        "test": "mocha"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/nitaiaharoni1/react-restaurant-website.git"
+    },
+    "author": "Nitai Aharoni",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/nitaiaharoni1/react-restaurant-website/issues"
+    },
+    "homepage": "https://github.com/nitaiaharoni1/react-restaurant-website#readme",
+    "dependencies": {
+        "body-parser": "^1.19.0",
+        "cookie-parser": "^1.4.4",
+        "express": "^4.17.1",
+        "express-rate-limit": "^5.0.0",
+        "jsonwebtoken": "^8.5.1",
+        "path": "^0.12.7",
+        "promisify-node": "^0.5.0",
+        "uniqid": "^5.0.3"
+    },
+    "devDependencies": {
+        "chai": "^4.2.0",
+        "mocha": "^6.2.0",
+        "supertest": "^4.0.2"
+    }
+}

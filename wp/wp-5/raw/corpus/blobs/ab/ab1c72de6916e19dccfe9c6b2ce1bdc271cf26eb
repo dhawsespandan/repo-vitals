@@ -1,0 +1,100 @@
+{
+  "name": "apollo3-cache-persist",
+  "version": "0.15.0",
+  "description": "Simple persistence for all Apollo cache implementations",
+  "author": "James Reggio <james.reggio@gmail.com>",
+  "contributors": [
+    "James Reggio <james.reggio@gmail.com>",
+    "Peggy Rayzis <peggy@meteor.com>"
+  ],
+  "license": "MIT",
+  "main": "./lib/cjs/index.js",
+  "module": "./lib/index.js",
+  "jsnext:main": "./lib/index.js",
+  "typings": "./lib/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/apollographql/apollo-cache-persist.git"
+  },
+  "homepage": "https://github.com/apollographql/apollo-cache-persist#readme",
+  "bugs": "https://github.com/apollographql/apollo-cache-persist/issues",
+  "scripts": {
+    "version": "yarn run changelog && git add CHANGELOG.md",
+    "postversion": "yarn run publish:git && yarn run publish:npm",
+    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 1",
+    "build:browser": "browserify ./lib/bundle.umd.js -o=./lib/bundle.js && npm run minify:browser",
+    "build": "tsc -p . && tsc -p ./tsconfig.cjs.json",
+    "bundle": "rollup -c",
+    "clean": "rimraf lib/* && rimraf coverage/*",
+    "coverage:upload": "codecov",
+    "minify:browser": "uglifyjs -c -m -o ./lib/bundle.min.js -- ./lib/bundle.js",
+    "postbuild": "npm run bundle",
+    "prebuild": "npm run clean",
+    "precommit": "lint-staged",
+    "test": "jest",
+    "test:watch": "jest --watchAll",
+    "coverage": "jest --coverage",
+    "watch": "tsc -w -p .",
+    "publish:git": "git push && git push --tags",
+    "publish:npm": "yarn run build && npm publish --access public",
+    "commit": "cz"
+  },
+  "lint-staged": {
+    "*.{md,ts,js,json}": [
+      "prettier --write es5",
+      "git add"
+    ]
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "transform": {
+      "\\.ts$": [
+        "ts-jest",
+        {
+          "babelConfig": true
+        }
+      ]
+    },
+    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|js)$",
+    "transformIgnorePatterns": [
+      "node_modules/(?!apollo-cache-hermes)"
+    ],
+    "preset": "ts-jest"
+  },
+  "peerDependencies": {
+    "@apollo/client": "^3.7.17"
+  },
+  "devDependencies": {
+    "@apollo/client": "3.9.9",
+    "@types/jest": "29.5.12",
+    "@types/node": "20.11.30",
+    "@types/react-native": "0.73.0",
+    "apollo-cache-hermes": "0.8.16",
+    "browserify": "17.0.0",
+    "codecov": "3.8.3",
+    "commitizen": "4.3.0",
+    "conventional-changelog-cli": "4.1.0",
+    "cz-conventional-changelog": "3.3.0",
+    "graphql": "16.8.1",
+    "husky": "9.0.11",
+    "jest": "29.7.0",
+    "lint-staged": "15.2.2",
+    "prettier": "3.2.5",
+    "react": "18.2.0",
+    "rimraf": "5.0.5",
+    "rollup": "4.13.0",
+    "ts-jest": "29.1.2",
+    "typescript": "5.4.3",
+    "uglify-js": "3.17.4"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "packageManager": "yarn@4.1.1"
+}

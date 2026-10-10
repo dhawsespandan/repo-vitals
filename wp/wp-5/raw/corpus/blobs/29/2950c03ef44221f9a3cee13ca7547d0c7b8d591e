@@ -1,0 +1,99 @@
+{
+	"name": "@three-ws/avatar",
+	"version": "0.2.3",
+	"description": "The official three.ws SDK — 3D avatar viewer, creator iframe, AR/VR runtime, and emotion + lipsync engine. Drop-in replacement for Ready Player Me.",
+	"keywords": [
+		"3d",
+		"avatar",
+		"three.js",
+		"webgl",
+		"webxr",
+		"ar",
+		"vr",
+		"lipsync",
+		"viseme",
+		"web-component",
+		"readyplayerme",
+		"ready-player-me"
+	],
+	"author": "three.ws <support@three.ws> (https://three.ws)",
+	"license": "Apache-2.0",
+	"homepage": "https://three.ws",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "avatar-sdk"
+	},
+	"type": "module",
+	"main": "./dist/index.mjs",
+	"module": "./dist/index.mjs",
+	"types": "./types/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./types/index.d.ts",
+			"import": "./dist/index.mjs",
+			"default": "./dist/index.mjs"
+		},
+		"./creator": {
+			"types": "./types/creator.d.ts",
+			"import": "./src/creator.js",
+			"default": "./src/creator.js"
+		},
+		"./element": {
+			"types": "./types/element.d.ts",
+			"import": "./dist/index.mjs",
+			"default": "./dist/index.mjs"
+		},
+		"./viewer": {
+			"types": "./types/viewer.d.ts",
+			"import": "./src/viewer.js",
+			"default": "./src/viewer.js"
+		},
+		"./agent": {
+			"types": "./types/element.d.ts",
+			"import": "./src/agent.js",
+			"default": "./src/agent.js"
+		},
+		"./react": {
+			"types": "./types/react.d.ts",
+			"import": "./src/react.js",
+			"default": "./src/react.js"
+		},
+		"./runtime/choreography.js": "./dist/runtime/choreography.js",
+		"./runtime/animation-slots.js": "./dist/runtime/animation-slots.js",
+		"./style.css": "./dist/style.css",
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"dist",
+		"src",
+		"types",
+		"README.md",
+		"LICENSE"
+	],
+	"scripts": {
+		"build": "node build.mjs",
+		"prepublishOnly": "npm run build"
+	},
+	"peerDependencies": {
+		"three": ">=0.150.0",
+		"react": ">=18.0.0"
+	},
+	"peerDependenciesMeta": {
+		"three": {
+			"optional": false
+		},
+		"react": {
+			"optional": true
+		}
+	},
+	"engines": {
+		"node": ">=18"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}

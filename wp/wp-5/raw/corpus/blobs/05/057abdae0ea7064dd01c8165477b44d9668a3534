@@ -1,0 +1,40 @@
+{
+  "name": "@netflix/pilet-watch",
+  "version": "1.1.0",
+  "description": "",
+  "keywords": [
+    "pilet"
+  ],
+  "importmap": {
+    "imports": {},
+    "inherit": [
+      "@smapiot/netflix-piral-demo"
+    ]
+  },
+  "devDependencies": {
+    "@smapiot/netflix-piral-demo": "1.1.0",
+    "@types/node": "latest",
+    "@types/react": "^18",
+    "@types/react-dom": "18",
+    "@types/react-router": "^5",
+    "@types/react-router-dom": "^5",
+    "piral-cli": "1.5.4",
+    "piral-cli-esbuild": "latest",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-router": "5.3.3",
+    "react-router-dom": "5.3.3",
+    "tslib": "2.6.2",
+    "typescript": "latest"
+  },
+  "scripts": {
+    "start": "pilet debug",
+    "build": "pilet build",
+    "upgrade": "pilet upgrade",
+    "debug": "pilet debug --feed https://feed.piral.cloud/api/v1/pilet/netflix-demo"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ]
+}

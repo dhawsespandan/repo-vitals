@@ -1,0 +1,11 @@
+flask==3.1.2
+flask-cors==6.0.1
+requests==2.32.5
+telethon==1.41.2
+cryptg==0.5.1
+Pillow==11.3.0
+pyOpenSSL==25.3.0
+psutil==7.1.0
+cryptography
+nest_asyncio==1.6.0
+supabase==2.11.0

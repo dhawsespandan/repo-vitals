@@ -1,0 +1,55 @@
+{
+    "name": "@wq/analyst",
+    "version": "2.0.0",
+    "description": "wq framework plugin providing interactive data tables & charts for Django REST Pandas",
+    "main": "index.js",
+    "unpkg": "dist/index.unpkg.js",
+    "type": "module",
+    "files": [
+        "src",
+        "dist",
+        "index.js",
+        "icons.js",
+        "hooks.js",
+        "version.js",
+        "components",
+        "views"
+    ],
+    "scripts": {
+        "test": "cd ../../ && npm run jest packages/analyst",
+        "build": "NODE_ENV=build npm run babel && npm run prettier",
+        "babel": "cd ../../ && npm run babel -- packages/analyst/src --out-dir packages/analyst/",
+        "prettier": "cd ../../ && npm run prettier",
+        "lint": "cd ../../ && npm run lint",
+        "rollup": "cd ../../ && npm run rollup -- -c packages/analyst/rollup.config.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/wq/django-rest-pandas.git",
+        "directory": "packages/analyst"
+    },
+    "keywords": [
+        "wq",
+        "analyst",
+        "django-rest-pandas"
+    ],
+    "author": "S. Andrew Sheppard",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/wq/django-rest-pandas/issues"
+    },
+    "homepage": "https://django-rest-pandas.wq.io/@wq/analyst",
+    "dependencies": {
+        "@wq/chart": "^2.0.0",
+        "@wq/pandas": "^2.0.0",
+        "mustache": "^4.2.0"
+    },
+    "peerDependencies": {
+        "@wq/material": "*",
+        "@wq/material-web": "*"
+    },
+    "devDependencies": {
+        "@wq/material": "^2.1.0",
+        "@wq/material-web": "^2.1.0"
+    }
+}

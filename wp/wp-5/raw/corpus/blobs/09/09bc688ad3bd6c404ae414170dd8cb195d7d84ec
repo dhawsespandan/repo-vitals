@@ -1,0 +1,244 @@
+{
+  "name": "vscode-pont",
+  "displayName": "pont",
+  "description": "",
+  "version": "1.6.3",
+  "publisher": "jasonHzq",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.24.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./out/extension",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "pontExplorer",
+          "title": "Pont",
+          "icon": "resources/pont.svg"
+        }
+      ]
+    },
+    "views": {
+      "pontExplorer": [
+        {
+          "id": "pontOrigins",
+          "name": "Pont"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "pontOrigins",
+        "contents": "请参阅[官方文档](https://github.com/alibaba/pont) 使用 pont start 命令 创建 pont-config.json 文件",
+        "when": "pontContext.noConfigFile"
+      },
+      {
+        "view": "pontOrigins",
+        "contents": "请安装或升级pont-engine \n [yarn add pont-engine](command:pont.installPontEngine?%7B%22type%22%3A%22yarn%22%7D) \n [npm i -D pont-engine](command:pont.installPontEngine?%7B%22type%22%3A%22npm%22%7D)",
+        "when": "pontContext.versionError",
+        "enablement": "pontContext.isInit"
+      },
+      {
+        "view": "pontOrigins",
+        "contents": "[忽略](command:pont.createManager)",
+        "when": "pontContext.versionError",
+        "enablement": "pontContext.isInit"
+      }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": "pont-config.json",
+        "url": "./configSchema.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "pont.switchOrigin",
+        "title": "切换数据源",
+        "icon": {
+          "dark": "resources/dark/icon-switch.svg",
+          "light": "resources/light/icon-switch.svg"
+        }
+      },
+      {
+        "command": "pont.findInterface",
+        "title": "接口代码片段",
+        "icon": {
+          "dark": "resources/dark/icon-api.svg",
+          "light": "resources/light/icon-api.svg"
+        }
+      },
+      {
+        "command": "pont.syncRemote",
+        "title": "拉取远程数据源",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "pont.regenerate",
+        "title": "生成接口代码",
+        "icon": "$(code)"
+      },
+      {
+        "command": "pont.makeAllSame",
+        "title": "更新全部数据源",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "pont.syncRemoteAndGenerate",
+        "title": "生成当前origin接口代码"
+      },
+      {
+        "command": "pont.syncRemoteAndGenerateAll",
+        "title": "生成所有origin接口代码"
+      },
+      {
+        "command": "pont.createManager",
+        "title": "重置Pont"
+      },
+      {
+        "command": "pont.updateMod",
+        "title": "更新模块",
+        "icon": "$(code)"
+      },
+      {
+        "command": "pont.qickPickMod",
+        "title": "搜索模块",
+        "icon": "$(search)"
+      },
+      {
+        "command": "pont.updateBo",
+        "title": "更新基类",
+        "icon": "$(code)"
+      },
+      {
+        "command": "pont.qickPickBo",
+        "title": "搜索基类",
+        "icon": "$(search)"
+      },
+      {
+        "command": "pont.jumpToMocks",
+        "title": "jump to mock position"
+      },
+      {
+        "command": "pont.visitMocks",
+        "title": "visit mocks interface"
+      },
+      {
+        "command": "pont.refreshMocks",
+        "title": "refresh mocks data"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "pont.findInterface",
+        "key": "cmd+ctrl+p",
+        "mac": "cmd+ctrl+p"
+      },
+      {
+        "command": "pont.refreshMocks",
+        "key": "cmd+ctrl+m",
+        "mac": "cmd+ctrl+m"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "group": "navigation",
+          "command": "pont.jumpToMocks"
+        },
+        {
+          "group": "navigation",
+          "command": "pont.visitMocks"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "pont.findInterface",
+          "when": "pontContext.initManager&&!pontContext.initError&&view == pontOrigins",
+          "group": "navigation@1"
+        },
+        {
+          "command": "pont.syncRemote",
+          "when": "pontContext.initManager&&!pontContext.initError&&view == pontOrigins",
+          "group": "navigation@2"
+        },
+        {
+          "command": "pont.regenerate",
+          "when": "pontContext.initManager&&!pontContext.initError&&view == pontOrigins",
+          "group": "navigation@3"
+        },
+        {
+          "command": "pont.syncRemoteAndGenerate",
+          "when": "pontContext.initManager&&!pontContext.initError&&view == pontOrigins",
+          "group": "secondary@1"
+        },
+        {
+          "command": "pont.syncRemoteAndGenerateAll",
+          "when": "pontContext.initManager&&!pontContext.initError&&view == pontOrigins&&pontContext.multipleOrigins",
+          "group": "secondary@2"
+        },
+        {
+          "command": "pont.createManager",
+          "when": "pontContext.isInit&&view == pontOrigins",
+          "group": "secondary@3"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "pont.switchOrigin",
+          "when": "viewItem == origin",
+          "group": "inline"
+        },
+        {
+          "command": "pont.updateMod",
+          "when": "viewItem == MOD",
+          "group": "inline"
+        },
+        {
+          "command": "pont.qickPickMod",
+          "when": "viewItem == MODParent",
+          "group": "inline"
+        },
+        {
+          "command": "pont.updateBo",
+          "when": "viewItem == BO",
+          "group": "inline"
+        },
+        {
+          "command": "pont.qickPickBo",
+          "when": "viewItem == BOParent",
+          "group": "inline"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "build": "rimraf ./out && tsc",
+    "watch": "tsc -watch -p ./",
+    "test": "npm run build && node ../../node_modules/vscode/bin/test"
+  },
+  "dependencies": {
+    "@types/fs-extra": "^5.1.0",
+    "fs-extra": "^7.0.1",
+    "mockjs": "^1.0.1-beta3",
+    "pont-engine": "1.6.3",
+    "typescript": "^4.8.3"
+  },
+  "devDependencies": {
+    "rimraf": "^3.0.2",
+    "vsce": "^1.50.0",
+    "vscode": "^1.1.37"
+  },
+  "icon": "logo.png",
+  "repository": {
+    "url": "https://github.com/alibaba/pont",
+    "type": "git"
+  }
+}

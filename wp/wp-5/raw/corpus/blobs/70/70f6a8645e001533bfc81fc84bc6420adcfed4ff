@@ -1,0 +1,72 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pygef"
+version = "0.14.1"
+description = "Parse soil measurument data."
+dependencies = ["polars>=1,<2", "lxml>=5,<7", "gef-file-to-map>=1,<2", "numpy>2,<3"]
+requires-python = ">=3.11,<3.15"
+license = { file = "LICENSE.txt" }
+readme = "README.md"
+keywords = ["gef"]
+
+[project.urls]
+repository = "https://github.com/cemsbv/pygef"
+
+[project.optional-dependencies]
+plot = ["matplotlib>=3.6,<4"]
+test = ["coveralls>=4,<5", "pytest>=9,<10"]
+docs = [
+  "Sphinx",
+  "sphinx-autodoc-typehints",
+  "ipython",
+  "asteroid-sphinx-theme",
+  "sphinx_rtd_theme",
+]
+lint = [
+  # https://github.com/super-linter/super-linter/blob/main/dependencies/python/black.txt
+  "black==26.5.1",
+  # https://github.com/super-linter/super-linter/blob/main/dependencies/python/isort.txt
+  "isort==8.0.1",
+]
+map = ["contextily>=1.3.0,<2"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+line_length = 88
+
+[tool.mypy]
+files = ["pygef"]
+mypy_path = 'src'
+namespace_packages = true
+show_error_codes = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unused_configs = true
+disallow_subclassing_any = true
+no_implicit_optional = true
+
+[[tool.mypy.overrides]]
+module = [
+  "matplotlib.*",
+  "pkg_resources.*",
+  "pandas.*",
+  "lxml.*",
+  "polars.*",
+  "numpy.*",
+  "gef_file_to_map.*",
+  "pytest.*",
+  "setuptools.*",
+  "contextily.*",
+]
+ignore_missing_imports = true

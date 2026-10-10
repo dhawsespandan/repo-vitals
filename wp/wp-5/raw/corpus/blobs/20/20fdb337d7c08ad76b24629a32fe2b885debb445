@@ -1,0 +1,55 @@
+{
+	"name": "@neodrag/react",
+	"version": "2.3.1",
+	"description": "React library to add dragging to your apps 😉",
+	"main": "./dist/index.js",
+	"module": "./dist/index.js",
+	"type": "module",
+	"types": "./dist/index.d.ts",
+	"files": [
+		"dist/*"
+	],
+	"sideEffects": false,
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": {
+				"production": "./dist/min/index.js",
+				"development": "./dist/index.js"
+			},
+			"default": "./dist/min/index.js"
+		},
+		"./package.json": "./package.json"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/PuruVJ/neodrag.git"
+	},
+	"keywords": [
+		"draggable",
+		"react",
+		"react-draggable",
+		"drag",
+		"neodrag",
+		"preact",
+		"small",
+		"tiny",
+		"performant",
+		"neodrag"
+	],
+	"author": "Puru Vijay",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/PuruVJ/neodrag/issues"
+	},
+	"homepage": "https://github.com/PuruVJ/neodrag/tree/main/packages/react#readme",
+	"scripts": {
+		"compile": "tsup",
+		"compile:watch": "tsup --watch",
+		"pub": "pnpm compile && pnpm publish --no-git-checks --access public",
+		"pub:dry": "pnpm compile && pnpm publish --dry-run --no-git-checks --access public"
+	},
+	"devDependencies": {
+		"@neodrag/core": "workspace:*"
+	}
+}

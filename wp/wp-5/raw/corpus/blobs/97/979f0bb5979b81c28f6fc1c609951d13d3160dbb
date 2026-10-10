@@ -1,0 +1,60 @@
+{
+  "name": "complex-js",
+  "version": "6.0.3-alpha",
+  "description": "Complex math for the browser and Node.js",
+  "main": "dst/complex.js",
+  "module": "dst/complex.mjs",
+  "browser": "dst/complex.min.js",
+  "types": "dst/complex.d.ts",
+  "repository": "github:patrickroberts/complex-js",
+  "homepage": "https://patrickroberts.github.io/complex-js/",
+  "bugs": "https://github.com/patrickroberts/gpcpu/issues",
+  "author": "Patrick Roberts",
+  "license": "MIT",
+  "keywords": [
+    "complex",
+    "math",
+    "compiler",
+    "isomorphic"
+  ],
+  "scripts": {
+    "clean": "rimraf docs dst compiler/grammar.ts",
+    "compile": "nearleyc compiler/grammar.ne -o compiler/grammar.ts",
+    "lint": "tslint -p . -e compiler/grammar.ts",
+    "bundle": "rollup -c",
+    "build": "npm run compile && npm run lint && npm run bundle",
+    "rebuild": "npm run clean && npm run build",
+    "docs": "typedoc complex.ts",
+    "test": "jest",
+    "prepublishOnly": "npm un moo nearley && npm run rebuild && npm run docs && npm run test"
+  },
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^3.0.0",
+    "@types/jest": "^25.1.3",
+    "@types/moo": "^0.5.2",
+    "@types/nearley": "^2.11.1",
+    "jest": "^25.1.0",
+    "rimraf": "^3.0.2",
+    "rollup": "^1.31.1",
+    "rollup-plugin-dts": "^1.2.1",
+    "rollup-plugin-peer-deps-external": "^2.2.2",
+    "rollup-plugin-terser": "^5.2.0",
+    "ts-jest": "^25.2.1",
+    "tslib": "^1.10.0",
+    "tslint": "^5.11.0",
+    "tslint-config-airbnb": "^5.11.2",
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-eslint-rules": "^5.4.0",
+    "typedoc": "^0.15.8",
+    "typedoc-plugin-sourcefile-url": "^1.0.4",
+    "typescript": "^3.7.5"
+  },
+  "peerDependencies": {
+    "moo": "^0.5.1",
+    "nearley": "^2.19.1"
+  },
+  "dependencies": {}
+}

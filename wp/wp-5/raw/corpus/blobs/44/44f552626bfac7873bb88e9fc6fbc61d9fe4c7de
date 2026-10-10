@@ -1,0 +1,218 @@
+{
+  "name": "@lobehub/editor",
+  "version": "4.29.2",
+  "description": "A powerful and extensible rich text editor built on Meta's Lexical framework, providing a modern editing experience with React integration.",
+  "keywords": [
+    "lobehub",
+    "editor",
+    "lexical"
+  ],
+  "homepage": "https://github.com/lobehub/lobe-editor",
+  "bugs": {
+    "url": "https://github.com/lobehub/lobe-editor/issues/new/choose"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lobehub/lobe-editor.git"
+  },
+  "license": "MIT",
+  "author": "LobeHub <i@lobehub.com>",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./es/index.d.ts",
+      "import": "./es/index.js"
+    },
+    "./codemirror": {
+      "types": "./es/codemirror.d.ts",
+      "import": "./es/codemirror.js"
+    },
+    "./headless": {
+      "types": "./es/headless.d.ts",
+      "import": "./es/headless.js"
+    },
+    "./litexml-commands": {
+      "types": "./es/plugins/litexml/command/symbols.d.ts",
+      "import": "./es/plugins/litexml/command/symbols.js"
+    },
+    "./react": {
+      "types": "./es/react.d.ts",
+      "import": "./es/react.js"
+    },
+    "./react/EditorProvider": {
+      "types": "./es/react/EditorProvider/index.d.ts",
+      "import": "./es/react/EditorProvider/index.js"
+    },
+    "./renderer": {
+      "types": "./es/renderer.d.ts",
+      "import": "./es/renderer.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./es/index.js",
+  "module": "./es/index.js",
+  "types": "./es/index.d.ts",
+  "files": [
+    "es",
+    "patches",
+    "scripts/postinstall-lexical-patch.cjs"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "build:clean": "tsx ./scripts/clean.ts",
+    "build:watch": "tsdown --watch",
+    "ci": "npm run lint:circular && npm run lint && npm run type-check",
+    "clean": "rm -r es lib dist coverage .react-router .eslintcache node_modules/.cache",
+    "demo:yjs-server": "node ./scripts/yjs-websocket-demo-server.cjs",
+    "dev": "lobedocs dev",
+    "docs:build": "lobedocs build",
+    "docs:build-analyze": "ANALYZE=1 lobedocs build",
+    "docs:dev": "lobedocs dev",
+    "postinstall": "node ./scripts/postinstall-lexical-patch.cjs",
+    "lint": "eslint \"{src,tests}/**/*.{js,jsx,ts,tsx}\" --fix",
+    "lint:circular": "dpdm src/**/*.{ts,tsx}  --warning false  --tree false  --exit-code circular:1  -T true",
+    "lint:md": "remark . --quiet --frail --output",
+    "lint:style": "stylelint \"{src,tests}/**/*.{js,jsx,ts,tsx,less}\" --fix",
+    "prepack": "clean-package",
+    "postpack": "clean-package restore",
+    "prepare": "husky && npm run setup",
+    "prettier": "prettier -c --write --no-error-on-unmatched-pattern \"**/**\"",
+    "release": "semantic-release",
+    "setup": "lobedocs typegen",
+    "start": "npm run docs:dev",
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage  --passWithNoTests",
+    "test:watch": "vitest --watch",
+    "type-check": "tsc --noEmit",
+    "verify:node-identity-package": "node scripts/verify-node-identity-package.mjs"
+  },
+  "lint-staged": {
+    "*.{md,mdc}": [
+      "remark --silent --output --",
+      "prettier --write --no-error-on-unmatched-pattern"
+    ],
+    "*.json": [
+      "prettier --write --no-error-on-unmatched-pattern"
+    ],
+    "*.{js,jsx}": [
+      "prettier --write",
+      "stylelint --fix",
+      "eslint --fix"
+    ],
+    "*.{mjs,cjs}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.{ts,tsx}": [
+      "prettier --parser=typescript --write",
+      "stylelint --fix",
+      "eslint --fix"
+    ]
+  },
+  "dependencies": {
+    "@floating-ui/dom": "^1.8.0",
+    "@floating-ui/react": "^0.27.20",
+    "@lexical/clipboard": "0.42.0",
+    "@lexical/code-core": "0.42.0",
+    "@lexical/dragon": "0.42.0",
+    "@lexical/headless": "0.42.0",
+    "@lexical/history": "0.42.0",
+    "@lexical/link": "0.42.0",
+    "@lexical/list": "0.42.0",
+    "@lexical/rich-text": "0.42.0",
+    "@lexical/selection": "0.42.0",
+    "@lexical/table": "0.42.0",
+    "@lexical/utils": "0.42.0",
+    "@lexical/yjs": "0.42.0",
+    "@shikijs/core": "^4.3.1",
+    "@shikijs/engine-javascript": "^4.3.1",
+    "@xmldom/xmldom": "^0.9.10",
+    "ahooks": "^3.9.6",
+    "antd-style": "^4.1.0",
+    "debug": "^4.4.3",
+    "es-toolkit": "^1.50.0",
+    "eventemitter3": "^5.0.1",
+    "fuse.js": "^7.5.0",
+    "katex": "^0.18.1",
+    "lexical": "0.42.0",
+    "lucide-react": "^1.26.0",
+    "mermaid": "^11.16.0",
+    "polished": "^4.3.1",
+    "re-resizable": "^6.11.2",
+    "react-error-boundary": "^6.1.2",
+    "react-merge-refs": "^3.0.2",
+    "remark": "^15.0.1",
+    "remark-cjk-friendly": "^1.2.3",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
+    "remark-supersub": "^1.0.0",
+    "shiki": "^4.3.1",
+    "ts-key-enum": "^3.0.13",
+    "use-merge-value": "^1.2.0",
+    "yjs": "^13.6.31"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@emotion/is-prop-valid": "^1.4.0",
+    "@lobehub/docs-kit": "^5.27.4",
+    "@lobehub/lint": "^2.1.5",
+    "@lobehub/ui": "^5.56.0",
+    "@react-router/dev": "8.2.0",
+    "@shikijs/types": "^4.3.1",
+    "@types/debug": "^4.1.12",
+    "@types/mdast": "^4.0.4",
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@types/unist": "^3.0.3",
+    "@types/ws": "^8.18.1",
+    "@vitest/coverage-v8": "^4.1.10",
+    "antd": "^6.5.2",
+    "clean-package": "^2.2.0",
+    "dpdm": "^4.2.0",
+    "eslint": "^10.7.0",
+    "husky": "^9.1.7",
+    "jsdom": "^29.1.1",
+    "leva": "^0.10.1",
+    "lint-staged": "^17.2.0",
+    "motion": "^12.42.2",
+    "prettier": "^3.9.6",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-hotkeys-hook": "^5.3.3",
+    "react-router": "8.2.0",
+    "remark-cli": "^12.0.1",
+    "semantic-release": "^21.1.2",
+    "stylelint": "^17.14.1",
+    "tsdown": "^0.22.14",
+    "tsx": "^4.23.0",
+    "typescript": "^6.0.3",
+    "vite": "8.1.4",
+    "vitest": "^4.1.10",
+    "ws": "^8.21.0"
+  },
+  "peerDependencies": {
+    "@lobehub/ui": "^5.55.0",
+    "antd": "^6.1.1",
+    "motion": "^12.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "packageManager": "pnpm@10.20.0",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true,
+    "registry": "https://registry.npmjs.org"
+  },
+  "pnpm": {
+    "overrides": {
+      "chalk": "^4.1.2"
+    },
+    "patchedDependencies": {
+      "@lexical/yjs@0.42.0": "patches/@lexical__yjs@0.42.0.patch"
+    }
+  }
+}

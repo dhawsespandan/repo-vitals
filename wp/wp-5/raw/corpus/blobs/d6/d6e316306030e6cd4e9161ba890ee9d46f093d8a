@@ -1,0 +1,4 @@
+beautifulsoup4==4.15.0
+croniter==6.2.4
+requests==2.34.2
+urllib3==2.7.0

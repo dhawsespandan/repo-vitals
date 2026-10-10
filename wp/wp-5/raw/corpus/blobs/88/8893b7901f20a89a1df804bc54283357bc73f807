@@ -1,0 +1,42 @@
+{
+  "name": "cordova.plugins.diagnostic.example",
+  "version": "7.0.0",
+  "displayName": "Diagnostic plugin example",
+  "cordova": {
+    "platforms": [
+      "android",
+      "ios"
+    ],
+    "plugins": {
+      "cordova.plugins.diagnostic": {},
+      "cordova-plugin-file": {
+        "ANDROIDX_WEBKIT_VERSION": "1.4.0"
+      },
+      "cordova-plugin-geolocation": {
+        "GPS_REQUIRED": "true"
+      },
+      "cordova-plugin-statusbar": {},
+      "cordova-plugin-camera": {
+        "ANDROIDX_CORE_VERSION": "1.6.+"
+      },
+      "cordova-plugin-androidx-adapter": {},
+      "cordova-plugin-device": {},
+      "cordova-plugin-zeroconf": {}
+    }
+  },
+  "devDependencies": {
+    "cordova-android": "^15.0.0",
+    "cordova-ios": "^7.1.1",
+    "cordova-plugin-zeroconf": "github:veronicatc/cordova-plugin-zeroconf"
+  },
+  "dependencies": {
+    "cordova-plugin-androidx-adapter": "*",
+    "cordova-plugin-camera": "*",
+    "cordova-plugin-device": "*",
+    "cordova-plugin-file": "*",
+    "cordova-plugin-geolocation": "*",
+    "cordova-plugin-statusbar": "*",
+    "cordova.plugins.diagnostic": "*",
+    "performance-now": "^2.1.0"
+  }
+}

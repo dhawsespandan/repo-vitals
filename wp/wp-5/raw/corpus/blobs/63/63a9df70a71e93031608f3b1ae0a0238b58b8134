@@ -1,0 +1,97 @@
+{
+  "name": "wobble",
+  "version": "1.5.1",
+  "description": "Wobble is a tiny spring simulation library based on the equations of motion governing damped harmonic oscillators.",
+  "repository": "https://github.com/skevy/wobble",
+  "author": "Adam Miskiewicz <adam@sk3vy.com>",
+  "license": "MIT",
+  "typescript:main": "src/index.ts",
+  "main": "./dist/module/index.js",
+  "module": "./dist/wobble.es.js",
+  "types": "./dist/module/index.d.ts",
+  "scripts": {
+    "dev": "concurrently \"yarn watch\" \"cd demos && yarn start\"",
+    "lint": "tslint -p . --format codeFrame",
+    "test": "tsc --noEmit && jest --coverage",
+    "posttest": "codecov -f coverage/*.json",
+    "clean": "rm -rf ./dist/",
+    "watch": "concurrently \"tsc -w\" \"yarn dist-es -w\"",
+    "build": "tsc",
+    "dist-es": "rollup -c --environment ROLLUP_CONFIG:es",
+    "dist-cjs": "rollup -c --environment ROLLUP_CONFIG:cjs",
+    "dist-browser": "rollup -c --environment ROLLUP_CONFIG:browser",
+    "dist": "yarn run clean && concurrently \"yarn build\" \"yarn dist-es\" \"yarn dist-cjs\" \"yarn dist-browser\"",
+    "prepublish": "yarn dist",
+    "precommit": "lint-staged"
+  },
+  "files": [
+    "src",
+    "dist"
+  ],
+  "jest": {
+    "globals": {
+      "ts-jest": {
+        "useBabelrc": true
+      }
+    },
+    "setupFiles": [
+      "./jest/rAF.js"
+    ],
+    "modulePathIgnorePatterns": [
+      "<rootDir>/build/",
+      "<rootDir>/dist/"
+    ],
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json",
+      "node"
+    ],
+    "mapCoverage": true,
+    "timers": "fake"
+  },
+  "lint-staged": {
+    "**/*.+(ts|tsx)": [
+      "tslint --format codeFrame"
+    ]
+  },
+  "jest-junit": {
+    "outputDirectory": "CIRCLE_TEST_REPORTS/jest/",
+    "outputName": "./test-results.xml"
+  },
+  "devDependencies": {
+    "@types/jest": "^22.0.1",
+    "@types/lolex": "^2.1.1",
+    "codecov": "^3.0.0",
+    "concurrently": "^3.5.1",
+    "husky": "^0.14.3",
+    "jest": "^22.1.1",
+    "jest-junit": "^5.2.0",
+    "lint-staged": "^6.0.0",
+    "lolex": "^2.3.1",
+    "prettier": "^1.10.2",
+    "rimraf": "^2.6.2",
+    "rollup": "^0.54.0",
+    "rollup-plugin-node-resolve": "^3.0.2",
+    "rollup-plugin-typescript": "^0.8.1",
+    "rollup-plugin-typescript2": "^0.10.0",
+    "rollup-plugin-uglify": "^2.0.1",
+    "rollup-watch": "^4.3.1",
+    "temp-dir": "^1.0.0",
+    "ts-jest": "^22.0.1",
+    "tslint": "^5.9.1",
+    "tslint-config-prettier": "^1.6.0",
+    "tslint-eslint-rules": "^4.1.1",
+    "tslint-junit-formatter": "^5.1.0",
+    "tslint-plugin-prettier": "^1.3.0",
+    "tslint-react": "^3.4.0",
+    "typescript": "^2.6.2",
+    "uglify-es": "^3.3.7"
+  }
+}

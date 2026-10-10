@@ -1,0 +1,110 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kajiki"
+version = "1.0.2"
+description = "Fast XML-based template engine with Genshi syntax and Jinja blocks"
+readme = "README.rst"
+license = "MIT"
+requires-python = ">=3.8"
+authors = [
+    { name = "Rick Copeland", email = "rick446@usa.net" },
+    { name = "Nando Florestan", email = "nandoflorestan@gmail.com" },
+    { name = "Alessandro Molina", email = "alessandro@molina.fyi" },
+    { name = "Jack Rosenthal", email = "jack@rosenth.al" },
+]
+maintainers = [
+    { name = "Jack Rosenthal", email = "jack@rosenth.al" },
+]
+keywords = [
+    "chameleon",
+    "engine",
+    "genshi",
+    "html",
+    "jinja",
+    "jinja2",
+    "mako",
+    "template",
+    "templating",
+    "xhtml",
+    "xml",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Web Environment",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Programming Language :: Python",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing :: Markup :: HTML",
+    "Topic :: Text Processing :: Markup :: XML",
+]
+dependencies = [
+    "linetable",
+    'importlib_resources; python_version < "3.9"',
+]
+
+[project.urls]
+Homepage = "https://github.com/jackrosenthal/kajiki"
+
+[project.scripts]
+kajiki = "kajiki.__main__:main"
+
+[project.entry-points."babel.extractors"]
+kajiki = "kajiki.i18n:extract"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/kajiki",
+    "/tests",
+]
+
+[tool.hatch.envs.hatch-test]
+extra-dependencies = [
+    "TurboGears2==2.5.0",
+]
+
+[[tool.hatch.envs.hatch-test.matrix]]
+python = ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "pypy3.10"]
+
+[tool.hatch.envs.default]
+installer = "uv"
+python = "3.12"
+
+[tool.hatch.envs.docs]
+dependencies = [
+    "furo",
+    "sphinx",
+]
+
+[tool.hatch.envs.docs.scripts]
+build = "sphinx-build -M html docs docs/_build"
+
+[tool.hatch.envs.speedtest]
+dependencies = [
+    "genshi",
+]
+
+[tool.hatch.envs.speedtest.scripts]
+run = "./speedtest.py"
+
+[tool.hatch.envs.repl]
+extra-dependencies = [
+    "ptpython"
+]
+
+[tool.ruff.lint.extend-per-file-ignores]
+"tests/*" = ["INP001", "SLF001"]

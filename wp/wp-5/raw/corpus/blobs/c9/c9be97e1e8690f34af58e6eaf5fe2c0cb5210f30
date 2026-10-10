@@ -1,0 +1,51 @@
+{
+  "name": "root",
+  "private": true,
+  "license": "AGPL-3.0",
+  "devDependencies": {
+    "@playwright/experimental-ct-react": "^1.36.0",
+    "@types/react": "^18.0.25",
+    "@types/react-dom": "^18.0.9",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "patch-package": "^7.0.0",
+    "playwright": "^1.36.0"
+  },
+  "workspaces": [
+    "packages/y-penpal",
+    "packages/util",
+    "packages/shared",
+    "packages/shared-test",
+    "packages/engine",
+    "packages/parsers",
+    "packages/frame",
+    "packages/editor",
+    "packages/server"
+  ],
+  "scripts": {
+    "patch-package": "patch-package",
+    "postinstall": "patch-package",
+    "playwright:dev": "npm run playwright:dev --workspaces",
+    "playwright:preview": "npm run playwright:preview --workspace=packages/editor",
+    "install-playwright": "npx playwright install --with-deps",
+    "test": "npm run test --workspaces",
+    "unittest:vitest": "npm run unittest:vitest --workspaces",
+    "wip:unittest:vitest:coverage": "vitest run --coverage -r packages/xxx",
+    "build": "npm run build --workspaces",
+    "build:react": "npm run build:react --workspace=packages/editor",
+    "lint": "npm run lint --workspaces",
+    "start": "npm run start-react",
+    "start-react": "npm run start --workspace=packages/editor",
+    "start:preview": "npm run preview --workspace=packages/editor",
+    "start:server": "npm run dev --workspace=packages/server",
+    "start:supabase": "npm run start:supabase --workspace=packages/server",
+    "stop:supabase": "npm run stop:supabase --workspace=packages/server",
+    "prepublishOnly": "npm run test && npm run build"
+  },
+  "overrides": {
+    "@types/react": "^18.0.25",
+    "@types/react-dom": "^18.0.9",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}

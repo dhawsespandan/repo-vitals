@@ -5930,3 +5930,23 @@ preparation step has to be repeated.
 **Left as it was found.** Production holds two reports this run made: the
 combined reports on `rv-accept-monorepo`'s and `rv-accept-basic`'s current
 scans. No project remains.
+
+### 14.17 The research machine's files are all on GitHub (2026-10-10/11)
+
+`research_data/` is git-ignored, so everything the research machine wrote
+outside the database existed on one laptop. The research database itself was
+already safe: every table in Docker's `repovitals-research-db` matched
+`wp/wp-5/wp5_research_db.dump` row for row. On the owner's instruction that
+GitHub be the only copy of the research data, all of `research_data/` is now
+in `wp/wp-N/raw/`, mirroring its layout, stored byte for byte, and indexed in
+`wp/RAW_DATA.md` (commits `7217baa` and the one after it).
+
+That includes what §13.17 and `REPLICATION.md` §9 had withheld: the WP-9
+answer key, both kappa reports, attempt 1's files and the full judge cache.
+They were published before File C §3.7's decision. If §3.7's option 1 is
+taken, the fresh 50 must be labelled by someone who has not opened them, and
+S3 must state that they were public during the labelling. It also includes
+other people's repository contents (the manifest blobs and the retrieved
+documents), kept under their original licences. A secret-pattern scan found
+no keys or tokens in any of it. The API keys in `backend/.env` and
+`backend/.env.team` stay off GitHub.

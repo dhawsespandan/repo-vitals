@@ -1,0 +1,58 @@
+{
+  "name": "@lobehub/lobe-openai-plugins",
+  "version": "1.0.0",
+  "private": true,
+  "description": "a collection of openai plugins that chan work with LobeChat",
+  "homepage": "https://github.com/lobehub/lobe-openai-plugins",
+  "repository": "https://github.com/lobehub/lobe-openai-plugins.git",
+  "scripts": {
+    "build": "bun src/index.ts",
+    "ci": "npm run lint && npm run type-check",
+    "dev": "bun src/index.ts",
+    "lint": "eslint \"{src,api,docs}/**/*.{js,jsx,ts,tsx}\" --fix",
+    "lint:md": "remark . --quiet --frail --output",
+    "prepare": "husky install",
+    "prettier": "prettier -c --write \"**/**\"",
+    "start": "npm run dev",
+    "sync": "bun scripts/syncOpenAI.ts",
+    "test": "npm run lint",
+    "type-check": "tsc --noEmit"
+  },
+  "lint-staged": {
+    "*.md": [
+      "remark --quiet --output --",
+      "prettier --write --no-error-on-unmatched-pattern"
+    ],
+    "*.json": [
+      "prettier --write --no-error-on-unmatched-pattern"
+    ],
+    "*.{js,jsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.{ts,tsx}": [
+      "prettier --parser=typescript --write",
+      "eslint --fix"
+    ]
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^17",
+    "@lobehub/lint": "latest",
+    "@types/lodash": "^4",
+    "@types/node": "^20",
+    "commitlint": "^17",
+    "consola": "^3",
+    "eslint": "^8",
+    "husky": "^8",
+    "js-yaml": "^4",
+    "lint-staged": "^15",
+    "lodash": "^4",
+    "p-map": "^7",
+    "prettier": "^3",
+    "remark": "^14",
+    "remark-cli": "^11",
+    "sharp": "^0.33",
+    "typescript": "^5",
+    "url-join": "^5"
+  }
+}

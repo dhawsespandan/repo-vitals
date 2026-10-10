@@ -1,0 +1,37 @@
+{
+  "name": "whatsapp-api",
+  "description": "A simple HTTP server that wraps an unofficial free WhatsApp API.",
+  "version": "0.0.1",
+  "license": "MIT",
+  "author": {
+    "name": "Gabriel Silva"
+  },
+  "scripts": {
+    "start": "ts-node src/main.ts",
+    "build": "tsc",
+    "start:prod": "node dist/main.js",
+    "start:dev": "tsnd --quiet --cls --respawn src/main.ts"
+  },
+  "dependencies": {
+    "axios": "^1.18.1",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "mime": "^2.6.0",
+    "multer": "^2.2.0",
+    "node-cron": "^4.5.0",
+    "qrcode": "^1.5.4",
+    "qrcode-terminal": "github:specious/qrcode-terminal",
+    "whatsapp-web.js": "^1.34.7"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/mime": "^2.0.3",
+    "@types/multer": "^2.0.0",
+    "@types/node-cron": "^3.0.11",
+    "@types/qrcode": "^1.5.5",
+    "@types/qrcode-terminal": "^0.12.2",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.8.3"
+  }
+}

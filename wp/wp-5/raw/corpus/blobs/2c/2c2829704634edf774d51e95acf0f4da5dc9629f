@@ -1,0 +1,35 @@
+{
+  "name": "node-distributed-throttle-function",
+  "version": "0.0.3",
+  "description": "Distributed throttle() function (like Underscore) built in Redis",
+  "main": "index.js",
+  "scripts": {
+    "ci": "npm run lint",
+    "lint": "eslint .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mixmaxhq/node-distributed-throttle-function"
+  },
+  "bugs": {
+    "url": "https://github.com/mixmaxhq/node-distributed-throttle-function/issues"
+  },
+  "homepage": "https://github.com/mixmaxhq/node-distributed-throttle-function",
+  "keywords": [
+    "redis",
+    "throttle",
+    "lock"
+  ],
+  "author": "Mixmax <admin@mixmax.com> (https://mixmax.com/)",
+  "license": "MIT",
+  "dependencies": {
+    "node-redis-scripty": "0.0.5"
+  },
+  "devDependencies": {
+    "@mixmaxhq/prettier-config": "^1.0.0",
+    "eslint": "^6.8.0",
+    "eslint-config-mixmax": "^4.8.0",
+    "prettier": "^1.19.1"
+  }
+}

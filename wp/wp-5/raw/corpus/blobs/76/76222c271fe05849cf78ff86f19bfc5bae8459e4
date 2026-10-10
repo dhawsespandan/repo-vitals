@@ -1,0 +1,5 @@
+nonebot2[fastapi]
+nonebot-adapter-onebot~=2.2.3
+openai~=0.27.4
+pydantic~=1.10.7
+chardet~=5.1.0

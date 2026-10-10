@@ -1,0 +1,31 @@
+[tool.black]
+include = '\.pyi?$'
+extend-exclude = 'gui\/(.*\/)*ui_.*.py'
+
+[tool.poetry]
+name = "ssrando"
+version = "2.3.0"
+description = "Skyward Sword Randomizer"
+authors = []
+readme = "README.md"
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.14"
+nlzss11 = "^1.6"
+PyYAML = "^6.0"
+PySide6 = "^6.6.2"
+lark = "^1.1.9"
+toml = "^0.10.2"
+pyclip = "^0.7.0"
+opencv-python = "^4.9.0.80"
+numpy = "^1.26.4"
+disc-riider-py = "==0.3.1"
+pyqtdarktheme-fork = "^2.3.2"
+
+[tool.poetry.group.build.dependencies]
+pyinstaller = "^6.4.0"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.3.0"
+pytest = "^9.0.0"

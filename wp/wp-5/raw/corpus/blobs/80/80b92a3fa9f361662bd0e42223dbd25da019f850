@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pycpio"
+version = "1.7.0"
+
+authors = [
+  { name="Desultory", email="dev@pyl.onl" },
+]
+description = "A Python library for reading and writing cpio archives."
+readme = "readme.md"
+requires-python = ">=3.11"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = ["zenlib >= 3.3.0"]
+
+[options.package_data]
+pycpio = "py.typed"
+
+[project.optional-dependencies]
+zstd = ["zstandard"]
+
+[project.scripts]
+pycpio = "pycpio.main:main"
+
+[project.urls]
+Homepage = "https://github.com/desultory/pycpio"
+Issues = "https://github.com/desultory/pycpio/issues"

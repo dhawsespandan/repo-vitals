@@ -1,0 +1,40 @@
+{
+  "name": "send-action",
+  "version": "4.0.2",
+  "description": "simple state management",
+  "main": "index.js",
+  "scripts": {
+    "docs:api": "documentation build index.js -o docs/api.md -f md",
+    "docs": "npm run docs:api",
+    "lint": "standard",
+    "lintfix": "standard --fix",
+    "test": "tape tests/*.js",
+    "test-lint": "npm run lint && npm run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sethvincent/send-action.git"
+  },
+  "keywords": [
+    "state",
+    "store",
+    "flux",
+    "redux",
+    "unidirectional",
+    "state management"
+  ],
+  "author": "sethvincent",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sethvincent/send-action/issues"
+  },
+  "homepage": "https://github.com/sethvincent/send-action#readme",
+  "dependencies": {
+    "xtend": "^4.0.2"
+  },
+  "devDependencies": {
+    "documentation": "^12.1.1",
+    "standard": "^13.1.0",
+    "tape": "^4.11.0"
+  }
+}

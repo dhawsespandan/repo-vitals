@@ -1,0 +1,106 @@
+{
+	"name": "@three-ws/sdk",
+	"version": "0.2.3",
+	"description": "Ship a cross-chain 3D AI agent with EVM + Solana identity, a chat panel, and discoverable .well-known endpoints.",
+	"type": "module",
+	"main": "./src/index.js",
+	"module": "./src/index.js",
+	"types": "./types/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./types/index.d.ts",
+			"import": "./src/index.js",
+			"require": "./dist/index.cjs",
+			"default": "./src/index.js"
+		},
+		"./permissions": {
+			"types": "./types/permissions.d.ts",
+			"import": "./src/permissions.js",
+			"require": "./dist/permissions.cjs",
+			"default": "./src/permissions.js"
+		},
+		"./permissions/advanced": {
+			"types": "./src/permissions/advanced.d.ts",
+			"import": "./src/permissions/advanced.js",
+			"require": "./dist/permissions/advanced.cjs",
+			"default": "./src/permissions/advanced.js"
+		},
+		"./styles": "./src/styles.css",
+		"./solana": {
+			"types": "./types/solana.d.ts",
+			"import": "./src/solana.js",
+			"require": "./dist/solana.cjs",
+			"default": "./src/solana.js"
+		},
+		"./solana-attestations": {
+			"types": "./types/solana-attestations.d.ts",
+			"import": "./src/solana-attestations.js",
+			"require": "./dist/solana-attestations.cjs",
+			"default": "./src/solana-attestations.js"
+		}
+	},
+	"files": [
+		"src",
+		"types",
+		"dist",
+		"README.md",
+		"LICENSE",
+		"CHANGELOG.md"
+	],
+	"scripts": {
+		"build": "node build.mjs",
+		"prepublishOnly": "node build.mjs",
+		"test": "node --test 'test/**/*.test.js'"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"keywords": [
+		"erc-8004",
+		"agent",
+		"blockchain",
+		"a2a",
+		"mcp",
+		"ethereum",
+		"solana",
+		"web3",
+		"identity",
+		"3d",
+		"ai",
+		"nft",
+		"metaplex"
+	],
+	"license": "Apache-2.0",
+	"peerDependencies": {
+		"ethers": "^6.0.0",
+		"@solana/web3.js": "^1.0.0",
+		"viem": "^2.0.0"
+	},
+	"peerDependenciesMeta": {
+		"ethers": {
+			"optional": true
+		},
+		"@solana/web3.js": {
+			"optional": true
+		},
+		"viem": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"jsdom": "^27.3.0"
+	},
+	"author": "three.ws <support@three.ws> (https://three.ws)",
+	"homepage": "https://three.ws/",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "sdk"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"engines": {
+		"node": ">=18"
+	}
+}

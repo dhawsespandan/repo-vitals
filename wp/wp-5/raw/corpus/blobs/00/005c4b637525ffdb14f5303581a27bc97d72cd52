@@ -1,0 +1,64 @@
+{
+  "name": "npmvet",
+  "version": "0.2.1",
+  "description": "A simple CLI tool for vetting npm package versions",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "jest",
+    "build": "tsc",
+    "run": "node dist/index.js",
+    "br": "npm run build && npm run run",
+    "prepublish": "npm run test && npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:harksys/npmvet.git"
+  },
+  "author": "Andrew Hathaway <andrew@harksys.com>",
+  "license": "MIT",
+  "bin": {
+    "npmvet": "./dist/index.js"
+  },
+  "jest": {
+    "transform": {
+      ".*": "./test/preprocessor.js"
+    },
+    "unmockedModulePathPatterns": [
+      "lodash",
+      "semver"
+    ],
+    "resetModules": true,
+    "modulePaths": [
+      "<rootDir>/src/"
+    ],
+    "roots": [
+      "./test/tests"
+    ],
+    "testRegex": "^.*.(js)$",
+    "globals": {
+      "SRC_DIRECTORY": "<rootDir>/src/"
+    },
+    "moduleFileExtensions": [
+      "js",
+      "ts"
+    ],
+    "collectCoverage": true
+  },
+  "devDependencies": {
+    "@types/blessed": "^0.1.4",
+    "@types/lodash": "^4.14.52",
+    "@types/node": "^7.0.5",
+    "@types/semver": "^5.3.30",
+    "jest": "^28.1.1",
+    "typescript": "^4.7.4"
+  },
+  "dependencies": {
+    "blessed": "^0.1.81",
+    "chalk": "^4.1.2",
+    "commander": "9.1.0",
+    "lodash": "^4.17.21",
+    "pluralize": "^6.0.0",
+    "semver": "^7.3.7",
+    "table": "^6.8.0"
+  }
+}

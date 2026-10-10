@@ -1,0 +1,39 @@
+{
+  "name": "express-mongoose-passport-token-login",
+  "version": "0.0.1",
+  "description": "User token authentication Node.js Application with express 4, mongoose, passport and csurf",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "make test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dondido/express-mongoose-passport-token-login.git"
+  },
+  "keywords": [
+    "tokens",
+    "sessions",
+    "express",
+    "mongodb",
+    "mongoose",
+    "passport"
+  ],
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "compression": "^1.7.4",
+    "connect-mongo": "^3.2.0",
+    "cookie-parser": "^1.4.5",
+    "csurf": "^1.11.0",
+    "ejs": "~3.1.7",
+    "express": "^4.17.1",
+    "express-session": "^1.17.1",
+    "mongodb": "~3.6.2",
+    "mongoose": "~5.13.15",
+    "nodemailer": "^6.6.1",
+    "passport": "~0.6.0",
+    "passport-local": "~1.0.0",
+    "passport-local-mongoose": "~6.0.1",
+    "serve-favicon": "^2.5.0"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "name": "integration-test",
+  "version": "0.0.0",
+  "private": true,
+  "description": "",
+  "main": "handler.js",
+  "dependencies": {
+    "chrome-remote-interface": "0.25.5"
+  },
+  "devDependencies": {
+    "serverless": "1.27.2"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

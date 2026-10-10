@@ -1,0 +1,41 @@
+{
+  "name": "tiny-stack",
+  "description": "Tiny stack for browser or server",
+  "version": "2.0.1",
+  "homepage": "http://avoidwork.github.io/tiny-stack",
+  "author": "Jason Mulligan <jason.mulligan@avoidwork.com>",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/avoidwork/tiny-stack.git"
+  },
+  "bugs": {
+    "url": "https://github.com/avoidwork/tiny-stack/issues"
+  },
+  "main": "lib/tiny-stack",
+  "engineStrict": true,
+  "engines": {
+    "node": ">=6.0.0"
+  },
+  "scripts": {
+    "test": "grunt test"
+  },
+  "devDependencies": {
+    "ajv": "^6.5.3",
+    "babel-core": "^6.26.3",
+    "babel-minify": "^0.4.3",
+    "babel-preset-env": "^1.7.0",
+    "grunt": "^1.0.3",
+    "grunt-babel": "^7.0.0",
+    "grunt-cli": "^1.2.0",
+    "grunt-contrib-concat": "^1.0.1",
+    "grunt-contrib-nodeunit": "^2.0.0",
+    "grunt-contrib-watch": "^1.1.0",
+    "grunt-eslint": "^21.0.0"
+  },
+  "keywords": [
+    "stack",
+    "tiny",
+    "micro"
+  ],
+  "license": "BSD-3-Clause"
+}

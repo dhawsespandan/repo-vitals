@@ -1,0 +1,48 @@
+{
+  "name": "bogota",
+  "description": "Concurrent tape test-files runner with tap-spec output",
+  "version": "2.0.4",
+  "author": "Diego Rodríguez Baquero <diegorbaquero@gmail.com> (https://diegorbaquero.com)",
+  "bin": {
+    "bogota": "./bin/bogota"
+  },
+  "bugs": {
+    "url": "https://github.com/DiegoRBaquero/bogota/issues"
+  },
+  "dependencies": {
+    "bl": "^3.0.0",
+    "glob": "^7.1.1",
+    "tap-spec": "^5.0.0",
+    "uniq": "^1.0.1"
+  },
+  "devDependencies": {
+    "standard": "^14.0.0",
+    "tape": "^4.6.3"
+  },
+  "engine-strict": true,
+  "engines": {
+    "node": ">=6.0.0"
+  },
+  "homepage": "https://github.com/DiegoRBaquero/bogota",
+  "keywords": [
+    "bogota",
+    "concurrent",
+    "runner",
+    "tap",
+    "tap-spec",
+    "tape",
+    "test",
+    "testing",
+    "tests"
+  ],
+  "license": "MIT",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:DiegoRBaquero/bogota.git"
+  },
+  "scripts": {
+    "pretest": "standard",
+    "test": "node bin/bogota"
+  }
+}

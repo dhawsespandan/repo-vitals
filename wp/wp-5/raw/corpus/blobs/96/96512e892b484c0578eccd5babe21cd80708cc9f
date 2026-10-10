@@ -1,0 +1,60 @@
+{
+  "name": "react-vertex-monorepo",
+  "version": "1.0.0",
+  "author": "Steven Hall <hall.steven.g@gmail.com>",
+  "private": true,
+  "description": "Monorepo for React Vertex",
+  "main": "index.js",
+  "engines": {
+    "node": ">=10"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sghall/react-vertex.git"
+  },
+  "keywords": [
+    "react",
+    "hooks",
+    "webgl"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sghall/react-vertex/issues"
+  },
+  "homepage": "https://github.com/sghall/react-vertex#readme",
+  "scripts": {
+    "deps:check": "manypkg check",
+    "deps:fix": "manypkg fix",
+    "pretty": "prettier --write '**/*.js'",
+    "changeset": "pnpm changeset"
+  },
+  "dependencies": {
+    "@babel/cli": "^7.12.10",
+    "@babel/core": "^7.12.10",
+    "@babel/node": "^7.12.10",
+    "@babel/plugin-proposal-class-properties": "^7.12.1",
+    "@babel/plugin-transform-object-assign": "^7.12.1",
+    "@babel/plugin-transform-runtime": "^7.12.10",
+    "@babel/preset-env": "^7.12.11",
+    "@babel/preset-react": "^7.12.10",
+    "@babel/preset-typescript": "^7.12.13",
+    "@babel/register": "^7.12.10",
+    "@manypkg/cli": "^0.17.0",
+    "@types/react": "16.14.4",
+    "@types/react-dom": "16.9.11",
+    "babel-plugin-glsl": "^1.0.0",
+    "babel-plugin-module-resolver": "^3.2.0",
+    "copy": "^0.3.2",
+    "cross-env": "^5.2.1",
+    "glslify": "^7.1.1",
+    "glslify-loader": "^2.0.0",
+    "lerna": "^3.22.1",
+    "prettier": "^1.19.1",
+    "raw-loader": "^2.0.0",
+    "react": "^16.14.0",
+    "react-dom": "16.14.0",
+    "rimraf": "^2.7.1",
+    "serve": "^11.3.2",
+    "typescript": "^4.1.3"
+  }
+}

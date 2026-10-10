@@ -1,0 +1,13 @@
+Flask==0.10.1
+Flask-HTTPAuth==2.2.1
+Flask-Admin==1.0.7
+Flask-SQLAlchemy==1.0
+Jinja2==2.7.2
+MarkupSafe==0.19
+SQLAlchemy==0.9.4
+WTForms==1.0.5
+Werkzeug==0.9.4
+itsdangerous==0.24
+wsgiref==0.1.2
+click==0.7
+sphinx-rtd-theme==0.1.6

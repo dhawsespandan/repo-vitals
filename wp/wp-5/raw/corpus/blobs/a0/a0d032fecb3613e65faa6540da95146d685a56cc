@@ -1,0 +1,61 @@
+{
+  "name": "grunt-pngmin",
+  "description": "Grunt plugin to compress png images with pngquant.",
+  "version": "2.0.3",
+  "type": "module",
+  "scripts": {
+    "build": "tsup",
+    "test": "npm run build && npm run test:run",
+    "test:run": "glob -c \"tsx --test\" \"./src/**/*.test.ts\"",
+    "test:run:only": "glob -c \"tsx --test --test-only\" \"./src/**/*.test.ts\"",
+    "lint": "biome check . && tsc --noEmit",
+    "format": "biome format . --write",
+    "fix": "biome check . --write"
+  },
+  "files": ["tasks", "LICENSE-MIT", "README.md", "package.json"],
+  "dependencies": {
+    "cp-file": "^9.1.0",
+    "execa": "^5.1.1",
+    "filesize": "^10.1.2",
+    "p-all": "^3.0.0",
+    "pngquant-bin": "^6.0.1",
+    "tmp": "^0.2.3",
+    "which": "^4.0.0",
+    "yoctocolors-cjs": "^2.1.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.8.1",
+    "@tsconfig/node20": "^20.1.4",
+    "@types/grunt": "^0.4.31",
+    "@types/node": "^20.14.5",
+    "@types/pngquant-bin": "^4.0.2",
+    "@types/tmp": "^0.2.6",
+    "@types/which": "^3.0.4",
+    "glob": "^10.4.1",
+    "grunt": "^1.6.1",
+    "rimraf": "^5.0.7",
+    "tsup": "^8.1.0",
+    "tsx": "^4.15.6",
+    "typescript": "^5.4.5"
+  },
+  "peerDependencies": {
+    "grunt": ">=1.0.0"
+  },
+  "homepage": "https://github.com/zauni/pngmin",
+  "author": {
+    "name": "Matthias Zaunseder",
+    "email": "zaunseder@outlook.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/zauni/pngmin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zauni/pngmin/issues"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">= 18.0.0"
+  },
+  "keywords": ["gruntplugin", "pngquant"]
+}

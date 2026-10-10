@@ -1,0 +1,39 @@
+{
+  "name": "@project-backend/graphql",
+  "version": "0.1.0",
+  "main": "index.ts",
+  "author": {
+    "name": "Karan Pratap Singh",
+    "email": "contact@karanpratapsingh.com",
+    "url": "https://karanpratapsingh.com"
+  },
+  "license": "MIT",
+  "description": "GraphQL package for full starterkit backend",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/karanpratapsingh/fullstack-starterkit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/karanpratapsingh/fullstack-starterkit/issues"
+  },
+  "scripts": {
+    "generate": "yarn graphql-codegen --config codegen.yml"
+  },
+  "dependencies": {
+    "@graphql-tools/merge": "6.2.14",
+    "@graphql-tools/schema": "7.1.5",
+    "graphql": "15.5.0",
+    "graphql-tag": "2.12.4"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "1.21.5",
+    "@graphql-codegen/schema-ast": "1.18.3",
+    "@graphql-codegen/typescript": "1.22.1",
+    "@graphql-codegen/typescript-operations": "1.18.0",
+    "@graphql-codegen/typescript-react-apollo": "2.2.5"
+  },
+  "volta": {
+    "node": "14.18.0",
+    "yarn": "1.22.10"
+  }
+}

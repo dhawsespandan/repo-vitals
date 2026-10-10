@@ -1,0 +1,24 @@
+{
+  "name": "reactively-root",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "bench-shallow": "node --allow-natives-syntax benches/bench.js",
+    "bench-grid": "node --allow-natives-syntax benches/grid.js",
+    "bench": "pnpm --filter \"reactively-bench\" bench",
+    "build:types": "pnpm --filter core --filter decorate --filter lit build:types",
+    "build": "pnpm --filter core --filter decorate --filter lit build",
+    "test": "pnpm --filter \"reactively-test\" test",
+    "component-test": "pnpm --filter \"cypress-test\" component-test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "esbuild": "^0.16.12",
+    "rimraf": "^3.0.2",
+    "typescript": "^4.9.4"
+  }
+}

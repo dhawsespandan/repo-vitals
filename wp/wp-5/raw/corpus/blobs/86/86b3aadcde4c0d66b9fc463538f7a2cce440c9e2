@@ -1,0 +1,92 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0", "polars>=1.5.0"]
+build-backend = "maturin"
+
+[project]
+name = "polars-xdt"
+description = "eXtra stuff for Dates and Times in Polars"
+readme = "README.md"
+authors = [
+  { name="Marco Gorelli", email="33491632+MarcoGorelli@users.noreply.github.com" },
+]
+license = { file = "LICENSE" }
+classifiers = [
+  "Programming Language :: Rust",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+requires-python = ">=3.9"
+dynamic = ["version"]
+
+[project.urls]
+"Repository" = "https://github.com/MarcoGorelli/polars-xdt"
+"Documentation" = "https://marcogorelli.github.io/polars-xdt-docs/"
+"Change Log" = "https://github.com/MarcoGorelli/polars-xdt/releases"
+"Issue Tracker" = "https://github.com/MarcoGorelli/polars-xdt/issues"
+
+
+[tool.maturin]
+module-name = "polars_xdt._internal"
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff]
+lint.select = [
+  "ALL",
+]
+lint.ignore = [
+  'A003',
+  'ANN401',
+  'ARG002',  # todo: enable
+  'ARG003',  # todo: enable
+  'C901',
+  'COM812',
+  'D100',
+  'D103',
+  'D104',
+  'D105',
+  'D107',
+  'D203',
+  'D212',
+  'DTZ',
+  'E501',
+  'FBT003',  # todo: enable
+  'FIX',
+  'ISC001',
+  'PD',
+  'PLR0911',
+  'PLR0912',
+  'PLR5501',
+  'PLR2004',
+  'PT011',
+  'PTH',
+  'RET505',
+  'S',
+  'SLF001',
+  'TD',
+  'TRY004'
+]
+
+# Allow autofix for all enabled rules (when `--fix`) is provided.
+lint.fixable = ["ALL"]
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    "tests",
+    ".git",
+    ".git-rewrite",
+    ".mypy_cache",
+    ".ruff_cache",
+    "venv",
+    ".ipynb",
+    "venv",
+]
+line-length = 80
+
+[[tool.mypy.overrides]]
+module = [
+  "pandas",
+  "dateutil.*",
+]
+ignore_missing_imports = true

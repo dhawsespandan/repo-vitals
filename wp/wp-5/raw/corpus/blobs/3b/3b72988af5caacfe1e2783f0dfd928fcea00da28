@@ -1,0 +1,23 @@
+{
+  "name": "example-css-modules",
+  "description": "An example using CSS Modules in Hydrogen",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "dev": "shopify hydrogen dev",
+    "build": "shopify hydrogen build",
+    "preview": "shopify hydrogen preview"
+  },
+  "devDependencies": {
+    "@shopify/cli": "^3.12.0",
+    "@shopify/cli-hydrogen": "^3.12.0",
+    "autoprefixer": "^10.4.2",
+    "postcss": "^8.4.5",
+    "vite": "^2.9.0"
+  },
+  "dependencies": {
+    "@shopify/hydrogen": "latest",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}

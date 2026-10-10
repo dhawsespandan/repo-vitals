@@ -1,0 +1,7 @@
+# This file is used by Binder and Github graph
+chaospy
+numpoly
+numpy
+scipy
+matplotlib
+importlib-metadata

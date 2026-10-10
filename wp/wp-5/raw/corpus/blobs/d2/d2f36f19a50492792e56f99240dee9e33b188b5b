@@ -1,0 +1,44 @@
+{
+  "name": "evanplaice",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build --prod --aot=true",
+    "test": "ng test",
+    "lint": "ng lint",
+    "stage": "aws --profile evanplaice.com s3 sync ./dist s3://staging.evanplaice.com --delete || true",
+    "publish": "aws --profile evanplaice.com s3 sync ./dist s3://evanplaice.com --delete --cache-control max-age=86400 || true"
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/animations": "^9.0.0",
+    "@angular/common": "^9.0.0",
+    "@angular/compiler": "^9.0.0",
+    "@angular/core": "^9.0.0",
+    "@angular/forms": "^9.0.0",
+    "@angular/platform-browser": "^9.0.0",
+    "@angular/platform-browser-dynamic": "^9.0.0",
+    "@angular/router": "^9.0.0",
+    "@vanillawc/wc-icon-rule": "^1.0.6",
+    "@vanillawc/wc-markdown": "^1.5.0",
+    "@vanillawc/wc-resume": "^2.0.24",
+    "@vanillawc/wc-social-link": "^1.3.0",
+    "ng": "0.0.0",
+    "regenerator-runtime": "^0.13.3",
+    "rxjs": "^6.5.4",
+    "tslib": "^1.10.0",
+    "zone.js": "~0.10.2"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^0.901.7",
+    "@angular/cli": "^9.0.7",
+    "@angular/compiler-cli": "^9.0.7",
+    "@angular/language-service": "^9.0.7",
+    "@types/node": "^12.11.1",
+    "codelyzer": "^5.1.2",
+    "ts-node": "^7.0.0",
+    "tslint": "^5.20.1",
+    "typescript": "~3.7.5"
+  }
+}

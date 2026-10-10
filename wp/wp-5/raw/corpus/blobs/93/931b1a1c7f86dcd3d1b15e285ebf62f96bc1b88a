@@ -1,0 +1,143 @@
+{
+  "name": "gridjs",
+  "version": "6.2.0",
+  "description": "Advanced table plugin",
+  "author": "Afshin Mehrabani <afshin.meh@gmail.com>",
+  "license": "MIT",
+  "keywords": [
+    "grid",
+    "table",
+    "gridjs",
+    "list",
+    "filter",
+    "search",
+    "sort",
+    "pagination",
+    "react",
+    "angular",
+    "jquery"
+  ],
+  "homepage": "https://gridjs.io",
+  "repository": "https://github.com/grid-js/gridjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/*",
+    "dist/theme/*",
+    "l10n/dist/*",
+    "plugins/!(node_modules)/dist/*"
+  ],
+  "exports": {
+    ".": {
+      "browser": "./dist/gridjs.module.js",
+      "umd": "./dist/gridjs.umd.js",
+      "import": "./dist/gridjs.mjs",
+      "require": "./dist/gridjs.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./legacy": {
+      "browser": "./dist/gridjs.production.es.min.js",
+      "umd": "./dist/gridjs.production.min.js"
+    },
+    "./l10n": {
+      "browser": "./l10n/dist/l10n.module.js",
+      "umd": "./l10n/dist/l10n.umd.js",
+      "import": "./l10n/dist/l10n.mjs",
+      "require": "./l10n/dist/l10n.js"
+    },
+    "./plugins/selection": {
+      "browser": "./plugins/selection/dist/selection.module.js",
+      "umd": "./plugins/selection/dist/selection.umd.js",
+      "import": "./plugins/selection/dist/selection.mjs",
+      "require": "./plugins/selection/dist/selection.js"
+    },
+    "./package.json": "./package.json",
+    "./": "./"
+  },
+  "main": "dist/gridjs.js",
+  "module": "dist/gridjs.module.js",
+  "umd:main": "dist/gridjs.umd.js",
+  "source": "index.ts",
+  "devDependencies": {
+    "@types/enzyme": "^3.10.12",
+    "@types/jest": "^29.2.4",
+    "@types/jest-axe": "^3.5.5",
+    "@types/node": "^18.11.17",
+    "@typescript-eslint/eslint-plugin": "^5.47.0",
+    "@typescript-eslint/parser": "^5.47.0",
+    "autoprefixer": "^10.4.8",
+    "axe-core": "^4.4.2",
+    "check-export-map": "^1.1.1",
+    "cssnano": "^5.0.5",
+    "cypress": "^8.1.0",
+    "cypress-visual-regression": "^1.5.7",
+    "enzyme": "^3.11.0",
+    "enzyme-adapter-preact-pure": "^4.0.1",
+    "eslint": "^8.18.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-jest": "~26.8.7",
+    "identity-obj-proxy": "^3.0.0",
+    "jest": "^29.3.1",
+    "jest-axe": "^6.0.0",
+    "jest-extended": "^3.2.0",
+    "jsdom": "^19.0.0",
+    "jsdom-global": "^3.0.2",
+    "lerna-changelog": "^2.1.0",
+    "microbundle": "^0.15.1",
+    "npm-run-all": "^4.1.5",
+    "postcss": "^8.4.16",
+    "postcss-cli": "^9.1.0",
+    "postcss-nested": "^5.0.6",
+    "postcss-scss": "^4.0.4",
+    "postcss-sort-media-queries": "^4.1.0",
+    "prettier": "~2.7.1",
+    "rimraf": "~3.0.2",
+    "sass": "^1.54.5",
+    "source-map-loader": "^4.0.0",
+    "start-server-and-test": "^1.12.3",
+    "ts-jest": "^29.0.3",
+    "ts-loader": "^9.4.2",
+    "tslib": "^2.4.1",
+    "tsutils": "^3.21.0",
+    "typescript": "^4.9.4"
+  },
+  "scripts": {
+    "install:plugins": "find ./plugins ! -path '*/node_modules/*' ! -path './package.json' -name 'package.json' -execdir npm install \\;",
+    "clean": "rimraf coverage dist tmp l10n/dist 'plugins/!(node_modules)/dist'",
+    "prebuild": "npm run clean",
+    "build": "run-p build:grid build:i18n build:plugins build:themes",
+    "build:grid": "microbundle build --raw --external none --tsconfig tsconfig.release.json",
+    "build:i18n": "microbundle build --raw --cwd l10n --tsconfig l10n/tsconfig.release.json",
+    "build:watch": "npm run build:grid -- -w",
+    "build:plugins": "microbundle build --raw --cwd plugins/selection --tsconfig plugins/selection/tsconfig.release.json",
+    "postbuild": "node build/node-13-exports.js",
+    "prebuild:themes": "sass src/theme/mermaid/index.scss dist/theme/mermaid.css",
+    "build:themes-dev": "postcss dist/theme/mermaid.css --output dist/theme/mermaid.css --env development --verbose",
+    "build:themes-prod": "postcss dist/theme/mermaid.css --output dist/theme/mermaid.min.css --env production --verbose",
+    "build:themes": "run-p build:themes-dev build:themes-prod",
+    "prettier": "prettier --write '(src|tests|plugins|i18n)/**/*.(ts|tsx|js|scss|css)'",
+    "lint": "eslint . --ext .ts,.tsx",
+    "test": "run-p lint test:prettier test:check-exports test:jest test:e2e",
+    "test:prettier": "prettier --check '(src|tests|plugins|i18n)/**/*.(ts|tsx|js|scss|css)'",
+    "test:jest": "jest --coverage --silent --ci --coverage --coverageReporters=\"text\" --coverageReporters=\"text-summary\"",
+    "test:cypress": "cd tests && cypress run",
+    "test:check-exports": "check-export-map",
+    "test:dev-server": "cd tests/dev-server && npm install && npm start",
+    "test:e2e": "start-server-and-test test:dev-server http://localhost:8080 test:cypress",
+    "test:watch": "jest --watch"
+  },
+  "dependencies": {
+    "preact": "^10.11.3"
+  },
+  "changelog": {
+    "labels": {
+      "new feature": ":rocket: New Feature",
+      "breaking": ":boom: Breaking Change",
+      "bug fix": ":bug: Bug Fix",
+      "polish": ":nail_care: Polish",
+      "documentation": ":memo: Documentation",
+      "internal": ":house: Internal",
+      "performance": ":running_woman: Performance"
+    },
+    "cacheDir": ".changelog"
+  }
+}

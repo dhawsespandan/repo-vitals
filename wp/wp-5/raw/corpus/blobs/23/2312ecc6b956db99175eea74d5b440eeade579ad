@@ -1,0 +1,59 @@
+{
+  "name": "chartjs-react",
+  "version": "4.3.0",
+  "description": "TypeScript React wrapper for Chart.js with hooks and tooltip",
+  "private": false,
+  "author": "Sergey Khomushin <xr0master@gmail.com>",
+  "license": "MIT",
+  "main": "es/ReactChart.js",
+  "types": "es/ReactChart.d.ts",
+  "keywords": [
+    "chartjs react",
+    "chartjs hooks",
+    "chartjs react typescript",
+    "chartjs tooltip"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xr0master/chartjs-react.git"
+  },
+  "scripts": {
+    "_build-ts": "tsc --project ./tsconfig.build.json",
+    "_clean": "rm -rf ./es",
+    "_eslint": "eslint 'src/**/*.{ts,tsx}'",
+    "build": "npm run _clean && npm run _eslint && npm run _build-ts",
+    "test": "jest --coverage",
+    "lint": "tsc --noEmit && npm run _eslint"
+  },
+  "peerDependencies": {
+    "chart.js": ">=3.9.0",
+    "react": ">=16.8.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@happy-dom/jest-environment": "^15.11.7",
+    "@stylistic/eslint-plugin": "^2.12.1",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.0.2",
+    "chart.js": "^4.4.7",
+    "eslint": "^9.17.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-plugin-react-refresh": "^0.4.16",
+    "jest": "^29.7.0",
+    "prettier": "^3.4.2",
+    "react": "^19.0.0",
+    "ts-jest": "^29.2.5",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.2"
+  },
+  "prettier": {
+    "trailingComma": "all",
+    "singleQuote": true
+  },
+  "bugs": {
+    "url": "https://github.com/xr0master/chartjs-react/issues"
+  },
+  "homepage": "https://github.com/xr0master/chartjs-react#readme"
+}

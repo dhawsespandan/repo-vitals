@@ -1,0 +1,16 @@
+{
+  "private": true,
+  "scripts": {
+    "postinstall": "jspm install"
+  },
+  "dependencies": {
+    "jspm": "^0.17.0-beta.6"
+  },
+  "jspm": {
+    "name": "app",
+    "dependencies": {},
+    "devDependencies": {
+      "plugin-babel": "npm:systemjs-plugin-babel@^0.0.2"
+    }
+  }
+}

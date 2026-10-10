@@ -1,0 +1,14 @@
+{
+  "name": "bene-reader",
+  "version": "0.0.1",
+  "type": "module",
+  "depot": {
+    "platform": "browser",
+    "no-server": true
+  },
+  "devDependencies": {
+    "@solid-primitives/scheduled": "^1.5.2",    
+    "bene-components": "workspace:*",
+    "bene-types": "workspace:*"
+  }
+}

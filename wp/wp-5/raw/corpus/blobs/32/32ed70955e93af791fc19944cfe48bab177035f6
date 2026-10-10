@@ -1,0 +1,42 @@
+{ 
+  "name": "SANDES-MD",
+  "version": "2.0.0",
+  "description": "A WhatsApp bot created By MR.SANDES 🍒",
+  "main": "index.js",
+  "scripts": {
+    "start": "pm2 start index.js --deep-monitoring --attach --name SANDES-MD",
+    "stop": "pm2 stop SANDES-MD",
+    "restart": "pm2 restart SANDES-MD" 
+   }, 
+  "dependencies": {
+    "@whiskeysockets/baileys": "7.0.0-rc11",
+    "@adiwajshing/keyed-db": "^0.2.4",
+    "sharp": "^0.32.6",
+    "jimp": "*",
+    "mongoose": "latest",
+    "google-tts-api": "^2.0.2",
+    "pino": "^7.0.5",
+    "adm-zip": "^0.5.17",
+    "node-addon-api": "^8.0.0",
+    "pm2": "^7.0.1",
+    "ffmpeg-static":"latest",
+    "util": "^0.12.4",
+    "api-dylux": "*",
+    "express": "latest",
+    "async-g-i-s": "^1.4.0",
+    "file-type": "^16.5.3",
+    "axios": "^1.2.5",
+    "file_size_url": "^1.0.4",
+    "fs-extra": "^11.1.0",
+    "path": "^0.12.7",
+    "node-fetch": "^2.6.1",
+    "megajs": "^1.1.0",
+    "vm": "^0.1.0",
+    "qrcode-terminal": "^0.12.0",
+    "yt-search": "2.11.1",
+    "g-i-s": "^2.1.7",
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "node-cache": "^5.1.1" ,
+    "moment-timezone": "latest"
+  }
+}

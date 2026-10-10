@@ -1,0 +1,22 @@
+{
+  "name": "@tokencss/astro",
+  "version": "0.0.4",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./index.d.ts": "./index.d.ts",
+    "./base.css": "./base.css"
+  },
+  "dependencies": {
+    "@tokencss/postcss": "workspace:*",
+    "postcss-preset-env": "^7.2.3"
+  },
+  "keywords": [
+    "astro",
+    "withastro",
+    "astro-integration",
+    "astro-component",
+    "css"
+  ]
+}

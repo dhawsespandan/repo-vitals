@@ -1,0 +1,42 @@
+{
+    "name": "demo",
+    "version": "0.0.0",
+    "description": "Scene.js demo",
+    "private": true,
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/daybrush/scenejs.git"
+    },
+    "keywords": [
+        "scene",
+        "scene.js",
+        "scenejs",
+        "keyframes",
+        "timeline",
+        "animate",
+        "animation",
+        "css",
+        "requestAnimationFrame",
+        "motion"
+    ],
+    "author": "Daybrush",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/daybrush/scenejs/issues"
+    },
+    "homepage": "https://daybrush.com/scenejs",
+    "scripts": {
+        "build": "rm -rf ../../demo/dist && rollup -c rollup.config.js"
+    },
+    "dependencies": {
+        "@daybrush/page": "^0.2.0",
+        "@daybrush/utils": "^1.10.2",
+        "scenejs": "~1.10.3",
+        "shape-svg": "^0.3.1"
+    },
+    "devDependencies": {
+        "@daybrush/builder": "^0.2.0",
+        "rollup-plugin-css-only": "^4.3.0",
+        "typescript": "^4.5.0 <4.6.0"
+    }
+}

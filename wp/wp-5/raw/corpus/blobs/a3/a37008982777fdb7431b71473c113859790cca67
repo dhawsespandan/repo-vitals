@@ -1,0 +1,62 @@
+{
+  "name": "fastify-orama",
+  "version": "4.0.0",
+  "description": "Orama search-engine plugin for Fastify",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "author": {
+    "name": "Mateo Nunez",
+    "email": "mateonunez95@gmail.com",
+    "url": "https://github.com/mateonunez"
+  },
+  "scripts": {
+    "lint": "standard | snazzy",
+    "lint:fix": "standard --fix | snazzy",
+    "pretest": "npm run clean",
+    "test": "npm run lint && npm run unit && npm run typescript",
+    "posttest": "npm run clean",
+    "typescript": "tstyche",
+    "prepare": "husky",
+    "clean": "rm -f orama_test* && rm -f *.msp",
+    "preunit": "npm run clean",
+    "unit": "c8 borp -T --reporter spec",
+    "postunit": "npm run clean"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mateonunez/fastify-orama.git"
+  },
+  "keywords": [
+    "fastify",
+    "orama",
+    "database",
+    "search",
+    "engine"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mateonunez/fastify-orama/issues"
+  },
+  "homepage": "https://github.com/mateonunez/fastify-orama#readme",
+  "dependencies": {
+    "@orama/orama": "^3.0.5",
+    "@orama/plugin-data-persistence": "^3.0.5",
+    "fastify-plugin": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.0",
+    "borp": "^0.21.0",
+    "c8": "^12.0.0",
+    "fastify": "^5.4.0",
+    "fastify-tsconfig": "^3.0.0",
+    "husky": "^9.1.7",
+    "snazzy": "^9.0.0",
+    "standard": "^17.1.2",
+    "tstyche": "^7.0.0",
+    "typescript": "^6.0.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "packageManager": "pnpm@10.8.1+sha512.c50088ba998c67b8ca8c99df8a5e02fd2ae2e2b29aaf238feaa9e124248d3f48f9fb6db2424949ff901cffbb5e0f0cc1ad6aedb602cd29450751d11c35023677"
+}

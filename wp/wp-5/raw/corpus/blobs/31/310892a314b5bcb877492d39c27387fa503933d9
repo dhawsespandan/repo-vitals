@@ -1,0 +1,46 @@
+{
+  "name": "react-radial-gauge",
+  "version": "0.1.1",
+  "description": "Gauges in React using SVG",
+  "main": "dist/gauge.js",
+  "scripts": {
+    "build": "npm run dist",
+    "dist": "rm -rf dist && mkdir dist && babel src -d dist",
+    "prepublish": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vraa/react-svg-gauge.git"
+  },
+  "keywords": [
+    "react",
+    "gauge",
+    "svg",
+    "graph",
+    "visualization",
+    "meter"
+  ],
+  "author": "Veera",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/vraa/react-svg-gauge/issues"
+  },
+  "homepage": "https://github.com/vraa/react-svg-gauge#readme",
+  "peerDependencies": {
+    "react": "^16.8.5"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.3",
+    "babel-loader": "^7.1.5",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-plugin-transform-react-jsx": "^6.24.1",
+    "babel-preset-env": "^1.7.0",
+    "react": "^16.8.5",
+    "react-dom": "^16.8.5",
+    "react-tools": "*",
+    "webpack": "^3.12.0",
+    "webpack-dev-server": "^2.11.5"
+  },
+  "dependencies": {}
+}

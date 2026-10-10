@@ -1,0 +1,25 @@
+{
+  "name": "turf-ol3",
+  "version": "0.0.1",
+  "description": "Just a demo for OpenLayers 3 with Turf",
+  "author": "Thomas Gratier",
+  "license": "MIT",
+  "dependencies": {},
+  "scripts": {
+    "build": "gitbook build --config book.json && cp *.html _book/ && cp -r assets _book/",
+    "serve": "gitbook serve --config book.json",
+    "deploy": "./node_modules/.bin/gh-pages-deploy"
+  },
+  "gh-pages-deploy": {
+    "staticpath": "_book",
+    "prep": [
+      "build"
+    ],
+    "noprompt": false
+  },
+  "devDependencies": {
+    "gh-pages-deploy": "^0.4.2",
+    "gitbook": "^3.2.3",
+    "gitbook-cli": "^2.3.2"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "name": "pont-engine",
+  "version": "1.6.3",
+  "author": "jasonHzq",
+  "description": "pont swagger typescript API",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "bin": {
+    "pont": "bin/init.js"
+  },
+  "scripts": {
+    "pretest": "npm run build",
+    "dev": "tsc -w",
+    "watch": "tsc -w",
+    "build-hooks-js": "tsc --project pontCore/tsconfig.json",
+    "build": "rm -rf lib && npm run build-hooks-js && tsc"
+  },
+  "dependencies": {
+    "@translate-tools/core": "^0.2.14",
+    "@vitalets/google-translate-api": "^9.1.0",
+    "baidu-translate": "^1.3.0",
+    "chalk": "^2.3.0",
+    "commander": "^2.19.0",
+    "fs-extra": "^5.0.0",
+    "inquirer": "^7.1.0",
+    "lodash": "^4.17.5",
+    "node-fetch": "^2.6.7",
+    "prettier": "^2.4.1",
+    "translation.js": "^0.7.5",
+    "typescript": "^4.8.3"
+  },
+  "files": [
+    "pontCore",
+    "configSchema.json",
+    "src",
+    "lib",
+    "*.md",
+    "bin",
+    "docs",
+    "templates",
+    "useRequest"
+  ],
+  "keywords": [
+    "pont",
+    "swagger",
+    "typescript",
+    "API"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alibaba/pont.git"
+  },
+  "homepage": "https://github.com/alibaba/pont#readme"
+}

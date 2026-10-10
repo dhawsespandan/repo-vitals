@@ -1,0 +1,35 @@
+{
+  "name": "@abhi-arya1/wt",
+  "version": "0.0.9",
+  "description": "Git worktree sandboxes, locally or on remote hosts over SSH.",
+  "module": "index.ts",
+  "type": "module",
+  "bin": {
+    "wt": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "bun build ./src/index.ts --minify --target bun --outdir ./dist --banner '#!/usr/bin/env bun' && chmod +x ./dist/index.js",
+    "dev": "bun run ./src/index.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/ms": "^2.1.0",
+    "@types/proper-lockfile": "^4.1.4"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^8.2.0",
+    "chalk": "^5.6.2",
+    "commander": "^14.0.3",
+    "ms": "^2.1.3",
+    "nanoid": "^5.1.6",
+    "nanospinner": "^1.2.2",
+    "proper-lockfile": "^4.1.2"
+  }
+}

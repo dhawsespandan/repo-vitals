@@ -1,0 +1,71 @@
+{
+  "name": "@noteduet/core",
+  "version": "0.1.3",
+  "description": "Core engine for Duet — the note-taking app with a built-in MCP server",
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "homepage": "https://noteduet.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/emreparker/duet.git",
+    "directory": "packages/core"
+  },
+  "keywords": ["notes", "mcp", "ai-agents", "collaboration", "postgresql"],
+  "main": "./dist/index.js",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./dist/index.js"
+    },
+    "./server": {
+      "types": "./src/server.ts",
+      "import": "./dist/server.js"
+    }
+  },
+  "publishConfig": {
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js"
+      },
+      "./server": {
+        "types": "./dist/server.d.ts",
+        "import": "./dist/server.js"
+      }
+    }
+  },
+  "files": ["dist", "drizzle"],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "pnpm build",
+    "dev": "tsx watch src/server.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1",
+    "@hono/zod-validator": "^0.4",
+    "bcrypt": "^6",
+    "drizzle-orm": "^0.40",
+    "googleapis": "^171.4.0",
+    "hono": "^4",
+    "nanoid": "^5",
+    "postgres": "^3",
+    "ws": "^8",
+    "zod": "^3.25"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5",
+    "@types/node": "^22",
+    "@types/ws": "^8",
+    "drizzle-kit": "^0.31",
+    "tsx": "^4",
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "name": "@nextcloud/event-bus",
+  "version": "3.3.3",
+  "description": "A simple event bus to communicate between Nextcloud components.",
+  "keywords": [
+    "nextcloud"
+  ],
+  "homepage": "https://github.com/nextcloud/nextcloud-event-bus#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nextcloud/nextcloud-event-bus"
+  },
+  "license": "GPL-3.0-or-later",
+  "author": "Nextcloud GmbH and Nextcloud contributors",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "dist/index.cjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "vite --mode production build",
+    "build:doc": "typedoc --out dist/doc lib/index.ts && touch dist/doc/.nojekyll",
+    "dev": "vite --mode development build",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest run --watch",
+    "watch": "npm run dev -- --watch"
+  },
+  "dependencies": {
+    "@types/semver": "^7.8.0",
+    "semver": "^7.8.5"
+  },
+  "devDependencies": {
+    "@nextcloud/eslint-config": "^9.0.1",
+    "@nextcloud/vite-config": "^2.5.4",
+    "@types/node": "^26.6.3",
+    "@vitest/coverage-v8": "^4.1.11",
+    "eslint": "^10.11.0",
+    "happy-dom": "^20.14.5",
+    "typedoc": "^0.28.20",
+    "typescript": "^6.0.3",
+    "vite": "^7.3.5",
+    "vitest": "^4.0.10"
+  },
+  "engines": {
+    "node": "^20 || ^22 || ^24"
+  },
+  "devEngines": {
+    "packageManager": [
+      {
+        "name": "npm",
+        "onFail": "error",
+        "version": "^11.3.0"
+      }
+    ],
+    "runtime": {
+      "name": "node",
+      "onFail": "error",
+      "version": "^24.0.0"
+    }
+  }
+}

@@ -1,0 +1,139 @@
+{
+  "name": "sc4",
+  "version": "0.2.24",
+  "description": "A command line utility for automating SimCity 4 modding tasks & modifying savegames",
+  "main": "lib/core/index.js",
+  "type": "module",
+  "exports": {
+    ".": "./lib/index.js",
+    "./core": "./lib/core/index.js",
+    "./utils": "./lib/utils/index.js",
+    "./utils/register": "./lib/utils/register-debug-utils.js",
+    "./plugins": "./lib/plugins/index.js",
+    "./plugins/browser": "./lib/plugins/index.browser.js",
+    "./threading": "./lib/threading/index.js",
+    "./cli": "./lib/cli/cli.js",
+    "./api": "./lib/api/api.js",
+    "./api/*": "./lib/api/*",
+    "./submenus": "./lib/submenus/index.js"
+  },
+  "imports": {
+    "#cli/*": {
+      "@sc4/dev": "./src/cli/*",
+      "default": "./lib/cli/*"
+    },
+    "#cli/prompts": {
+      "@sc4/dev": "./src/cli/prompts/index.ts",
+      "default": "./lib/cli/prompts/index.js"
+    },
+    "#cli/commands": {
+      "@sc4/dev": "./src/cli/commands/index.ts",
+      "default": "./lib/cli/commands/index.js"
+    },
+    "#cli/flows": {
+      "@sc4/dev": "./src/cli/flows/index.ts",
+      "default": "./lib/cli/flows/index.js"
+    },
+    "#test/*": "./test/*"
+  },
+  "engines": {
+    "node": ">=22.3.0"
+  },
+  "scripts": {
+    "lint": "eslint src",
+    "test": "npm run typecheck && npm run test:mocha",
+    "test:mocha": "cross-env NODE_ENV=test mocha src/**/*-test.js src/**/*-test.ts --reporter progress",
+    "prebuild": "rimraf lib",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json && copyfiles -u 1 src/cli/assets/* lib",
+    "build:exe": "npm run build && build\\sea.bat",
+    "build:bundle": "npm run build:bundle:main && npm run build:thread",
+    "build:bundle:main": "esbuild lib/cli/cli.js --bundle --platform=node --target=node22 --outfile=dist/sc4.js --minify --format=cjs --metafile=dist/buildmanifest.json",
+    "build:thread": "esbuild lib/plugins/plugin-index-thread.js --bundle --platform=node --target=node22 --outfile=dist/plugin-index-thread.js --minify --format=cjs --metafile=dist/thread.buildmanifest.json",
+    "build:postject": "postject dist/sc4.exe NODE_SEA_BLOB dist/sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2",
+    "build:icons": "node --env-file-if-exists ./build/.env --experimental-strip-types --no-warnings build/inject-icon.ts",
+    "electron": "electron lib/gui/app.js",
+    "cli": "tsx src/cli/cli.js"
+  },
+  "bin": {
+    "sc4": "lib/cli/cli.js"
+  },
+  "keywords": [
+    "SimCity 4",
+    "modding"
+  ],
+  "author": "Sebastiaan Marynissen",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sebamarynissen/sc4.git"
+  },
+  "files": [
+    "lib"
+  ],
+  "mocha": {
+    "import": "tsx",
+    "extension": ".ts"
+  },
+  "devDependencies": {
+    "@actions/core": "^1.11.1",
+    "@actions/github": "^6.0.0",
+    "@types/chai": "^5.0.1",
+    "@types/debug": "^4.1.12",
+    "@types/knuth-shuffle-seeded": "^1.0.2",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.10.1",
+    "@types/semver": "^7.5.8",
+    "@types/wicg-file-system-access": "^2023.10.5",
+    "@whisthub/eslint-config": "^3.1.0",
+    "buffer": "^6.0.3",
+    "chai": "^5.1.2",
+    "chai-spies": "^1.0.0",
+    "copyfiles": "^2.4.1",
+    "cross-env": "^7.0.3",
+    "esbuild": "^0.25.0",
+    "eslint": "^9.14.0",
+    "hilbert-curve": "^2.0.5",
+    "jsdom": "^25.0.1",
+    "memfs": "^4.14.0",
+    "mocha": "^10.8.2",
+    "postject": "^1.0.0-alpha.6",
+    "rimraf": "^6.0.1",
+    "string-argv": "^0.3.1",
+    "tsx": "^4.19.3",
+    "type-fest": "^4.30.0",
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "@inquirer/checkbox": "^4.0.1",
+    "@inquirer/confirm": "^5.0.1",
+    "@inquirer/core": "^10.0.1",
+    "@inquirer/editor": "^4.1.0",
+    "@inquirer/figures": "^1.0.8",
+    "@inquirer/input": "^4.0.1",
+    "@inquirer/number": "^3.0.1",
+    "@inquirer/select": "^4.0.1",
+    "binary-search-bounds": "^2.0.5",
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "conf": "^13.0.1",
+    "debug": "^4.4.0",
+    "glob": "^11.0.0",
+    "ini": "^1.3.5",
+    "is-unicode-supported": "^2.1.0",
+    "knuth-shuffle-seeded": "^1.0.6",
+    "lru-cache": "^11.0.2",
+    "minimatch": "^10.0.1",
+    "open": "github:sebamarynissen/open#feature/sea",
+    "ora": "^8.1.1",
+    "p-queue": "^8.0.1",
+    "package-up": "^5.0.0",
+    "qfs-compression": "^0.2.3",
+    "semver": "^7.3.5",
+    "smart-arraybuffer": "^1.0.0-alpha.2",
+    "supports-color": "^10.0.0",
+    "tar": "^6.1.8",
+    "uint8array-extras": "^1.4.0",
+    "yaml": "^2.6.0"
+  }
+}

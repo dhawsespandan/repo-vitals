@@ -1,0 +1,41 @@
+{
+    "name": "@ngxp/store-service",
+    "author": {
+        "name": "Joost Zöllner",
+        "email": "github@joost.io"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/ngxp/store-service"
+    },
+    "description": "Adds an abstraction layer / facade between Angular components and the ngrx store with powerful testing helpers",
+    "keywords": [
+        "ngrx",
+        "angular",
+        "store",
+        "store service",
+        "abstraction",
+        "facade",
+        "testing"
+    ],
+    "homepage": "https://github.com/ngxp/store-service#readme",
+    "bugs": {
+        "url": "https://github.com/ngxp/store-service/issues"
+    },
+    "license": "MIT",
+    "version": "21.0.0",
+    "dependencies": {
+        "tslib": "^2.6.0"
+    },
+    "peerDependencies": {
+        "@angular/platform-browser-dynamic": "^21.0.0",
+        "@angular/common": "^21.0.0",
+        "@angular/core": "^21.0.0",
+        "@ngrx/effects": "^21.0.0",
+        "@ngrx/store": "^21.0.0",
+        "rxjs": "^6.6.0 || ^7.0.0"
+    }
+}
