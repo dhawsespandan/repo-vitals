@@ -1,0 +1,168 @@
+START 2026-10-08T03:03:22Z (local 2026-10-08 08:33) at a293a18
+Database: repovitals_research
+  AHP: D:\Symbiosis\RepoVitals\wp\wp-3\wp3_matrix_final.csv
+  corpus: 914 repositories, 29494 occurrences as of 2026-10-07
+  deps.dev: Scorecard for 914 repositories (cached)
+  deps.dev: 50/914 looked up
+  deps.dev: 100/914 looked up
+  deps.dev: 150/914 looked up
+  deps.dev: 200/914 looked up
+  deps.dev: 250/914 looked up
+  deps.dev: 300/914 looked up
+  deps.dev: 350/914 looked up
+  deps.dev: 400/914 looked up
+  deps.dev: 450/914 looked up
+  deps.dev: 500/914 looked up
+  deps.dev: 550/914 looked up
+  deps.dev: 600/914 looked up
+  deps.dev: 650/914 looked up
+  deps.dev: 700/914 looked up
+  deps.dev: 750/914 looked up
+  deps.dev: 800/914 looked up
+  deps.dev: 850/914 looked up
+  deps.dev: 900/914 looked up
+  deps.dev: 914/914 looked up
+  sensitivity: sweeping both vectors
+  anchors: scanning 49 repositories
+2026-10-08 08:38:12,220 WARNING apps.scanning.scanner Tree contained 84 manifests; scanning the 50 shallowest.
+2026-10-08 08:39:02,014 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  atom/atom: ok
+2026-10-08 08:39:29,771 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  atom/apm: ok
+  angular/angular.js: ok
+2026-10-08 08:40:13,041 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:40:17,855 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  angular/protractor: ok
+2026-10-08 08:40:47,599 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:40:50,618 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  microsoft/vscode-go: ok
+2026-10-08 08:40:58,219 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  facebookarchive/react-native-fbsdk: ok
+  bower/bower: ok
+2026-10-08 08:41:23,814 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:41:25,743 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  facebookarchive/flux: ok
+2026-10-08 08:41:50,234 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:41:52,926 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:42:01,197 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:42:04,990 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:42:18,173 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  react/create-react-app: ok
+  request/request: ok
+  strongloop/loopback: ok
+  openai/gpt-2: ok
+  Netflix/security_monkey: ok
+  mdn/kuma: ok
+  openai/jukebox: ok
+  googleapis/oauth2client: ok
+  tensorflow/tensor2tensor: ok
+  YelpArchive/elastalert: ok
+  openai/spinningup: ok
+  boto/boto: ok
+2026-10-08 08:45:22,240 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:45:22,800 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  eslint/eslint: ok
+2026-10-08 08:46:09,343 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:46:10,013 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:46:24,345 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:46:29,024 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:46:29,955 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:46:50,712 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:46:52,358 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:46:58,367 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  prettier/prettier: ok
+2026-10-08 08:47:02,881 WARNING apps.scanning.scanner Tree contained 670 manifests; scanning the 50 shallowest.
+2026-10-08 08:47:37,612 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:47:50,431 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:47:56,627 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:47:57,668 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:47:59,837 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:48:04,100 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:48:05,271 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:48:07,794 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:48:08,249 WARNING apps.scanning.adapters.registry_clients npm registry lookup failed for a package.
+2026-10-08 08:48:18,325 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:48:35,077 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:48:42,618 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:48:52,494 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:48:57,012 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:48:59,800 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:49:00,595 WARNING apps.scanning.adapters.registry_clients npm registry lookup failed for a package.
+2026-10-08 08:49:03,896 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:49:04,561 WARNING apps.scanning.adapters.registry_clients npm registry lookup failed for a package.
+2026-10-08 08:49:05,757 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:49:07,136 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:49:10,265 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:49:12,598 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:49:15,592 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:49:18,297 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  vercel/next.js: ok
+2026-10-08 08:49:37,384 WARNING apps.scanning.scanner Tree contained 153 manifests; scanning the 50 shallowest.
+2026-10-08 08:50:42,609 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:50:46,427 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:50:48,981 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:50:51,325 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:50:57,100 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:52:01,589 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:52:08,794 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:52:09,498 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:52:10,411 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:52:20,712 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  microsoft/vscode: ok
+2026-10-08 08:52:43,030 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  microsoft/TypeScript: ok
+2026-10-08 08:52:58,206 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:53:01,750 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:53:06,751 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:53:10,126 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  mochajs/mocha: ok
+  expressjs/express: ok
+2026-10-08 08:53:29,584 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:53:33,493 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 08:53:34,601 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  axios/axios: ok
+2026-10-08 08:53:44,997 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  mozilla/pdf.js: ok
+  django/django: ok
+  pallets/flask: ok
+2026-10-08 08:54:15,705 INFO apps.scanning.adapters.pypi Skipping a dependency reference that names no package.
+2026-10-08 08:54:15,705 INFO apps.scanning.adapters.pypi Skipping a dependency reference that names no package.
+2026-10-08 08:54:15,705 INFO apps.scanning.adapters.pypi Skipping a dependency reference that names no package.
+  celery/celery: ok
+  pytest-dev/pytest: ok
+  psf/requests: ok
+2026-10-08 08:54:35,132 WARNING apps.scanning.adapters.registry_clients PyPI lookup failed for a package.
+2026-10-08 08:54:43,741 WARNING apps.scanning.adapters.registry_clients PyPI lookup failed for a package.
+  scrapy/scrapy: ok
+2026-10-08 08:55:03,638 WARNING apps.scanning.scanner Tree contained 108 manifests; scanning the 50 shallowest.
+2026-10-08 08:55:23,762 WARNING apps.scanning.adapters.pypi poetry.lock could not be parsed; resolving from ranges.
+  python-poetry/poetry: ok
+2026-10-08 08:55:44,840 INFO apps.scanning.adapters.pypi Skipping a self-referential editable install.
+  pypa/pipenv: ok
+  gulpjs/gulp: ok
+  jaredhanson/passport: ok
+  moment/moment: ok
+  pugjs/pug: ok
+  jquery/jquery-ui: ok
+  bevacqua/dragula: ok
+  rstacruz/nprogress: ok
+  dropbox/pyannotate: ok
+  kennethreitz/records: ok
+  nvbn/thefuck: ok
+  pyeve/eve: ok
+  cookiecutter/cookiecutter: ok
+Validated 914 repositories as of 2026-10-07. WP-6 checklist: 1 ok, 2 ok, 3 attention, 4 attention, 5 ok, 6 ok.
+  wrote D:\Symbiosis\RepoVitals\research_data\validation_report\weights_comparison.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\validation_report\entropy.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\validation_report\scores.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\validation_report\correlation.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\validation_report\confusion.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\validation_report\sensitivity.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\validation_report\anchors.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\validation_report\weights_v2_candidate.yaml
+  wrote D:\Symbiosis\RepoVitals\research_data\validation_report\inputs.json
+  wrote D:\Symbiosis\RepoVitals\research_data\validation_report\report.md
+  wrote D:\Symbiosis\RepoVitals\research_data\validation_report\correlation_scatter.png
+  wrote D:\Symbiosis\RepoVitals\research_data\validation_report\weight_comparison.png
+  wrote D:\Symbiosis\RepoVitals\research_data\validation_report\confusion_matrices.png
+EXIT 0 2026-10-08T03:26:44Z

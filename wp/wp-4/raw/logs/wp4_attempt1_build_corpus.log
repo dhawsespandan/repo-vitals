@@ -1,0 +1,614 @@
+START 2026-10-07T18:42:21Z (local 2026-10-08 00:12 IST)
+Frame: D:\Symbiosis\RepoVitals\backend\corpus_frame.yaml
+Output: D:\Symbiosis\RepoVitals\research_data\corpus
+2026-10-08 00:13:07,418 INFO apps.research.corpus Cell javascript|5-20|lt6|2019-2021+5-10+5-7+5-5 still holds 1128 repositories at depth 3; capping at 1000.
+2026-10-08 00:13:49,918 INFO apps.research.corpus Cell javascript|5-20|lt6|2022plus+5-10+5-7+5-5 still holds 7898 repositories at depth 3; capping at 1000.
+2026-10-08 00:13:54,922 INFO apps.research.corpus Cell javascript|5-20|lt6|2022plus+5-10+5-7+6-7+6-6 still holds 5474 repositories at depth 4; capping at 1000.
+2026-10-08 00:13:57,420 INFO apps.research.corpus Cell javascript|5-20|lt6|2022plus+5-10+5-7+6-7+7-7 still holds 4192 repositories at depth 4; capping at 1000.
+2026-10-08 00:14:02,399 INFO apps.research.corpus Cell javascript|5-20|lt6|2022plus+5-10+8-10+8-8 still holds 3079 repositories at depth 3; capping at 1000.
+2026-10-08 00:14:07,388 INFO apps.research.corpus Cell javascript|5-20|lt6|2022plus+5-10+8-10+9-10+9-9 still holds 2516 repositories at depth 4; capping at 1000.
+2026-10-08 00:14:09,897 INFO apps.research.corpus Cell javascript|5-20|lt6|2022plus+5-10+8-10+9-10+10-10 still holds 1946 repositories at depth 4; capping at 1000.
+2026-10-08 00:14:19,981 INFO apps.research.corpus Cell javascript|5-20|lt6|2022plus+11-20+11-14+11-12+11-11 still holds 1677 repositories at depth 4; capping at 1000.
+2026-10-08 00:14:22,387 INFO apps.research.corpus Cell javascript|5-20|lt6|2022plus+11-20+11-14+11-12+12-12 still holds 1445 repositories at depth 4; capping at 1000.
+2026-10-08 00:14:27,857 INFO apps.research.corpus Cell javascript|5-20|lt6|2022plus+11-20+11-14+13-14+13-13 still holds 1232 repositories at depth 4; capping at 1000.
+2026-10-08 00:14:29,858 INFO apps.research.corpus Cell javascript|5-20|lt6|2022plus+11-20+11-14+13-14+14-14 still holds 1068 repositories at depth 4; capping at 1000.
+2026-10-08 00:14:37,389 INFO apps.research.corpus Cell javascript|5-20|lt6|2022plus+11-20+15-20+15-17+15-15 still holds 1016 repositories at depth 4; capping at 1000.
+2026-10-08 00:15:37,465 INFO apps.research.corpus Cell javascript|5-20|6-18|2019-2021+5-10+5-7+5-5 still holds 1002 repositories at depth 3; capping at 1000.
+2026-10-08 00:16:10,120 INFO apps.research.corpus Cell javascript|5-20|6-18|2022plus+5-10+5-7+5-5 still holds 7640 repositories at depth 3; capping at 1000.
+2026-10-08 00:16:14,916 INFO apps.research.corpus Cell javascript|5-20|6-18|2022plus+5-10+5-7+6-7+6-6 still holds 5291 repositories at depth 4; capping at 1000.
+2026-10-08 00:16:17,506 INFO apps.research.corpus Cell javascript|5-20|6-18|2022plus+5-10+5-7+6-7+7-7 still holds 4145 repositories at depth 4; capping at 1000.
+2026-10-08 00:16:22,487 INFO apps.research.corpus Cell javascript|5-20|6-18|2022plus+5-10+8-10+8-8 still holds 2585 repositories at depth 3; capping at 1000.
+2026-10-08 00:16:27,499 INFO apps.research.corpus Cell javascript|5-20|6-18|2022plus+5-10+8-10+9-10+9-9 still holds 2091 repositories at depth 4; capping at 1000.
+2026-10-08 00:16:29,941 INFO apps.research.corpus Cell javascript|5-20|6-18|2022plus+5-10+8-10+9-10+10-10 still holds 1957 repositories at depth 4; capping at 1000.
+2026-10-08 00:16:39,963 INFO apps.research.corpus Cell javascript|5-20|6-18|2022plus+11-20+11-14+11-12+11-11 still holds 1298 repositories at depth 4; capping at 1000.
+2026-10-08 00:16:42,446 INFO apps.research.corpus Cell javascript|5-20|6-18|2022plus+11-20+11-14+11-12+12-12 still holds 1140 repositories at depth 4; capping at 1000.
+2026-10-08 00:17:45,943 INFO apps.research.corpus Cell javascript|5-20|18-48|2016-2018+5-10+5-7+5-5 still holds 2210 repositories at depth 3; capping at 1000.
+2026-10-08 00:17:49,995 INFO apps.research.corpus Cell javascript|5-20|18-48|2016-2018+5-10+5-7+6-7+6-6 still holds 1796 repositories at depth 4; capping at 1000.
+2026-10-08 00:17:52,458 INFO apps.research.corpus Cell javascript|5-20|18-48|2016-2018+5-10+5-7+6-7+7-7 still holds 1459 repositories at depth 4; capping at 1000.
+2026-10-08 00:17:57,428 INFO apps.research.corpus Cell javascript|5-20|18-48|2016-2018+5-10+8-10+8-8 still holds 1181 repositories at depth 3; capping at 1000.
+2026-10-08 00:18:52,946 INFO apps.research.corpus Cell javascript|5-20|18-48|2019-2021+5-10+5-7+5-5 still holds 6565 repositories at depth 3; capping at 1000.
+2026-10-08 00:18:57,742 INFO apps.research.corpus Cell javascript|5-20|18-48|2019-2021+5-10+5-7+6-7+6-6 still holds 4646 repositories at depth 4; capping at 1000.
+2026-10-08 00:19:00,040 INFO apps.research.corpus Cell javascript|5-20|18-48|2019-2021+5-10+5-7+6-7+7-7 still holds 3569 repositories at depth 4; capping at 1000.
+2026-10-08 00:19:05,044 INFO apps.research.corpus Cell javascript|5-20|18-48|2019-2021+5-10+8-10+8-8 still holds 2773 repositories at depth 3; capping at 1000.
+2026-10-08 00:19:10,540 INFO apps.research.corpus Cell javascript|5-20|18-48|2019-2021+5-10+8-10+9-10+9-9 still holds 2223 repositories at depth 4; capping at 1000.
+2026-10-08 00:19:12,584 INFO apps.research.corpus Cell javascript|5-20|18-48|2019-2021+5-10+8-10+9-10+10-10 still holds 1806 repositories at depth 4; capping at 1000.
+2026-10-08 00:19:22,560 INFO apps.research.corpus Cell javascript|5-20|18-48|2019-2021+11-20+11-14+11-12+11-11 still holds 1568 repositories at depth 4; capping at 1000.
+2026-10-08 00:19:25,063 INFO apps.research.corpus Cell javascript|5-20|18-48|2019-2021+11-20+11-14+11-12+12-12 still holds 1453 repositories at depth 4; capping at 1000.
+2026-10-08 00:19:30,038 INFO apps.research.corpus Cell javascript|5-20|18-48|2019-2021+11-20+11-14+13-14+13-13 still holds 1215 repositories at depth 4; capping at 1000.
+2026-10-08 00:19:32,526 INFO apps.research.corpus Cell javascript|5-20|18-48|2019-2021+11-20+11-14+13-14+14-14 still holds 1050 repositories at depth 4; capping at 1000.
+2026-10-08 00:20:10,191 INFO apps.research.corpus Cell javascript|5-20|18-48|2022plus+5-10+5-7+5-5 still holds 15247 repositories at depth 3; capping at 1000.
+2026-10-08 00:20:15,198 INFO apps.research.corpus Cell javascript|5-20|18-48|2022plus+5-10+5-7+6-7+6-6 still holds 10129 repositories at depth 4; capping at 1000.
+2026-10-08 00:20:17,686 INFO apps.research.corpus Cell javascript|5-20|18-48|2022plus+5-10+5-7+6-7+7-7 still holds 6968 repositories at depth 4; capping at 1000.
+2026-10-08 00:20:22,629 INFO apps.research.corpus Cell javascript|5-20|18-48|2022plus+5-10+8-10+8-8 still holds 5089 repositories at depth 3; capping at 1000.
+2026-10-08 00:20:27,606 INFO apps.research.corpus Cell javascript|5-20|18-48|2022plus+5-10+8-10+9-10+9-9 still holds 3936 repositories at depth 4; capping at 1000.
+2026-10-08 00:20:30,060 INFO apps.research.corpus Cell javascript|5-20|18-48|2022plus+5-10+8-10+9-10+10-10 still holds 3306 repositories at depth 4; capping at 1000.
+2026-10-08 00:20:40,125 INFO apps.research.corpus Cell javascript|5-20|18-48|2022plus+11-20+11-14+11-12+11-11 still holds 2473 repositories at depth 4; capping at 1000.
+2026-10-08 00:20:42,536 INFO apps.research.corpus Cell javascript|5-20|18-48|2022plus+11-20+11-14+11-12+12-12 still holds 2177 repositories at depth 4; capping at 1000.
+2026-10-08 00:20:47,608 INFO apps.research.corpus Cell javascript|5-20|18-48|2022plus+11-20+11-14+13-14+13-13 still holds 1751 repositories at depth 4; capping at 1000.
+2026-10-08 00:20:50,176 INFO apps.research.corpus Cell javascript|5-20|18-48|2022plus+11-20+11-14+13-14+14-14 still holds 1653 repositories at depth 4; capping at 1000.
+2026-10-08 00:20:57,574 INFO apps.research.corpus Cell javascript|5-20|18-48|2022plus+11-20+15-20+15-17+15-15 still holds 1343 repositories at depth 4; capping at 1000.
+2026-10-08 00:21:02,683 INFO apps.research.corpus Cell javascript|5-20|18-48|2022plus+11-20+15-20+15-17+16-17+16-16 still holds 1320 repositories at depth 5; capping at 1000.
+2026-10-08 00:21:05,127 INFO apps.research.corpus Cell javascript|5-20|18-48|2022plus+11-20+15-20+15-17+16-17+17-17 still holds 1116 repositories at depth 5; capping at 1000.
+2026-10-08 00:21:27,627 INFO apps.research.corpus Cell javascript|5-20|gt48|le2015+5-10+5-7+5-5 still holds 14113 repositories at depth 3; capping at 1000.
+2026-10-08 00:21:32,588 INFO apps.research.corpus Cell javascript|5-20|gt48|le2015+5-10+5-7+6-7+6-6 still holds 10299 repositories at depth 4; capping at 1000.
+2026-10-08 00:21:35,115 INFO apps.research.corpus Cell javascript|5-20|gt48|le2015+5-10+5-7+6-7+7-7 still holds 7743 repositories at depth 4; capping at 1000.
+2026-10-08 00:21:40,086 INFO apps.research.corpus Cell javascript|5-20|gt48|le2015+5-10+8-10+8-8 still holds 6361 repositories at depth 3; capping at 1000.
+2026-10-08 00:21:45,095 INFO apps.research.corpus Cell javascript|5-20|gt48|le2015+5-10+8-10+9-10+9-9 still holds 4973 repositories at depth 4; capping at 1000.
+2026-10-08 00:21:47,519 INFO apps.research.corpus Cell javascript|5-20|gt48|le2015+5-10+8-10+9-10+10-10 still holds 4476 repositories at depth 4; capping at 1000.
+2026-10-08 00:21:57,550 INFO apps.research.corpus Cell javascript|5-20|gt48|le2015+11-20+11-14+11-12+11-11 still holds 3695 repositories at depth 4; capping at 1000.
+2026-10-08 00:22:00,081 INFO apps.research.corpus Cell javascript|5-20|gt48|le2015+11-20+11-14+11-12+12-12 still holds 3231 repositories at depth 4; capping at 1000.
+2026-10-08 00:22:05,169 INFO apps.research.corpus Cell javascript|5-20|gt48|le2015+11-20+11-14+13-14+13-13 still holds 2769 repositories at depth 4; capping at 1000.
+2026-10-08 00:22:07,624 INFO apps.research.corpus Cell javascript|5-20|gt48|le2015+11-20+11-14+13-14+14-14 still holds 2615 repositories at depth 4; capping at 1000.
+2026-10-08 00:22:15,074 INFO apps.research.corpus Cell javascript|5-20|gt48|le2015+11-20+15-20+15-17+15-15 still holds 2225 repositories at depth 4; capping at 1000.
+2026-10-08 00:22:20,076 INFO apps.research.corpus Cell javascript|5-20|gt48|le2015+11-20+15-20+15-17+16-17+16-16 still holds 1990 repositories at depth 5; capping at 1000.
+2026-10-08 00:22:22,583 INFO apps.research.corpus Cell javascript|5-20|gt48|le2015+11-20+15-20+15-17+16-17+17-17 still holds 1749 repositories at depth 5; capping at 1000.
+2026-10-08 00:22:27,648 INFO apps.research.corpus Cell javascript|5-20|gt48|le2015+11-20+15-20+18-20+18-18 still holds 1664 repositories at depth 4; capping at 1000.
+2026-10-08 00:22:32,620 INFO apps.research.corpus Cell javascript|5-20|gt48|le2015+11-20+15-20+18-20+19-20+19-19 still holds 1482 repositories at depth 5; capping at 1000.
+2026-10-08 00:22:35,091 INFO apps.research.corpus Cell javascript|5-20|gt48|le2015+11-20+15-20+18-20+19-20+20-20 still holds 1440 repositories at depth 5; capping at 1000.
+2026-10-08 00:22:45,121 INFO apps.research.corpus Cell javascript|5-20|gt48|2016-2018+5-10+5-7+5-5 still holds 15192 repositories at depth 3; capping at 1000.
+2026-10-08 00:22:50,114 INFO apps.research.corpus Cell javascript|5-20|gt48|2016-2018+5-10+5-7+6-7+6-6 still holds 10974 repositories at depth 4; capping at 1000.
+2026-10-08 00:22:52,669 INFO apps.research.corpus Cell javascript|5-20|gt48|2016-2018+5-10+5-7+6-7+7-7 still holds 8229 repositories at depth 4; capping at 1000.
+2026-10-08 00:22:57,672 INFO apps.research.corpus Cell javascript|5-20|gt48|2016-2018+5-10+8-10+8-8 still holds 6427 repositories at depth 3; capping at 1000.
+2026-10-08 00:23:02,611 INFO apps.research.corpus Cell javascript|5-20|gt48|2016-2018+5-10+8-10+9-10+9-9 still holds 5165 repositories at depth 4; capping at 1000.
+2026-10-08 00:23:05,166 INFO apps.research.corpus Cell javascript|5-20|gt48|2016-2018+5-10+8-10+9-10+10-10 still holds 4449 repositories at depth 4; capping at 1000.
+2026-10-08 00:23:15,107 INFO apps.research.corpus Cell javascript|5-20|gt48|2016-2018+11-20+11-14+11-12+11-11 still holds 3574 repositories at depth 4; capping at 1000.
+2026-10-08 00:23:17,624 INFO apps.research.corpus Cell javascript|5-20|gt48|2016-2018+11-20+11-14+11-12+12-12 still holds 3182 repositories at depth 4; capping at 1000.
+2026-10-08 00:23:22,700 INFO apps.research.corpus Cell javascript|5-20|gt48|2016-2018+11-20+11-14+13-14+13-13 still holds 2739 repositories at depth 4; capping at 1000.
+2026-10-08 00:23:25,132 INFO apps.research.corpus Cell javascript|5-20|gt48|2016-2018+11-20+11-14+13-14+14-14 still holds 2385 repositories at depth 4; capping at 1000.
+2026-10-08 00:23:32,637 INFO apps.research.corpus Cell javascript|5-20|gt48|2016-2018+11-20+15-20+15-17+15-15 still holds 2120 repositories at depth 4; capping at 1000.
+2026-10-08 00:23:37,683 INFO apps.research.corpus Cell javascript|5-20|gt48|2016-2018+11-20+15-20+15-17+16-17+16-16 still holds 1880 repositories at depth 5; capping at 1000.
+2026-10-08 00:23:40,123 INFO apps.research.corpus Cell javascript|5-20|gt48|2016-2018+11-20+15-20+15-17+16-17+17-17 still holds 1631 repositories at depth 5; capping at 1000.
+2026-10-08 00:23:45,157 INFO apps.research.corpus Cell javascript|5-20|gt48|2016-2018+11-20+15-20+18-20+18-18 still holds 1560 repositories at depth 4; capping at 1000.
+2026-10-08 00:23:50,186 INFO apps.research.corpus Cell javascript|5-20|gt48|2016-2018+11-20+15-20+18-20+19-20+19-19 still holds 1307 repositories at depth 5; capping at 1000.
+2026-10-08 00:23:52,633 INFO apps.research.corpus Cell javascript|5-20|gt48|2016-2018+11-20+15-20+18-20+19-20+20-20 still holds 1266 repositories at depth 5; capping at 1000.
+2026-10-08 00:24:02,689 INFO apps.research.corpus Cell javascript|5-20|gt48|2019-2021+5-10+5-7+5-5 still holds 12687 repositories at depth 3; capping at 1000.
+2026-10-08 00:24:07,712 INFO apps.research.corpus Cell javascript|5-20|gt48|2019-2021+5-10+5-7+6-7+6-6 still holds 8598 repositories at depth 4; capping at 1000.
+2026-10-08 00:24:10,150 INFO apps.research.corpus Cell javascript|5-20|gt48|2019-2021+5-10+5-7+6-7+7-7 still holds 6056 repositories at depth 4; capping at 1000.
+2026-10-08 00:24:15,152 INFO apps.research.corpus Cell javascript|5-20|gt48|2019-2021+5-10+8-10+8-8 still holds 4783 repositories at depth 3; capping at 1000.
+2026-10-08 00:24:20,175 INFO apps.research.corpus Cell javascript|5-20|gt48|2019-2021+5-10+8-10+9-10+9-9 still holds 3654 repositories at depth 4; capping at 1000.
+2026-10-08 00:24:22,652 INFO apps.research.corpus Cell javascript|5-20|gt48|2019-2021+5-10+8-10+9-10+10-10 still holds 2951 repositories at depth 4; capping at 1000.
+2026-10-08 00:24:32,714 INFO apps.research.corpus Cell javascript|5-20|gt48|2019-2021+11-20+11-14+11-12+11-11 still holds 2487 repositories at depth 4; capping at 1000.
+2026-10-08 00:24:35,138 INFO apps.research.corpus Cell javascript|5-20|gt48|2019-2021+11-20+11-14+11-12+12-12 still holds 1993 repositories at depth 4; capping at 1000.
+2026-10-08 00:24:40,164 INFO apps.research.corpus Cell javascript|5-20|gt48|2019-2021+11-20+11-14+13-14+13-13 still holds 1687 repositories at depth 4; capping at 1000.
+2026-10-08 00:24:42,706 INFO apps.research.corpus Cell javascript|5-20|gt48|2019-2021+11-20+11-14+13-14+14-14 still holds 1543 repositories at depth 4; capping at 1000.
+2026-10-08 00:24:50,137 INFO apps.research.corpus Cell javascript|5-20|gt48|2019-2021+11-20+15-20+15-17+15-15 still holds 1350 repositories at depth 4; capping at 1000.
+2026-10-08 00:24:55,192 INFO apps.research.corpus Cell javascript|5-20|gt48|2019-2021+11-20+15-20+15-17+16-17+16-16 still holds 1222 repositories at depth 5; capping at 1000.
+2026-10-08 00:25:20,145 INFO apps.research.corpus Cell javascript|5-20|gt48|2022plus+5-10+5-7+5-5 still holds 3867 repositories at depth 3; capping at 1000.
+2026-10-08 00:25:25,174 INFO apps.research.corpus Cell javascript|5-20|gt48|2022plus+5-10+5-7+6-7+6-6 still holds 2655 repositories at depth 4; capping at 1000.
+2026-10-08 00:25:27,690 INFO apps.research.corpus Cell javascript|5-20|gt48|2022plus+5-10+5-7+6-7+7-7 still holds 1778 repositories at depth 4; capping at 1000.
+2026-10-08 00:25:32,633 INFO apps.research.corpus Cell javascript|5-20|gt48|2022plus+5-10+8-10+8-8 still holds 1307 repositories at depth 3; capping at 1000.
+2026-10-08 00:25:37,697 INFO apps.research.corpus Cell javascript|5-20|gt48|2022plus+5-10+8-10+9-10+9-9 still holds 1032 repositories at depth 4; capping at 1000.
+2026-10-08 00:31:15,229 INFO apps.research.corpus Cell javascript|21-50|gt48|le2015+21-32+21-25+21-22+21-21 still holds 1283 repositories at depth 4; capping at 1000.
+2026-10-08 00:31:17,800 INFO apps.research.corpus Cell javascript|21-50|gt48|le2015+21-32+21-25+21-22+22-22 still holds 1206 repositories at depth 4; capping at 1000.
+2026-10-08 00:31:22,743 INFO apps.research.corpus Cell javascript|21-50|gt48|le2015+21-32+21-25+23-25+23-23 still holds 1059 repositories at depth 4; capping at 1000.
+2026-10-08 00:31:27,735 INFO apps.research.corpus Cell javascript|21-50|gt48|le2015+21-32+21-25+23-25+24-25+24-24 still holds 1010 repositories at depth 5; capping at 1000.
+2026-10-08 00:33:07,768 INFO apps.research.corpus Cell javascript|21-50|gt48|2016-2018+21-32+21-25+21-22+21-21 still holds 1164 repositories at depth 4; capping at 1000.
+2026-10-08 00:33:10,274 INFO apps.research.corpus Cell javascript|21-50|gt48|2016-2018+21-32+21-25+21-22+22-22 still holds 1047 repositories at depth 4; capping at 1000.
+2026-10-08 00:46:20,599 INFO apps.research.corpus Cell typescript|5-20|lt6|2022plus+5-10+5-7+5-5 still holds 12302 repositories at depth 3; capping at 1000.
+2026-10-08 00:46:25,598 INFO apps.research.corpus Cell typescript|5-20|lt6|2022plus+5-10+5-7+6-7+6-6 still holds 8562 repositories at depth 4; capping at 1000.
+2026-10-08 00:46:28,082 INFO apps.research.corpus Cell typescript|5-20|lt6|2022plus+5-10+5-7+6-7+7-7 still holds 6470 repositories at depth 4; capping at 1000.
+2026-10-08 00:46:33,057 INFO apps.research.corpus Cell typescript|5-20|lt6|2022plus+5-10+8-10+8-8 still holds 5169 repositories at depth 3; capping at 1000.
+2026-10-08 00:46:38,035 INFO apps.research.corpus Cell typescript|5-20|lt6|2022plus+5-10+8-10+9-10+9-9 still holds 4182 repositories at depth 4; capping at 1000.
+2026-10-08 00:46:40,541 INFO apps.research.corpus Cell typescript|5-20|lt6|2022plus+5-10+8-10+9-10+10-10 still holds 3475 repositories at depth 4; capping at 1000.
+2026-10-08 00:46:50,567 INFO apps.research.corpus Cell typescript|5-20|lt6|2022plus+11-20+11-14+11-12+11-11 still holds 2906 repositories at depth 4; capping at 1000.
+2026-10-08 00:46:53,036 INFO apps.research.corpus Cell typescript|5-20|lt6|2022plus+11-20+11-14+11-12+12-12 still holds 2559 repositories at depth 4; capping at 1000.
+2026-10-08 00:46:58,062 INFO apps.research.corpus Cell typescript|5-20|lt6|2022plus+11-20+11-14+13-14+13-13 still holds 2241 repositories at depth 4; capping at 1000.
+2026-10-08 00:47:00,541 INFO apps.research.corpus Cell typescript|5-20|lt6|2022plus+11-20+11-14+13-14+14-14 still holds 1822 repositories at depth 4; capping at 1000.
+2026-10-08 00:47:08,067 INFO apps.research.corpus Cell typescript|5-20|lt6|2022plus+11-20+15-20+15-17+15-15 still holds 1663 repositories at depth 4; capping at 1000.
+2026-10-08 00:47:13,105 INFO apps.research.corpus Cell typescript|5-20|lt6|2022plus+11-20+15-20+15-17+16-17+16-16 still holds 1650 repositories at depth 5; capping at 1000.
+2026-10-08 00:47:15,579 INFO apps.research.corpus Cell typescript|5-20|lt6|2022plus+11-20+15-20+15-17+16-17+17-17 still holds 1476 repositories at depth 5; capping at 1000.
+2026-10-08 00:47:20,620 INFO apps.research.corpus Cell typescript|5-20|lt6|2022plus+11-20+15-20+18-20+18-18 still holds 1309 repositories at depth 4; capping at 1000.
+2026-10-08 00:47:25,575 INFO apps.research.corpus Cell typescript|5-20|lt6|2022plus+11-20+15-20+18-20+19-20+19-19 still holds 1153 repositories at depth 5; capping at 1000.
+2026-10-08 00:47:28,034 INFO apps.research.corpus Cell typescript|5-20|lt6|2022plus+11-20+15-20+18-20+19-20+20-20 still holds 1088 repositories at depth 5; capping at 1000.
+2026-10-08 00:48:05,628 INFO apps.research.corpus Cell typescript|5-20|6-18|2022plus+5-10+5-7+5-5 still holds 8540 repositories at depth 3; capping at 1000.
+2026-10-08 00:48:10,600 INFO apps.research.corpus Cell typescript|5-20|6-18|2022plus+5-10+5-7+6-7+6-6 still holds 5820 repositories at depth 4; capping at 1000.
+2026-10-08 00:48:13,075 INFO apps.research.corpus Cell typescript|5-20|6-18|2022plus+5-10+5-7+6-7+7-7 still holds 4106 repositories at depth 4; capping at 1000.
+2026-10-08 00:48:18,057 INFO apps.research.corpus Cell typescript|5-20|6-18|2022plus+5-10+8-10+8-8 still holds 3344 repositories at depth 3; capping at 1000.
+2026-10-08 00:48:23,136 INFO apps.research.corpus Cell typescript|5-20|6-18|2022plus+5-10+8-10+9-10+9-9 still holds 2455 repositories at depth 4; capping at 1000.
+2026-10-08 00:48:25,538 INFO apps.research.corpus Cell typescript|5-20|6-18|2022plus+5-10+8-10+9-10+10-10 still holds 2147 repositories at depth 4; capping at 1000.
+2026-10-08 00:48:35,577 INFO apps.research.corpus Cell typescript|5-20|6-18|2022plus+11-20+11-14+11-12+11-11 still holds 1715 repositories at depth 4; capping at 1000.
+2026-10-08 00:48:38,052 INFO apps.research.corpus Cell typescript|5-20|6-18|2022plus+11-20+11-14+11-12+12-12 still holds 1438 repositories at depth 4; capping at 1000.
+2026-10-08 00:48:43,071 INFO apps.research.corpus Cell typescript|5-20|6-18|2022plus+11-20+11-14+13-14+13-13 still holds 1265 repositories at depth 4; capping at 1000.
+2026-10-08 00:48:45,558 INFO apps.research.corpus Cell typescript|5-20|6-18|2022plus+11-20+11-14+13-14+14-14 still holds 1096 repositories at depth 4; capping at 1000.
+2026-10-08 00:49:48,135 INFO apps.research.corpus Cell typescript|5-20|18-48|2019-2021+5-10+5-7+5-5 still holds 2945 repositories at depth 3; capping at 1000.
+2026-10-08 00:49:53,117 INFO apps.research.corpus Cell typescript|5-20|18-48|2019-2021+5-10+5-7+6-7+6-6 still holds 2314 repositories at depth 4; capping at 1000.
+2026-10-08 00:49:55,612 INFO apps.research.corpus Cell typescript|5-20|18-48|2019-2021+5-10+5-7+6-7+7-7 still holds 1750 repositories at depth 4; capping at 1000.
+2026-10-08 00:50:00,620 INFO apps.research.corpus Cell typescript|5-20|18-48|2019-2021+5-10+8-10+8-8 still holds 1439 repositories at depth 3; capping at 1000.
+2026-10-08 00:50:05,654 INFO apps.research.corpus Cell typescript|5-20|18-48|2019-2021+5-10+8-10+9-10+9-9 still holds 1155 repositories at depth 4; capping at 1000.
+2026-10-08 00:50:55,727 INFO apps.research.corpus Cell typescript|5-20|18-48|2022plus+5-10+5-7+5-5 still holds 10273 repositories at depth 3; capping at 1000.
+2026-10-08 00:51:00,694 INFO apps.research.corpus Cell typescript|5-20|18-48|2022plus+5-10+5-7+6-7+6-6 still holds 6965 repositories at depth 4; capping at 1000.
+2026-10-08 00:51:03,220 INFO apps.research.corpus Cell typescript|5-20|18-48|2022plus+5-10+5-7+6-7+7-7 still holds 5111 repositories at depth 4; capping at 1000.
+2026-10-08 00:51:08,206 INFO apps.research.corpus Cell typescript|5-20|18-48|2022plus+5-10+8-10+8-8 still holds 3827 repositories at depth 3; capping at 1000.
+2026-10-08 00:51:13,173 INFO apps.research.corpus Cell typescript|5-20|18-48|2022plus+5-10+8-10+9-10+9-9 still holds 3101 repositories at depth 4; capping at 1000.
+2026-10-08 00:51:15,659 INFO apps.research.corpus Cell typescript|5-20|18-48|2022plus+5-10+8-10+9-10+10-10 still holds 2558 repositories at depth 4; capping at 1000.
+2026-10-08 00:51:25,646 INFO apps.research.corpus Cell typescript|5-20|18-48|2022plus+11-20+11-14+11-12+11-11 still holds 1999 repositories at depth 4; capping at 1000.
+2026-10-08 00:51:28,135 INFO apps.research.corpus Cell typescript|5-20|18-48|2022plus+11-20+11-14+11-12+12-12 still holds 1785 repositories at depth 4; capping at 1000.
+2026-10-08 00:51:33,137 INFO apps.research.corpus Cell typescript|5-20|18-48|2022plus+11-20+11-14+13-14+13-13 still holds 1490 repositories at depth 4; capping at 1000.
+2026-10-08 00:51:35,702 INFO apps.research.corpus Cell typescript|5-20|18-48|2022plus+11-20+11-14+13-14+14-14 still holds 1356 repositories at depth 4; capping at 1000.
+2026-10-08 00:51:43,142 INFO apps.research.corpus Cell typescript|5-20|18-48|2022plus+11-20+15-20+15-17+15-15 still holds 1155 repositories at depth 4; capping at 1000.
+2026-10-08 00:51:48,141 INFO apps.research.corpus Cell typescript|5-20|18-48|2022plus+11-20+15-20+15-17+16-17+16-16 still holds 1146 repositories at depth 5; capping at 1000.
+2026-10-08 00:52:15,678 INFO apps.research.corpus Cell typescript|5-20|gt48|2016-2018+5-10+5-7+5-5 still holds 1564 repositories at depth 3; capping at 1000.
+2026-10-08 00:52:20,601 INFO apps.research.corpus Cell typescript|5-20|gt48|2016-2018+5-10+5-7+6-7+6-6 still holds 1176 repositories at depth 4; capping at 1000.
+2026-10-08 00:53:03,163 INFO apps.research.corpus Cell typescript|5-20|gt48|2019-2021+5-10+5-7+5-5 still holds 3748 repositories at depth 3; capping at 1000.
+2026-10-08 00:53:08,176 INFO apps.research.corpus Cell typescript|5-20|gt48|2019-2021+5-10+5-7+6-7+6-6 still holds 2639 repositories at depth 4; capping at 1000.
+2026-10-08 00:53:10,637 INFO apps.research.corpus Cell typescript|5-20|gt48|2019-2021+5-10+5-7+6-7+7-7 still holds 1921 repositories at depth 4; capping at 1000.
+2026-10-08 00:53:15,690 INFO apps.research.corpus Cell typescript|5-20|gt48|2019-2021+5-10+8-10+8-8 still holds 1479 repositories at depth 3; capping at 1000.
+2026-10-08 00:53:20,639 INFO apps.research.corpus Cell typescript|5-20|gt48|2019-2021+5-10+8-10+9-10+9-9 still holds 1139 repositories at depth 4; capping at 1000.
+2026-10-08 00:54:05,675 INFO apps.research.corpus Cell typescript|5-20|gt48|2022plus+5-10+5-7+5-5 still holds 1515 repositories at depth 3; capping at 1000.
+2026-10-08 00:54:10,686 INFO apps.research.corpus Cell typescript|5-20|gt48|2022plus+5-10+5-7+6-7+6-6 still holds 1011 repositories at depth 4; capping at 1000.
+2026-10-08 00:55:03,714 INFO apps.research.corpus Cell typescript|21-50|lt6|2022plus+21-32+21-25+21-22+21-21 still holds 1054 repositories at depth 4; capping at 1000.
+2026-10-08 01:07:09,517 INFO apps.research.corpus Cell python|5-20|lt6|2019-2021+5-10+5-7+5-5 still holds 1561 repositories at depth 3; capping at 1000.
+2026-10-08 01:07:14,436 INFO apps.research.corpus Cell python|5-20|lt6|2019-2021+5-10+5-7+6-7+6-6 still holds 1145 repositories at depth 4; capping at 1000.
+2026-10-08 01:07:16,899 INFO apps.research.corpus Cell python|5-20|lt6|2019-2021+5-10+5-7+6-7+7-7 still holds 1011 repositories at depth 4; capping at 1000.
+2026-10-08 01:08:06,920 INFO apps.research.corpus Cell python|5-20|lt6|2022plus+5-10+5-7+5-5 still holds 21603 repositories at depth 3; capping at 1000.
+2026-10-08 01:08:11,929 INFO apps.research.corpus Cell python|5-20|lt6|2022plus+5-10+5-7+6-7+6-6 still holds 15550 repositories at depth 4; capping at 1000.
+2026-10-08 01:08:14,415 INFO apps.research.corpus Cell python|5-20|lt6|2022plus+5-10+5-7+6-7+7-7 still holds 13094 repositories at depth 4; capping at 1000.
+2026-10-08 01:08:19,399 INFO apps.research.corpus Cell python|5-20|lt6|2022plus+5-10+8-10+8-8 still holds 10584 repositories at depth 3; capping at 1000.
+2026-10-08 01:08:24,403 INFO apps.research.corpus Cell python|5-20|lt6|2022plus+5-10+8-10+9-10+9-9 still holds 7967 repositories at depth 4; capping at 1000.
+2026-10-08 01:08:26,965 INFO apps.research.corpus Cell python|5-20|lt6|2022plus+5-10+8-10+9-10+10-10 still holds 6298 repositories at depth 4; capping at 1000.
+2026-10-08 01:08:36,961 INFO apps.research.corpus Cell python|5-20|lt6|2022plus+11-20+11-14+11-12+11-11 still holds 5226 repositories at depth 4; capping at 1000.
+2026-10-08 01:08:40,467 INFO apps.research.corpus Cell python|5-20|lt6|2022plus+11-20+11-14+11-12+12-12 still holds 4484 repositories at depth 4; capping at 1000.
+2026-10-08 01:08:44,402 INFO apps.research.corpus Cell python|5-20|lt6|2022plus+11-20+11-14+13-14+13-13 still holds 4038 repositories at depth 4; capping at 1000.
+2026-10-08 01:08:46,897 INFO apps.research.corpus Cell python|5-20|lt6|2022plus+11-20+11-14+13-14+14-14 still holds 3442 repositories at depth 4; capping at 1000.
+2026-10-08 01:08:54,434 INFO apps.research.corpus Cell python|5-20|lt6|2022plus+11-20+15-20+15-17+15-15 still holds 3139 repositories at depth 4; capping at 1000.
+2026-10-08 01:08:59,424 INFO apps.research.corpus Cell python|5-20|lt6|2022plus+11-20+15-20+15-17+16-17+16-16 still holds 2821 repositories at depth 5; capping at 1000.
+2026-10-08 01:09:01,889 INFO apps.research.corpus Cell python|5-20|lt6|2022plus+11-20+15-20+15-17+16-17+17-17 still holds 2490 repositories at depth 5; capping at 1000.
+2026-10-08 01:09:06,927 INFO apps.research.corpus Cell python|5-20|lt6|2022plus+11-20+15-20+18-20+18-18 still holds 2301 repositories at depth 4; capping at 1000.
+2026-10-08 01:09:11,926 INFO apps.research.corpus Cell python|5-20|lt6|2022plus+11-20+15-20+18-20+19-20+19-19 still holds 2088 repositories at depth 5; capping at 1000.
+2026-10-08 01:09:14,403 INFO apps.research.corpus Cell python|5-20|lt6|2022plus+11-20+15-20+18-20+19-20+20-20 still holds 1931 repositories at depth 5; capping at 1000.
+2026-10-08 01:09:49,488 INFO apps.research.corpus Cell python|5-20|6-18|2019-2021+5-10+5-7+5-5 still holds 1109 repositories at depth 3; capping at 1000.
+2026-10-08 01:10:32,051 INFO apps.research.corpus Cell python|5-20|6-18|2022plus+5-10+5-7+5-5 still holds 18794 repositories at depth 3; capping at 1000.
+2026-10-08 01:10:37,035 INFO apps.research.corpus Cell python|5-20|6-18|2022plus+5-10+5-7+6-7+6-6 still holds 13443 repositories at depth 4; capping at 1000.
+2026-10-08 01:10:39,538 INFO apps.research.corpus Cell python|5-20|6-18|2022plus+5-10+5-7+6-7+7-7 still holds 9870 repositories at depth 4; capping at 1000.
+2026-10-08 01:10:44,549 INFO apps.research.corpus Cell python|5-20|6-18|2022plus+5-10+8-10+8-8 still holds 7657 repositories at depth 3; capping at 1000.
+2026-10-08 01:10:49,529 INFO apps.research.corpus Cell python|5-20|6-18|2022plus+5-10+8-10+9-10+9-9 still holds 6082 repositories at depth 4; capping at 1000.
+2026-10-08 01:10:51,948 INFO apps.research.corpus Cell python|5-20|6-18|2022plus+5-10+8-10+9-10+10-10 still holds 4931 repositories at depth 4; capping at 1000.
+2026-10-08 01:11:01,994 INFO apps.research.corpus Cell python|5-20|6-18|2022plus+11-20+11-14+11-12+11-11 still holds 4294 repositories at depth 4; capping at 1000.
+2026-10-08 01:11:04,521 INFO apps.research.corpus Cell python|5-20|6-18|2022plus+11-20+11-14+11-12+12-12 still holds 3598 repositories at depth 4; capping at 1000.
+2026-10-08 01:11:09,487 INFO apps.research.corpus Cell python|5-20|6-18|2022plus+11-20+11-14+13-14+13-13 still holds 3058 repositories at depth 4; capping at 1000.
+2026-10-08 01:11:11,959 INFO apps.research.corpus Cell python|5-20|6-18|2022plus+11-20+11-14+13-14+14-14 still holds 2748 repositories at depth 4; capping at 1000.
+2026-10-08 01:11:19,499 INFO apps.research.corpus Cell python|5-20|6-18|2022plus+11-20+15-20+15-17+15-15 still holds 2373 repositories at depth 4; capping at 1000.
+2026-10-08 01:11:24,512 INFO apps.research.corpus Cell python|5-20|6-18|2022plus+11-20+15-20+15-17+16-17+16-16 still holds 2136 repositories at depth 5; capping at 1000.
+2026-10-08 01:11:27,028 INFO apps.research.corpus Cell python|5-20|6-18|2022plus+11-20+15-20+15-17+16-17+17-17 still holds 2001 repositories at depth 5; capping at 1000.
+2026-10-08 01:11:31,987 INFO apps.research.corpus Cell python|5-20|6-18|2022plus+11-20+15-20+18-20+18-18 still holds 1746 repositories at depth 4; capping at 1000.
+2026-10-08 01:11:36,995 INFO apps.research.corpus Cell python|5-20|6-18|2022plus+11-20+15-20+18-20+19-20+19-19 still holds 1624 repositories at depth 5; capping at 1000.
+2026-10-08 01:11:39,474 INFO apps.research.corpus Cell python|5-20|6-18|2022plus+11-20+15-20+18-20+19-20+20-20 still holds 1480 repositories at depth 5; capping at 1000.
+2026-10-08 01:12:12,022 INFO apps.research.corpus Cell python|5-20|18-48|2016-2018+5-10+5-7+5-5 still holds 1405 repositories at depth 3; capping at 1000.
+2026-10-08 01:12:17,043 INFO apps.research.corpus Cell python|5-20|18-48|2016-2018+5-10+5-7+6-7+6-6 still holds 1152 repositories at depth 4; capping at 1000.
+2026-10-08 01:13:04,533 INFO apps.research.corpus Cell python|5-20|18-48|2019-2021+5-10+5-7+5-5 still holds 5117 repositories at depth 3; capping at 1000.
+2026-10-08 01:13:09,593 INFO apps.research.corpus Cell python|5-20|18-48|2019-2021+5-10+5-7+6-7+6-6 still holds 4056 repositories at depth 4; capping at 1000.
+2026-10-08 01:13:11,997 INFO apps.research.corpus Cell python|5-20|18-48|2019-2021+5-10+5-7+6-7+7-7 still holds 3288 repositories at depth 4; capping at 1000.
+2026-10-08 01:13:17,026 INFO apps.research.corpus Cell python|5-20|18-48|2019-2021+5-10+8-10+8-8 still holds 2648 repositories at depth 3; capping at 1000.
+2026-10-08 01:13:22,005 INFO apps.research.corpus Cell python|5-20|18-48|2019-2021+5-10+8-10+9-10+9-9 still holds 2234 repositories at depth 4; capping at 1000.
+2026-10-08 01:13:24,495 INFO apps.research.corpus Cell python|5-20|18-48|2019-2021+5-10+8-10+9-10+10-10 still holds 1965 repositories at depth 4; capping at 1000.
+2026-10-08 01:13:34,692 INFO apps.research.corpus Cell python|5-20|18-48|2019-2021+11-20+11-14+11-12+11-11 still holds 1704 repositories at depth 4; capping at 1000.
+2026-10-08 01:13:37,010 INFO apps.research.corpus Cell python|5-20|18-48|2019-2021+11-20+11-14+11-12+12-12 still holds 1506 repositories at depth 4; capping at 1000.
+2026-10-08 01:13:42,034 INFO apps.research.corpus Cell python|5-20|18-48|2019-2021+11-20+11-14+13-14+13-13 still holds 1364 repositories at depth 4; capping at 1000.
+2026-10-08 01:13:44,478 INFO apps.research.corpus Cell python|5-20|18-48|2019-2021+11-20+11-14+13-14+14-14 still holds 1201 repositories at depth 4; capping at 1000.
+2026-10-08 01:13:52,065 INFO apps.research.corpus Cell python|5-20|18-48|2019-2021+11-20+15-20+15-17+15-15 still holds 1095 repositories at depth 4; capping at 1000.
+2026-10-08 01:13:57,076 INFO apps.research.corpus Cell python|5-20|18-48|2019-2021+11-20+15-20+15-17+16-17+16-16 still holds 1046 repositories at depth 5; capping at 1000.
+2026-10-08 01:14:22,089 INFO apps.research.corpus Cell python|5-20|18-48|2022plus+5-10+5-7+5-5 still holds 25186 repositories at depth 3; capping at 1000.
+2026-10-08 01:14:27,061 INFO apps.research.corpus Cell python|5-20|18-48|2022plus+5-10+5-7+6-7+6-6 still holds 17881 repositories at depth 4; capping at 1000.
+2026-10-08 01:14:29,631 INFO apps.research.corpus Cell python|5-20|18-48|2022plus+5-10+5-7+6-7+7-7 still holds 13509 repositories at depth 4; capping at 1000.
+2026-10-08 01:14:34,528 INFO apps.research.corpus Cell python|5-20|18-48|2022plus+5-10+8-10+8-8 still holds 10575 repositories at depth 3; capping at 1000.
+2026-10-08 01:14:39,551 INFO apps.research.corpus Cell python|5-20|18-48|2022plus+5-10+8-10+9-10+9-9 still holds 8610 repositories at depth 4; capping at 1000.
+2026-10-08 01:14:42,033 INFO apps.research.corpus Cell python|5-20|18-48|2022plus+5-10+8-10+9-10+10-10 still holds 7154 repositories at depth 4; capping at 1000.
+2026-10-08 01:14:52,444 INFO apps.research.corpus Cell python|5-20|18-48|2022plus+11-20+11-14+11-12+11-11 still holds 5976 repositories at depth 4; capping at 1000.
+2026-10-08 01:14:54,528 INFO apps.research.corpus Cell python|5-20|18-48|2022plus+11-20+11-14+11-12+12-12 still holds 5192 repositories at depth 4; capping at 1000.
+2026-10-08 01:14:59,543 INFO apps.research.corpus Cell python|5-20|18-48|2022plus+11-20+11-14+13-14+13-13 still holds 4489 repositories at depth 4; capping at 1000.
+2026-10-08 01:15:02,086 INFO apps.research.corpus Cell python|5-20|18-48|2022plus+11-20+11-14+13-14+14-14 still holds 3915 repositories at depth 4; capping at 1000.
+2026-10-08 01:15:09,598 INFO apps.research.corpus Cell python|5-20|18-48|2022plus+11-20+15-20+15-17+15-15 still holds 3259 repositories at depth 4; capping at 1000.
+2026-10-08 01:15:14,521 INFO apps.research.corpus Cell python|5-20|18-48|2022plus+11-20+15-20+15-17+16-17+16-16 still holds 3273 repositories at depth 5; capping at 1000.
+2026-10-08 01:15:17,088 INFO apps.research.corpus Cell python|5-20|18-48|2022plus+11-20+15-20+15-17+16-17+17-17 still holds 2891 repositories at depth 5; capping at 1000.
+2026-10-08 01:15:22,073 INFO apps.research.corpus Cell python|5-20|18-48|2022plus+11-20+15-20+18-20+18-18 still holds 2551 repositories at depth 4; capping at 1000.
+2026-10-08 01:15:27,073 INFO apps.research.corpus Cell python|5-20|18-48|2022plus+11-20+15-20+18-20+19-20+19-19 still holds 2324 repositories at depth 5; capping at 1000.
+2026-10-08 01:15:29,531 INFO apps.research.corpus Cell python|5-20|18-48|2022plus+11-20+15-20+18-20+19-20+20-20 still holds 2117 repositories at depth 5; capping at 1000.
+2026-10-08 01:15:39,568 INFO apps.research.corpus Cell python|5-20|gt48|le2015+5-10+5-7+5-5 still holds 8992 repositories at depth 3; capping at 1000.
+2026-10-08 01:15:44,637 INFO apps.research.corpus Cell python|5-20|gt48|le2015+5-10+5-7+6-7+6-6 still holds 6612 repositories at depth 4; capping at 1000.
+2026-10-08 01:15:47,024 INFO apps.research.corpus Cell python|5-20|gt48|le2015+5-10+5-7+6-7+7-7 still holds 5093 repositories at depth 4; capping at 1000.
+2026-10-08 01:15:52,176 INFO apps.research.corpus Cell python|5-20|gt48|le2015+5-10+8-10+8-8 still holds 3945 repositories at depth 3; capping at 1000.
+2026-10-08 01:15:57,041 INFO apps.research.corpus Cell python|5-20|gt48|le2015+5-10+8-10+9-10+9-9 still holds 3200 repositories at depth 4; capping at 1000.
+2026-10-08 01:15:59,584 INFO apps.research.corpus Cell python|5-20|gt48|le2015+5-10+8-10+9-10+10-10 still holds 2930 repositories at depth 4; capping at 1000.
+2026-10-08 01:16:09,623 INFO apps.research.corpus Cell python|5-20|gt48|le2015+11-20+11-14+11-12+11-11 still holds 2370 repositories at depth 4; capping at 1000.
+2026-10-08 01:16:12,127 INFO apps.research.corpus Cell python|5-20|gt48|le2015+11-20+11-14+11-12+12-12 still holds 1973 repositories at depth 4; capping at 1000.
+2026-10-08 01:16:17,078 INFO apps.research.corpus Cell python|5-20|gt48|le2015+11-20+11-14+13-14+13-13 still holds 1734 repositories at depth 4; capping at 1000.
+2026-10-08 01:16:19,570 INFO apps.research.corpus Cell python|5-20|gt48|le2015+11-20+11-14+13-14+14-14 still holds 1553 repositories at depth 4; capping at 1000.
+2026-10-08 01:16:27,148 INFO apps.research.corpus Cell python|5-20|gt48|le2015+11-20+15-20+15-17+15-15 still holds 1385 repositories at depth 4; capping at 1000.
+2026-10-08 01:16:32,081 INFO apps.research.corpus Cell python|5-20|gt48|le2015+11-20+15-20+15-17+16-17+16-16 still holds 1334 repositories at depth 5; capping at 1000.
+2026-10-08 01:16:34,579 INFO apps.research.corpus Cell python|5-20|gt48|le2015+11-20+15-20+15-17+16-17+17-17 still holds 1086 repositories at depth 5; capping at 1000.
+2026-10-08 01:16:39,573 INFO apps.research.corpus Cell python|5-20|gt48|le2015+11-20+15-20+18-20+18-18 still holds 1003 repositories at depth 4; capping at 1000.
+2026-10-08 01:16:57,096 INFO apps.research.corpus Cell python|5-20|gt48|2016-2018+5-10+5-7+5-5 still holds 13179 repositories at depth 3; capping at 1000.
+2026-10-08 01:17:02,138 INFO apps.research.corpus Cell python|5-20|gt48|2016-2018+5-10+5-7+6-7+6-6 still holds 10136 repositories at depth 4; capping at 1000.
+2026-10-08 01:17:04,638 INFO apps.research.corpus Cell python|5-20|gt48|2016-2018+5-10+5-7+6-7+7-7 still holds 7601 repositories at depth 4; capping at 1000.
+2026-10-08 01:17:09,603 INFO apps.research.corpus Cell python|5-20|gt48|2016-2018+5-10+8-10+8-8 still holds 6111 repositories at depth 3; capping at 1000.
+2026-10-08 01:17:14,587 INFO apps.research.corpus Cell python|5-20|gt48|2016-2018+5-10+8-10+9-10+9-9 still holds 4811 repositories at depth 4; capping at 1000.
+2026-10-08 01:17:17,073 INFO apps.research.corpus Cell python|5-20|gt48|2016-2018+5-10+8-10+9-10+10-10 still holds 4346 repositories at depth 4; capping at 1000.
+2026-10-08 01:17:27,107 INFO apps.research.corpus Cell python|5-20|gt48|2016-2018+11-20+11-14+11-12+11-11 still holds 3566 repositories at depth 4; capping at 1000.
+2026-10-08 01:17:29,617 INFO apps.research.corpus Cell python|5-20|gt48|2016-2018+11-20+11-14+11-12+12-12 still holds 3069 repositories at depth 4; capping at 1000.
+2026-10-08 01:17:34,605 INFO apps.research.corpus Cell python|5-20|gt48|2016-2018+11-20+11-14+13-14+13-13 still holds 2742 repositories at depth 4; capping at 1000.
+2026-10-08 01:17:37,117 INFO apps.research.corpus Cell python|5-20|gt48|2016-2018+11-20+11-14+13-14+14-14 still holds 2359 repositories at depth 4; capping at 1000.
+2026-10-08 01:17:44,585 INFO apps.research.corpus Cell python|5-20|gt48|2016-2018+11-20+15-20+15-17+15-15 still holds 2156 repositories at depth 4; capping at 1000.
+2026-10-08 01:17:49,606 INFO apps.research.corpus Cell python|5-20|gt48|2016-2018+11-20+15-20+15-17+16-17+16-16 still holds 1980 repositories at depth 5; capping at 1000.
+2026-10-08 01:17:52,095 INFO apps.research.corpus Cell python|5-20|gt48|2016-2018+11-20+15-20+15-17+16-17+17-17 still holds 1690 repositories at depth 5; capping at 1000.
+2026-10-08 01:17:57,100 INFO apps.research.corpus Cell python|5-20|gt48|2016-2018+11-20+15-20+18-20+18-18 still holds 1653 repositories at depth 4; capping at 1000.
+2026-10-08 01:18:02,147 INFO apps.research.corpus Cell python|5-20|gt48|2016-2018+11-20+15-20+18-20+19-20+19-19 still holds 1414 repositories at depth 5; capping at 1000.
+2026-10-08 01:18:04,601 INFO apps.research.corpus Cell python|5-20|gt48|2016-2018+11-20+15-20+18-20+19-20+20-20 still holds 1298 repositories at depth 5; capping at 1000.
+2026-10-08 01:18:14,646 INFO apps.research.corpus Cell python|5-20|gt48|2019-2021+5-10+5-7+5-5 still holds 20796 repositories at depth 3; capping at 1000.
+2026-10-08 01:18:19,679 INFO apps.research.corpus Cell python|5-20|gt48|2019-2021+5-10+5-7+6-7+6-6 still holds 15055 repositories at depth 4; capping at 1000.
+2026-10-08 01:18:22,159 INFO apps.research.corpus Cell python|5-20|gt48|2019-2021+5-10+5-7+6-7+7-7 still holds 11188 repositories at depth 4; capping at 1000.
+2026-10-08 01:18:27,221 INFO apps.research.corpus Cell python|5-20|gt48|2019-2021+5-10+8-10+8-8 still holds 9038 repositories at depth 3; capping at 1000.
+2026-10-08 01:18:32,114 INFO apps.research.corpus Cell python|5-20|gt48|2019-2021+5-10+8-10+9-10+9-9 still holds 7375 repositories at depth 4; capping at 1000.
+2026-10-08 01:18:34,592 INFO apps.research.corpus Cell python|5-20|gt48|2019-2021+5-10+8-10+9-10+10-10 still holds 6090 repositories at depth 4; capping at 1000.
+2026-10-08 01:18:44,635 INFO apps.research.corpus Cell python|5-20|gt48|2019-2021+11-20+11-14+11-12+11-11 still holds 5090 repositories at depth 4; capping at 1000.
+2026-10-08 01:18:47,109 INFO apps.research.corpus Cell python|5-20|gt48|2019-2021+11-20+11-14+11-12+12-12 still holds 4319 repositories at depth 4; capping at 1000.
+2026-10-08 01:18:52,073 INFO apps.research.corpus Cell python|5-20|gt48|2019-2021+11-20+11-14+13-14+13-13 still holds 3768 repositories at depth 4; capping at 1000.
+2026-10-08 01:18:54,616 INFO apps.research.corpus Cell python|5-20|gt48|2019-2021+11-20+11-14+13-14+14-14 still holds 3310 repositories at depth 4; capping at 1000.
+2026-10-08 01:19:02,151 INFO apps.research.corpus Cell python|5-20|gt48|2019-2021+11-20+15-20+15-17+15-15 still holds 2973 repositories at depth 4; capping at 1000.
+2026-10-08 01:19:07,115 INFO apps.research.corpus Cell python|5-20|gt48|2019-2021+11-20+15-20+15-17+16-17+16-16 still holds 2618 repositories at depth 5; capping at 1000.
+2026-10-08 01:19:09,614 INFO apps.research.corpus Cell python|5-20|gt48|2019-2021+11-20+15-20+15-17+16-17+17-17 still holds 2362 repositories at depth 5; capping at 1000.
+2026-10-08 01:19:14,645 INFO apps.research.corpus Cell python|5-20|gt48|2019-2021+11-20+15-20+18-20+18-18 still holds 2146 repositories at depth 4; capping at 1000.
+2026-10-08 01:19:19,637 INFO apps.research.corpus Cell python|5-20|gt48|2019-2021+11-20+15-20+18-20+19-20+19-19 still holds 1863 repositories at depth 5; capping at 1000.
+2026-10-08 01:19:22,136 INFO apps.research.corpus Cell python|5-20|gt48|2019-2021+11-20+15-20+18-20+19-20+20-20 still holds 1779 repositories at depth 5; capping at 1000.
+2026-10-08 01:19:32,112 INFO apps.research.corpus Cell python|5-20|gt48|2022plus+5-10+5-7+5-5 still holds 4307 repositories at depth 3; capping at 1000.
+2026-10-08 01:19:37,163 INFO apps.research.corpus Cell python|5-20|gt48|2022plus+5-10+5-7+6-7+6-6 still holds 3089 repositories at depth 4; capping at 1000.
+2026-10-08 01:19:39,657 INFO apps.research.corpus Cell python|5-20|gt48|2022plus+5-10+5-7+6-7+7-7 still holds 2191 repositories at depth 4; capping at 1000.
+2026-10-08 01:19:44,667 INFO apps.research.corpus Cell python|5-20|gt48|2022plus+5-10+8-10+8-8 still holds 1657 repositories at depth 3; capping at 1000.
+2026-10-08 01:19:49,686 INFO apps.research.corpus Cell python|5-20|gt48|2022plus+5-10+8-10+9-10+9-9 still holds 1350 repositories at depth 4; capping at 1000.
+2026-10-08 01:19:52,114 INFO apps.research.corpus Cell python|5-20|gt48|2022plus+5-10+8-10+9-10+10-10 still holds 1123 repositories at depth 4; capping at 1000.
+2026-10-08 01:21:29,725 INFO apps.research.corpus Cell python|21-50|lt6|2022plus+21-32+21-25+21-22+21-21 still holds 1776 repositories at depth 4; capping at 1000.
+2026-10-08 01:21:32,175 INFO apps.research.corpus Cell python|21-50|lt6|2022plus+21-32+21-25+21-22+22-22 still holds 1633 repositories at depth 4; capping at 1000.
+2026-10-08 01:21:37,198 INFO apps.research.corpus Cell python|21-50|lt6|2022plus+21-32+21-25+23-25+23-23 still holds 1600 repositories at depth 4; capping at 1000.
+2026-10-08 01:21:42,231 INFO apps.research.corpus Cell python|21-50|lt6|2022plus+21-32+21-25+23-25+24-25+24-24 still holds 1435 repositories at depth 5; capping at 1000.
+2026-10-08 01:21:44,730 INFO apps.research.corpus Cell python|21-50|lt6|2022plus+21-32+21-25+23-25+24-25+25-25 still holds 1342 repositories at depth 5; capping at 1000.
+2026-10-08 01:21:52,171 INFO apps.research.corpus Cell python|21-50|lt6|2022plus+21-32+26-32+26-28+26-26 still holds 1250 repositories at depth 4; capping at 1000.
+2026-10-08 01:21:57,229 INFO apps.research.corpus Cell python|21-50|lt6|2022plus+21-32+26-32+26-28+27-28+27-27 still holds 1168 repositories at depth 5; capping at 1000.
+2026-10-08 01:21:59,716 INFO apps.research.corpus Cell python|21-50|lt6|2022plus+21-32+26-32+26-28+27-28+28-28 still holds 1118 repositories at depth 5; capping at 1000.
+2026-10-08 01:22:09,669 INFO apps.research.corpus Cell python|21-50|lt6|2022plus+21-32+26-32+29-32+29-30+30-30 still holds 1005 repositories at depth 5; capping at 1000.
+2026-10-08 01:24:14,848 INFO apps.research.corpus Cell python|21-50|6-18|2022plus+21-32+21-25+21-22+21-21 still holds 1392 repositories at depth 4; capping at 1000.
+2026-10-08 01:24:17,246 INFO apps.research.corpus Cell python|21-50|6-18|2022plus+21-32+21-25+21-22+22-22 still holds 1219 repositories at depth 4; capping at 1000.
+2026-10-08 01:24:22,698 INFO apps.research.corpus Cell python|21-50|6-18|2022plus+21-32+21-25+23-25+23-23 still holds 1152 repositories at depth 4; capping at 1000.
+2026-10-08 01:24:27,312 INFO apps.research.corpus Cell python|21-50|6-18|2022plus+21-32+21-25+23-25+24-25+24-24 still holds 1066 repositories at depth 5; capping at 1000.
+2026-10-08 01:28:05,047 INFO apps.research.corpus Cell python|21-50|18-48|2022plus+21-32+21-25+21-22+21-21 still holds 1955 repositories at depth 4; capping at 1000.
+2026-10-08 01:28:07,443 INFO apps.research.corpus Cell python|21-50|18-48|2022plus+21-32+21-25+21-22+22-22 still holds 1724 repositories at depth 4; capping at 1000.
+2026-10-08 01:28:12,415 INFO apps.research.corpus Cell python|21-50|18-48|2022plus+21-32+21-25+23-25+23-23 still holds 1636 repositories at depth 4; capping at 1000.
+2026-10-08 01:28:17,439 INFO apps.research.corpus Cell python|21-50|18-48|2022plus+21-32+21-25+23-25+24-25+24-24 still holds 1491 repositories at depth 5; capping at 1000.
+2026-10-08 01:28:19,846 INFO apps.research.corpus Cell python|21-50|18-48|2022plus+21-32+21-25+23-25+24-25+25-25 still holds 1448 repositories at depth 5; capping at 1000.
+2026-10-08 01:28:27,429 INFO apps.research.corpus Cell python|21-50|18-48|2022plus+21-32+26-32+26-28+26-26 still holds 1276 repositories at depth 4; capping at 1000.
+2026-10-08 01:28:32,465 INFO apps.research.corpus Cell python|21-50|18-48|2022plus+21-32+26-32+26-28+27-28+27-27 still holds 1225 repositories at depth 5; capping at 1000.
+2026-10-08 01:28:34,944 INFO apps.research.corpus Cell python|21-50|18-48|2022plus+21-32+26-32+26-28+27-28+28-28 still holds 1203 repositories at depth 5; capping at 1000.
+2026-10-08 01:28:42,426 INFO apps.research.corpus Cell python|21-50|18-48|2022plus+21-32+26-32+29-32+29-30+29-29 still holds 1044 repositories at depth 5; capping at 1000.
+2026-10-08 01:28:44,925 INFO apps.research.corpus Cell python|21-50|18-48|2022plus+21-32+26-32+29-32+29-30+30-30 still holds 1007 repositories at depth 5; capping at 1000.
+2026-10-08 01:31:44,968 INFO apps.research.corpus Cell python|21-50|gt48|2016-2018+21-32+21-25+21-22+21-21 still holds 1232 repositories at depth 4; capping at 1000.
+2026-10-08 01:31:47,452 INFO apps.research.corpus Cell python|21-50|gt48|2016-2018+21-32+21-25+21-22+22-22 still holds 1116 repositories at depth 4; capping at 1000.
+2026-10-08 01:31:52,501 INFO apps.research.corpus Cell python|21-50|gt48|2016-2018+21-32+21-25+23-25+23-23 still holds 1095 repositories at depth 4; capping at 1000.
+2026-10-08 01:33:27,571 INFO apps.research.corpus Cell python|21-50|gt48|2019-2021+21-32+21-25+21-22+21-21 still holds 1637 repositories at depth 4; capping at 1000.
+2026-10-08 01:33:30,017 INFO apps.research.corpus Cell python|21-50|gt48|2019-2021+21-32+21-25+21-22+22-22 still holds 1486 repositories at depth 4; capping at 1000.
+2026-10-08 01:33:35,060 INFO apps.research.corpus Cell python|21-50|gt48|2019-2021+21-32+21-25+23-25+23-23 still holds 1440 repositories at depth 4; capping at 1000.
+2026-10-08 01:33:40,046 INFO apps.research.corpus Cell python|21-50|gt48|2019-2021+21-32+21-25+23-25+24-25+24-24 still holds 1200 repositories at depth 5; capping at 1000.
+2026-10-08 01:33:42,508 INFO apps.research.corpus Cell python|21-50|gt48|2019-2021+21-32+21-25+23-25+24-25+25-25 still holds 1163 repositories at depth 5; capping at 1000.
+2026-10-08 01:33:50,030 INFO apps.research.corpus Cell python|21-50|gt48|2019-2021+21-32+26-32+26-28+26-26 still holds 1167 repositories at depth 4; capping at 1000.
+2026-10-08 01:33:55,078 INFO apps.research.corpus Cell python|21-50|gt48|2019-2021+21-32+26-32+26-28+27-28+27-27 still holds 1006 repositories at depth 5; capping at 1000.
+  Enumerated 1326 cell(s) from 3 language(s).
+2026-10-08 01:52:55,503 INFO apps.research.corpus Allocated 500 of 500 npm admissions across 728 cell(s).
+2026-10-08 01:52:55,510 INFO apps.research.corpus Allocated 500 of 500 pypi admissions across 598 cell(s).
+  javascript|5-20|lt6|le2015+5-10+5-7: 1/1 admitted from 1 examined.
+  javascript|5-20|lt6|le2015+5-10+8-10: 1/1 admitted from 1 examined.
+  javascript|5-20|lt6|le2015+11-20: 1/1 admitted from 2 examined.
+  javascript|5-20|lt6|2016-2018+5-10+5-7+5-5: 0/1 admitted from 2 examined.
+  javascript|5-20|lt6|2016-2018+5-10+5-7+6-7: 1/1 admitted from 1 examined.
+  javascript|5-20|lt6|2016-2018+5-10+8-10: 1/1 admitted from 1 examined.
+  javascript|5-20|lt6|2016-2018+11-20+11-14: 1/1 admitted from 1 examined.
+  javascript|5-20|lt6|2016-2018+11-20+15-20: 1/1 admitted from 2 examined.
+  javascript|5-20|lt6|2019-2021+5-10+5-7+5-5: 1/1 admitted from 1 examined.
+  javascript|5-20|lt6|2019-2021+5-10+5-7+6-7+6-6: 1/1 admitted from 1 examined.
+  javascript|5-20|lt6|2019-2021+5-10+5-7+6-7+7-7: 1/1 admitted from 1 examined.
+  javascript|5-20|lt6|2019-2021+5-10+8-10+8-8: 1/1 admitted from 1 examined.
+  javascript|5-20|lt6|2019-2021+5-10+8-10+9-10: 1/1 admitted from 2 examined.
+  javascript|5-20|lt6|2019-2021+11-20+11-14+11-12: 1/1 admitted from 1 examined.
+  javascript|5-20|lt6|2019-2021+11-20+11-14+13-14: 1/1 admitted from 1 examined.
+  javascript|5-20|lt6|2019-2021+11-20+15-20+15-17: 1/1 admitted from 2 examined.
+  javascript|5-20|lt6|2019-2021+11-20+15-20+18-20: 1/1 admitted from 1 examined.
+  javascript|5-20|lt6|2022plus+5-10+5-7+5-5: 1/1 admitted from 1 examined.
+  javascript|5-20|lt6|2022plus+5-10+5-7+6-7+6-6: 1/1 admitted from 1 examined.
+  javascript|5-20|lt6|2022plus+5-10+5-7+6-7+7-7: 1/1 admitted from 2 examined.
+  javascript|5-20|lt6|2022plus+5-10+8-10+8-8: 1/1 admitted from 2 examined.
+  javascript|5-20|lt6|2022plus+5-10+8-10+9-10+9-9: 0/1 admitted from 2 examined.
+  javascript|5-20|lt6|2022plus+5-10+8-10+9-10+10-10: 1/1 admitted from 1 examined.
+  javascript|5-20|lt6|2022plus+11-20+11-14+11-12+11-11: 1/1 admitted from 2 examined.
+2026-10-08 01:56:37,244 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  javascript|5-20|lt6|2022plus+11-20+11-14+11-12+12-12: 1/1 admitted from 2 examined.
+  javascript|5-20|lt6|2022plus+11-20+11-14+13-14+13-13: 1/1 admitted from 1 examined.
+  javascript|5-20|lt6|2022plus+11-20+11-14+13-14+14-14: 1/1 admitted from 1 examined.
+  javascript|5-20|lt6|2022plus+11-20+15-20+15-17+15-15: 1/1 admitted from 1 examined.
+  javascript|5-20|lt6|2022plus+11-20+15-20+15-17+16-17+16-16: 0/1 admitted from 2 examined.
+  javascript|5-20|lt6|2022plus+11-20+15-20+15-17+16-17+17-17: 1/1 admitted from 2 examined.
+  javascript|5-20|lt6|2022plus+11-20+15-20+18-20+18-18: 1/1 admitted from 1 examined.
+  javascript|5-20|lt6|2022plus+11-20+15-20+18-20+19-20+19-19: 1/1 admitted from 1 examined.
+  javascript|5-20|lt6|2022plus+11-20+15-20+18-20+19-20+20-20: 1/1 admitted from 1 examined.
+  javascript|5-20|6-18|le2015+5-10: 1/1 admitted from 1 examined.
+  javascript|5-20|6-18|le2015+11-20: 1/1 admitted from 1 examined.
+  javascript|5-20|6-18|2016-2018+5-10+5-7+5-5: 1/1 admitted from 1 examined.
+  javascript|5-20|6-18|2016-2018+5-10+5-7+6-7: 1/1 admitted from 2 examined.
+  javascript|5-20|6-18|2016-2018+5-10+8-10: 1/1 admitted from 1 examined.
+  javascript|5-20|6-18|2016-2018+11-20+11-14: 1/1 admitted from 1 examined.
+  javascript|5-20|6-18|2016-2018+11-20+15-20: 1/1 admitted from 1 examined.
+  javascript|5-20|6-18|2019-2021+5-10+5-7+5-5: 1/1 admitted from 2 examined.
+  javascript|5-20|6-18|2019-2021+5-10+5-7+6-7+6-6: 1/1 admitted from 1 examined.
+  javascript|5-20|6-18|2019-2021+5-10+5-7+6-7+7-7: 1/1 admitted from 1 examined.
+  javascript|5-20|6-18|2019-2021+5-10+8-10+8-8: 1/1 admitted from 1 examined.
+  javascript|5-20|6-18|2019-2021+5-10+8-10+9-10: 0/1 admitted from 2 examined.
+  javascript|5-20|6-18|2019-2021+11-20+11-14: 1/1 admitted from 2 examined.
+  javascript|5-20|6-18|2019-2021+11-20+15-20: 1/1 admitted from 1 examined.
+  javascript|5-20|6-18|2022plus+5-10+5-7+5-5: 1/1 admitted from 1 examined.
+  javascript|5-20|6-18|2022plus+5-10+5-7+6-7+6-6: 1/1 admitted from 1 examined.
+  javascript|5-20|6-18|2022plus+5-10+5-7+6-7+7-7: 1/1 admitted from 1 examined.
+  javascript|5-20|6-18|2022plus+5-10+8-10+8-8: 1/1 admitted from 1 examined.
+  javascript|5-20|6-18|2022plus+5-10+8-10+9-10+9-9: 1/1 admitted from 1 examined.
+  javascript|5-20|6-18|2022plus+5-10+8-10+9-10+10-10: 1/1 admitted from 1 examined.
+  javascript|5-20|6-18|2022plus+11-20+11-14+11-12+11-11: 1/1 admitted from 1 examined.
+  javascript|5-20|6-18|2022plus+11-20+11-14+11-12+12-12: 1/1 admitted from 1 examined.
+  javascript|5-20|6-18|2022plus+11-20+11-14+13-14+13-13: 1/1 admitted from 2 examined.
+  javascript|5-20|6-18|2022plus+11-20+11-14+13-14+14-14: 1/1 admitted from 1 examined.
+  javascript|5-20|6-18|2022plus+11-20+15-20+15-17+15-15: 1/1 admitted from 1 examined.
+  javascript|5-20|6-18|2022plus+11-20+15-20+15-17+16-17+16-16: 1/1 admitted from 1 examined.
+  javascript|5-20|6-18|2022plus+11-20+15-20+15-17+16-17+17-17: 1/1 admitted from 2 examined.
+  javascript|5-20|6-18|2022plus+11-20+15-20+18-20+18-18: 1/1 admitted from 2 examined.
+  javascript|5-20|6-18|2022plus+11-20+15-20+18-20+19-20: 1/1 admitted from 2 examined.
+  javascript|5-20|18-48|le2015+5-10+5-7+5-5: 2/2 admitted from 2 examined.
+  javascript|5-20|18-48|le2015+5-10+5-7+6-7: 2/2 admitted from 3 examined.
+  javascript|5-20|18-48|le2015+5-10+8-10: 2/2 admitted from 3 examined.
+  javascript|5-20|18-48|le2015+11-20+11-14: 2/2 admitted from 2 examined.
+  javascript|5-20|18-48|le2015+11-20+15-20: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2016-2018+5-10+5-7+5-5: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2016-2018+5-10+5-7+6-7+6-6: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2016-2018+5-10+5-7+6-7+7-7: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2016-2018+5-10+8-10+8-8: 1/1 admitted from 2 examined.
+  javascript|5-20|18-48|2016-2018+5-10+8-10+9-10+9-9: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2016-2018+5-10+8-10+9-10+10-10: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2016-2018+11-20+11-14+11-12+11-11: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2016-2018+11-20+11-14+11-12+12-12: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2016-2018+11-20+11-14+13-14+13-13: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2016-2018+11-20+11-14+13-14+14-14: 1/1 admitted from 2 examined.
+  javascript|5-20|18-48|2016-2018+11-20+15-20+15-17+15-15: 1/1 admitted from 2 examined.
+  javascript|5-20|18-48|2016-2018+11-20+15-20+15-17+16-17: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2016-2018+11-20+15-20+18-20+18-18: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2016-2018+11-20+15-20+18-20+19-20: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2019-2021+5-10+5-7+5-5: 1/1 admitted from 2 examined.
+  javascript|5-20|18-48|2019-2021+5-10+5-7+6-7+6-6: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2019-2021+5-10+5-7+6-7+7-7: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2019-2021+5-10+8-10+8-8: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2019-2021+5-10+8-10+9-10+9-9: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2019-2021+5-10+8-10+9-10+10-10: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2019-2021+11-20+11-14+11-12+11-11: 1/1 admitted from 1 examined.
+2026-10-08 02:06:15,627 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  javascript|5-20|18-48|2019-2021+11-20+11-14+11-12+12-12: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2019-2021+11-20+11-14+13-14+13-13: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2019-2021+11-20+11-14+13-14+14-14: 1/1 admitted from 1 examined.
+2026-10-08 02:06:38,070 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  javascript|5-20|18-48|2019-2021+11-20+15-20+15-17+15-15: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2019-2021+11-20+15-20+15-17+16-17+16-16: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2019-2021+11-20+15-20+15-17+16-17+17-17: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2019-2021+11-20+15-20+18-20+18-18: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2019-2021+11-20+15-20+18-20+19-20+19-19: 1/1 admitted from 2 examined.
+  javascript|5-20|18-48|2019-2021+11-20+15-20+18-20+19-20+20-20: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2022plus+5-10+5-7+5-5: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2022plus+5-10+5-7+6-7+6-6: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2022plus+5-10+5-7+6-7+7-7: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2022plus+5-10+8-10+8-8: 1/1 admitted from 2 examined.
+2026-10-08 02:08:05,569 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  javascript|5-20|18-48|2022plus+5-10+8-10+9-10+9-9: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2022plus+5-10+8-10+9-10+10-10: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2022plus+11-20+11-14+11-12+11-11: 1/1 admitted from 2 examined.
+  javascript|5-20|18-48|2022plus+11-20+11-14+11-12+12-12: 1/1 admitted from 2 examined.
+  javascript|5-20|18-48|2022plus+11-20+11-14+13-14+13-13: 1/1 admitted from 2 examined.
+  javascript|5-20|18-48|2022plus+11-20+11-14+13-14+14-14: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2022plus+11-20+15-20+15-17+15-15: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2022plus+11-20+15-20+15-17+16-17+16-16: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2022plus+11-20+15-20+15-17+16-17+17-17: 0/1 admitted from 2 examined.
+  javascript|5-20|18-48|2022plus+11-20+15-20+18-20+18-18: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2022plus+11-20+15-20+18-20+19-20+19-19: 0/1 admitted from 2 examined.
+  javascript|5-20|18-48|2022plus+11-20+15-20+18-20+19-20+20-20: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|le2015+5-10+5-7+5-5: 1/1 admitted from 2 examined.
+  javascript|5-20|gt48|le2015+5-10+5-7+6-7+6-6: 1/1 admitted from 2 examined.
+  javascript|5-20|gt48|le2015+5-10+5-7+6-7+7-7: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|le2015+5-10+8-10+8-8: 1/1 admitted from 2 examined.
+  javascript|5-20|gt48|le2015+5-10+8-10+9-10+9-9: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|le2015+5-10+8-10+9-10+10-10: 1/1 admitted from 2 examined.
+  javascript|5-20|gt48|le2015+11-20+11-14+11-12+11-11: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|le2015+11-20+11-14+11-12+12-12: 1/1 admitted from 2 examined.
+  javascript|5-20|gt48|le2015+11-20+11-14+13-14+13-13: 0/1 admitted from 2 examined.
+  javascript|5-20|gt48|le2015+11-20+11-14+13-14+14-14: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|le2015+11-20+15-20+15-17+15-15: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|le2015+11-20+15-20+15-17+16-17+16-16: 1/1 admitted from 2 examined.
+  javascript|5-20|gt48|le2015+11-20+15-20+15-17+16-17+17-17: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|le2015+11-20+15-20+18-20+18-18: 0/1 admitted from 2 examined.
+  javascript|5-20|gt48|le2015+11-20+15-20+18-20+19-20+19-19: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|le2015+11-20+15-20+18-20+19-20+20-20: 1/1 admitted from 2 examined.
+  javascript|5-20|gt48|2016-2018+5-10+5-7+5-5: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2016-2018+5-10+5-7+6-7+6-6: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2016-2018+5-10+5-7+6-7+7-7: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2016-2018+5-10+8-10+8-8: 1/1 admitted from 1 examined.
+2026-10-08 02:12:53,108 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  javascript|5-20|gt48|2016-2018+5-10+8-10+9-10+9-9: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2016-2018+5-10+8-10+9-10+10-10: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2016-2018+11-20+11-14+11-12+11-11: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2016-2018+11-20+11-14+11-12+12-12: 0/1 admitted from 2 examined.
+  javascript|5-20|gt48|2016-2018+11-20+11-14+13-14+13-13: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2016-2018+11-20+11-14+13-14+14-14: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2016-2018+11-20+15-20+15-17+15-15: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2016-2018+11-20+15-20+15-17+16-17+16-16: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2016-2018+11-20+15-20+15-17+16-17+17-17: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2016-2018+11-20+15-20+18-20+18-18: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2016-2018+11-20+15-20+18-20+19-20+19-19: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2016-2018+11-20+15-20+18-20+19-20+20-20: 1/1 admitted from 2 examined.
+  javascript|5-20|gt48|2019-2021+5-10+5-7+5-5: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2019-2021+5-10+5-7+6-7+6-6: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2019-2021+5-10+5-7+6-7+7-7: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2019-2021+5-10+8-10+8-8: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2019-2021+5-10+8-10+9-10+9-9: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2019-2021+5-10+8-10+9-10+10-10: 1/1 admitted from 2 examined.
+  javascript|5-20|gt48|2019-2021+11-20+11-14+11-12+11-11: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2019-2021+11-20+11-14+11-12+12-12: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2019-2021+11-20+11-14+13-14+13-13: 1/1 admitted from 1 examined.
+2026-10-08 02:15:48,728 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  javascript|5-20|gt48|2019-2021+11-20+11-14+13-14+14-14: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2019-2021+11-20+15-20+15-17+15-15: 0/1 admitted from 2 examined.
+  javascript|5-20|gt48|2019-2021+11-20+15-20+15-17+16-17+16-16: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2019-2021+11-20+15-20+15-17+16-17+17-17: 1/1 admitted from 2 examined.
+  javascript|5-20|gt48|2019-2021+11-20+15-20+18-20+18-18: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2019-2021+11-20+15-20+18-20+19-20+19-19: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2019-2021+11-20+15-20+18-20+19-20+20-20: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2022plus+5-10+5-7+5-5: 1/1 admitted from 2 examined.
+  javascript|5-20|gt48|2022plus+5-10+5-7+6-7+6-6: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2022plus+5-10+5-7+6-7+7-7: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2022plus+5-10+8-10+8-8: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2022plus+5-10+8-10+9-10+9-9: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2022plus+5-10+8-10+9-10+10-10: 0/1 admitted from 2 examined.
+  javascript|5-20|gt48|2022plus+11-20+11-14+11-12+11-11: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2022plus+11-20+11-14+11-12+12-12: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2022plus+11-20+11-14+13-14: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2022plus+11-20+15-20+15-17: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2022plus+11-20+15-20+18-20: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|le2015+21-32+21-25: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|le2015+21-32+26-32: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|le2015+33-50: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2016-2018+21-32+21-25+21-22: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2016-2018+21-32+21-25+23-25: 1/1 admitted from 2 examined.
+  javascript|21-50|18-48|2016-2018+21-32+26-32+26-28: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2016-2018+21-32+26-32+29-32: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2016-2018+33-50+33-40+33-36: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2016-2018+33-50+33-40+37-40: 1/1 admitted from 2 examined.
+  javascript|21-50|18-48|2016-2018+33-50+41-50+41-45: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2016-2018+33-50+41-50+46-50: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2019-2021+21-32+21-25+21-22+21-21: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2019-2021+21-32+21-25+21-22+22-22: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2019-2021+21-32+21-25+23-25+23-23: 1/1 admitted from 2 examined.
+  javascript|21-50|18-48|2019-2021+21-32+21-25+23-25+24-25: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2019-2021+21-32+26-32+26-28+26-26: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2019-2021+21-32+26-32+26-28+27-28: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2019-2021+21-32+26-32+29-32+29-30: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2019-2021+21-32+26-32+29-32+31-32: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2019-2021+33-50+33-40+33-36: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2019-2021+33-50+33-40+37-40: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2019-2021+33-50+41-50+41-45: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2019-2021+33-50+41-50+46-50: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2022plus+21-32+21-25+21-22+21-21: 1/1 admitted from 1 examined.
+2026-10-08 02:21:53,756 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 02:21:54,960 WARNING apps.scanning.adapters.registry_clients npm registry lookup failed for a package.
+  javascript|21-50|18-48|2022plus+21-32+21-25+21-22+22-22: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2022plus+21-32+21-25+23-25+23-23: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2022plus+21-32+21-25+23-25+24-25: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2022plus+21-32+26-32+26-28+26-26: 0/1 admitted from 2 examined.
+  javascript|21-50|18-48|2022plus+21-32+26-32+26-28+27-28: 1/1 admitted from 2 examined.
+  javascript|21-50|18-48|2022plus+21-32+26-32+29-32+29-30: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2022plus+21-32+26-32+29-32+31-32: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2022plus+33-50+33-40+33-36: 1/1 admitted from 2 examined.
+  javascript|21-50|18-48|2022plus+33-50+33-40+37-40: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2022plus+33-50+41-50+41-45: 1/1 admitted from 2 examined.
+  javascript|21-50|18-48|2022plus+33-50+41-50+46-50: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|le2015+21-32+21-25+21-22+21-21: 1/1 admitted from 2 examined.
+  javascript|21-50|gt48|le2015+21-32+21-25+21-22+22-22: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|le2015+21-32+21-25+23-25+23-23: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|le2015+21-32+21-25+23-25+24-25+24-24: 1/1 admitted from 2 examined.
+  javascript|21-50|gt48|le2015+21-32+21-25+23-25+24-25+25-25: 1/1 admitted from 2 examined.
+  javascript|21-50|gt48|le2015+21-32+26-32+26-28+26-26: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|le2015+21-32+26-32+26-28+27-28+27-27: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|le2015+21-32+26-32+26-28+27-28+28-28: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|le2015+21-32+26-32+29-32+29-30+29-29: 1/1 admitted from 2 examined.
+  javascript|21-50|gt48|le2015+21-32+26-32+29-32+29-30+30-30: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|le2015+21-32+26-32+29-32+31-32+31-31: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|le2015+21-32+26-32+29-32+31-32+32-32: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|le2015+33-50+33-40+33-36+33-34+33-33: 0/1 admitted from 2 examined.
+  javascript|21-50|gt48|le2015+33-50+33-40+33-36+33-34+34-34: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|le2015+33-50+33-40+33-36+35-36+35-35: 0/1 admitted from 2 examined.
+  javascript|21-50|gt48|le2015+33-50+33-40+33-36+35-36+36-36: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|le2015+33-50+33-40+37-40+37-38: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|le2015+33-50+33-40+37-40+39-40: 0/1 admitted from 2 examined.
+  javascript|21-50|gt48|le2015+33-50+41-50+41-45+41-42: 0/1 admitted from 2 examined.
+  javascript|21-50|gt48|le2015+33-50+41-50+41-45+43-45+43-43: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|le2015+33-50+41-50+41-45+43-45+44-45: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|le2015+33-50+41-50+46-50+46-47: 0/1 admitted from 2 examined.
+  javascript|21-50|gt48|le2015+33-50+41-50+46-50+48-50: 0/1 admitted from 2 examined.
+  javascript|21-50|gt48|2016-2018+21-32+21-25+21-22+21-21: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2016-2018+21-32+21-25+21-22+22-22: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2016-2018+21-32+21-25+23-25+23-23: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2016-2018+21-32+21-25+23-25+24-25+24-24: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2016-2018+21-32+21-25+23-25+24-25+25-25: 1/1 admitted from 2 examined.
+  javascript|21-50|gt48|2016-2018+21-32+26-32+26-28+26-26: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2016-2018+21-32+26-32+26-28+27-28+27-27: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2016-2018+21-32+26-32+26-28+27-28+28-28: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2016-2018+21-32+26-32+29-32+29-30+29-29: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2016-2018+21-32+26-32+29-32+29-30+30-30: 1/1 admitted from 2 examined.
+  javascript|21-50|gt48|2016-2018+21-32+26-32+29-32+31-32+31-31: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2016-2018+21-32+26-32+29-32+31-32+32-32: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2016-2018+33-50+33-40+33-36+33-34+33-33: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2016-2018+33-50+33-40+33-36+33-34+34-34: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2016-2018+33-50+33-40+33-36+35-36: 1/1 admitted from 2 examined.
+2026-10-08 02:28:55,180 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  javascript|21-50|gt48|2016-2018+33-50+33-40+37-40+37-38: 1/1 admitted from 2 examined.
+  javascript|21-50|gt48|2016-2018+33-50+33-40+37-40+39-40: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2016-2018+33-50+41-50+41-45+41-42: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2016-2018+33-50+41-50+41-45+43-45: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2016-2018+33-50+41-50+46-50+46-47: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2016-2018+33-50+41-50+46-50+48-50: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2019-2021+21-32+21-25+21-22+21-21: 0/1 admitted from 2 examined.
+  javascript|21-50|gt48|2019-2021+21-32+21-25+21-22+22-22: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2019-2021+21-32+21-25+23-25+23-23: 0/1 admitted from 2 examined.
+  javascript|21-50|gt48|2019-2021+21-32+21-25+23-25+24-25: 1/1 admitted from 2 examined.
+  javascript|21-50|gt48|2019-2021+21-32+26-32+26-28+26-26: 0/1 admitted from 2 examined.
+  javascript|21-50|gt48|2019-2021+21-32+26-32+26-28+27-28: 1/1 admitted from 2 examined.
+  javascript|21-50|gt48|2019-2021+21-32+26-32+29-32+29-30: 0/1 admitted from 2 examined.
+  javascript|21-50|gt48|2019-2021+21-32+26-32+29-32+31-32: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2019-2021+33-50+33-40+33-36+33-34: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2019-2021+33-50+33-40+33-36+35-36: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2019-2021+33-50+33-40+37-40: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2019-2021+33-50+41-50+41-45: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2019-2021+33-50+41-50+46-50: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2022plus+21-32: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2022plus+33-50: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|le2015+51-100+51-71: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|le2015+51-100+72-100: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|le2015+101-200+101-142: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|le2015+101-200+143-200: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2016-2018+51-100+51-71+51-60: 1/1 admitted from 2 examined.
+  javascript|51-200|18-48|2016-2018+51-100+51-71+61-71: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2016-2018+51-100+72-100+72-84: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2016-2018+51-100+72-100+85-100: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2016-2018+101-200+101-142+101-119: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2016-2018+101-200+101-142+120-142: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2016-2018+101-200+143-200: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2019-2021+51-100+51-71+51-60: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2019-2021+51-100+51-71+61-71: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2019-2021+51-100+72-100+72-84: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2019-2021+51-100+72-100+85-100: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2019-2021+101-200+101-142+101-119: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2019-2021+101-200+101-142+120-142: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2019-2021+101-200+143-200: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2022plus+51-100+51-71+51-60: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2022plus+51-100+51-71+61-71: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2022plus+51-100+72-100: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2022plus+101-200+101-142: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2022plus+101-200+143-200: 0/1 admitted from 2 examined.
+  javascript|51-200|gt48|le2015+51-100+51-71+51-60+51-55+51-52: 1/1 admitted from 2 examined.
+  javascript|51-200|gt48|le2015+51-100+51-71+51-60+51-55+53-55: 1/1 admitted from 1 examined.
+EXIT 127 2026-10-07T21:04:56Z

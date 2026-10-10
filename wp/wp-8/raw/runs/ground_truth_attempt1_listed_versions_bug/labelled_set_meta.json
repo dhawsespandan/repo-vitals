@@ -1,0 +1,61 @@
+{
+  "generated_at": "2026-10-08T17:26:50.886442+00:00",
+  "snapshot_date": "2026-10-07",
+  "seed": 42,
+  "size": 150,
+  "replacement_share": 0.5,
+  "items": 86,
+  "quotas": [
+    {
+      "ecosystem": "npm",
+      "case_type": "cve_fix",
+      "available": 549,
+      "target": 37,
+      "taken": 37
+    },
+    {
+      "ecosystem": "npm",
+      "case_type": "deprecation_replacement",
+      "available": 135,
+      "target": 38,
+      "taken": 38
+    },
+    {
+      "ecosystem": "pypi",
+      "case_type": "cve_fix",
+      "available": 11,
+      "target": 37,
+      "taken": 11
+    },
+    {
+      "ecosystem": "pypi",
+      "case_type": "deprecation_replacement",
+      "available": 0,
+      "target": 38,
+      "taken": 0
+    }
+  ],
+  "coverage": {
+    "npm|deprecation_replacement": {
+      "candidates": 632,
+      "extracted": 135,
+      "no_successor_in_text": 496,
+      "successor_not_in_registry": 1
+    },
+    "npm|cve_fix": {
+      "candidates": 674,
+      "extracted": 549,
+      "no_fixed_version": 125
+    },
+    "pypi|cve_fix": {
+      "candidates": 783,
+      "no_fixed_version": 771,
+      "extracted": 11,
+      "unparseable_range": 1
+    },
+    "pypi|deprecation_replacement": {
+      "candidates": 34,
+      "no_successor_in_text": 34
+    }
+  }
+}

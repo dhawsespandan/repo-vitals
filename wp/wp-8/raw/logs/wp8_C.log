@@ -1,0 +1,604 @@
+﻿=== START 2026-10-09T00:31:26Z condition C groq=member3 gemini=member1 
+2026-10-09 06:01:27,825 INFO apps.reports.rag.embeddings Loading embedding model sentence-transformers/all-MiniLM-L6-v2.
+2026-10-09 06:01:29,630 INFO apps.reports.rag.chroma_store Opening the chunk store at D:\Symbiosis\RepoVitals\backend\.chroma.
+2026-10-09 06:01:29,813 INFO apps.reports.agent.graph Grounding for @sentry/browser: top similarity 0.5681 over 2412 chars -> sufficient
+  S3-178e81dd68: ok (sufficient)
+2026-10-09 06:02:16,050 INFO apps.reports.agent.graph Grounding for postcss: top similarity 0.6574 over 470 chars -> sufficient
+  S3-196bee2a82: ok (sufficient)
+2026-10-09 06:02:59,782 INFO apps.reports.agent.graph Grounding for body-parser: top similarity 0.5891 over 4701 chars -> sufficient
+  S3-2344c2d5f0: ok (sufficient)
+2026-10-09 06:03:44,801 INFO apps.reports.agent.graph Grounding for ws: top similarity 0.3657 over 3333 chars -> sufficient
+  S3-26aeb41ab4: ok (sufficient)
+2026-10-09 06:04:27,562 INFO apps.reports.agent.graph Grounding for basic-auth-connect: top similarity 0.5690 over 894 chars -> sufficient
+  S3-39288fb7e1: ok (sufficient)
+2026-10-09 06:05:13,100 INFO apps.reports.agent.graph Grounding for node-sass: top similarity 0.7748 over 321 chars -> low
+  S3-3962e7e622: ok (low)
+2026-10-09 06:06:01,671 INFO apps.reports.agent.graph Grounding for csvtojson: top similarity 0.7148 over 813 chars -> sufficient
+  S3-3e2b9e4f48: ok (sufficient)
+2026-10-09 06:06:50,358 INFO apps.reports.agent.graph Grounding for nodemailer: top similarity 0.7601 over 1267 chars -> sufficient
+  S3-44195a8d92: ok (sufficient)
+2026-10-09 06:07:34,030 INFO apps.reports.agent.graph Grounding for jsoneditor: top similarity 0.7139 over 849 chars -> sufficient
+  S3-49a3654b5d: ok (sufficient)
+2026-10-09 06:08:15,334 INFO apps.reports.agent.graph Grounding for ejs: top similarity 0.5628 over 2234 chars -> sufficient
+  S3-4ab3cb3a24: ok (sufficient)
+  S3-4f2d7583a9: ok (low)
+2026-10-09 06:09:45,087 INFO apps.reports.agent.graph Grounding for mongoose: top similarity 0.6042 over 1282 chars -> sufficient
+  S3-502866d352: ok (sufficient)
+2026-10-09 06:10:38,643 INFO apps.reports.agent.graph Grounding for axios: top similarity 0.7027 over 1212 chars -> sufficient
+  S3-60d098c607: ok (sufficient)
+2026-10-09 06:11:14,888 INFO apps.reports.agent.graph Grounding for express: top similarity 0.6967 over 2429 chars -> sufficient
+  S3-6c0b1b3cb5: ok (sufficient)
+2026-10-09 06:12:00,559 INFO apps.reports.agent.graph Grounding for postcss: top similarity 0.6574 over 470 chars -> sufficient
+  S3-722d700af5: ok (sufficient)
+2026-10-09 06:12:48,460 INFO apps.reports.agent.graph Grounding for webpack-dev-middleware: top similarity 0.8033 over 1253 chars -> sufficient
+  S3-757d405323: ok (sufficient)
+2026-10-09 06:13:38,537 INFO apps.reports.agent.graph Grounding for @capacitor/ios: top similarity 0.5889 over 1453 chars -> sufficient
+  S3-7757cfdf69: ok (sufficient)
+2026-10-09 06:14:13,612 INFO apps.reports.agent.graph Grounding for @azure/identity: top similarity 0.6100 over 3410 chars -> sufficient
+  S3-7d74a29656: ok (sufficient)
+2026-10-09 06:14:58,111 INFO apps.reports.agent.graph Grounding for node-sass: top similarity 0.7748 over 321 chars -> low
+2026-10-09 06:14:58,162 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 06:14:58,162 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+  S3-8594fe0d64: the generator did not answer (1)
+2026-10-09 06:14:58,425 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+    waiting 65s for the provider's per-minute window, then asking again
+2026-10-09 06:16:04,444 INFO apps.reports.agent.graph Grounding for node-sass: top similarity 0.7748 over 321 chars -> low
+2026-10-09 06:16:04,810 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 06:16:04,811 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+  S3-8594fe0d64: ok (low)
+2026-10-09 06:16:50,468 INFO apps.reports.agent.graph Grounding for express: top similarity 0.6967 over 2429 chars -> sufficient
+2026-10-09 06:16:50,542 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 06:16:50,542 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+2026-10-09 06:16:50,921 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+  S3-9981e7a365: the generator did not answer (1)
+    waiting 65s for the provider's per-minute window, then asking again
+2026-10-09 06:17:57,919 INFO apps.reports.agent.graph Grounding for express: top similarity 0.6967 over 2429 chars -> sufficient
+2026-10-09 06:17:58,300 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 06:17:58,300 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+2026-10-09 06:17:58,659 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+  S3-9981e7a365: the generator did not answer (2)
+Run C_75246f3b_openai-gpt-oss-120b: 19 completed, 0 failed, 0 already done, 131 remaining.
+  Stopped: The generator stopped answering — most likely its daily limit. Every finished item is saved; rerun the same command later and it continues from here.
+  judge: 37 call(s), 0 cache hit(s)
+  D:\Symbiosis\RepoVitals\research_data\runs\C_75246f3b_openai-gpt-oss-120b\items.jsonl
+=== EXIT 0 2026-10-09T00:47:58Z
+=== START 2026-10-09T00:47:58Z condition C groq=member4 gemini=member1 
+2026-10-09 06:18:00,744 INFO apps.reports.rag.embeddings Loading embedding model sentence-transformers/all-MiniLM-L6-v2.
+2026-10-09 06:18:03,405 INFO apps.reports.rag.chroma_store Opening the chunk store at D:\Symbiosis\RepoVitals\backend\.chroma.
+2026-10-09 06:18:03,569 INFO apps.reports.agent.graph Grounding for express: top similarity 0.6967 over 2429 chars -> sufficient
+  S3-9981e7a365: ok (sufficient)
+2026-10-09 06:18:45,809 INFO apps.reports.agent.graph Grounding for passport: top similarity 0.5868 over 1393 chars -> sufficient
+  S3-a078012751: ok (sufficient)
+2026-10-09 06:19:31,679 INFO apps.reports.agent.graph Grounding for @nestjs/common: top similarity 0.7028 over 2472 chars -> sufficient
+  S3-a122ba6834: ok (sufficient)
+2026-10-09 06:20:26,978 INFO apps.reports.agent.graph Grounding for @babel/traverse: top similarity 0.6416 over 2734 chars -> sufficient
+  S3-a5ac245b50: ok (sufficient)
+2026-10-09 06:21:04,639 INFO apps.reports.agent.graph Grounding for terser: top similarity 0.4885 over 735 chars -> sufficient
+  S3-aad1080e67: ok (sufficient)
+  S3-ac82bbe1f5: ok (low)
+2026-10-09 06:22:37,597 INFO apps.reports.agent.graph Grounding for jsonwebtoken: top similarity 0.7057 over 2088 chars -> sufficient
+  S3-b40e294636: ok (sufficient)
+2026-10-09 06:23:26,714 INFO apps.reports.agent.graph Grounding for axios: top similarity 0.7027 over 1212 chars -> sufficient
+  S3-c030612877: ok (sufficient)
+2026-10-09 06:24:00,898 INFO apps.reports.agent.graph Grounding for tar: top similarity 0.5336 over 1103 chars -> sufficient
+  S3-c93a30ebf5: ok (sufficient)
+2026-10-09 06:24:45,082 INFO apps.reports.agent.graph Grounding for lodash: top similarity 0.5500 over 47 chars -> low
+  S3-cd4e25457f: ok (low)
+2026-10-09 06:25:41,050 INFO apps.reports.agent.graph Grounding for axios: top similarity 0.6739 over 1392 chars -> sufficient
+  S3-d554e71610: ok (sufficient)
+2026-10-09 06:26:25,849 INFO apps.reports.agent.graph Grounding for webpack-dev-server: top similarity 0.7663 over 1906 chars -> sufficient
+  S3-eb0296adc8: ok (sufficient)
+2026-10-09 06:27:11,554 INFO apps.reports.agent.graph Grounding for @babel/runtime: top similarity 0.5792 over 2535 chars -> sufficient
+  S3-f2aba40384: ok (sufficient)
+2026-10-09 06:27:45,735 INFO apps.reports.agent.graph Grounding for vitest: top similarity 0.5566 over 2706 chars -> sufficient
+  S3-f2c331b76a: ok (sufficient)
+2026-10-09 06:28:41,174 INFO apps.reports.agent.graph Grounding for @babel/core: top similarity 0.5184 over 1297 chars -> sufficient
+2026-10-09 06:28:43,981 INFO apps.reports.schema Dropped 1 citation(s) naming chunks that were not retrieved.
+  S3-f39c7e4573: ok (sufficient)
+2026-10-09 06:29:17,231 INFO apps.reports.agent.graph Grounding for fastify: top similarity 0.6760 over 3010 chars -> sufficient
+  S3-f3c8926506: ok (sufficient)
+2026-10-09 06:30:01,507 INFO apps.reports.agent.graph Grounding for @nestjs/core: top similarity 0.6956 over 2472 chars -> sufficient
+  S3-f494cec6d9: ok (sufficient)
+2026-10-09 06:30:56,705 INFO apps.reports.agent.graph Grounding for karma: top similarity 0.7160 over 992 chars -> sufficient
+  S3-fef0c182ca: ok (sufficient)
+2026-10-09 06:31:42,213 INFO apps.reports.agent.graph Grounding for @babel/plugin-proposal-class-properties: top similarity 0.6272 over 2793 chars -> sufficient
+  S3-078563ef49: ok (sufficient)
+2026-10-09 06:32:27,364 INFO apps.reports.agent.graph Grounding for @babel/plugin-proposal-class-properties: top similarity 0.6272 over 2793 chars -> sufficient
+  S3-07e91951e7: ok (sufficient)
+2026-10-09 06:33:01,849 INFO apps.reports.agent.graph Grounding for hast: top similarity 0.4693 over 2485 chars -> sufficient
+  S3-16c5294fad: ok (sufficient)
+2026-10-09 06:33:46,409 INFO apps.reports.agent.graph Grounding for react-native-unimodules: top similarity 0.6115 over 2789 chars -> sufficient
+  S3-19569886c0: ok (sufficient)
+  S3-211276731e: ok (low)
+2026-10-09 06:35:15,842 INFO apps.reports.agent.graph Grounding for webextension-polyfill-ts: top similarity 0.7520 over 3709 chars -> sufficient
+  S3-25aa5ff6aa: ok (sufficient)
+2026-10-09 06:36:11,335 INFO apps.reports.agent.graph Grounding for @babel/plugin-proposal-logical-assignment-operators: top similarity 0.6278 over 4302 chars -> sufficient
+  S3-27dc6e9349: ok (sufficient)
+2026-10-09 06:36:45,852 INFO apps.reports.agent.graph Grounding for stylelint-config-factorial: top similarity 0.6617 over 1632 chars -> sufficient
+  S3-30835ec6e2: ok (sufficient)
+2026-10-09 06:37:36,559 INFO apps.reports.agent.graph Grounding for koa-router: top similarity 0.6772 over 2955 chars -> sufficient
+  S3-351c1d1201: ok (sufficient)
+2026-10-09 06:38:26,517 INFO apps.reports.agent.graph Grounding for @babel/plugin-proposal-private-methods: top similarity 0.5505 over 2735 chars -> sufficient
+  S3-3c6f498657: ok (sufficient)
+2026-10-09 06:39:01,792 INFO apps.reports.agent.graph Grounding for html-webpack-include-assets-plugin: top similarity 0.8353 over 956 chars -> sufficient
+  S3-409e91c326: ok (sufficient)
+2026-10-09 06:39:56,105 INFO apps.reports.agent.graph Grounding for @opentelemetry/tracing: top similarity 0.7955 over 4514 chars -> sufficient
+  S3-4a6d5ebfca: ok (sufficient)
+2026-10-09 06:40:41,513 INFO apps.reports.agent.graph Grounding for @babel/plugin-proposal-json-strings: top similarity 0.6434 over 2413 chars -> sufficient
+  S3-4bdf84f422: ok (sufficient)
+2026-10-09 06:41:28,295 INFO apps.reports.agent.graph Grounding for @babel/plugin-proposal-export-namespace-from: top similarity 0.5951 over 3265 chars -> sufficient
+  S3-4fd04cdf4e: ok (sufficient)
+2026-10-09 06:42:00,336 INFO apps.reports.agent.graph Grounding for vscode: top similarity 0.7062 over 1280 chars -> sufficient
+  S3-539298bc48: ok (sufficient)
+2026-10-09 06:42:45,120 INFO apps.reports.agent.graph Grounding for graphql-tools: top similarity 0.7871 over 83 chars -> low
+  S3-53c1247d7f: ok (low)
+2026-10-09 06:43:39,342 INFO apps.reports.agent.graph Grounding for leveldown: top similarity 0.5907 over 1308 chars -> sufficient
+  S3-54572f7c11: ok (sufficient)
+2026-10-09 06:44:15,654 INFO apps.reports.agent.graph Grounding for @react-native-community/bob: top similarity 0.5607 over 2084 chars -> sufficient
+  S3-581f141798: ok (sufficient)
+2026-10-09 06:45:10,969 INFO apps.reports.agent.graph Grounding for @babel/plugin-proposal-nullish-coalescing-operator: top similarity 0.5800 over 2221 chars -> sufficient
+  S3-643a67e076: ok (sufficient)
+2026-10-09 06:45:50,177 INFO apps.reports.agent.graph Grounding for moize: top similarity 0.6275 over 1403 chars -> sufficient
+  S3-674aa7890d: ok (sufficient)
+2026-10-09 06:46:31,524 INFO apps.reports.agent.graph Grounding for @zeit/ncc: top similarity 0.5235 over 2348 chars -> sufficient
+  S3-733cf68b45: ok (sufficient)
+2026-10-09 06:47:15,819 INFO apps.reports.agent.graph Grounding for react-navigation-tabs: top similarity 0.7771 over 2502 chars -> sufficient
+  S3-8829e2b1e8: ok (sufficient)
+  S3-88c845b9c6: ok (low)
+2026-10-09 06:48:49,609 INFO apps.reports.agent.graph Grounding for subscriptions-transport-ws: top similarity 0.8206 over 1241 chars -> sufficient
+  S3-9925cf8712: ok (sufficient)
+2026-10-09 06:49:31,281 INFO apps.reports.agent.graph Grounding for @angular/http: top similarity 0.6444 over 1435 chars -> sufficient
+  S3-ac7b8627fc: ok (sufficient)
+2026-10-09 06:50:26,933 INFO apps.reports.agent.graph Grounding for ng2-bootstrap: top similarity 0.6203 over 1261 chars -> sufficient
+  S3-acb8ba6c19: ok (sufficient)
+2026-10-09 06:51:09,405 INFO apps.reports.agent.graph Grounding for levelup: top similarity 0.5355 over 682 chars -> sufficient
+  S3-b21b41321f: ok (sufficient)
+2026-10-09 06:51:56,755 INFO apps.reports.agent.graph Grounding for @babel/plugin-proposal-json-strings: top similarity 0.6434 over 2413 chars -> sufficient
+  S3-b631eaa95d: ok (sufficient)
+2026-10-09 06:52:35,977 INFO apps.reports.agent.graph Grounding for @capacitor/storage: top similarity 0.5318 over 4031 chars -> sufficient
+  S3-bddf1c8e9f: ok (sufficient)
+2026-10-09 06:53:23,878 INFO apps.reports.agent.graph Grounding for abstract-leveldown: top similarity 0.5775 over 2172 chars -> sufficient
+  S3-c453a5f2ff: ok (sufficient)
+2026-10-09 06:54:01,103 INFO apps.reports.agent.graph Grounding for @chakra-ui/core: top similarity 0.6872 over 2547 chars -> sufficient
+  S3-c544684c9b: ok (sufficient)
+2026-10-09 06:54:45,109 INFO apps.reports.agent.graph Grounding for graphql-tools: top similarity 0.7871 over 83 chars -> low
+  S3-cc10901c43: ok (low)
+2026-10-09 06:55:30,155 INFO apps.reports.agent.graph Grounding for node-uuid: top similarity 0.4041 over 500 chars -> sufficient
+  S3-d3efd8136c: ok (sufficient)
+2026-10-09 06:56:16,084 INFO apps.reports.agent.graph Grounding for @nextui-org/react: top similarity 0.6157 over 2141 chars -> sufficient
+  S3-d9fd8e9766: ok (sufficient)
+2026-10-09 06:57:00,962 INFO apps.reports.agent.graph Grounding for flag-icon-css: top similarity 0.7114 over 998 chars -> sufficient
+  S3-e3faec9463: ok (sufficient)
+2026-10-09 06:57:46,789 INFO apps.reports.agent.graph Grounding for phantomjs: top similarity 0.7587 over 4651 chars -> sufficient
+  S3-e910a557e3: ok (sufficient)
+2026-10-09 06:58:40,808 INFO apps.reports.agent.graph Grounding for @babel/plugin-proposal-class-properties: top similarity 0.6272 over 2793 chars -> sufficient
+  S3-f2a66f59bc: ok (sufficient)
+2026-10-09 06:59:26,685 INFO apps.reports.agent.graph Grounding for @babel/plugin-proposal-object-rest-spread: top similarity 0.6140 over 3202 chars -> sufficient
+  S3-fd77d1f262: ok (sufficient)
+2026-10-09 07:00:00,529 INFO apps.reports.agent.graph Grounding for pytest: top similarity 0.6865 over 5297 chars -> sufficient
+  S3-025ccd1209: ok (sufficient)
+2026-10-09 07:00:48,766 INFO apps.reports.agent.graph Grounding for torch: top similarity 0.4485 over 2921 chars -> sufficient
+  S3-03551af2a3: ok (sufficient)
+2026-10-09 07:01:30,871 INFO apps.reports.agent.graph Grounding for h11: top similarity 0.3968 over 3846 chars -> sufficient
+  S3-04ab73079a: ok (sufficient)
+2026-10-09 07:02:21,079 INFO apps.reports.agent.graph Grounding for markdown2: top similarity 0.5178 over 1481 chars -> sufficient
+  S3-07c8c4e420: ok (sufficient)
+2026-10-09 07:03:01,368 INFO apps.reports.agent.graph Grounding for sentencepiece: top similarity 0.4889 over 3093 chars -> sufficient
+  S3-08c7332aa8: ok (sufficient)
+2026-10-09 07:03:47,105 INFO apps.reports.agent.graph Grounding for flask-cors: top similarity 0.8100 over 1846 chars -> sufficient
+  S3-0ae1581e49: ok (sufficient)
+2026-10-09 07:04:30,463 INFO apps.reports.agent.graph Grounding for numpy: top similarity 0.6018 over 5197 chars -> sufficient
+  S3-0bde55d926: ok (sufficient)
+2026-10-09 07:05:15,732 INFO apps.reports.agent.graph Grounding for typed-ast: top similarity 0.6509 over 2504 chars -> sufficient
+  S3-0cb3ea2cb6: ok (sufficient)
+2026-10-09 07:06:00,796 INFO apps.reports.agent.graph Grounding for scikit-learn: top similarity 0.5178 over 5509 chars -> sufficient
+  S3-204a9be602: ok (sufficient)
+2026-10-09 07:06:47,152 INFO apps.reports.agent.graph Grounding for diffusers: top similarity 0.4795 over 2947 chars -> sufficient
+  S3-20ecb69394: ok (sufficient)
+2026-10-09 07:07:30,882 INFO apps.reports.agent.graph Grounding for pyarrow: top similarity 0.3252 over 3523 chars -> sufficient
+  S3-2156d7d3df: ok (sufficient)
+2026-10-09 07:08:15,730 INFO apps.reports.agent.graph Grounding for oauthlib: top similarity 0.6429 over 5262 chars -> sufficient
+  S3-22651abc2e: ok (sufficient)
+2026-10-09 07:09:00,893 INFO apps.reports.agent.graph Grounding for h11: top similarity 0.3968 over 3846 chars -> sufficient
+  S3-2281f5f608: ok (sufficient)
+2026-10-09 07:09:45,298 INFO apps.reports.agent.graph Grounding for pyjwt: top similarity 0.5644 over 2675 chars -> sufficient
+  S3-22d0f2175e: ok (sufficient)
+2026-10-09 07:10:30,195 INFO apps.reports.agent.graph Grounding for certifi: top similarity 0.3697 over 1156 chars -> sufficient
+  S3-24e78b5bf6: ok (sufficient)
+2026-10-09 07:11:15,464 INFO apps.reports.agent.graph Grounding for numpy: top similarity 0.6020 over 5197 chars -> sufficient
+  S3-2b4d085daa: ok (sufficient)
+2026-10-09 07:12:02,509 INFO apps.reports.agent.graph Grounding for opencv-python: top similarity 0.5948 over 3605 chars -> sufficient
+  S3-2b74750370: ok (sufficient)
+2026-10-09 07:12:46,083 INFO apps.reports.agent.graph Grounding for urllib3: top similarity 0.6446 over 2069 chars -> sufficient
+  S3-2b7680909a: ok (sufficient)
+2026-10-09 07:13:30,180 INFO apps.reports.agent.graph Grounding for certifi: top similarity 0.3660 over 1156 chars -> sufficient
+  S3-2d0570dcfb: ok (sufficient)
+2026-10-09 07:14:15,557 INFO apps.reports.agent.graph Grounding for ipython: top similarity 0.5898 over 5247 chars -> sufficient
+  S3-2faf984e89: ok (sufficient)
+2026-10-09 07:15:00,189 INFO apps.reports.agent.graph Grounding for wheel: top similarity 0.4190 over 1091 chars -> sufficient
+  S3-30377b9065: ok (sufficient)
+2026-10-09 07:15:45,259 INFO apps.reports.agent.graph Grounding for pyopenssl: top similarity 0.5518 over 1862 chars -> sufficient
+  S3-323b773685: ok (sufficient)
+2026-10-09 07:16:30,506 INFO apps.reports.agent.graph Grounding for scipy: top similarity 0.5779 over 4700 chars -> sufficient
+  S3-3d370b0b24: ok (sufficient)
+2026-10-09 07:17:15,636 INFO apps.reports.agent.graph Grounding for daphne: top similarity 0.3786 over 5138 chars -> sufficient
+  S3-3dc2ebde9f: ok (sufficient)
+2026-10-09 07:18:07,058 INFO apps.reports.agent.graph Grounding for requests: top similarity 0.5210 over 5347 chars -> sufficient
+  S3-3e98984ff0: ok (sufficient)
+2026-10-09 07:18:52,148 INFO apps.reports.agent.graph Grounding for requests: top similarity 0.5153 over 5318 chars -> sufficient
+  S3-3fed89b648: ok (sufficient)
+2026-10-09 07:19:36,871 INFO apps.reports.agent.graph Grounding for requests: top similarity 0.5153 over 5318 chars -> sufficient
+  S3-40264f4636: ok (sufficient)
+2026-10-09 07:20:18,420 INFO apps.reports.agent.graph Grounding for torch: top similarity 0.4390 over 2921 chars -> sufficient
+  S3-445c626457: ok (sufficient)
+2026-10-09 07:21:02,894 INFO apps.reports.agent.graph Grounding for sqlparse: top similarity 0.5743 over 4760 chars -> sufficient
+  S3-45c2ef2c7b: ok (sufficient)
+2026-10-09 07:21:46,641 INFO apps.reports.agent.graph Grounding for ujson: top similarity 0.5318 over 2096 chars -> sufficient
+  S3-4827bfc6cf: ok (sufficient)
+2026-10-09 07:22:30,735 INFO apps.reports.agent.graph Grounding for starlette: top similarity 0.4357 over 3446 chars -> sufficient
+  S3-4e603f6378: ok (sufficient)
+  S3-4e626d8998: ok (low)
+2026-10-09 07:24:00,540 INFO apps.reports.agent.graph Grounding for numpy: top similarity 0.6018 over 5197 chars -> sufficient
+2026-10-09 07:24:00,612 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 07:24:00,612 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+2026-10-09 07:24:00,951 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+  S3-5193297e81: the generator did not answer (1)
+    waiting 65s for the provider's per-minute window, then asking again
+2026-10-09 07:25:06,436 INFO apps.reports.agent.graph Grounding for numpy: top similarity 0.6018 over 5197 chars -> sufficient
+2026-10-09 07:25:06,806 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 07:25:06,806 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+2026-10-09 07:25:07,116 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+  S3-5193297e81: the generator did not answer (2)
+Run C_75246f3b_openai-gpt-oss-120b: 88 completed, 0 failed, 19 already done, 43 remaining.
+  Stopped: The generator stopped answering — most likely its daily limit. Every finished item is saved; rerun the same command later and it continues from here.
+  judge: 172 call(s), 0 cache hit(s)
+  D:\Symbiosis\RepoVitals\research_data\runs\C_75246f3b_openai-gpt-oss-120b\items.jsonl
+=== EXIT 0 2026-10-09T01:55:07Z
+=== START 2026-10-09T02:03:28Z condition C groq=member1 gemini=member1 
+2026-10-09 07:33:30,835 INFO apps.reports.rag.embeddings Loading embedding model sentence-transformers/all-MiniLM-L6-v2.
+2026-10-09 07:33:32,228 INFO apps.reports.rag.chroma_store Opening the chunk store at D:\Symbiosis\RepoVitals\backend\.chroma.
+2026-10-09 07:33:32,392 INFO apps.reports.agent.graph Grounding for numpy: top similarity 0.6018 over 5197 chars -> sufficient
+  S3-5193297e81: ok (sufficient)
+2026-10-09 07:34:20,027 INFO apps.reports.agent.graph Grounding for python-dotenv: top similarity 0.6839 over 2107 chars -> sufficient
+2026-10-09 07:34:22,373 INFO apps.reports.schema Dropped 1 citation(s) naming chunks that were not retrieved.
+  S3-5b1e78f0cc: ok (sufficient)
+2026-10-09 07:35:06,377 INFO apps.reports.agent.graph Grounding for requests: top similarity 0.5153 over 5318 chars -> sufficient
+  S3-61ffa06cc5: ok (sufficient)
+2026-10-09 07:35:45,424 INFO apps.reports.agent.graph Grounding for langchain-community: top similarity 0.4429 over 2406 chars -> sufficient
+  S3-64634cf4e6: ok (sufficient)
+2026-10-09 07:36:30,333 INFO apps.reports.agent.graph Grounding for markdown: top similarity 0.4698 over 2984 chars -> sufficient
+  S3-6b0cf81601: ok (sufficient)
+2026-10-09 07:37:16,821 INFO apps.reports.agent.graph Grounding for mxnet: top similarity 0.5808 over 5099 chars -> sufficient
+  S3-71b80f8812: ok (sufficient)
+2026-10-09 07:38:00,837 INFO apps.reports.agent.graph Grounding for pillow: top similarity 0.5570 over 3663 chars -> sufficient
+  S3-73497b2116: ok (sufficient)
+2026-10-09 07:38:45,430 INFO apps.reports.agent.graph Grounding for pygments: top similarity 0.5876 over 4250 chars -> sufficient
+  S3-7b38c84e82: ok (sufficient)
+  S3-7b3ac993fc: ok (low)
+2026-10-09 07:40:15,782 INFO apps.reports.agent.graph Grounding for pillow: top similarity 0.5459 over 3663 chars -> sufficient
+  S3-7b45771871: ok (sufficient)
+2026-10-09 07:41:00,514 INFO apps.reports.agent.graph Grounding for scipy: top similarity 0.5779 over 4700 chars -> sufficient
+2026-10-09 07:41:00,585 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 07:41:00,586 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+2026-10-09 07:41:00,967 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+  S3-7c63708478: the generator did not answer (1)
+    waiting 65s for the provider's per-minute window, then asking again
+2026-10-09 07:42:06,441 INFO apps.reports.agent.graph Grounding for scipy: top similarity 0.5779 over 4700 chars -> sufficient
+2026-10-09 07:42:06,786 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 07:42:06,787 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+2026-10-09 07:42:07,116 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+  S3-7c63708478: the generator did not answer (2)
+Run C_75246f3b_openai-gpt-oss-120b: 10 completed, 0 failed, 107 already done, 33 remaining.
+  Stopped: The generator stopped answering — most likely its daily limit. Every finished item is saved; rerun the same command later and it continues from here.
+  judge: 19 call(s), 0 cache hit(s)
+  D:\Symbiosis\RepoVitals\research_data\runs\C_75246f3b_openai-gpt-oss-120b\items.jsonl
+=== EXIT 0 2026-10-09T02:12:07Z
+=== START 2026-10-09T02:12:07Z condition C groq=member2 gemini=member1 
+2026-10-09 07:42:09,162 INFO apps.reports.rag.embeddings Loading embedding model sentence-transformers/all-MiniLM-L6-v2.
+2026-10-09 07:42:10,574 INFO apps.reports.rag.chroma_store Opening the chunk store at D:\Symbiosis\RepoVitals\backend\.chroma.
+2026-10-09 07:42:10,730 INFO apps.reports.agent.graph Grounding for scipy: top similarity 0.5779 over 4700 chars -> sufficient
+  S3-7c63708478: ok (sufficient)
+2026-10-09 07:42:54,337 INFO apps.reports.agent.graph Grounding for werkzeug: top similarity 0.4442 over 2698 chars -> sufficient
+  S3-8067a7f10e: ok (sufficient)
+2026-10-09 07:43:39,063 INFO apps.reports.agent.graph Grounding for numpy: top similarity 0.6018 over 5197 chars -> sufficient
+  S3-808a8b7577: ok (sufficient)
+2026-10-09 07:44:23,966 INFO apps.reports.agent.graph Grounding for pyjwt: top similarity 0.5644 over 2675 chars -> sufficient
+  S3-809a44c5fa: ok (sufficient)
+2026-10-09 07:45:10,401 INFO apps.reports.agent.graph Grounding for pandas: top similarity 0.5869 over 1899 chars -> sufficient
+  S3-80c3a4d494: ok (sufficient)
+2026-10-09 07:45:54,165 INFO apps.reports.agent.graph Grounding for werkzeug: top similarity 0.4442 over 2698 chars -> sufficient
+  S3-8c4810b67f: ok (sufficient)
+  S3-8e707fdf02: ok (low)
+2026-10-09 07:47:29,073 INFO apps.reports.agent.graph Grounding for tqdm: top similarity 0.5878 over 5790 chars -> sufficient
+2026-10-09 07:47:29,142 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 07:47:29,143 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+2026-10-09 07:47:29,615 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+  S3-8e9233526f: the generator did not answer (1)
+    waiting 65s for the provider's per-minute window, then asking again
+2026-10-09 07:48:39,804 INFO apps.reports.agent.graph Grounding for tqdm: top similarity 0.5878 over 5790 chars -> sufficient
+2026-10-09 07:48:40,177 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 07:48:40,177 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+2026-10-09 07:48:40,538 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+  S3-8e9233526f: the generator did not answer (2)
+Run C_75246f3b_openai-gpt-oss-120b: 7 completed, 0 failed, 117 already done, 26 remaining.
+  Stopped: The generator stopped answering — most likely its daily limit. Every finished item is saved; rerun the same command later and it continues from here.
+  judge: 13 call(s), 0 cache hit(s)
+  D:\Symbiosis\RepoVitals\research_data\runs\C_75246f3b_openai-gpt-oss-120b\items.jsonl
+=== EXIT 0 2026-10-09T02:18:40Z
+=== START 2026-10-09T02:18:40Z condition C groq=member3 gemini=member1 
+2026-10-09 07:48:42,551 INFO apps.reports.rag.embeddings Loading embedding model sentence-transformers/all-MiniLM-L6-v2.
+2026-10-09 07:48:48,584 INFO apps.reports.rag.chroma_store Opening the chunk store at D:\Symbiosis\RepoVitals\backend\.chroma.
+2026-10-09 07:48:48,861 INFO apps.reports.agent.graph Grounding for tqdm: top similarity 0.5878 over 5790 chars -> sufficient
+  S3-8e9233526f: ok (sufficient)
+2026-10-09 07:49:27,407 INFO apps.reports.agent.graph Grounding for flask: top similarity 0.5721 over 1626 chars -> sufficient
+  S3-911ca75ebc: ok (sufficient)
+2026-10-09 07:50:19,999 INFO apps.reports.agent.graph Grounding for black: top similarity 0.5482 over 1738 chars -> sufficient
+  S3-92b604c417: ok (sufficient)
+2026-10-09 07:50:57,995 INFO apps.reports.agent.graph Grounding for urllib3: top similarity 0.6465 over 2069 chars -> sufficient
+  S3-9e35f9721a: ok (sufficient)
+2026-10-09 07:51:45,070 INFO apps.reports.agent.graph Grounding for orjson: top similarity 0.6419 over 569 chars -> sufficient
+  S3-9e5520c8fa: ok (sufficient)
+2026-10-09 07:52:28,779 INFO apps.reports.agent.graph Grounding for pandas: top similarity 0.5869 over 1899 chars -> sufficient
+2026-10-09 07:52:28,843 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 07:52:28,843 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+2026-10-09 07:52:29,179 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+  S3-9fa5ff1c2b: the generator did not answer (1)
+    waiting 65s for the provider's per-minute window, then asking again
+2026-10-09 07:53:35,770 INFO apps.reports.agent.graph Grounding for pandas: top similarity 0.5869 over 1899 chars -> sufficient
+2026-10-09 07:53:36,148 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 07:53:36,148 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+2026-10-09 07:53:36,466 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+  S3-9fa5ff1c2b: the generator did not answer (2)
+Run C_75246f3b_openai-gpt-oss-120b: 5 completed, 0 failed, 124 already done, 21 remaining.
+  Stopped: The generator stopped answering — most likely its daily limit. Every finished item is saved; rerun the same command later and it continues from here.
+  judge: 10 call(s), 0 cache hit(s)
+  D:\Symbiosis\RepoVitals\research_data\runs\C_75246f3b_openai-gpt-oss-120b\items.jsonl
+=== EXIT 0 2026-10-09T02:23:36Z
+=== START 2026-10-09T02:23:36Z condition C groq=member4 gemini=member1 
+2026-10-09 07:53:38,412 INFO apps.reports.rag.embeddings Loading embedding model sentence-transformers/all-MiniLM-L6-v2.
+2026-10-09 07:53:41,003 INFO apps.reports.rag.chroma_store Opening the chunk store at D:\Symbiosis\RepoVitals\backend\.chroma.
+2026-10-09 07:53:41,217 INFO apps.reports.agent.graph Grounding for pandas: top similarity 0.5869 over 1899 chars -> sufficient
+  S3-9fa5ff1c2b: ok (sufficient)
+2026-10-09 07:54:24,138 INFO apps.reports.agent.graph Grounding for pymongo: top similarity 0.6395 over 3228 chars -> sufficient
+  S3-a183118b31: ok (sufficient)
+2026-10-09 07:55:08,018 INFO apps.reports.agent.graph Grounding for wheel: top similarity 0.4190 over 1091 chars -> sufficient
+2026-10-09 07:55:08,085 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 07:55:08,086 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+  S3-a1f59fbead: the generator did not answer (1)
+    waiting 65s for the provider's per-minute window, then asking again
+2026-10-09 07:55:08,426 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 07:56:13,575 INFO apps.reports.agent.graph Grounding for wheel: top similarity 0.4190 over 1091 chars -> sufficient
+2026-10-09 07:56:14,241 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 07:56:14,241 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+  S3-a1f59fbead: the generator did not answer (2)
+2026-10-09 07:56:14,553 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+Run C_75246f3b_openai-gpt-oss-120b: 2 completed, 0 failed, 129 already done, 19 remaining.
+  Stopped: The generator stopped answering — most likely its daily limit. Every finished item is saved; rerun the same command later and it continues from here.
+  judge: 4 call(s), 0 cache hit(s)
+  D:\Symbiosis\RepoVitals\research_data\runs\C_75246f3b_openai-gpt-oss-120b\items.jsonl
+=== EXIT 0 2026-10-09T02:26:14Z
+=== START 2026-10-09T02:29:01Z condition C groq=member1 gemini=member1 
+2026-10-09 07:59:03,244 INFO apps.reports.rag.embeddings Loading embedding model sentence-transformers/all-MiniLM-L6-v2.
+2026-10-09 07:59:04,084 INFO apps.reports.rag.chroma_store Opening the chunk store at D:\Symbiosis\RepoVitals\backend\.chroma.
+2026-10-09 07:59:04,212 INFO apps.reports.agent.graph Grounding for wheel: top similarity 0.4190 over 1091 chars -> sufficient
+  S3-a1f59fbead: ok (sufficient)
+2026-10-09 07:59:49,880 INFO apps.reports.agent.graph Grounding for transformers: top similarity 0.4263 over 4303 chars -> sufficient
+2026-10-09 07:59:50,006 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 07:59:50,006 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+  S3-aa26e6437e: the generator did not answer (1)
+2026-10-09 07:59:50,400 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+    waiting 65s for the provider's per-minute window, then asking again
+2026-10-09 08:00:57,266 INFO apps.reports.agent.graph Grounding for transformers: top similarity 0.4263 over 4303 chars -> sufficient
+2026-10-09 08:00:57,639 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 08:00:57,639 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+  S3-aa26e6437e: the generator did not answer (2)
+2026-10-09 08:00:57,928 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+Run C_75246f3b_openai-gpt-oss-120b: 1 completed, 0 failed, 131 already done, 18 remaining.
+  Stopped: The generator stopped answering — most likely its daily limit. Every finished item is saved; rerun the same command later and it continues from here.
+  judge: 2 call(s), 0 cache hit(s)
+  D:\Symbiosis\RepoVitals\research_data\runs\C_75246f3b_openai-gpt-oss-120b\items.jsonl
+=== EXIT 0 2026-10-09T02:30:58Z
+=== START 2026-10-09T02:30:58Z condition C groq=member2 gemini=member1 
+2026-10-09 08:00:59,993 INFO apps.reports.rag.embeddings Loading embedding model sentence-transformers/all-MiniLM-L6-v2.
+2026-10-09 08:01:02,605 INFO apps.reports.rag.chroma_store Opening the chunk store at D:\Symbiosis\RepoVitals\backend\.chroma.
+2026-10-09 08:01:02,780 INFO apps.reports.agent.graph Grounding for transformers: top similarity 0.4263 over 4303 chars -> sufficient
+  S3-aa26e6437e: ok (sufficient)
+2026-10-09 08:01:45,703 INFO apps.reports.agent.graph Grounding for onnx: top similarity 0.5791 over 1858 chars -> sufficient
+  S3-b162848ff5: ok (sufficient)
+2026-10-09 08:02:30,824 INFO apps.reports.agent.graph Grounding for gdown: top similarity 0.5243 over 985 chars -> sufficient
+2026-10-09 08:02:30,888 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 08:02:30,888 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+2026-10-09 08:02:31,183 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+  S3-b54188ec1c: the generator did not answer (1)
+    waiting 65s for the provider's per-minute window, then asking again
+2026-10-09 08:03:37,502 INFO apps.reports.agent.graph Grounding for gdown: top similarity 0.5243 over 985 chars -> sufficient
+2026-10-09 08:03:37,820 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 08:03:37,820 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+2026-10-09 08:03:38,143 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+  S3-b54188ec1c: the generator did not answer (2)
+Run C_75246f3b_openai-gpt-oss-120b: 2 completed, 0 failed, 132 already done, 16 remaining.
+  Stopped: The generator stopped answering — most likely its daily limit. Every finished item is saved; rerun the same command later and it continues from here.
+  judge: 4 call(s), 0 cache hit(s)
+  D:\Symbiosis\RepoVitals\research_data\runs\C_75246f3b_openai-gpt-oss-120b\items.jsonl
+=== EXIT 0 2026-10-09T02:33:38Z
+=== START 2026-10-09T02:33:38Z condition C groq=member3 gemini=member1 
+2026-10-09 08:03:39,949 INFO apps.reports.rag.embeddings Loading embedding model sentence-transformers/all-MiniLM-L6-v2.
+2026-10-09 08:03:42,136 INFO apps.reports.rag.chroma_store Opening the chunk store at D:\Symbiosis\RepoVitals\backend\.chroma.
+2026-10-09 08:03:42,303 INFO apps.reports.agent.graph Grounding for gdown: top similarity 0.5243 over 985 chars -> sufficient
+2026-10-09 08:03:45,112 INFO apps.reports.schema Dropped 4 citation(s) naming chunks that were not retrieved.
+  S3-b54188ec1c: ok (sufficient)
+2026-10-09 08:04:25,179 INFO apps.reports.agent.graph Grounding for scikit-learn: top similarity 0.5508 over 5509 chars -> sufficient
+2026-10-09 08:04:25,254 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 08:04:25,254 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+2026-10-09 08:04:25,582 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+  S3-b678c221d0: the generator did not answer (1)
+    waiting 65s for the provider's per-minute window, then asking again
+2026-10-09 08:05:31,346 INFO apps.reports.agent.graph Grounding for scikit-learn: top similarity 0.5508 over 5509 chars -> sufficient
+2026-10-09 08:05:31,875 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 08:05:31,875 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+2026-10-09 08:05:32,215 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+  S3-b678c221d0: the generator did not answer (2)
+Run C_75246f3b_openai-gpt-oss-120b: 1 completed, 0 failed, 134 already done, 15 remaining.
+  Stopped: The generator stopped answering — most likely its daily limit. Every finished item is saved; rerun the same command later and it continues from here.
+  judge: 2 call(s), 0 cache hit(s)
+  D:\Symbiosis\RepoVitals\research_data\runs\C_75246f3b_openai-gpt-oss-120b\items.jsonl
+=== EXIT 0 2026-10-09T02:35:32Z
+=== START 2026-10-09T02:35:32Z condition C groq=member4 gemini=member1 
+2026-10-09 08:05:34,194 INFO apps.reports.rag.embeddings Loading embedding model sentence-transformers/all-MiniLM-L6-v2.
+2026-10-09 08:05:35,697 INFO apps.reports.rag.chroma_store Opening the chunk store at D:\Symbiosis\RepoVitals\backend\.chroma.
+2026-10-09 08:05:35,851 INFO apps.reports.agent.graph Grounding for scikit-learn: top similarity 0.5508 over 5509 chars -> sufficient
+2026-10-09 08:05:36,186 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 08:05:36,186 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+2026-10-09 08:05:36,511 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+  S3-b678c221d0: the generator did not answer (1)
+    waiting 65s for the provider's per-minute window, then asking again
+2026-10-09 08:06:42,266 INFO apps.reports.agent.graph Grounding for scikit-learn: top similarity 0.5508 over 5509 chars -> sufficient
+2026-10-09 08:06:42,589 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 08:06:42,590 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+2026-10-09 08:06:42,929 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+  S3-b678c221d0: the generator did not answer (2)
+Run C_75246f3b_openai-gpt-oss-120b: 0 completed, 0 failed, 135 already done, 15 remaining.
+  Stopped: The generator stopped answering — most likely its daily limit. Every finished item is saved; rerun the same command later and it continues from here.
+  judge: 0 call(s), 0 cache hit(s)
+  D:\Symbiosis\RepoVitals\research_data\runs\C_75246f3b_openai-gpt-oss-120b\items.jsonl
+=== EXIT 0 2026-10-09T02:36:43Z
+=== START 2026-10-09T03:27:56Z condition C groq=member1 gemini=member1 
+2026-10-09 08:57:59,820 INFO apps.reports.rag.embeddings Loading embedding model sentence-transformers/all-MiniLM-L6-v2.
+2026-10-09 08:58:01,893 INFO apps.reports.rag.chroma_store Opening the chunk store at D:\Symbiosis\RepoVitals\backend\.chroma.
+2026-10-09 08:58:03,027 INFO apps.reports.agent.graph Grounding for scikit-learn: top similarity 0.5508 over 5509 chars -> sufficient
+  S3-b678c221d0: ok (sufficient)
+2026-10-09 08:58:06,042 WARNING apps.common.http Outbound POST /v1beta/models/gemini-3.5-flash-lite:generateContent hit an upstream rate limit.
+2026-10-09 08:58:06,042 INFO apps.research.experiment.judge The judge did not answer; retrying in 10s.
+2026-10-09 08:58:16,628 WARNING apps.common.http Outbound POST /v1beta/models/gemini-3.5-flash-lite:generateContent hit an upstream rate limit.
+2026-10-09 08:58:16,628 INFO apps.research.experiment.judge The judge did not answer; retrying in 30s.
+2026-10-09 08:58:47,192 WARNING apps.common.http Outbound POST /v1beta/models/gemini-3.5-flash-lite:generateContent hit an upstream rate limit.
+  Judging stopped for this session (The judge did not answer.); generations continue. Judge the rest later with `analyze_experiment --judge`.
+2026-10-09 08:58:51,503 INFO apps.reports.agent.graph Grounding for deepspeed: top similarity 0.5142 over 3970 chars -> sufficient
+  S3-b9b0fe1996: ok (sufficient)
+2026-10-09 08:59:42,354 INFO apps.reports.agent.graph Grounding for pydantic: top similarity 0.7335 over 1494 chars -> sufficient
+  S3-ba55791b24: ok (sufficient)
+2026-10-09 09:00:18,200 INFO apps.reports.agent.graph Grounding for urllib3: top similarity 0.6446 over 2069 chars -> sufficient
+2026-10-09 09:00:18,273 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 09:00:18,273 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+  S3-bbb45f2c54: the generator did not answer (1)
+    waiting 65s for the provider's per-minute window, then asking again
+2026-10-09 09:00:18,649 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 09:01:24,654 INFO apps.reports.agent.graph Grounding for urllib3: top similarity 0.6446 over 2069 chars -> sufficient
+2026-10-09 09:01:24,990 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 09:01:24,990 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+2026-10-09 09:01:25,362 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+  S3-bbb45f2c54: the generator did not answer (2)
+Run C_75246f3b_openai-gpt-oss-120b: 3 completed, 0 failed, 135 already done, 12 remaining.
+  Stopped: The generator stopped answering — most likely its daily limit. Every finished item is saved; rerun the same command later and it continues from here.
+  judge: 3 call(s), 0 cache hit(s); Judging stopped for this session (The judge did not answer.); generations continue. Judge the rest later with `analyze_experiment --judge`.
+  D:\Symbiosis\RepoVitals\research_data\runs\C_75246f3b_openai-gpt-oss-120b\items.jsonl
+=== EXIT 0 2026-10-09T03:31:25Z
+=== START 2026-10-09T03:31:25Z condition C groq=member2 gemini=member1 
+2026-10-09 09:01:27,235 INFO apps.reports.rag.embeddings Loading embedding model sentence-transformers/all-MiniLM-L6-v2.
+2026-10-09 09:01:29,076 INFO apps.reports.rag.chroma_store Opening the chunk store at D:\Symbiosis\RepoVitals\backend\.chroma.
+2026-10-09 09:01:29,299 INFO apps.reports.agent.graph Grounding for urllib3: top similarity 0.6446 over 2069 chars -> sufficient
+  S3-bbb45f2c54: ok (sufficient)
+2026-10-09 09:01:32,137 WARNING apps.common.http Outbound POST /v1beta/models/gemini-3.5-flash-lite:generateContent hit an upstream rate limit.
+2026-10-09 09:01:32,137 INFO apps.research.experiment.judge The judge did not answer; retrying in 10s.
+2026-10-09 09:01:42,755 WARNING apps.common.http Outbound POST /v1beta/models/gemini-3.5-flash-lite:generateContent hit an upstream rate limit.
+2026-10-09 09:01:42,756 INFO apps.research.experiment.judge The judge did not answer; retrying in 30s.
+2026-10-09 09:02:13,294 WARNING apps.common.http Outbound POST /v1beta/models/gemini-3.5-flash-lite:generateContent hit an upstream rate limit.
+  Judging stopped for this session (The judge did not answer.); generations continue. Judge the rest later with `analyze_experiment --judge`.
+2026-10-09 09:02:13,471 INFO apps.reports.agent.graph Grounding for certifi: top similarity 0.3697 over 1156 chars -> sufficient
+  S3-bd8ec06a72: ok (sufficient)
+2026-10-09 09:02:58,918 INFO apps.reports.agent.graph Grounding for pyyaml: top similarity 0.6504 over 1946 chars -> sufficient
+  S3-bea3ec84cc: ok (sufficient)
+2026-10-09 09:03:43,892 INFO apps.reports.agent.graph Grounding for numpy: top similarity 0.6020 over 5197 chars -> sufficient
+2026-10-09 09:03:43,972 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 09:03:43,972 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+2026-10-09 09:03:44,305 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+  S3-c0b2b3380f: the generator did not answer (1)
+    waiting 65s for the provider's per-minute window, then asking again
+2026-10-09 09:04:49,764 INFO apps.reports.agent.graph Grounding for numpy: top similarity 0.6020 over 5197 chars -> sufficient
+2026-10-09 09:04:50,159 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 09:04:50,159 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+  S3-c0b2b3380f: the generator did not answer (2)
+2026-10-09 09:04:50,496 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+Run C_75246f3b_openai-gpt-oss-120b: 3 completed, 0 failed, 138 already done, 9 remaining.
+  Stopped: The generator stopped answering — most likely its daily limit. Every finished item is saved; rerun the same command later and it continues from here.
+  judge: 3 call(s), 0 cache hit(s); Judging stopped for this session (The judge did not answer.); generations continue. Judge the rest later with `analyze_experiment --judge`.
+  D:\Symbiosis\RepoVitals\research_data\runs\C_75246f3b_openai-gpt-oss-120b\items.jsonl
+=== EXIT 0 2026-10-09T03:34:50Z
+=== START 2026-10-09T03:34:50Z condition C groq=member3 gemini=member1 
+2026-10-09 09:04:52,429 INFO apps.reports.rag.embeddings Loading embedding model sentence-transformers/all-MiniLM-L6-v2.
+2026-10-09 09:04:53,632 INFO apps.reports.rag.chroma_store Opening the chunk store at D:\Symbiosis\RepoVitals\backend\.chroma.
+2026-10-09 09:04:53,777 INFO apps.reports.agent.graph Grounding for numpy: top similarity 0.6020 over 5197 chars -> sufficient
+  S3-c0b2b3380f: ok (sufficient)
+2026-10-09 09:04:57,887 WARNING apps.common.http Outbound POST /v1beta/models/gemini-3.5-flash-lite:generateContent hit an upstream rate limit.
+2026-10-09 09:04:57,888 INFO apps.research.experiment.judge The judge did not answer; retrying in 10s.
+2026-10-09 09:05:08,404 WARNING apps.common.http Outbound POST /v1beta/models/gemini-3.5-flash-lite:generateContent hit an upstream rate limit.
+2026-10-09 09:05:08,404 INFO apps.research.experiment.judge The judge did not answer; retrying in 30s.
+  Judging stopped for this session (The judge did not answer.); generations continue. Judge the rest later with `analyze_experiment --judge`.
+2026-10-09 09:05:39,340 WARNING apps.common.http Outbound POST /v1beta/models/gemini-3.5-flash-lite:generateContent hit an upstream rate limit.
+2026-10-09 09:05:40,035 INFO apps.reports.agent.graph Grounding for werkzeug: top similarity 0.4442 over 2698 chars -> sufficient
+2026-10-09 09:05:43,278 INFO apps.reports.schema Dropped 1 citation(s) naming chunks that were not retrieved.
+  S3-c16432766d: ok (sufficient)
+2026-10-09 09:06:26,967 INFO apps.reports.agent.graph Grounding for tablib: top similarity 0.6456 over 885 chars -> sufficient
+2026-10-09 09:06:27,044 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 09:06:27,045 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+  S3-c53196bd12: ok (sufficient)
+2026-10-09 09:07:10,149 INFO apps.reports.agent.graph Grounding for pyinstaller: top similarity 0.6916 over 5178 chars -> sufficient
+2026-10-09 09:07:10,208 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 09:07:10,208 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+2026-10-09 09:07:10,546 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+  S3-c694c380f5: the generator did not answer (1)
+    waiting 65s for the provider's per-minute window, then asking again
+2026-10-09 09:08:16,107 INFO apps.reports.agent.graph Grounding for pyinstaller: top similarity 0.6916 over 5178 chars -> sufficient
+2026-10-09 09:08:16,488 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 09:08:16,488 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+2026-10-09 09:08:16,830 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+  S3-c694c380f5: the generator did not answer (2)
+Run C_75246f3b_openai-gpt-oss-120b: 3 completed, 0 failed, 141 already done, 6 remaining.
+  Stopped: The generator stopped answering — most likely its daily limit. Every finished item is saved; rerun the same command later and it continues from here.
+  judge: 3 call(s), 0 cache hit(s); Judging stopped for this session (The judge did not answer.); generations continue. Judge the rest later with `analyze_experiment --judge`.
+  D:\Symbiosis\RepoVitals\research_data\runs\C_75246f3b_openai-gpt-oss-120b\items.jsonl
+=== EXIT 0 2026-10-09T03:38:17Z
+=== START 2026-10-09T03:38:17Z condition C groq=member4 gemini=member1 
+2026-10-09 09:08:18,884 INFO apps.reports.rag.embeddings Loading embedding model sentence-transformers/all-MiniLM-L6-v2.
+2026-10-09 09:08:20,232 INFO apps.reports.rag.chroma_store Opening the chunk store at D:\Symbiosis\RepoVitals\backend\.chroma.
+2026-10-09 09:08:20,391 INFO apps.reports.agent.graph Grounding for pyinstaller: top similarity 0.6916 over 5178 chars -> sufficient
+  S3-c694c380f5: ok (sufficient)
+2026-10-09 09:08:23,678 WARNING apps.common.http Outbound POST /v1beta/models/gemini-3.5-flash-lite:generateContent hit an upstream rate limit.
+2026-10-09 09:08:23,678 INFO apps.research.experiment.judge The judge did not answer; retrying in 10s.
+2026-10-09 09:08:34,286 WARNING apps.common.http Outbound POST /v1beta/models/gemini-3.5-flash-lite:generateContent hit an upstream rate limit.
+2026-10-09 09:08:34,286 INFO apps.research.experiment.judge The judge did not answer; retrying in 30s.
+2026-10-09 09:09:04,913 WARNING apps.common.http Outbound POST /v1beta/models/gemini-3.5-flash-lite:generateContent hit an upstream rate limit.
+  Judging stopped for this session (The judge did not answer.); generations continue. Judge the rest later with `analyze_experiment --judge`.
+2026-10-09 09:09:07,562 INFO apps.reports.agent.graph Grounding for idna: top similarity 0.6244 over 1451 chars -> sufficient
+  S3-d3923a72e3: ok (sufficient)
+2026-10-09 09:09:51,752 INFO apps.reports.agent.graph Grounding for transformers: top similarity 0.4263 over 4303 chars -> sufficient
+  S3-eb144795bd: ok (sufficient)
+2026-10-09 09:10:35,312 INFO apps.reports.agent.graph Grounding for eventlet: top similarity 0.4858 over 4144 chars -> sufficient
+2026-10-09 09:10:35,387 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 09:10:35,387 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+2026-10-09 09:10:35,717 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+  S3-ec5a85dec1: the generator did not answer (1)
+    waiting 65s for the provider's per-minute window, then asking again
+2026-10-09 09:11:41,095 INFO apps.reports.agent.graph Grounding for eventlet: top similarity 0.4858 over 4144 chars -> sufficient
+2026-10-09 09:11:41,409 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+2026-10-09 09:11:41,409 INFO apps.reports.llm.groq_client Generator call failed transiently; retrying once.
+2026-10-09 09:11:41,677 WARNING apps.common.http Outbound POST /openai/v1/chat/completions hit an upstream rate limit.
+  S3-ec5a85dec1: the generator did not answer (2)
+Run C_75246f3b_openai-gpt-oss-120b: 3 completed, 0 failed, 144 already done, 3 remaining.
+  Stopped: The generator stopped answering — most likely its daily limit. Every finished item is saved; rerun the same command later and it continues from here.
+  judge: 3 call(s), 0 cache hit(s); Judging stopped for this session (The judge did not answer.); generations continue. Judge the rest later with `analyze_experiment --judge`.
+  D:\Symbiosis\RepoVitals\research_data\runs\C_75246f3b_openai-gpt-oss-120b\items.jsonl
+=== EXIT 0 2026-10-09T03:41:41Z
+=== START 2026-10-09T14:17:53Z condition C groq=member1 gemini=member1 
+2026-10-09 19:48:03,242 INFO apps.reports.rag.embeddings Loading embedding model sentence-transformers/all-MiniLM-L6-v2.
+2026-10-09 19:48:09,546 INFO apps.reports.rag.chroma_store Opening the chunk store at D:\Symbiosis\RepoVitals\backend\.chroma.
+2026-10-09 19:48:11,246 INFO apps.reports.agent.graph Grounding for eventlet: top similarity 0.4858 over 4144 chars -> sufficient
+  S3-ec5a85dec1: ok (sufficient)
+2026-10-09 19:48:42,994 INFO apps.reports.agent.graph Grounding for tornado: top similarity 0.4483 over 1634 chars -> sufficient
+  S3-f235fea69c: ok (sufficient)
+2026-10-09 19:49:31,723 INFO apps.reports.agent.graph Grounding for pandas: top similarity 0.5869 over 1899 chars -> sufficient
+  S3-fd66e0b6e7: ok (sufficient)
+Run C_75246f3b_openai-gpt-oss-120b: 3 completed, 0 failed, 147 already done, 0 remaining.
+  judge: 6 call(s), 0 cache hit(s)
+  D:\Symbiosis\RepoVitals\research_data\runs\C_75246f3b_openai-gpt-oss-120b\items.jsonl
+=== EXIT 0 2026-10-09T14:19:43Z

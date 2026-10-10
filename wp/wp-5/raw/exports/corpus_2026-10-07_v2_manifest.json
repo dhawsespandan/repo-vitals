@@ -1,0 +1,36 @@
+{
+  "generated_at": "2026-10-08T16:50:05.894319+00:00",
+  "weights_version": "v2",
+  "weights_derivation": "ahp-entropy-validated",
+  "weights_file": "weights_v2.yaml",
+  "weights": {
+    "npm": {
+      "deprecation": "0.272",
+      "severity": "0.4829",
+      "count": "0.157",
+      "staleness": "0.0881"
+    },
+    "pypi": {
+      "deprecation": "0.1904",
+      "severity": "0.5237",
+      "count": "0.157",
+      "staleness": "0.1289"
+    }
+  },
+  "rollup": {
+    "decay": "0.5",
+    "max_terms": 20
+  },
+  "thresholds": {
+    "safe_min": "80",
+    "medium_min": "50"
+  },
+  "filters": {
+    "source": "corpus_scan",
+    "limit": null
+  },
+  "scan_history_rows": 914,
+  "dependency_history_rows": 29494,
+  "repository_scores_differing_from_stored": 816,
+  "note": "Recomputed from stored signals under the named weights version (D6). No database row was written or modified by this run; the stored_* columns are what the product reported at scan time."
+}

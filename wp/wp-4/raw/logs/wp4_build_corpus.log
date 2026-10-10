@@ -1,0 +1,737 @@
+START 2026-10-07T21:12:22Z (local 2026-10-08 02:42) attempt 2: --resume over attempt 1's enumeration (cells.jsonl); candidates.jsonl cleared; allocation per stratum (§11.29)
+Frame: D:\Symbiosis\RepoVitals\backend\corpus_frame.yaml
+Output: D:\Symbiosis\RepoVitals\research_data\corpus
+  Enumerated 1326 cell(s) from 3 language(s).
+2026-10-08 02:42:24,225 INFO apps.research.corpus Allocated 500 of 500 npm admissions across 160 strata (728 cells); 0 strata got none.
+2026-10-08 02:42:24,226 INFO apps.research.corpus Allocated 500 of 500 pypi admissions across 80 strata (598 cells); 0 strata got none.
+  javascript|5-20|lt6|le2015+5-10+5-7: 1/1 admitted from 1 examined.
+  javascript|5-20|lt6|le2015+11-20: 1/1 admitted from 2 examined.
+  javascript|5-20|lt6|2016-2018+5-10+5-7+6-7: 1/1 admitted from 1 examined.
+  javascript|5-20|lt6|2016-2018+5-10+8-10: 1/1 admitted from 1 examined.
+  javascript|5-20|lt6|2019-2021+5-10+5-7+5-5: 1/1 admitted from 1 examined.
+  javascript|5-20|lt6|2019-2021+5-10+8-10+9-10: 1/1 admitted from 2 examined.
+  javascript|5-20|lt6|2022plus+11-20+11-14+11-12+11-11: 0/1 admitted from 2 examined.
+2026-10-08 02:43:33,111 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  javascript|5-20|lt6|2022plus+11-20+11-14+11-12+12-12: 1/1 admitted from 2 examined.
+  javascript|5-20|6-18|le2015+5-10: 1/1 admitted from 1 examined.
+  javascript|5-20|6-18|le2015+11-20: 1/1 admitted from 1 examined.
+  javascript|5-20|6-18|2016-2018+5-10+5-7+6-7: 1/1 admitted from 2 examined.
+  javascript|5-20|6-18|2016-2018+5-10+8-10: 1/1 admitted from 1 examined.
+  javascript|5-20|6-18|2019-2021+5-10+5-7+5-5: 1/1 admitted from 2 examined.
+  javascript|5-20|6-18|2019-2021+11-20+11-14: 1/1 admitted from 2 examined.
+  javascript|5-20|6-18|2022plus+11-20+11-14+11-12+11-11: 1/1 admitted from 2 examined.
+  javascript|5-20|6-18|2022plus+11-20+11-14+11-12+12-12: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|le2015+5-10+5-7+6-7: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|le2015+5-10+8-10: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|le2015+11-20+11-14: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|le2015+11-20+15-20: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2016-2018+5-10+5-7+5-5: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2016-2018+5-10+5-7+6-7+6-6: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2016-2018+5-10+5-7+6-7+7-7: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2016-2018+5-10+8-10+8-8: 1/1 admitted from 2 examined.
+  javascript|5-20|18-48|2019-2021+11-20+11-14+11-12+11-11: 1/1 admitted from 1 examined.
+2026-10-08 02:46:12,869 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  javascript|5-20|18-48|2019-2021+11-20+11-14+11-12+12-12: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2019-2021+11-20+11-14+13-14+13-13: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2019-2021+11-20+11-14+13-14+14-14: 1/1 admitted from 1 examined.
+  javascript|5-20|18-48|2022plus+11-20+11-14+11-12+11-11: 1/1 admitted from 2 examined.
+  javascript|5-20|18-48|2022plus+11-20+11-14+11-12+12-12: 1/1 admitted from 2 examined.
+  javascript|5-20|18-48|2022plus+11-20+11-14+13-14+13-13: 1/1 admitted from 2 examined.
+  javascript|5-20|18-48|2022plus+11-20+11-14+13-14+14-14: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|le2015+11-20+11-14+11-12+11-11: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|le2015+11-20+11-14+11-12+12-12: 1/1 admitted from 2 examined.
+  javascript|5-20|gt48|le2015+11-20+11-14+13-14+13-13: 0/1 admitted from 2 examined.
+  javascript|5-20|gt48|le2015+11-20+11-14+13-14+14-14: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|le2015+11-20+15-20+15-17+15-15: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2016-2018+11-20+11-14+11-12+11-11: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2016-2018+11-20+11-14+11-12+12-12: 0/1 admitted from 2 examined.
+  javascript|5-20|gt48|2016-2018+11-20+11-14+13-14+13-13: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2016-2018+11-20+11-14+13-14+14-14: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2016-2018+11-20+15-20+15-17+15-15: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2019-2021+11-20+11-14+11-12+11-11: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2019-2021+11-20+11-14+11-12+12-12: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2019-2021+11-20+11-14+13-14+13-13: 1/1 admitted from 1 examined.
+2026-10-08 02:48:57,192 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  javascript|5-20|gt48|2019-2021+11-20+11-14+13-14+14-14: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2019-2021+11-20+15-20+15-17+15-15: 0/1 admitted from 2 examined.
+  javascript|5-20|gt48|2022plus+5-10+5-7+5-5: 1/1 admitted from 2 examined.
+  javascript|5-20|gt48|2022plus+5-10+5-7+6-7+6-6: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2022plus+5-10+5-7+6-7+7-7: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2022plus+5-10+8-10+8-8: 1/1 admitted from 1 examined.
+  javascript|5-20|gt48|2022plus+5-10+8-10+9-10+9-9: 1/1 admitted from 1 examined.
+  javascript|21-50|lt6|le2015: 2/2 admitted from 4 examined.
+  javascript|21-50|lt6|2016-2018+21-32: 1/1 admitted from 1 examined.
+  javascript|21-50|lt6|2016-2018+33-50: 1/1 admitted from 1 examined.
+  javascript|21-50|lt6|2019-2021+21-32+21-25: 0/1 admitted from 2 examined.
+  javascript|21-50|lt6|2019-2021+21-32+26-32: 1/1 admitted from 2 examined.
+  javascript|21-50|lt6|2022plus+21-32+21-25+23-25+24-25: 1/1 admitted from 1 examined.
+  javascript|21-50|lt6|2022plus+33-50+33-40+33-36: 1/1 admitted from 1 examined.
+  javascript|21-50|6-18|le2015: 2/2 admitted from 4 examined.
+  javascript|21-50|6-18|2016-2018+21-32: 0/1 admitted from 2 examined.
+  javascript|21-50|6-18|2016-2018+33-50: 1/1 admitted from 1 examined.
+  javascript|21-50|6-18|2019-2021+21-32: 1/1 admitted from 2 examined.
+  javascript|21-50|6-18|2019-2021+33-50: 1/1 admitted from 2 examined.
+  javascript|21-50|6-18|2022plus+21-32+21-25+23-25: 1/1 admitted from 2 examined.
+  javascript|21-50|6-18|2022plus+33-50+41-50: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|le2015+21-32+21-25: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|le2015+21-32+26-32: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|le2015+33-50: 2/2 admitted from 2 examined.
+  javascript|21-50|18-48|2016-2018+21-32+21-25+23-25: 1/1 admitted from 2 examined.
+  javascript|21-50|18-48|2016-2018+21-32+26-32+26-28: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2016-2018+21-32+26-32+29-32: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2016-2018+33-50+33-40+33-36: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2019-2021+21-32+21-25+23-25+24-25: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2019-2021+33-50+33-40+33-36: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2019-2021+33-50+33-40+37-40: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2019-2021+33-50+41-50+41-45: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2022plus+21-32+21-25+23-25+24-25: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2022plus+33-50+33-40+33-36: 1/1 admitted from 2 examined.
+  javascript|21-50|18-48|2022plus+33-50+33-40+37-40: 1/1 admitted from 1 examined.
+  javascript|21-50|18-48|2022plus+33-50+41-50+41-45: 1/1 admitted from 2 examined.
+  javascript|21-50|gt48|le2015+21-32+21-25+21-22+21-21: 1/1 admitted from 2 examined.
+  javascript|21-50|gt48|le2015+21-32+21-25+21-22+22-22: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|le2015+21-32+21-25+23-25+23-23: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|le2015+21-32+21-25+23-25+24-25+24-24: 1/1 admitted from 2 examined.
+  javascript|21-50|gt48|le2015+33-50+33-40+37-40+37-38: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2016-2018+21-32+21-25+21-22+21-21: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2016-2018+21-32+21-25+21-22+22-22: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2016-2018+21-32+21-25+23-25+23-23: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2016-2018+21-32+21-25+23-25+24-25+24-24: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2016-2018+33-50+41-50+41-45+43-45: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2019-2021+21-32+21-25+23-25+24-25: 1/1 admitted from 2 examined.
+  javascript|21-50|gt48|2019-2021+21-32+26-32+26-28+27-28: 1/1 admitted from 2 examined.
+  javascript|21-50|gt48|2019-2021+21-32+26-32+29-32+29-30: 0/1 admitted from 2 examined.
+  javascript|21-50|gt48|2019-2021+33-50+33-40+37-40: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2019-2021+33-50+41-50+41-45: 1/1 admitted from 1 examined.
+  javascript|21-50|gt48|2022plus+21-32: 3/3 admitted from 3 examined.
+  javascript|21-50|gt48|2022plus+33-50: 2/2 admitted from 2 examined.
+  javascript|51-200|lt6|le2015+51-100: 1/1 admitted from 1 examined.
+  javascript|51-200|lt6|le2015+101-200: 1/1 admitted from 1 examined.
+  javascript|51-200|lt6|2016-2018+51-100+51-71: 1/1 admitted from 1 examined.
+  javascript|51-200|lt6|2016-2018+101-200: 1/1 admitted from 1 examined.
+  javascript|51-200|lt6|2019-2021+51-100+51-71: 1/1 admitted from 1 examined.
+  javascript|51-200|lt6|2019-2021+101-200: 1/1 admitted from 2 examined.
+  javascript|51-200|lt6|2022plus+51-100+51-71+51-60: 1/1 admitted from 1 examined.
+  javascript|51-200|lt6|2022plus+101-200+143-200: 1/1 admitted from 1 examined.
+  javascript|51-200|6-18|le2015: 2/2 admitted from 2 examined.
+  javascript|51-200|6-18|2016-2018+51-100: 1/1 admitted from 2 examined.
+  javascript|51-200|6-18|2016-2018+101-200: 1/1 admitted from 1 examined.
+  javascript|51-200|6-18|2019-2021+51-100: 1/1 admitted from 1 examined.
+  javascript|51-200|6-18|2019-2021+101-200: 1/1 admitted from 2 examined.
+  javascript|51-200|6-18|2022plus+51-100+72-100: 1/1 admitted from 2 examined.
+  javascript|51-200|6-18|2022plus+101-200: 0/1 admitted from 2 examined.
+  javascript|51-200|18-48|le2015+51-100+51-71: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|le2015+51-100+72-100: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|le2015+101-200+101-142: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|le2015+101-200+143-200: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2016-2018+51-100+51-71+51-60: 1/1 admitted from 2 examined.
+  javascript|51-200|18-48|2016-2018+51-100+51-71+61-71: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2016-2018+51-100+72-100+72-84: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2016-2018+101-200+143-200: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2019-2021+51-100+51-71+51-60: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2019-2021+51-100+51-71+61-71: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2019-2021+51-100+72-100+72-84: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2019-2021+101-200+143-200: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2022plus+51-100+51-71+51-60: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2022plus+51-100+51-71+61-71: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2022plus+51-100+72-100: 1/1 admitted from 1 examined.
+  javascript|51-200|18-48|2022plus+101-200+101-142: 1/1 admitted from 1 examined.
+  javascript|51-200|gt48|le2015+51-100+51-71+51-60+51-55+53-55: 1/1 admitted from 1 examined.
+  javascript|51-200|gt48|le2015+51-100+72-100+72-84+72-77: 1/1 admitted from 2 examined.
+  javascript|51-200|gt48|le2015+51-100+72-100+72-84+78-84: 1/1 admitted from 1 examined.
+  javascript|51-200|gt48|le2015+51-100+72-100+85-100+85-92: 1/1 admitted from 2 examined.
+  javascript|51-200|gt48|le2015+101-200+143-200+170-200: 0/1 admitted from 2 examined.
+  javascript|51-200|gt48|2016-2018+51-100+51-71+51-60+56-60: 1/1 admitted from 1 examined.
+  javascript|51-200|gt48|2016-2018+51-100+51-71+61-71+61-65: 1/1 admitted from 2 examined.
+  javascript|51-200|gt48|2016-2018+51-100+51-71+61-71+66-71: 1/1 admitted from 1 examined.
+  javascript|51-200|gt48|2016-2018+101-200+101-142+101-119: 1/1 admitted from 1 examined.
+  javascript|51-200|gt48|2016-2018+101-200+101-142+120-142: 1/1 admitted from 1 examined.
+  javascript|51-200|gt48|2019-2021+51-100+51-71+51-60: 1/1 admitted from 1 examined.
+  javascript|51-200|gt48|2019-2021+51-100+51-71+61-71: 1/1 admitted from 1 examined.
+  javascript|51-200|gt48|2019-2021+51-100+72-100+72-84: 1/1 admitted from 1 examined.
+  javascript|51-200|gt48|2019-2021+51-100+72-100+85-100: 1/1 admitted from 1 examined.
+  javascript|51-200|gt48|2019-2021+101-200+101-142: 1/1 admitted from 1 examined.
+  javascript|51-200|gt48|2022plus: 5/5 admitted from 9 examined.
+  javascript|201-1000|lt6|le2015+201-448: 1/1 admitted from 1 examined.
+  javascript|201-1000|lt6|le2015+449-1000: 1/1 admitted from 1 examined.
+  javascript|201-1000|lt6|2016-2018+201-448: 1/1 admitted from 2 examined.
+  javascript|201-1000|lt6|2016-2018+449-1000: 1/1 admitted from 1 examined.
+  javascript|201-1000|lt6|2019-2021+201-448: 1/1 admitted from 1 examined.
+  javascript|201-1000|lt6|2019-2021+449-1000: 1/1 admitted from 1 examined.
+2026-10-08 03:04:54,171 WARNING apps.scanning.scanner Tree contained 223 manifests; scanning the 50 shallowest.
+  javascript|201-1000|lt6|2022plus+201-448+201-300: 1/1 admitted from 2 examined.
+  javascript|201-1000|lt6|2022plus+449-1000: 1/1 admitted from 1 examined.
+  javascript|201-1000|6-18|le2015: 2/2 admitted from 2 examined.
+  javascript|201-1000|6-18|2016-2018: 2/2 admitted from 2 examined.
+  javascript|201-1000|6-18|2019-2021: 2/2 admitted from 3 examined.
+  javascript|201-1000|6-18|2022plus: 2/2 admitted from 4 examined.
+  javascript|201-1000|18-48|le2015+201-448+201-300: 1/1 admitted from 1 examined.
+  javascript|201-1000|18-48|le2015+201-448+301-448: 1/1 admitted from 1 examined.
+  javascript|201-1000|18-48|le2015+449-1000: 2/2 admitted from 3 examined.
+  javascript|201-1000|18-48|2016-2018+201-448+201-300: 2/2 admitted from 2 examined.
+  javascript|201-1000|18-48|2016-2018+201-448+301-448: 1/1 admitted from 1 examined.
+  javascript|201-1000|18-48|2016-2018+449-1000: 1/1 admitted from 1 examined.
+  javascript|201-1000|18-48|2019-2021+201-448+201-300: 2/2 admitted from 2 examined.
+RESUME 2026-10-07T21:39:23Z (local 03:09) after the working session ended and the process died at 237 examined
+Frame: D:\Symbiosis\RepoVitals\backend\corpus_frame.yaml
+Output: D:\Symbiosis\RepoVitals\research_data\corpus
+  Enumerated 1326 cell(s) from 3 language(s).
+2026-10-08 03:09:27,841 INFO apps.research.corpus Allocated 500 of 500 npm admissions across 160 strata (728 cells); 0 strata got none.
+2026-10-08 03:09:27,843 INFO apps.research.corpus Allocated 500 of 500 pypi admissions across 80 strata (598 cells); 0 strata got none.
+  javascript|201-1000|18-48|2019-2021+201-448+301-448: 1/1 admitted from 1 examined.
+  javascript|201-1000|18-48|2019-2021+449-1000: 1/1 admitted from 1 examined.
+  javascript|201-1000|18-48|2022plus: 4/4 admitted from 5 examined.
+  javascript|201-1000|gt48|le2015+201-448+201-300+201-245: 1/1 admitted from 1 examined.
+  javascript|201-1000|gt48|le2015+201-448+201-300+246-300: 1/1 admitted from 1 examined.
+  javascript|201-1000|gt48|le2015+201-448+301-448+301-367: 1/1 admitted from 1 examined.
+  javascript|201-1000|gt48|le2015+201-448+301-448+368-448: 1/1 admitted from 2 examined.
+  javascript|201-1000|gt48|le2015+449-1000+449-670: 1/1 admitted from 2 examined.
+  javascript|201-1000|gt48|2016-2018+201-448+201-300+201-245: 1/1 admitted from 1 examined.
+  javascript|201-1000|gt48|2016-2018+201-448+201-300+246-300: 1/1 admitted from 1 examined.
+  javascript|201-1000|gt48|2016-2018+201-448+301-448: 2/2 admitted from 4 examined.
+  javascript|201-1000|gt48|2016-2018+449-1000: 1/1 admitted from 1 examined.
+  javascript|201-1000|gt48|2019-2021: 5/5 admitted from 8 examined.
+  javascript|201-1000|gt48|2022plus: 5/5 admitted from 5 examined.
+  javascript|1000+|lt6|le2015: 2/2 admitted from 2 examined.
+  javascript|1000+|lt6|2016-2018: 2/2 admitted from 2 examined.
+RESUME process stopped 2026-10-07T21:43:14Z after the user stopped the task
+RESUME 2026-10-07T21:46:36Z (local 03:16) user said continue
+Frame: D:\Symbiosis\RepoVitals\backend\corpus_frame.yaml
+Output: D:\Symbiosis\RepoVitals\research_data\corpus
+  Enumerated 1326 cell(s) from 3 language(s).
+2026-10-08 03:16:38,905 INFO apps.research.corpus Allocated 500 of 500 npm admissions across 160 strata (728 cells); 0 strata got none.
+2026-10-08 03:16:38,907 INFO apps.research.corpus Allocated 500 of 500 pypi admissions across 80 strata (598 cells); 0 strata got none.
+  javascript|1000+|lt6|2019-2021: 2/2 admitted from 2 examined.
+  javascript|1000+|lt6|2022plus: 2/2 admitted from 4 examined.
+  javascript|1000+|6-18|le2015: 2/2 admitted from 2 examined.
+  javascript|1000+|6-18|2016-2018: 2/2 admitted from 2 examined.
+  javascript|1000+|6-18|2019-2021: 2/2 admitted from 3 examined.
+2026-10-08 03:17:40,261 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  javascript|1000+|6-18|2022plus: 2/2 admitted from 3 examined.
+  javascript|1000+|18-48|le2015: 4/4 admitted from 6 examined.
+2026-10-08 03:18:33,247 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  javascript|1000+|18-48|2016-2018: 4/4 admitted from 4 examined.
+  javascript|1000+|18-48|2019-2021: 4/4 admitted from 4 examined.
+  javascript|1000+|18-48|2022plus: 4/4 admitted from 4 examined.
+  javascript|1000+|gt48|le2015: 5/5 admitted from 5 examined.
+  javascript|1000+|gt48|2016-2018: 5/5 admitted from 8 examined.
+  javascript|1000+|gt48|2019-2021: 4/5 admitted from 12 examined.
+  javascript|1000+|gt48|2022plus: 1/4 admitted from 4 examined.
+  typescript|5-20|lt6|le2015: 2/2 admitted from 2 examined.
+  typescript|5-20|lt6|2016-2018+5-10+5-7: 1/1 admitted from 1 examined.
+2026-10-08 03:20:58,597 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  typescript|5-20|lt6|2016-2018+11-20: 1/1 admitted from 1 examined.
+  typescript|5-20|lt6|2019-2021+5-10+5-7+5-5: 1/1 admitted from 1 examined.
+  typescript|5-20|lt6|2019-2021+5-10+8-10+9-10: 1/1 admitted from 1 examined.
+  typescript|5-20|lt6|2022plus+11-20+11-14+11-12+11-11: 1/1 admitted from 1 examined.
+  typescript|5-20|lt6|2022plus+11-20+11-14+11-12+12-12: 1/1 admitted from 1 examined.
+  typescript|5-20|6-18|le2015: 2/2 admitted from 2 examined.
+2026-10-08 03:22:02,042 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  typescript|5-20|6-18|2016-2018: 2/2 admitted from 2 examined.
+  typescript|5-20|6-18|2019-2021+5-10+5-7+6-7: 1/1 admitted from 1 examined.
+  typescript|5-20|6-18|2019-2021+5-10+8-10: 1/1 admitted from 1 examined.
+  typescript|5-20|6-18|2022plus+11-20+11-14+11-12+11-11: 1/1 admitted from 1 examined.
+  typescript|5-20|6-18|2022plus+11-20+11-14+11-12+12-12: 1/1 admitted from 1 examined.
+2026-10-08 03:22:57,527 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  typescript|5-20|18-48|le2015: 3/3 admitted from 3 examined.
+  typescript|5-20|18-48|2016-2018+5-10+5-7+6-7: 1/1 admitted from 1 examined.
+  typescript|5-20|18-48|2016-2018+5-10+8-10: 1/1 admitted from 1 examined.
+  typescript|5-20|18-48|2016-2018+11-20+15-20: 1/1 admitted from 1 examined.
+  typescript|5-20|18-48|2019-2021+5-10+5-7+5-5: 1/1 admitted from 1 examined.
+  typescript|5-20|18-48|2019-2021+5-10+5-7+6-7+6-6: 1/1 admitted from 1 examined.
+  typescript|5-20|18-48|2019-2021+5-10+5-7+6-7+7-7: 1/1 admitted from 1 examined.
+  typescript|5-20|18-48|2022plus+11-20+11-14+11-12+11-11: 1/1 admitted from 1 examined.
+  typescript|5-20|18-48|2022plus+11-20+11-14+11-12+12-12: 1/1 admitted from 1 examined.
+  typescript|5-20|18-48|2022plus+11-20+11-14+13-14+13-13: 1/1 admitted from 1 examined.
+2026-10-08 03:24:43,154 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  typescript|5-20|gt48|le2015: 5/5 admitted from 5 examined.
+  typescript|5-20|gt48|2016-2018+5-10+5-7+5-5: 1/1 admitted from 1 examined.
+  typescript|5-20|gt48|2016-2018+5-10+5-7+6-7+6-6: 1/1 admitted from 1 examined.
+  typescript|5-20|gt48|2016-2018+5-10+5-7+6-7+7-7: 1/1 admitted from 1 examined.
+  typescript|5-20|gt48|2016-2018+5-10+8-10+8-8: 1/1 admitted from 1 examined.
+  typescript|5-20|gt48|2016-2018+11-20+11-14+11-12: 1/1 admitted from 1 examined.
+  typescript|5-20|gt48|2019-2021+5-10+5-7+5-5: 1/1 admitted from 1 examined.
+  typescript|5-20|gt48|2019-2021+5-10+5-7+6-7+6-6: 1/1 admitted from 1 examined.
+  typescript|5-20|gt48|2019-2021+5-10+5-7+6-7+7-7: 1/1 admitted from 1 examined.
+  typescript|5-20|gt48|2019-2021+5-10+8-10+8-8: 1/1 admitted from 1 examined.
+  typescript|5-20|gt48|2019-2021+5-10+8-10+9-10+9-9: 1/1 admitted from 1 examined.
+  typescript|5-20|gt48|2022plus+5-10+5-7+5-5: 1/1 admitted from 1 examined.
+  typescript|5-20|gt48|2022plus+5-10+5-7+6-7+6-6: 1/1 admitted from 1 examined.
+  typescript|5-20|gt48|2022plus+5-10+5-7+6-7+7-7: 1/1 admitted from 1 examined.
+  typescript|5-20|gt48|2022plus+5-10+8-10+9-10: 1/1 admitted from 1 examined.
+  typescript|5-20|gt48|2022plus+11-20+11-14: 1/1 admitted from 1 examined.
+  typescript|21-50|lt6|le2015: 2/2 admitted from 3 examined.
+  typescript|21-50|lt6|2016-2018: 2/2 admitted from 2 examined.
+2026-10-08 03:27:53,156 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  typescript|21-50|lt6|2019-2021+21-32+21-25: 1/1 admitted from 1 examined.
+  typescript|21-50|lt6|2019-2021+21-32+26-32: 1/1 admitted from 1 examined.
+  typescript|21-50|lt6|2022plus+21-32+21-25+21-22+21-21: 1/1 admitted from 1 examined.
+  typescript|21-50|lt6|2022plus+33-50+33-40+33-36+33-34: 1/1 admitted from 1 examined.
+  typescript|21-50|6-18|le2015: 2/2 admitted from 2 examined.
+  typescript|21-50|6-18|2016-2018: 2/2 admitted from 2 examined.
+  typescript|21-50|6-18|2019-2021+21-32: 1/1 admitted from 1 examined.
+  typescript|21-50|6-18|2019-2021+33-50: 1/1 admitted from 1 examined.
+  typescript|21-50|6-18|2022plus+21-32+21-25+23-25+24-25: 1/1 admitted from 1 examined.
+  typescript|21-50|6-18|2022plus+33-50+33-40+33-36: 1/1 admitted from 1 examined.
+  typescript|21-50|18-48|le2015: 3/3 admitted from 3 examined.
+  typescript|21-50|18-48|2016-2018+21-32: 2/2 admitted from 2 examined.
+  typescript|21-50|18-48|2016-2018+33-50: 1/1 admitted from 1 examined.
+  typescript|21-50|18-48|2019-2021+21-32+21-25+23-25: 1/1 admitted from 1 examined.
+  typescript|21-50|18-48|2019-2021+21-32+26-32+29-32: 1/1 admitted from 1 examined.
+  typescript|21-50|18-48|2019-2021+33-50+41-50: 1/1 admitted from 1 examined.
+  typescript|21-50|18-48|2022plus+21-32+21-25+23-25+24-25: 1/1 admitted from 1 examined.
+  typescript|21-50|18-48|2022plus+33-50+33-40+33-36: 1/1 admitted from 1 examined.
+  typescript|21-50|18-48|2022plus+33-50+41-50+41-45: 1/1 admitted from 1 examined.
+  typescript|21-50|gt48|le2015: 5/5 admitted from 5 examined.
+  typescript|21-50|gt48|2016-2018+21-32+21-25: 2/2 admitted from 2 examined.
+  typescript|21-50|gt48|2016-2018+21-32+26-32: 1/1 admitted from 1 examined.
+  typescript|21-50|gt48|2016-2018+33-50: 2/2 admitted from 2 examined.
+  typescript|21-50|gt48|2019-2021+21-32+21-25+21-22: 1/1 admitted from 1 examined.
+  typescript|21-50|gt48|2019-2021+21-32+21-25+23-25: 1/1 admitted from 1 examined.
+  typescript|21-50|gt48|2019-2021+21-32+26-32: 1/1 admitted from 1 examined.
+2026-10-08 03:31:55,274 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  typescript|21-50|gt48|2019-2021+33-50+33-40: 1/1 admitted from 1 examined.
+  typescript|21-50|gt48|2019-2021+33-50+41-50: 0/1 admitted from 2 examined.
+  typescript|21-50|gt48|2022plus: 5/5 admitted from 5 examined.
+  typescript|51-200|lt6|le2015: 2/2 admitted from 2 examined.
+  typescript|51-200|lt6|2016-2018+51-100: 1/1 admitted from 1 examined.
+  typescript|51-200|lt6|2016-2018+101-200: 1/1 admitted from 1 examined.
+  typescript|51-200|lt6|2019-2021+51-100+51-71: 1/1 admitted from 1 examined.
+  typescript|51-200|lt6|2019-2021+51-100+72-100: 1/1 admitted from 1 examined.
+  typescript|51-200|lt6|2022plus+51-100+51-71+51-60+56-60: 1/1 admitted from 1 examined.
+  typescript|51-200|lt6|2022plus+101-200+143-200+170-200: 1/1 admitted from 1 examined.
+  typescript|51-200|6-18|le2015: 2/2 admitted from 2 examined.
+  typescript|51-200|6-18|2016-2018: 2/2 admitted from 2 examined.
+  typescript|51-200|6-18|2019-2021+51-100: 1/1 admitted from 1 examined.
+  typescript|51-200|6-18|2019-2021+101-200: 1/1 admitted from 1 examined.
+  typescript|51-200|6-18|2022plus+51-100+51-71+51-60: 1/1 admitted from 1 examined.
+  typescript|51-200|6-18|2022plus+101-200+101-142: 1/1 admitted from 1 examined.
+2026-10-08 03:34:40,848 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  typescript|51-200|18-48|le2015: 3/3 admitted from 3 examined.
+  typescript|51-200|18-48|2016-2018+51-100: 2/2 admitted from 2 examined.
+  typescript|51-200|18-48|2016-2018+101-200: 1/1 admitted from 1 examined.
+  typescript|51-200|18-48|2019-2021+51-100+51-71+51-60: 1/1 admitted from 1 examined.
+  typescript|51-200|18-48|2019-2021+51-100+72-100: 1/1 admitted from 1 examined.
+  typescript|51-200|18-48|2019-2021+101-200+101-142: 1/1 admitted from 1 examined.
+  typescript|51-200|18-48|2022plus+51-100+51-71+61-71: 1/1 admitted from 1 examined.
+  typescript|51-200|18-48|2022plus+101-200+101-142: 1/1 admitted from 1 examined.
+  typescript|51-200|18-48|2022plus+101-200+143-200: 1/1 admitted from 1 examined.
+  typescript|51-200|gt48|le2015: 5/5 admitted from 5 examined.
+2026-10-08 03:36:21,654 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  typescript|51-200|gt48|2016-2018+51-100: 3/3 admitted from 3 examined.
+  typescript|51-200|gt48|2016-2018+101-200: 2/2 admitted from 2 examined.
+  typescript|51-200|gt48|2019-2021+51-100: 3/3 admitted from 4 examined.
+2026-10-08 03:37:13,667 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 03:37:14,417 WARNING apps.scanning.adapters.registry_clients npm registry lookup failed for a package.
+  typescript|51-200|gt48|2019-2021+101-200: 2/2 admitted from 3 examined.
+2026-10-08 03:37:28,414 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 03:37:34,561 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  typescript|51-200|gt48|2022plus: 5/5 admitted from 5 examined.
+  typescript|201-1000|lt6|le2015: 2/2 admitted from 2 examined.
+  typescript|201-1000|lt6|2016-2018+201-448: 1/1 admitted from 1 examined.
+  typescript|201-1000|lt6|2016-2018+449-1000: 1/1 admitted from 1 examined.
+  typescript|201-1000|lt6|2019-2021+201-448+201-300: 1/1 admitted from 1 examined.
+  typescript|201-1000|lt6|2019-2021+449-1000: 1/1 admitted from 1 examined.
+  typescript|201-1000|lt6|2022plus+201-448+201-300+201-245: 1/1 admitted from 1 examined.
+  typescript|201-1000|lt6|2022plus+201-448+201-300+246-300: 1/1 admitted from 1 examined.
+  typescript|201-1000|6-18|le2015: 2/2 admitted from 2 examined.
+  typescript|201-1000|6-18|2016-2018: 2/2 admitted from 2 examined.
+  typescript|201-1000|6-18|2019-2021: 2/2 admitted from 2 examined.
+  typescript|201-1000|6-18|2022plus+201-448+201-300: 1/1 admitted from 1 examined.
+  typescript|201-1000|6-18|2022plus+449-1000: 1/1 admitted from 1 examined.
+2026-10-08 03:40:08,814 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  typescript|201-1000|18-48|le2015: 3/3 admitted from 3 examined.
+  typescript|201-1000|18-48|2016-2018: 3/3 admitted from 3 examined.
+  typescript|201-1000|18-48|2019-2021+201-448: 2/2 admitted from 2 examined.
+  typescript|201-1000|18-48|2019-2021+449-1000: 1/1 admitted from 1 examined.
+2026-10-08 03:41:23,031 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 03:41:23,772 WARNING apps.scanning.adapters.registry_clients npm registry lookup failed for a package.
+2026-10-08 03:41:25,858 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  typescript|201-1000|18-48|2022plus+201-448: 2/2 admitted from 2 examined.
+  typescript|201-1000|18-48|2022plus+449-1000: 1/1 admitted from 1 examined.
+  typescript|201-1000|gt48|le2015: 5/5 admitted from 6 examined.
+  typescript|201-1000|gt48|2016-2018: 5/5 admitted from 6 examined.
+  typescript|201-1000|gt48|2019-2021: 5/5 admitted from 5 examined.
+  typescript|201-1000|gt48|2022plus: 5/5 admitted from 5 examined.
+  typescript|1000+|lt6|le2015: 2/2 admitted from 2 examined.
+  typescript|1000+|lt6|2016-2018: 2/2 admitted from 2 examined.
+  typescript|1000+|lt6|2019-2021: 2/2 admitted from 2 examined.
+2026-10-08 03:43:37,965 WARNING apps.scanning.scanner Tree contained 513 manifests; scanning the 50 shallowest.
+  typescript|1000+|lt6|2022plus+1001-3002+1001-1733: 1/1 admitted from 1 examined.
+  typescript|1000+|lt6|2022plus+3003-inf: 1/1 admitted from 1 examined.
+  typescript|1000+|6-18|le2015: 2/2 admitted from 2 examined.
+2026-10-08 03:44:22,155 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  typescript|1000+|6-18|2016-2018: 2/2 admitted from 2 examined.
+  typescript|1000+|6-18|2019-2021: 2/2 admitted from 2 examined.
+  typescript|1000+|6-18|2022plus: 2/2 admitted from 2 examined.
+2026-10-08 03:45:13,699 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  typescript|1000+|18-48|le2015: 3/3 admitted from 3 examined.
+  typescript|1000+|18-48|2016-2018: 4/4 admitted from 4 examined.
+  typescript|1000+|18-48|2019-2021: 4/4 admitted from 5 examined.
+2026-10-08 03:46:20,185 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+2026-10-08 03:46:20,813 WARNING apps.scanning.adapters.registry_clients npm registry lookup failed for a package.
+2026-10-08 03:46:24,814 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  typescript|1000+|18-48|2022plus: 4/4 admitted from 4 examined.
+  typescript|1000+|gt48|le2015: 5/5 admitted from 5 examined.
+  typescript|1000+|gt48|2016-2018: 5/5 admitted from 5 examined.
+  typescript|1000+|gt48|2019-2021: 5/5 admitted from 5 examined.
+2026-10-08 03:46:48,456 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  typescript|1000+|gt48|2022plus: 3/3 admitted from 3 examined.
+  python|5-20|lt6|le2015+5-10+5-7: 1/1 admitted from 1 examined.
+  python|5-20|lt6|le2015+5-10+8-10: 1/1 admitted from 2 examined.
+  python|5-20|lt6|le2015+11-20: 0/1 admitted from 2 examined.
+  python|5-20|lt6|2016-2018+5-10+5-7+6-7: 0/1 admitted from 2 examined.
+  python|5-20|lt6|2016-2018+5-10+8-10: 1/1 admitted from 2 examined.
+  python|5-20|lt6|2016-2018+11-20+15-20: 1/1 admitted from 1 examined.
+  python|5-20|lt6|2019-2021+5-10+5-7+5-5: 1/1 admitted from 1 examined.
+  python|5-20|lt6|2019-2021+5-10+5-7+6-7+6-6: 1/1 admitted from 1 examined.
+  python|5-20|lt6|2019-2021+5-10+5-7+6-7+7-7: 1/1 admitted from 2 examined.
+  python|5-20|lt6|2022plus+11-20+11-14+11-12+11-11: 1/1 admitted from 1 examined.
+  python|5-20|lt6|2022plus+11-20+11-14+11-12+12-12: 1/1 admitted from 1 examined.
+  python|5-20|lt6|2022plus+11-20+11-14+13-14+13-13: 1/1 admitted from 2 examined.
+  python|5-20|6-18|le2015+5-10: 2/2 admitted from 2 examined.
+2026-10-08 03:49:06,188 INFO apps.scanning.adapters.pypi Skipping a self-referential editable install.
+  python|5-20|6-18|le2015+11-20: 1/1 admitted from 1 examined.
+  python|5-20|6-18|2016-2018+5-10+5-7: 1/1 admitted from 1 examined.
+  python|5-20|6-18|2016-2018+5-10+8-10: 0/1 admitted from 2 examined.
+  python|5-20|6-18|2016-2018+11-20+15-20: 1/1 admitted from 2 examined.
+  python|5-20|6-18|2019-2021+5-10+5-7+5-5: 1/1 admitted from 2 examined.
+  python|5-20|6-18|2019-2021+5-10+5-7+6-7+6-6: 1/1 admitted from 1 examined.
+  python|5-20|6-18|2019-2021+5-10+8-10+9-10: 1/1 admitted from 1 examined.
+  python|5-20|6-18|2022plus+11-20+11-14+11-12+11-11: 1/1 admitted from 1 examined.
+  python|5-20|6-18|2022plus+11-20+11-14+11-12+12-12: 0/1 admitted from 2 examined.
+  python|5-20|6-18|2022plus+11-20+11-14+13-14+13-13: 1/1 admitted from 1 examined.
+  python|5-20|18-48|le2015+5-10+5-7+5-5: 1/1 admitted from 2 examined.
+  python|5-20|18-48|le2015+5-10+5-7+6-7: 1/1 admitted from 1 examined.
+  python|5-20|18-48|le2015+5-10+8-10: 2/2 admitted from 2 examined.
+  python|5-20|18-48|le2015+11-20+11-14: 2/2 admitted from 3 examined.
+  python|5-20|18-48|le2015+11-20+15-20: 1/1 admitted from 1 examined.
+2026-10-08 03:51:23,080 INFO apps.scanning.adapters.pypi Skipping a dependency reference that names no package.
+  python|5-20|18-48|2016-2018+5-10+5-7+5-5: 1/1 admitted from 2 examined.
+  python|5-20|18-48|2016-2018+5-10+5-7+6-7+6-6: 1/1 admitted from 2 examined.
+  python|5-20|18-48|2016-2018+5-10+5-7+6-7+7-7: 1/1 admitted from 2 examined.
+  python|5-20|18-48|2016-2018+5-10+8-10+8-8: 1/1 admitted from 1 examined.
+  python|5-20|18-48|2016-2018+11-20+11-14+13-14: 1/1 admitted from 1 examined.
+  python|5-20|18-48|2016-2018+11-20+15-20+15-17: 1/1 admitted from 1 examined.
+  python|5-20|18-48|2016-2018+11-20+15-20+18-20: 1/1 admitted from 2 examined.
+  python|5-20|18-48|2019-2021+5-10+5-7+5-5: 1/1 admitted from 1 examined.
+  python|5-20|18-48|2019-2021+11-20+11-14+11-12+11-11: 1/1 admitted from 1 examined.
+  python|5-20|18-48|2019-2021+11-20+11-14+11-12+12-12: 1/1 admitted from 1 examined.
+  python|5-20|18-48|2019-2021+11-20+11-14+13-14+13-13: 1/1 admitted from 1 examined.
+  python|5-20|18-48|2019-2021+11-20+11-14+13-14+14-14: 1/1 admitted from 1 examined.
+  python|5-20|18-48|2019-2021+11-20+15-20+15-17+15-15: 1/1 admitted from 1 examined.
+  python|5-20|18-48|2019-2021+11-20+15-20+15-17+16-17+16-16: 1/1 admitted from 1 examined.
+  python|5-20|18-48|2022plus+11-20+11-14+11-12+11-11: 1/1 admitted from 2 examined.
+  python|5-20|18-48|2022plus+11-20+11-14+11-12+12-12: 1/1 admitted from 1 examined.
+2026-10-08 03:53:55,852 INFO apps.scanning.adapters.pypi Skipping a dependency reference that names no package.
+2026-10-08 03:53:55,852 INFO apps.scanning.adapters.pypi Skipping a dependency reference that names no package.
+2026-10-08 03:53:55,852 INFO apps.scanning.adapters.pypi Skipping a dependency reference that names no package.
+  python|5-20|18-48|2022plus+11-20+11-14+13-14+13-13: 1/1 admitted from 1 examined.
+  python|5-20|18-48|2022plus+11-20+11-14+13-14+14-14: 0/1 admitted from 2 examined.
+  python|5-20|18-48|2022plus+11-20+15-20+15-17+15-15: 1/1 admitted from 1 examined.
+  python|5-20|18-48|2022plus+11-20+15-20+15-17+16-17+16-16: 1/1 admitted from 1 examined.
+  python|5-20|18-48|2022plus+11-20+15-20+15-17+16-17+17-17: 1/1 admitted from 1 examined.
+  python|5-20|gt48|le2015+5-10+5-7+5-5: 1/1 admitted from 1 examined.
+  python|5-20|gt48|le2015+5-10+5-7+6-7+6-6: 0/1 admitted from 2 examined.
+  python|5-20|gt48|le2015+5-10+5-7+6-7+7-7: 0/1 admitted from 2 examined.
+  python|5-20|gt48|le2015+11-20+11-14+11-12+11-11: 1/1 admitted from 2 examined.
+  python|5-20|gt48|le2015+11-20+11-14+11-12+12-12: 1/1 admitted from 1 examined.
+  python|5-20|gt48|le2015+11-20+11-14+13-14+13-13: 0/1 admitted from 2 examined.
+  python|5-20|gt48|le2015+11-20+11-14+13-14+14-14: 0/1 admitted from 2 examined.
+  python|5-20|gt48|le2015+11-20+15-20+15-17+15-15: 0/1 admitted from 2 examined.
+  python|5-20|gt48|le2015+11-20+15-20+15-17+16-17+16-16: 0/1 admitted from 2 examined.
+  python|5-20|gt48|le2015+11-20+15-20+15-17+16-17+17-17: 0/1 admitted from 2 examined.
+  python|5-20|gt48|le2015+11-20+15-20+18-20+18-18: 1/1 admitted from 2 examined.
+  python|5-20|gt48|2016-2018+5-10+5-7+5-5: 0/1 admitted from 2 examined.
+  python|5-20|gt48|2016-2018+11-20+11-14+11-12+11-11: 0/1 admitted from 2 examined.
+  python|5-20|gt48|2016-2018+11-20+11-14+11-12+12-12: 0/1 admitted from 2 examined.
+  python|5-20|gt48|2016-2018+11-20+11-14+13-14+13-13: 0/1 admitted from 2 examined.
+  python|5-20|gt48|2016-2018+11-20+11-14+13-14+14-14: 0/1 admitted from 2 examined.
+  python|5-20|gt48|2016-2018+11-20+15-20+15-17+15-15: 0/1 admitted from 2 examined.
+  python|5-20|gt48|2016-2018+11-20+15-20+15-17+16-17+16-16: 0/1 admitted from 2 examined.
+  python|5-20|gt48|2016-2018+11-20+15-20+15-17+16-17+17-17: 0/1 admitted from 2 examined.
+  python|5-20|gt48|2016-2018+11-20+15-20+18-20+18-18: 0/1 admitted from 2 examined.
+  python|5-20|gt48|2016-2018+11-20+15-20+18-20+19-20+19-19: 1/1 admitted from 2 examined.
+  python|5-20|gt48|2016-2018+11-20+15-20+18-20+19-20+20-20: 0/1 admitted from 2 examined.
+  python|5-20|gt48|2019-2021+5-10+5-7+5-5: 0/1 admitted from 2 examined.
+  python|5-20|gt48|2019-2021+11-20+11-14+11-12+11-11: 1/1 admitted from 2 examined.
+  python|5-20|gt48|2019-2021+11-20+11-14+11-12+12-12: 0/1 admitted from 2 examined.
+  python|5-20|gt48|2019-2021+11-20+11-14+13-14+13-13: 1/1 admitted from 1 examined.
+  python|5-20|gt48|2019-2021+11-20+11-14+13-14+14-14: 0/1 admitted from 2 examined.
+  python|5-20|gt48|2019-2021+11-20+15-20+15-17+15-15: 0/1 admitted from 2 examined.
+  python|5-20|gt48|2019-2021+11-20+15-20+15-17+16-17+16-16: 0/1 admitted from 2 examined.
+  python|5-20|gt48|2019-2021+11-20+15-20+15-17+16-17+17-17: 0/1 admitted from 2 examined.
+  python|5-20|gt48|2019-2021+11-20+15-20+18-20+18-18: 1/1 admitted from 1 examined.
+  python|5-20|gt48|2019-2021+11-20+15-20+18-20+19-20+19-19: 0/1 admitted from 2 examined.
+  python|5-20|gt48|2019-2021+11-20+15-20+18-20+19-20+20-20: 0/1 admitted from 2 examined.
+  python|5-20|gt48|2022plus+5-10+5-7+5-5: 1/1 admitted from 2 examined.
+  python|5-20|gt48|2022plus+5-10+5-7+6-7+6-6: 0/1 admitted from 2 examined.
+  python|5-20|gt48|2022plus+5-10+5-7+6-7+7-7: 0/1 admitted from 2 examined.
+  python|5-20|gt48|2022plus+5-10+8-10+8-8: 1/1 admitted from 1 examined.
+  python|5-20|gt48|2022plus+5-10+8-10+9-10+9-9: 1/1 admitted from 2 examined.
+  python|5-20|gt48|2022plus+5-10+8-10+9-10+10-10: 1/1 admitted from 2 examined.
+  python|5-20|gt48|2022plus+11-20+11-14+11-12+11-11: 1/1 admitted from 2 examined.
+  python|5-20|gt48|2022plus+11-20+11-14+11-12+12-12: 0/1 admitted from 2 examined.
+  python|5-20|gt48|2022plus+11-20+11-14+13-14+13-13: 1/1 admitted from 2 examined.
+  python|5-20|gt48|2022plus+11-20+15-20+15-17+16-17: 1/1 admitted from 1 examined.
+  python|5-20|gt48|2022plus+11-20+15-20+18-20: 0/1 admitted from 2 examined.
+  python|21-50|lt6|le2015+21-32: 2/2 admitted from 3 examined.
+  python|21-50|lt6|le2015+33-50: 1/1 admitted from 2 examined.
+  python|21-50|lt6|2016-2018+21-32+21-25: 1/1 admitted from 1 examined.
+  python|21-50|lt6|2016-2018+21-32+26-32: 1/1 admitted from 1 examined.
+  python|21-50|lt6|2016-2018+33-50: 2/2 admitted from 3 examined.
+  python|21-50|lt6|2019-2021+21-32+21-25+23-25: 1/1 admitted from 1 examined.
+  python|21-50|lt6|2019-2021+21-32+26-32+26-28: 1/1 admitted from 1 examined.
+  python|21-50|lt6|2019-2021+21-32+26-32+29-32: 1/1 admitted from 2 examined.
+  python|21-50|lt6|2019-2021+33-50+41-50: 1/1 admitted from 1 examined.
+  python|21-50|lt6|2022plus+21-32+21-25+21-22+21-21: 1/1 admitted from 2 examined.
+  python|21-50|lt6|2022plus+21-32+21-25+21-22+22-22: 1/1 admitted from 1 examined.
+  python|21-50|lt6|2022plus+21-32+21-25+23-25+23-23: 1/1 admitted from 2 examined.
+  python|21-50|lt6|2022plus+21-32+21-25+23-25+24-25+24-24: 1/1 admitted from 1 examined.
+  python|21-50|6-18|le2015: 4/4 admitted from 7 examined.
+  python|21-50|6-18|2016-2018+21-32: 2/2 admitted from 2 examined.
+2026-10-08 04:03:56,770 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  python|21-50|6-18|2016-2018+33-50: 2/2 admitted from 3 examined.
+  python|21-50|6-18|2019-2021+21-32+21-25: 0/1 admitted from 2 examined.
+  python|21-50|6-18|2019-2021+21-32+26-32: 1/1 admitted from 1 examined.
+  python|21-50|6-18|2019-2021+33-50+33-40: 1/1 admitted from 1 examined.
+2026-10-08 04:04:33,753 INFO apps.scanning.adapters.pypi Skipping a dependency reference that names no package.
+  python|21-50|6-18|2019-2021+33-50+41-50: 1/1 admitted from 1 examined.
+  python|21-50|6-18|2022plus+21-32+21-25+21-22+21-21: 1/1 admitted from 2 examined.
+  python|21-50|6-18|2022plus+21-32+21-25+21-22+22-22: 1/1 admitted from 1 examined.
+  python|21-50|6-18|2022plus+21-32+21-25+23-25+23-23: 1/1 admitted from 1 examined.
+  python|21-50|6-18|2022plus+21-32+21-25+23-25+24-25+24-24: 1/1 admitted from 1 examined.
+  python|21-50|18-48|le2015+21-32: 4/4 admitted from 7 examined.
+  python|21-50|18-48|le2015+33-50: 3/3 admitted from 3 examined.
+  python|21-50|18-48|2016-2018+21-32+21-25+21-22: 1/1 admitted from 1 examined.
+  python|21-50|18-48|2016-2018+21-32+21-25+23-25: 1/1 admitted from 2 examined.
+  python|21-50|18-48|2016-2018+21-32+26-32+26-28: 1/1 admitted from 2 examined.
+  python|21-50|18-48|2016-2018+21-32+26-32+29-32: 1/1 admitted from 1 examined.
+  python|21-50|18-48|2016-2018+33-50+33-40: 2/2 admitted from 3 examined.
+  python|21-50|18-48|2016-2018+33-50+41-50: 1/1 admitted from 2 examined.
+  python|21-50|18-48|2019-2021+21-32+21-25+21-22+21-21: 1/1 admitted from 1 examined.
+  python|21-50|18-48|2019-2021+21-32+21-25+21-22+22-22: 1/1 admitted from 1 examined.
+  python|21-50|18-48|2019-2021+21-32+26-32+29-32+29-30: 1/1 admitted from 1 examined.
+  python|21-50|18-48|2019-2021+21-32+26-32+29-32+31-32: 1/1 admitted from 1 examined.
+  python|21-50|18-48|2019-2021+33-50+33-40+33-36+33-34: 1/1 admitted from 1 examined.
+  python|21-50|18-48|2019-2021+33-50+41-50+41-45+43-45: 1/1 admitted from 1 examined.
+  python|21-50|18-48|2019-2021+33-50+41-50+46-50: 1/1 admitted from 2 examined.
+  python|21-50|18-48|2022plus+21-32+21-25+21-22+21-21: 1/1 admitted from 1 examined.
+  python|21-50|18-48|2022plus+21-32+21-25+21-22+22-22: 1/1 admitted from 1 examined.
+  python|21-50|18-48|2022plus+21-32+21-25+23-25+23-23: 0/1 admitted from 2 examined.
+  python|21-50|18-48|2022plus+21-32+21-25+23-25+24-25+24-24: 1/1 admitted from 1 examined.
+  python|21-50|18-48|2022plus+21-32+21-25+23-25+24-25+25-25: 1/1 admitted from 1 examined.
+  python|21-50|18-48|2022plus+21-32+26-32+26-28+26-26: 1/1 admitted from 1 examined.
+  python|21-50|18-48|2022plus+21-32+26-32+26-28+27-28+27-27: 1/1 admitted from 2 examined.
+  python|21-50|gt48|le2015+21-32+21-25+21-22+21-21: 1/1 admitted from 2 examined.
+  python|21-50|gt48|le2015+21-32+21-25+21-22+22-22: 1/1 admitted from 1 examined.
+  python|21-50|gt48|le2015+21-32+21-25+23-25+23-23: 0/1 admitted from 2 examined.
+  python|21-50|gt48|le2015+21-32+21-25+23-25+24-25+24-24: 0/1 admitted from 2 examined.
+  python|21-50|gt48|le2015+21-32+21-25+23-25+24-25+25-25: 0/1 admitted from 2 examined.
+  python|21-50|gt48|le2015+21-32+26-32+29-32+29-30: 1/1 admitted from 2 examined.
+  python|21-50|gt48|le2015+21-32+26-32+29-32+31-32: 1/1 admitted from 2 examined.
+  python|21-50|gt48|le2015+33-50+33-40+33-36+33-34: 1/1 admitted from 2 examined.
+  python|21-50|gt48|le2015+33-50+33-40+33-36+35-36: 0/1 admitted from 2 examined.
+  python|21-50|gt48|le2015+33-50+41-50+41-45+43-45: 1/1 admitted from 1 examined.
+  python|21-50|gt48|le2015+33-50+41-50+46-50: 0/1 admitted from 2 examined.
+  python|21-50|gt48|2016-2018+21-32+21-25+21-22+21-21: 0/1 admitted from 2 examined.
+  python|21-50|gt48|2016-2018+21-32+21-25+21-22+22-22: 1/1 admitted from 2 examined.
+  python|21-50|gt48|2016-2018+21-32+21-25+23-25+23-23: 1/1 admitted from 1 examined.
+  python|21-50|gt48|2016-2018+21-32+21-25+23-25+24-25+24-24: 1/1 admitted from 2 examined.
+  python|21-50|gt48|2016-2018+21-32+21-25+23-25+24-25+25-25: 1/1 admitted from 1 examined.
+  python|21-50|gt48|2016-2018+21-32+26-32+26-28+26-26: 0/1 admitted from 2 examined.
+  python|21-50|gt48|2016-2018+33-50+33-40+33-36+35-36: 1/1 admitted from 1 examined.
+  python|21-50|gt48|2016-2018+33-50+33-40+37-40+37-38: 0/1 admitted from 2 examined.
+  python|21-50|gt48|2016-2018+33-50+33-40+37-40+39-40: 1/1 admitted from 1 examined.
+  python|21-50|gt48|2016-2018+33-50+41-50+41-45+43-45: 0/1 admitted from 2 examined.
+  python|21-50|gt48|2016-2018+33-50+41-50+46-50+48-50: 0/1 admitted from 2 examined.
+  python|21-50|gt48|2019-2021+21-32+21-25+21-22+21-21: 1/1 admitted from 2 examined.
+  python|21-50|gt48|2019-2021+21-32+21-25+21-22+22-22: 1/1 admitted from 1 examined.
+  python|21-50|gt48|2019-2021+21-32+21-25+23-25+23-23: 1/1 admitted from 1 examined.
+  python|21-50|gt48|2019-2021+21-32+21-25+23-25+24-25+24-24: 0/1 admitted from 2 examined.
+  python|21-50|gt48|2019-2021+21-32+21-25+23-25+24-25+25-25: 1/1 admitted from 1 examined.
+  python|21-50|gt48|2019-2021+21-32+26-32+26-28+26-26: 0/1 admitted from 2 examined.
+  python|21-50|gt48|2019-2021+21-32+26-32+26-28+27-28+27-27: 0/1 admitted from 2 examined.
+  python|21-50|gt48|2019-2021+21-32+26-32+26-28+27-28+28-28: 1/1 admitted from 2 examined.
+  python|21-50|gt48|2019-2021+21-32+26-32+29-32+29-30+29-29: 1/1 admitted from 1 examined.
+  python|21-50|gt48|2019-2021+33-50+41-50+41-45+41-42: 1/1 admitted from 2 examined.
+  python|21-50|gt48|2019-2021+33-50+41-50+41-45+43-45+44-45: 1/1 admitted from 2 examined.
+  python|21-50|gt48|2022plus+21-32+21-25+21-22: 1/2 admitted from 5 examined.
+  python|21-50|gt48|2022plus+21-32+21-25+23-25: 2/2 admitted from 3 examined.
+  python|21-50|gt48|2022plus+21-32+26-32: 3/3 admitted from 4 examined.
+2026-10-08 04:14:08,120 INFO apps.scanning.adapters.pypi Skipping a dependency reference that names no package.
+2026-10-08 04:14:08,120 INFO apps.scanning.adapters.pypi Skipping a dependency reference that names no package.
+2026-10-08 04:14:08,120 INFO apps.scanning.adapters.pypi Skipping a dependency reference that names no package.
+2026-10-08 04:14:08,120 INFO apps.scanning.adapters.pypi Skipping a dependency reference that names no package.
+2026-10-08 04:14:08,120 INFO apps.scanning.adapters.pypi Skipping a dependency reference that names no package.
+  python|21-50|gt48|2022plus+33-50+33-40: 2/2 admitted from 4 examined.
+  python|21-50|gt48|2022plus+33-50+41-50: 2/2 admitted from 5 examined.
+  python|51-200|lt6|le2015+51-100: 2/2 admitted from 3 examined.
+  python|51-200|lt6|le2015+101-200: 1/1 admitted from 1 examined.
+  python|51-200|lt6|2016-2018+51-100+51-71: 1/1 admitted from 1 examined.
+  python|51-200|lt6|2016-2018+51-100+72-100: 1/1 admitted from 2 examined.
+  python|51-200|lt6|2016-2018+101-200+101-142: 1/1 admitted from 1 examined.
+  python|51-200|lt6|2019-2021+51-100+51-71+51-60: 1/1 admitted from 1 examined.
+  python|51-200|lt6|2019-2021+101-200+101-142: 1/1 admitted from 1 examined.
+  python|51-200|lt6|2019-2021+101-200+143-200: 0/1 admitted from 2 examined.
+  python|51-200|lt6|2022plus+51-100+51-71+51-60+56-60+58-60: 1/1 admitted from 1 examined.
+  python|51-200|lt6|2022plus+101-200+101-142+120-142+131-142: 1/1 admitted from 1 examined.
+  python|51-200|lt6|2022plus+101-200+143-200+143-169+143-155: 1/1 admitted from 1 examined.
+  python|51-200|6-18|le2015: 3/3 admitted from 5 examined.
+2026-10-08 04:16:38,716 WARNING apps.scanning.adapters.registry_clients PyPI lookup failed for a package.
+  python|51-200|6-18|2016-2018+51-100: 2/2 admitted from 3 examined.
+  python|51-200|6-18|2016-2018+101-200: 1/1 admitted from 1 examined.
+  python|51-200|6-18|2019-2021+51-100+51-71: 1/1 admitted from 1 examined.
+  python|51-200|6-18|2019-2021+51-100+72-100: 1/1 admitted from 1 examined.
+  python|51-200|6-18|2019-2021+101-200: 1/1 admitted from 1 examined.
+  python|51-200|6-18|2022plus+51-100+51-71+51-60+51-55+53-55: 1/1 admitted from 1 examined.
+  python|51-200|6-18|2022plus+51-100+51-71+61-71+61-65: 1/1 admitted from 1 examined.
+  python|51-200|6-18|2022plus+51-100+72-100+72-84+78-84: 1/1 admitted from 1 examined.
+  python|51-200|18-48|le2015+51-100+51-71: 2/2 admitted from 3 examined.
+  python|51-200|18-48|le2015+51-100+72-100: 2/2 admitted from 2 examined.
+  python|51-200|18-48|le2015+101-200: 3/3 admitted from 3 examined.
+  python|51-200|18-48|2016-2018+51-100+51-71+51-60: 1/1 admitted from 1 examined.
+  python|51-200|18-48|2016-2018+51-100+51-71+61-71: 1/1 admitted from 1 examined.
+  python|51-200|18-48|2016-2018+51-100+72-100: 2/2 admitted from 2 examined.
+  python|51-200|18-48|2016-2018+101-200+101-142: 2/2 admitted from 2 examined.
+  python|51-200|18-48|2016-2018+101-200+143-200: 1/1 admitted from 1 examined.
+  python|51-200|18-48|2019-2021+51-100+51-71+51-60+51-55: 1/1 admitted from 1 examined.
+  python|51-200|18-48|2019-2021+51-100+51-71+51-60+56-60: 1/1 admitted from 2 examined.
+  python|51-200|18-48|2019-2021+51-100+51-71+61-71+66-71: 1/1 admitted from 1 examined.
+  python|51-200|18-48|2019-2021+101-200+101-142+101-119: 0/1 admitted from 2 examined.
+  python|51-200|18-48|2019-2021+101-200+101-142+120-142: 1/1 admitted from 2 examined.
+  python|51-200|18-48|2019-2021+101-200+143-200+143-169: 1/1 admitted from 1 examined.
+  python|51-200|18-48|2019-2021+101-200+143-200+170-200: 1/1 admitted from 2 examined.
+  python|51-200|18-48|2022plus+51-100+51-71+51-60+51-55+51-52: 1/1 admitted from 2 examined.
+  python|51-200|18-48|2022plus+51-100+51-71+51-60+56-60+58-60: 1/1 admitted from 1 examined.
+  python|51-200|18-48|2022plus+51-100+51-71+61-71+61-65+63-65: 0/1 admitted from 2 examined.
+  python|51-200|18-48|2022plus+51-100+72-100+85-100+93-100: 1/1 admitted from 1 examined.
+  python|51-200|18-48|2022plus+101-200+101-142+101-119+101-109: 1/1 admitted from 2 examined.
+  python|51-200|18-48|2022plus+101-200+101-142+101-119+110-119: 1/1 admitted from 1 examined.
+  python|51-200|18-48|2022plus+101-200+101-142+120-142+131-142: 1/1 admitted from 1 examined.
+  python|51-200|gt48|le2015+51-100+51-71+51-60+51-55: 0/1 admitted from 2 examined.
+  python|51-200|gt48|le2015+51-100+51-71+51-60+56-60: 0/1 admitted from 2 examined.
+  python|51-200|gt48|le2015+51-100+51-71+61-71+61-65: 1/1 admitted from 1 examined.
+  python|51-200|gt48|le2015+51-100+51-71+61-71+66-71: 1/1 admitted from 1 examined.
+  python|51-200|gt48|le2015+51-100+72-100+72-84: 2/2 admitted from 3 examined.
+  python|51-200|gt48|le2015+51-100+72-100+85-100: 1/1 admitted from 1 examined.
+  python|51-200|gt48|le2015+101-200+101-142+101-119: 0/1 admitted from 2 examined.
+  python|51-200|gt48|le2015+101-200+101-142+120-142: 1/1 admitted from 1 examined.
+2026-10-08 04:22:28,875 INFO apps.scanning.adapters.pypi Skipping a dependency reference that names no package.
+  python|51-200|gt48|le2015+101-200+143-200: 2/2 admitted from 4 examined.
+  python|51-200|gt48|2016-2018+51-100+51-71+51-60+51-55+53-55: 1/1 admitted from 2 examined.
+  python|51-200|gt48|2016-2018+51-100+51-71+61-71+61-65: 0/1 admitted from 2 examined.
+  python|51-200|gt48|2016-2018+51-100+51-71+61-71+66-71: 1/1 admitted from 2 examined.
+  python|51-200|gt48|2016-2018+51-100+72-100+72-84+72-77: 1/1 admitted from 1 examined.
+  python|51-200|gt48|2016-2018+51-100+72-100+72-84+78-84: 0/1 admitted from 2 examined.
+  python|51-200|gt48|2016-2018+51-100+72-100+85-100+85-92: 0/1 admitted from 2 examined.
+2026-10-08 04:23:18,585 INFO apps.scanning.adapters.pypi Skipping a self-referential editable install.
+  python|51-200|gt48|2016-2018+51-100+72-100+85-100+93-100: 1/1 admitted from 1 examined.
+  python|51-200|gt48|2016-2018+101-200+101-142+101-119+101-109: 0/1 admitted from 2 examined.
+  python|51-200|gt48|2016-2018+101-200+101-142+101-119+110-119: 0/1 admitted from 2 examined.
+  python|51-200|gt48|2016-2018+101-200+143-200+143-169: 0/1 admitted from 2 examined.
+  python|51-200|gt48|2016-2018+101-200+143-200+170-200: 0/1 admitted from 2 examined.
+  python|51-200|gt48|2019-2021+51-100+51-71+51-60+51-55+51-52: 1/1 admitted from 1 examined.
+  python|51-200|gt48|2019-2021+51-100+51-71+51-60+51-55+53-55: 1/1 admitted from 1 examined.
+  python|51-200|gt48|2019-2021+51-100+51-71+51-60+56-60+58-60: 1/1 admitted from 1 examined.
+  python|51-200|gt48|2019-2021+51-100+51-71+61-71+61-65+63-65: 0/1 admitted from 2 examined.
+  python|51-200|gt48|2019-2021+51-100+72-100+72-84+72-77: 1/1 admitted from 1 examined.
+  python|51-200|gt48|2019-2021+51-100+72-100+72-84+78-84: 1/1 admitted from 1 examined.
+  python|51-200|gt48|2019-2021+51-100+72-100+85-100+85-92: 1/1 admitted from 1 examined.
+  python|51-200|gt48|2019-2021+51-100+72-100+85-100+93-100: 0/1 admitted from 2 examined.
+  python|51-200|gt48|2019-2021+101-200+101-142+101-119+101-109: 0/1 admitted from 2 examined.
+  python|51-200|gt48|2019-2021+101-200+143-200+143-169: 1/1 admitted from 1 examined.
+  python|51-200|gt48|2019-2021+101-200+143-200+170-200: 1/1 admitted from 1 examined.
+  python|51-200|gt48|2022plus+51-100: 8/8 admitted from 14 examined.
+  python|51-200|gt48|2022plus+101-200: 3/3 admitted from 6 examined.
+  python|201-1000|lt6|le2015+201-448: 2/2 admitted from 2 examined.
+2026-10-08 04:26:52,747 WARNING apps.scanning.scanner Tree contained 74 manifests; scanning the 50 shallowest.
+  python|201-1000|lt6|le2015+449-1000: 2/2 admitted from 2 examined.
+  python|201-1000|lt6|2016-2018+201-448: 2/2 admitted from 3 examined.
+  python|201-1000|lt6|2016-2018+449-1000: 2/2 admitted from 3 examined.
+  python|201-1000|lt6|2019-2021+201-448+201-300: 1/1 admitted from 1 examined.
+  python|201-1000|lt6|2019-2021+201-448+301-448: 1/1 admitted from 1 examined.
+  python|201-1000|lt6|2019-2021+449-1000: 2/2 admitted from 2 examined.
+  python|201-1000|lt6|2022plus+201-448+201-300+201-245+201-221: 1/1 admitted from 2 examined.
+  python|201-1000|lt6|2022plus+201-448+201-300+201-245+222-245: 1/1 admitted from 1 examined.
+  python|201-1000|lt6|2022plus+201-448+301-448+368-448: 1/1 admitted from 1 examined.
+  python|201-1000|lt6|2022plus+449-1000+449-670+449-548: 1/1 admitted from 1 examined.
+2026-10-08 04:29:20,667 INFO apps.scanning.adapters.pypi Skipping a dependency reference that names no package.
+  python|201-1000|6-18|le2015: 4/4 admitted from 4 examined.
+  python|201-1000|6-18|2016-2018: 4/4 admitted from 8 examined.
+2026-10-08 04:30:11,537 INFO apps.scanning.adapters.pypi Skipping a dependency reference that names no package.
+  python|201-1000|6-18|2019-2021: 4/4 admitted from 4 examined.
+  python|201-1000|6-18|2022plus+201-448+201-300+201-245: 1/1 admitted from 1 examined.
+  python|201-1000|6-18|2022plus+201-448+201-300+246-300: 1/1 admitted from 1 examined.
+  python|201-1000|6-18|2022plus+201-448+301-448+301-367: 1/1 admitted from 1 examined.
+  python|201-1000|6-18|2022plus+449-1000+449-670: 1/1 admitted from 2 examined.
+  python|201-1000|18-48|le2015+201-448: 4/4 admitted from 6 examined.
+  python|201-1000|18-48|le2015+449-1000: 3/3 admitted from 5 examined.
+  python|201-1000|18-48|2016-2018+201-448+201-300: 2/2 admitted from 2 examined.
+  python|201-1000|18-48|2016-2018+201-448+301-448: 2/2 admitted from 3 examined.
+  python|201-1000|18-48|2016-2018+449-1000: 3/3 admitted from 3 examined.
+  python|201-1000|18-48|2019-2021+201-448+201-300+201-245: 1/1 admitted from 1 examined.
+  python|201-1000|18-48|2019-2021+201-448+201-300+246-300: 1/1 admitted from 1 examined.
+  python|201-1000|18-48|2019-2021+201-448+301-448: 2/2 admitted from 2 examined.
+  python|201-1000|18-48|2019-2021+449-1000+449-670: 2/2 admitted from 3 examined.
+  python|201-1000|18-48|2019-2021+449-1000+671-1000: 1/1 admitted from 1 examined.
+  python|201-1000|18-48|2022plus+201-448+201-300+201-245+201-221: 1/1 admitted from 1 examined.
+  python|201-1000|18-48|2022plus+201-448+201-300+201-245+222-245: 1/1 admitted from 1 examined.
+  python|201-1000|18-48|2022plus+201-448+201-300+246-300: 1/1 admitted from 1 examined.
+  python|201-1000|18-48|2022plus+201-448+301-448+301-367: 1/1 admitted from 1 examined.
+  python|201-1000|18-48|2022plus+201-448+301-448+368-448: 1/1 admitted from 1 examined.
+  python|201-1000|18-48|2022plus+449-1000+449-670: 1/1 admitted from 1 examined.
+  python|201-1000|18-48|2022plus+449-1000+671-1000: 1/1 admitted from 2 examined.
+  python|201-1000|gt48|le2015+201-448+201-300: 5/5 admitted from 10 examined.
+  python|201-1000|gt48|le2015+201-448+301-448: 2/3 admitted from 8 examined.
+  python|201-1000|gt48|le2015+449-1000: 2/3 admitted from 8 examined.
+  python|201-1000|gt48|2016-2018+201-448+201-300+201-245: 2/3 admitted from 8 examined.
+  python|201-1000|gt48|2016-2018+201-448+201-300+246-300: 2/2 admitted from 3 examined.
+  python|201-1000|gt48|2016-2018+201-448+301-448: 3/3 admitted from 6 examined.
+2026-10-08 04:36:18,452 INFO apps.scanning.adapters.pypi Skipping a dependency reference that names no package.
+  python|201-1000|gt48|2016-2018+449-1000: 3/3 admitted from 5 examined.
+  python|201-1000|gt48|2019-2021+201-448+201-300+201-245: 3/3 admitted from 3 examined.
+  python|201-1000|gt48|2019-2021+201-448+201-300+246-300: 2/2 admitted from 4 examined.
+  python|201-1000|gt48|2019-2021+201-448+301-448: 3/3 admitted from 8 examined.
+  python|201-1000|gt48|2019-2021+449-1000: 3/3 admitted from 6 examined.
+  python|201-1000|gt48|2022plus: 11/11 admitted from 23 examined.
+  python|1000+|lt6|le2015+1001-3002: 2/2 admitted from 3 examined.
+  python|1000+|lt6|le2015+3003-inf: 2/2 admitted from 2 examined.
+  python|1000+|lt6|2016-2018: 4/4 admitted from 4 examined.
+2026-10-08 04:39:35,334 INFO apps.scanning.adapters.pypi Skipping a dependency reference that names no package.
+2026-10-08 04:39:37,305 WARNING apps.scanning.scanner Tree contained 73 manifests; scanning the 50 shallowest.
+  python|1000+|lt6|2019-2021: 4/4 admitted from 4 examined.
+  python|1000+|lt6|2022plus+1001-3002+1001-1733+1001-1317: 1/1 admitted from 1 examined.
+  python|1000+|lt6|2022plus+1001-3002+1001-1733+1318-1733: 1/1 admitted from 1 examined.
+  python|1000+|lt6|2022plus+1001-3002+1734-3002: 1/1 admitted from 1 examined.
+  python|1000+|lt6|2022plus+3003-inf+3003-9008: 1/1 admitted from 1 examined.
+  python|1000+|6-18|le2015: 4/4 admitted from 4 examined.
+  python|1000+|6-18|2016-2018: 4/4 admitted from 7 examined.
+  python|1000+|6-18|2019-2021: 4/4 admitted from 5 examined.
+  python|1000+|6-18|2022plus: 4/4 admitted from 4 examined.
+2026-10-08 04:41:51,922 INFO apps.scanning.adapters.pypi Skipping a self-referential editable install.
+  python|1000+|18-48|le2015: 7/7 admitted from 11 examined.
+2026-10-08 04:42:23,263 INFO apps.scanning.adapters.pypi Ignoring an unrecognised pip option in a requirements file.
+  python|1000+|18-48|2016-2018: 7/7 admitted from 10 examined.
+  python|1000+|18-48|2019-2021: 7/7 admitted from 9 examined.
+2026-10-08 04:43:19,624 INFO apps.scanning.adapters.pypi Skipping a dependency reference that names no package.
+2026-10-08 04:43:19,624 INFO apps.scanning.adapters.pypi Skipping a dependency reference that names no package.
+2026-10-08 04:43:21,806 INFO apps.scanning.adapters.pypi Skipping a dependency reference that names no package.
+2026-10-08 04:43:24,209 WARNING apps.scanning.adapters.registry_clients PyPI lookup failed for a package.
+2026-10-08 04:43:30,825 INFO apps.scanning.adapters.pypi Skipping a dependency reference that names no package.
+2026-10-08 04:43:30,825 INFO apps.scanning.adapters.pypi Skipping a dependency reference that names no package.
+2026-10-08 04:43:30,825 INFO apps.scanning.adapters.pypi Skipping a dependency reference that names no package.
+  python|1000+|18-48|2022plus: 7/7 admitted from 9 examined.
+  python|1000+|gt48|le2015: 11/11 admitted from 16 examined.
+  python|1000+|gt48|2016-2018: 11/11 admitted from 25 examined.
+  python|1000+|gt48|2019-2021: 11/11 admitted from 18 examined.
+2026-10-08 04:44:56,114 INFO apps.scanning.adapters.pypi Skipping a dependency reference that names no package.
+  python|1000+|gt48|2022plus: 5/8 admitted from 8 examined.
+Admitted 914 of 1343 candidate(s) (68%) across 1326 cell(s) in 1131 search call(s).
+  rejected duplicate_dependency_set: 4
+  rejected no_declared_dependencies: 55
+  rejected no_supported_manifest: 370
+  wrote D:\Symbiosis\RepoVitals\research_data\corpus\corpus_manifest.json
+  wrote D:\Symbiosis\RepoVitals\research_data\corpus\strata_report.md
+Read the strata report before handing this on — WP-4's checklist is already computed at the top of it.
+EXIT 0 2026-10-07T23:15:00Z

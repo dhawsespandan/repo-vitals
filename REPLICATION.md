@@ -225,6 +225,10 @@ Medium ≥ 50, roll-up decay 0.5 over at most 20 terms (§5.2–5.4).
 - **Live-scan rows and agent traces** name RepoVitals users and possibly
   private repositories; the export leaves them out unless `--source` asks.
 
+Everything else the research machine wrote is archived (checkpoints, run logs,
+the `v1`/`v2` corpus panels, S3's ground-truth pool, the pilots' traces):
+`wp/wp-N/raw/`, indexed in `wp/RAW_DATA.md`.
+
 ## 10. Limitations that travel with the data
 
 Quote these wherever the numbers go. File C's L1–L12 are the full register;

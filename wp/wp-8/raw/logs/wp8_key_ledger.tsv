@@ -1,0 +1,63 @@
+﻿2026-10-08T20:45:19Z	start A at 0/150 groq=member1 gemini=member1
+2026-10-08T22:37:09Z	end   A at 150/150 groq=member1 (+150)
+2026-10-08T22:37:09Z	DONE A: 150/150, 0 failed
+2026-10-08T22:37:09Z	start B at 0/150 groq=member1 gemini=member2
+2026-10-08T22:39:09Z	end   B at 1/150 groq=member1 (+1)
+2026-10-08T22:39:09Z	start B at 1/150 groq=member2 gemini=member2
+2026-10-08T23:46:20Z	end   B at 89/150 groq=member2 (+88)
+2026-10-08T23:46:20Z	start B at 89/150 groq=member3 gemini=member2
+2026-10-09T00:31:26Z	end   B at 150/150 groq=member3 (+61)
+2026-10-09T00:31:26Z	DONE B: 150/150, 0 failed
+2026-10-09T00:31:26Z	start C at 0/150 groq=member3 gemini=member1
+2026-10-09T00:47:58Z	end   C at 19/150 groq=member3 (+19)
+2026-10-09T00:47:58Z	start C at 19/150 groq=member4 gemini=member1
+2026-10-09T01:55:07Z	end   C at 107/150 groq=member4 (+88)
+2026-10-09T01:55:07Z	STOPPED at C (107/150): no unspent Groq key. Add keys to backend\.env.team and run this script again.
+2026-10-09T02:03:28Z	DONE A: 150/150, 0 failed
+2026-10-09T02:03:28Z	DONE B: 150/150, 0 failed
+2026-10-09T02:03:28Z	start C at 107/150 groq=member1 gemini=member1
+2026-10-09T02:12:07Z	end   C at 117/150 groq=member1 (+10)
+2026-10-09T02:12:07Z	start C at 117/150 groq=member2 gemini=member1
+2026-10-09T02:18:40Z	end   C at 124/150 groq=member2 (+7)
+2026-10-09T02:18:40Z	start C at 124/150 groq=member3 gemini=member1
+2026-10-09T02:23:36Z	end   C at 129/150 groq=member3 (+5)
+2026-10-09T02:23:36Z	start C at 129/150 groq=member4 gemini=member1
+2026-10-09T02:26:14Z	end   C at 131/150 groq=member4 (+2)
+2026-10-09T02:26:14Z	STOPPED at C (131/150): no unspent Groq key. Add keys to backend\.env.team and run this script again.
+2026-10-09T02:29:01Z	DONE A: 150/150, 0 failed
+2026-10-09T02:29:01Z	DONE B: 150/150, 0 failed
+2026-10-09T02:29:01Z	start C at 131/150 groq=member1 gemini=member1
+2026-10-09T02:30:58Z	end   C at 132/150 groq=member1 (+1)
+2026-10-09T02:30:58Z	start C at 132/150 groq=member2 gemini=member1
+2026-10-09T02:33:38Z	end   C at 134/150 groq=member2 (+2)
+2026-10-09T02:33:38Z	start C at 134/150 groq=member3 gemini=member1
+2026-10-09T02:35:32Z	end   C at 135/150 groq=member3 (+1)
+2026-10-09T02:35:32Z	start C at 135/150 groq=member4 gemini=member1
+2026-10-09T02:36:43Z	end   C at 135/150 groq=member4 (+0)
+2026-10-09T02:36:43Z	STOPPED at C (135/150): no unspent Groq key. Judging what exists, then exiting; add keys or wait, and run this script again.
+2026-10-09T02:36:43Z	analyze --judge gemini=member1 runs=A_75246f3b_openai-gpt-oss-120b,B_75246f3b_openai-gpt-oss-120b,C_75246f3b_openai-gpt-oss-120b
+2026-10-09T02:45:09Z	analyze --judge gemini=member2 runs=A_75246f3b_openai-gpt-oss-120b,B_75246f3b_openai-gpt-oss-120b,C_75246f3b_openai-gpt-oss-120b
+2026-10-09T02:45:13Z	analyze --judge gemini=member3 runs=A_75246f3b_openai-gpt-oss-120b,B_75246f3b_openai-gpt-oss-120b,C_75246f3b_openai-gpt-oss-120b
+2026-10-09T03:09:07Z	analyze --judge gemini=member4 runs=A_75246f3b_openai-gpt-oss-120b,B_75246f3b_openai-gpt-oss-120b,C_75246f3b_openai-gpt-oss-120b
+2026-10-09T03:27:56Z	DONE A: 150/150, 0 failed
+2026-10-09T03:27:56Z	DONE B: 150/150, 0 failed
+2026-10-09T03:27:56Z	start C at 135/150 groq=member1 gemini=member1
+2026-10-09T03:31:25Z	end   C at 138/150 groq=member1 (+3)
+2026-10-09T03:31:25Z	start C at 138/150 groq=member2 gemini=member1
+2026-10-09T03:34:50Z	end   C at 141/150 groq=member2 (+3)
+2026-10-09T03:34:50Z	start C at 141/150 groq=member3 gemini=member1
+2026-10-09T03:38:17Z	end   C at 144/150 groq=member3 (+3)
+2026-10-09T03:38:17Z	start C at 144/150 groq=member4 gemini=member1
+2026-10-09T03:41:41Z	end   C at 147/150 groq=member4 (+3)
+2026-10-09T03:41:41Z	STOPPED at C (147/150): no unspent Groq key. Judging what exists, then exiting; add keys or wait, and run this script again.
+2026-10-09T03:41:41Z	analyze --judge gemini=member1 runs=A_75246f3b_openai-gpt-oss-120b,B_75246f3b_openai-gpt-oss-120b,C_75246f3b_openai-gpt-oss-120b
+2026-10-09T14:17:53Z	DONE A: 150/150, 0 failed
+2026-10-09T14:17:53Z	DONE B: 150/150, 0 failed
+2026-10-09T14:17:53Z	start C at 147/150 groq=member1 gemini=member1
+2026-10-09T14:19:43Z	end   C at 150/150 groq=member1 (+3)
+2026-10-09T14:19:43Z	DONE C: 150/150, 0 failed
+2026-10-09T14:19:43Z	analyze --judge gemini=member1 runs=A_75246f3b_openai-gpt-oss-120b,B_75246f3b_openai-gpt-oss-120b,C_75246f3b_openai-gpt-oss-120b
+2026-10-09T14:21:29Z	analyze --judge gemini=member2 runs=A_75246f3b_openai-gpt-oss-120b,B_75246f3b_openai-gpt-oss-120b,C_75246f3b_openai-gpt-oss-120b
+2026-10-09T14:21:32Z	analyze --judge gemini=member3 runs=A_75246f3b_openai-gpt-oss-120b,B_75246f3b_openai-gpt-oss-120b,C_75246f3b_openai-gpt-oss-120b
+2026-10-09T14:21:36Z	analyze --judge gemini=member4 runs=A_75246f3b_openai-gpt-oss-120b,B_75246f3b_openai-gpt-oss-120b,C_75246f3b_openai-gpt-oss-120b
+2026-10-09T14:21:39Z	ALL DONE. Tables: research_data\runs\analysis\tables.md

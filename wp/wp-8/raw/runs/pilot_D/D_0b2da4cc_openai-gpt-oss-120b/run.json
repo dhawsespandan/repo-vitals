@@ -1,0 +1,27 @@
+{
+  "run_id": "D_0b2da4cc_openai-gpt-oss-120b",
+  "condition": "D",
+  "description": "C over changelog and issue text (internal, D13)",
+  "internal": true,
+  "items_file": "pilot_items.jsonl",
+  "items_sha256": "0b2da4cc7fb3dddfdf3ba2277c25573152ec78b66ab53f9f95372901b2afd14d",
+  "items": 20,
+  "generator_model": "openai/gpt-oss-120b",
+  "temperature": 0,
+  "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "k": 5,
+  "grounding_min_sim": 0.3,
+  "grounding_min_chars": 400,
+  "prompt_digest": "eab96f832b2762b5",
+  "started_at": "2026-10-08T18:53:25.837133+00:00",
+  "sessions": [
+    {
+      "started_at": "2026-10-08T18:53:25.837133+00:00",
+      "finished_at": "2026-10-08T18:54:19.677643+00:00",
+      "attempted": 2,
+      "stopped": null
+    }
+  ],
+  "completed": 2,
+  "failed": 0
+}

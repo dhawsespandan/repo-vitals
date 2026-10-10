@@ -1,0 +1,28 @@
+Snapshot 2026-10-07: 2044 flagged (package, version) candidate(s)
+  extracted from 100/2044 candidates
+  extracted from 200/2044 candidates
+2026-10-08 23:00:43,886 INFO apps.scanning.adapters.registry_clients Packument over the size cap; using the abbreviated form.
+  extracted from 300/2044 candidates
+  extracted from 400/2044 candidates
+  extracted from 500/2044 candidates
+  extracted from 600/2044 candidates
+  extracted from 700/2044 candidates
+  extracted from 800/2044 candidates
+  extracted from 900/2044 candidates
+  extracted from 1000/2044 candidates
+  extracted from 1100/2044 candidates
+  extracted from 1200/2044 candidates
+  extracted from 1300/2044 candidates
+  extracted from 1400/2044 candidates
+  extracted from 1500/2044 candidates
+  extracted from 1600/2044 candidates
+  extracted from 1700/2044 candidates
+  extracted from 1800/2044 candidates
+  extracted from 1900/2044 candidates
+  extracted from 2000/2044 candidates
+  extracted from 2044/2044 candidates
+1420 item(s) extracted; labelled set of 150 written
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\ground_truth\ground_truth_candidates.jsonl
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\ground_truth\labelled_set.jsonl
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\ground_truth\labelled_set_meta.json
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\ground_truth\extraction_report.md

@@ -1,0 +1,89 @@
+﻿2026-10-09 08:14:26,237 WARNING apps.common.http Outbound POST /v1beta/models/gemini-3.5-flash-lite:generateContent hit an upstream rate limit.
+2026-10-09 08:14:26,237 INFO apps.research.experiment.judge The judge did not answer; retrying in 10s.
+2026-10-09 08:14:36,827 WARNING apps.common.http Outbound POST /v1beta/models/gemini-3.5-flash-lite:generateContent hit an upstream rate limit.
+2026-10-09 08:14:36,827 INFO apps.research.experiment.judge The judge did not answer; retrying in 30s.
+2026-10-09 08:15:07,695 WARNING apps.common.http Outbound POST /v1beta/models/gemini-3.5-flash-lite:generateContent hit an upstream rate limit.
+  Judging stopped (The judge did not answer.); the rest stay unjudged for now.
+Analysed 435 item-condition record(s) across 3 condition(s).
+  114 successful generation(s) unjudged.
+  judge: 74 call(s), 0 cache hit(s)
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\tables.md
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\correctness.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\correctness_not_given.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\faithfulness.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\precision.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\paired_tests.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\calibration.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\metrics.csv
+  Judging stopped (The judge API key was refused.); the rest stay unjudged for now.
+Analysed 435 item-condition record(s) across 3 condition(s).
+  113 successful generation(s) unjudged.
+  judge: 1 call(s), 0 cache hit(s)
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\tables.md
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\correctness.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\correctness_not_given.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\faithfulness.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\precision.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\paired_tests.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\calibration.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\metrics.csv
+Analysed 435 item-condition record(s) across 3 condition(s).
+  judge: 221 call(s), 0 cache hit(s)
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\tables.md
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\correctness.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\correctness_not_given.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\faithfulness.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\precision.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\paired_tests.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\calibration.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\metrics.csv
+Analysed 435 item-condition record(s) across 3 condition(s).
+  judge: 0 call(s), 0 cache hit(s)
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\tables.md
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\correctness.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\correctness_not_given.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\faithfulness.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\precision.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\paired_tests.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\calibration.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\metrics.csv
+Analysed 450 item-condition record(s) across 3 condition(s).
+  judge: 16 call(s), 0 cache hit(s)
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\tables.md
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\correctness.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\correctness_not_given.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\faithfulness.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\precision.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\paired_tests.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\calibration.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\metrics.csv
+Analysed 450 item-condition record(s) across 3 condition(s).
+  judge: 0 call(s), 0 cache hit(s)
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\tables.md
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\correctness.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\correctness_not_given.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\faithfulness.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\precision.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\paired_tests.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\calibration.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\metrics.csv
+Analysed 450 item-condition record(s) across 3 condition(s).
+  judge: 0 call(s), 0 cache hit(s)
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\tables.md
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\correctness.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\correctness_not_given.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\faithfulness.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\precision.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\paired_tests.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\calibration.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\metrics.csv
+Analysed 450 item-condition record(s) across 3 condition(s).
+  judge: 0 call(s), 0 cache hit(s)
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\tables.md
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\correctness.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\correctness_not_given.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\faithfulness.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\precision.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\paired_tests.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\calibration.csv
+  wrote D:\Symbiosis\RepoVitals\research_data\runs\analysis\metrics.csv
