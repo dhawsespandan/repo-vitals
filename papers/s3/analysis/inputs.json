@@ -1,0 +1,13 @@
+{
+  "bootstrap": 2000,
+  "inputs": {
+    "judge_validation/judge_validation_packet.md": "99c5c256ccdf4d5f39f195db6bfd98b011054534b0887db58d930b5c4f259a02",
+    "judge_validation/wp9_judge_labels.csv": "d69b97ad79d9e635feda424744dfd0bef93ec0b0b84787a316e967a7f4e1dc61",
+    "runs/A_75246f3b_openai-gpt-oss-120b/items.jsonl": "00995a2a0dc115da86050f5bc50bbeb6d073df4e47cc89fbce3460e3ad214f02",
+    "runs/B_75246f3b_openai-gpt-oss-120b/items.jsonl": "3b16bcd9b679c03cb8bc9e586cf9034708f1818cf21bb6a49f2d4cbc2d93caf4",
+    "runs/C_75246f3b_openai-gpt-oss-120b/items.jsonl": "400f0618dbf7f831726fb66b44ccfefdd6388edfb2e154d37874e84da2df1e8e",
+    "runs/analysis/metrics.csv": "3639ad89e88caaa13af5f3d44f86de7380f06b1a7ac88c9c83be38f213455334",
+    "runs/ground_truth/labelled_set.jsonl": "75246f3b462c31e9ff77aabc0fdddc182967d639e51334932f6542bacfcba9eb"
+  },
+  "seed": 42
+}
