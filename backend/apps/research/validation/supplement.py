@@ -785,7 +785,46 @@ def run(
     return result
 
 
+#: The export files the supplement reads. Their digests travel with its output,
+#: so a committed copy says which data it was computed from (`same_inputs`).
+INPUT_FILES: tuple[str, ...] = (
+    "scan_history.parquet",
+    "dependency_history.parquet",
+    "anchors/wp2_anchor_set.csv",
+    "validation_report/anchors.csv",
+    "validation_report/correlation.csv",
+    "validation_report/scores.csv",
+    "validation_report/sensitivity.csv",
+    "validation_report/weights_comparison.csv",
+)
+
+
+def input_digests(export: Path) -> dict[str, str]:
+    """The sha256 the export's own manifest records for each input file."""
+    manifest = json.loads((export / "MANIFEST.json").read_text(encoding="utf-8"))
+    recorded = {entry["path"]: entry["sha256"] for entry in manifest["files"]}
+    missing = [name for name in INPUT_FILES if name not in recorded]
+    if missing:
+        raise SupplementError(f"The export's manifest lists no {', '.join(missing)}.")
+    return {name: recorded[name] for name in INPUT_FILES}
+
+
+def same_inputs(export: Path, committed: Path) -> bool:
+    """Was `committed` computed from the data in `export`?
+
+    A committed copy is the paper's; a regeneration is compared with it only
+    when both read the same files, because a different export (the suite's
+    synthetic corpus, a future snapshot) is meant to give different numbers.
+    """
+    recorded = committed / "inputs.json"
+    if not recorded.exists():
+        return False
+    digests = json.loads(recorded.read_text(encoding="utf-8")).get("inputs", {})
+    return digests == input_digests(export)
+
+
 FILES: tuple[str, ...] = (
+    "inputs.json",
     "supplement.md",
     "class_shares.csv",
     "dependency_strata.csv",
@@ -893,6 +932,22 @@ def write(result: Supplement, out: Path) -> list[Path]:
         out / "hypotheses.csv",
         ["hypothesis", "version", "observed", "supported"],
         [[h.hypothesis, h.version, h.observed, h.supported] for h in result.hypotheses],
+    )
+    (out / "inputs.json").write_text(
+        json.dumps(
+            {
+                "snapshot_date": result.snapshot_date,
+                "repositories": result.repositories,
+                "versions": list(result.versions),
+                "seed": result.seed,
+                "bootstrap": result.iterations,
+                "inputs": result.inputs_digest,
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
     )
     (out / "supplement.md").write_text(render(result), encoding="utf-8")
     return [out / name for name in FILES]

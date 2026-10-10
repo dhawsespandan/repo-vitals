@@ -1,0 +1,25 @@
+version,statistic,group,n,value,ci_low,ci_high
+v1,"rho(score, assessed)",all,914,-0.681338,-0.718903,-0.642418
+v1,"rho(score, scorecard)",all,289,0.083684,-0.033730,0.204014
+v1,"partial rho(score, scorecard | assessed)",all,289,0.212312,0.095284,0.324473
+v1,"rho(scorecard, assessed)",all,289,0.094061,-0.019881,0.216258
+v1,"rho(score, assessed)",npm,475,-0.644969,-0.697906,-0.584284
+v1,"rho(score, scorecard)",npm,162,0.060703,-0.090663,0.206200
+v1,"partial rho(score, scorecard | assessed)",npm,162,0.148413,0.001982,0.301502
+v1,"rho(scorecard, assessed)",npm,162,0.090233,-0.055375,0.244889
+v1,"rho(score, assessed)",pypi,402,-0.678696,-0.733017,-0.618638
+v1,"rho(score, scorecard)",pypi,115,0.141864,-0.042159,0.316848
+v1,"partial rho(score, scorecard | assessed)",pypi,115,0.329776,0.148873,0.472444
+v1,"rho(scorecard, assessed)",pypi,115,0.122129,-0.085227,0.306209
+v2,"rho(score, assessed)",all,914,-0.614863,-0.656327,-0.571387
+v2,"rho(score, scorecard)",all,289,0.047115,-0.076866,0.168510
+v2,"partial rho(score, scorecard | assessed)",all,289,0.154311,0.031893,0.273844
+v2,"rho(scorecard, assessed)",all,289,0.094061,-0.019881,0.216258
+v2,"rho(score, assessed)",npm,475,-0.590223,-0.649841,-0.528355
+v2,"rho(score, scorecard)",npm,162,-0.017143,-0.175454,0.140933
+v2,"partial rho(score, scorecard | assessed)",npm,162,0.045490,-0.115250,0.206030
+v2,"rho(scorecard, assessed)",npm,162,0.090233,-0.055375,0.244889
+v2,"rho(score, assessed)",pypi,402,-0.647347,-0.702844,-0.586024
+v2,"rho(score, scorecard)",pypi,115,0.131509,-0.051689,0.313458
+v2,"partial rho(score, scorecard | assessed)",pypi,115,0.298821,0.111969,0.454413
+v2,"rho(scorecard, assessed)",pypi,115,0.122129,-0.085227,0.306209

@@ -142,6 +142,7 @@ code they call.
 | `scores.csv`, `entropy.csv`, `weights_comparison.csv`, `correlation.csv`, `confusion.csv`, `sensitivity.csv`, `anchors.csv` | S1 | same | yes |
 | `correlation_scatter.png`, `weight_comparison.png`, `confusion_matrices.png` | S1 | same (redrawn by `report.render_figures`) | yes |
 | Corpus under `v0_equal` / `v1` / `v2` (Safe / Medium / High alert: 136/278/500, 273/143/498, 300/144/470) | S1 | notebook 13_3 §3 | yes |
+| `papers/s1/analysis/`: sampling-weighted class shares, the RQ5 PyPI trust gate, dependency-count strata and partial correlations, RQ3 under `v1`, the hypotheses under both weightings | S1 | notebook 13_3 §5 (`apps.research.validation.supplement`); compared file by file when the export's input digests match `inputs.json` | yes |
 | Materialized `v2` corpus panel | S1 | `python manage.py rescore --weights v2 --source corpus_scan --out ../research_data/exports/corpus_2026-10-07_v2` | yes |
 | `score_histogram.png`, `flagged_rate_by_stratum.png`, `corpus_report.md` | S1 (descriptive) | `python manage.py corpus_report --corpus ../wp/wp-4/corpus_manifest.json` against the restored database | yes |
 | `strata_report.md` | S1 (sampling) | written by `build_corpus` at sampling time — a record (§1) | no |

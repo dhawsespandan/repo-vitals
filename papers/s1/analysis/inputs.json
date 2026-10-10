@@ -1,0 +1,20 @@
+{
+  "bootstrap": 2000,
+  "inputs": {
+    "anchors/wp2_anchor_set.csv": "a02e6fa890707c8b54df893087dc55e2867ca822f70b8372f1444af04445002e",
+    "dependency_history.parquet": "6506ff0b21ad8385b50136efbe71b187918403301c89591e5f09ab005091e20f",
+    "scan_history.parquet": "5f738bedda21e4c1f3be4e45f971ae4feb397bd5cd50df1fea5245940b2971a2",
+    "validation_report/anchors.csv": "ec6558772909420cb974ad819c3c3d2bf3ccf650d1645c941a1b60d6403551b1",
+    "validation_report/correlation.csv": "d264aea1da83375def62e35f85bbeeadadf31e2b7b7072099c62e01922a2b76d",
+    "validation_report/scores.csv": "743f9e21d18d55385e02e4fc8e17659c3b1dbd3f502e345d7ae202c88ed59d0c",
+    "validation_report/sensitivity.csv": "d8c4b3fbed5975540e35d2e61698ec135773f02f75518f38cd29cd7130e753ad",
+    "validation_report/weights_comparison.csv": "513ab2d0dc0a532e1c2e6dd02cafeb17c649a14b42284108225469ab3da91886"
+  },
+  "repositories": 914,
+  "seed": 42,
+  "snapshot_date": "2026-10-07",
+  "versions": [
+    "v1",
+    "v2"
+  ]
+}

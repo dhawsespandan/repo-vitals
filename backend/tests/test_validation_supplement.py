@@ -9,6 +9,7 @@ direct test of what it computes.
 from __future__ import annotations
 
 import csv
+import json
 from datetime import date
 from decimal import Decimal
 
@@ -376,6 +377,26 @@ def test_the_supplement_is_deterministic(export, tmp_path):
         assert (tmp_path / "one" / file).read_bytes() == (
             tmp_path / "two" / file
         ).read_bytes()
+
+
+def test_a_committed_copy_is_compared_only_against_its_own_inputs(export, tmp_path):
+    files = [
+        {"path": name, "sha256": f"{index:064x}", "source": "x", "bytes": 1}
+        for index, name in enumerate(supplement.INPUT_FILES)
+    ]
+    (export / "MANIFEST.json").write_text(json.dumps({"files": files}), encoding="utf-8")
+    digests = supplement.input_digests(export)
+    inputs = supplement.read_inputs(export, small_panel())
+    result = supplement.run(
+        inputs, {"v2": load_weights("v2")}, iterations=20, inputs_digest=digests
+    )
+    supplement.write(result, tmp_path / "committed")
+
+    assert supplement.same_inputs(export, tmp_path / "committed")
+    files[0]["sha256"] = "f" * 64
+    (export / "MANIFEST.json").write_text(json.dumps({"files": files}), encoding="utf-8")
+    assert not supplement.same_inputs(export, tmp_path / "committed")
+    assert not supplement.same_inputs(export, tmp_path / "nothing-here")
 
 
 def test_a_scorecard_for_a_repository_outside_the_panel_is_refused(export):
