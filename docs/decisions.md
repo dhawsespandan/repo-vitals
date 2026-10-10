@@ -5594,7 +5594,7 @@ inside the app could drift from the files; the link cannot.
 | Exports regenerate every notebook table | **passes**: S1's 10 files and S3's 8 regenerate from the export alone; byte-identical on 3.11, float-precision on 3.12+ (§14.5); in the suite on every push |
 | Demo script runs on prod without improvisation | **not verified on production** — the session could not reach it (this section's introduction). The product half of the script ran on a local stack (Django + Vite over the dev database, scans built from real WP-5 rows and completed by the product's own `finalize`) in Chromium: login screen, dashboard, Documentation opening the README in a new tab, the `v2` score with its arithmetic (`100 − 52.02 = 47.98`), the trend's `weights v2` marker, the drill-down with the maintainer's deprecation text, a PyPI repository, the sign-out guard on `/login`, a registration refused with §5.6's message, four research routes 404, health a database round trip; no console error but the browser's own log of that designed 404. `docs/prod_smoke_checklist.md` is the production run, after `main` moves |
 | WP-8 outputs + WP-9 kappa present | **passes**: A, B, C 150/150 each in `wp/wp-8/runs/`; kappa 0.134 (§13.17), labels in the export, key withheld |
-| All 15 tags exist | **14 on GitHub; the fifteenth is the owner's to push** (§14.12): `v0.1.0`–`v0.13.0` and `v0.12.0-rc` exist; `v1.0.0` was created in the session and refused by its git access |
+| All 15 tags exist | **15 once the owner pushes two** (§14.12): §4.3 names one tag per phase, `v0.1.0`…`v0.14.0`, then `v1.0.0`. `v0.1.0`–`v0.13.0` are on GitHub; `v0.14.0` and `v1.0.0` go on the same commit, the head of `main`. `v0.12.0-rc` is a release candidate and is not counted |
 
 CI: the commits were each verified in a clean worktree against the full check
 command (1,358 → 1,385 backend tests; 207 → 210 frontend), and CI run
@@ -5619,21 +5619,59 @@ The check is `docs/prod_smoke_checklist.md`, start to end, with the new scan's
 `weights v2` tag as the version marker §13.15 used; then the demo script once,
 timed.
 
-### 14.12 The tag is the last step, and it is the owner's
+### 14.12 Shipped to `main`; the tags and the production run are the owner's
 
-The session's git access pushes its working branch and nothing else: `git push
-origin v1.0.0` was answered 403, and the GitHub tools it had can create a
-branch or a file but not a tag. So `v1.0.0` exists only in the session's
-clone, and this record does not claim otherwise. The release is the head of
-`claude/inspiring-bell-90ibgz`. To finish it, from a clone with push access:
+**`main`.** On Spandan's instruction (2026-10-10), `main` was fast-forwarded to
+the Phase 14 head, `5a03414`, at 06:18 UTC. CI run 38030490616 passed on it,
+on Postgres. GitHub's deployment record shows Vercel's **Production**
+deployment of `5a03414` (deployment 6977064006) completed successfully at
+06:19 UTC. Render posts nothing to GitHub, so its build of the frozen
+`requirements.txt` (§14.11) could not be seen from the session.
+
+**The tags.** §4.3 reads "one tag per phase `v0.1.0`…`v0.14.0`, then
+`v1.0.0`", and §9's index gives Phase 14 `v1.0.0`; the two agree if both tags
+name Phase 14's last commit, which makes fifteen without counting
+`v0.12.0-rc`. Both were created, and both pushes were refused (HTTP 403): the
+session's git access pushes branches, not tags, and its GitHub tools cannot
+create one. Routing a tag through a workflow would have been a way around
+that policy, not a fix, so it was not done. From a clone with push access:
 
 ```
 git fetch origin
-git push origin origin/claude/inspiring-bell-90ibgz:main      # fast-forward; Render and Vercel deploy
-git tag -a v1.0.0 origin/claude/inspiring-bell-90ibgz -m "Phase 14: replication package, final hardening (decisions §14)"
-git push origin v1.0.0
+git tag -a v0.14.0 origin/main -m "Phase 14 (decisions §14)"
+git tag -a v1.0.0  origin/main -m "v1.0.0 - Phase 14: replication package, final hardening (decisions §14)"
+git push origin v0.14.0 v1.0.0
 ```
 
-then `docs/prod_smoke_checklist.md` on the deploy, which is also §14.10's one
-unverified criterion.
+**Production.** Still not run: the session's network policy denies both
+production hosts, Claude in Chrome was not connected, and using GitHub Actions
+to reach them for the session would route around the same policy. So §14.10's
+production criterion stays open. The run is `docs/prod_smoke_checklist.md`,
+start to end (the new scan's `weights v2` tag is the version marker), then
+`docs/demo_script.md` once, timed, recorded here as §14.14.
 
+### 14.13 WP-1's "rarely applied", measured
+
+The WP review asked for WP-1's "the Inactive classifier is rarely applied in
+practice" to carry a number or be softened. Two measurements, each re-derived
+by an independent check that tried to refute it:
+
+- **The corpus (confirmed).** In WP-5's snapshot the classifier marks 18 of
+  2,093 assessable PyPI packages (37 of 8,922 occurrences, 0.4%); yanks of the
+  assessed release mark 7 more (11 occurrences); npm's deprecation field marks
+  367 of 4,946 packages (1,309 of 19,881 occurrences, 6.6%). Re-computed from
+  the Parquet export with pandas, every number matched the SQL; all 25
+  deprecated PyPI packages were checked against live PyPI on 2026-10-10 and
+  the classifier/yank split held exactly. Within PyPI the classifier is the
+  *main* explicit signal (77% of deprecated occurrences): what is rare is PyPI
+  deprecation as a whole, about twelve times rarer per occurrence than npm's.
+- **PyPI as a whole (not obtained).** PyPI's classifier search served a Fastly
+  image CAPTCHA to every automated request, which was not attempted; the
+  XML-RPC `browse` method is retired; BigQuery's
+  `pypi.distribution_metadata` would need a billed project nobody approved.
+  PyPI's homepage counted 911,940 projects at 06:21 UTC, which is not a
+  denominator for the classifier's use and is not cited as one.
+
+WP-1's note now gives the corpus figures, says they describe the corpus and
+not PyPI, and marks them as measured after the note was written. The weights
+do not change.
