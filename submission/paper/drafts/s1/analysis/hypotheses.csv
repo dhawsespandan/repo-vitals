@@ -1,0 +1,11 @@
+hypothesis,version,observed,supported
+H1 (AHP ≈ entropy),v1,"npm cosine 0.899, top two differ; pypi cosine 0.890, top two differ",False
+"H2 (Scorecard rho in [0.3, 0.6])",v1,"rho 0.084 [-0.034, 0.204], 289 repositories",False
+H3 (flips < 15% at ±20%),v1,max 8.4%,True
+H4 (known anchors ≥ Medium),v1,12/12,True
+RQ5 trust gate (G1-G3),v1,pass,True
+H1 (AHP ≈ entropy),v2,"npm cosine 0.898, top two differ; pypi cosine 0.691, top two differ",False
+"H2 (Scorecard rho in [0.3, 0.6])",v2,"rho 0.047 [-0.077, 0.169], 289 repositories",False
+H3 (flips < 15% at ±20%),v2,max 4.7%,True
+H4 (known anchors ≥ Medium),v2,12/12,True
+RQ5 trust gate (G1-G3),v2,pass,True
