@@ -240,7 +240,7 @@ The judge cache is held back until WP-9 is labelled, to keep the labelling blind
 
 **Attempt 1** (kappa −0.023) is void: its packet hid 11 of the 15 measured fields (§13.16).
 
-**Decide before S3:**
+**Decided at S3 start** (moved to File C §3.7, 10 Oct):
 1. **Tighten the rubric, re-judge all 450, and re-validate on a fresh 50** (excluding these 50). Whoever labels the fresh 50 must not read §13.16–13.17 first.
 2. **Or** report the judge as not validated, and report faithfulness only from the 50 human labels.
 
@@ -259,6 +259,6 @@ They stay local so a fresh 50 can still be labelled blind. Publish them once tha
 1. ~~Phase 12, commit 7~~: done (§12.19). `v0.12.0` is not moved; commit 7 ships in `v0.13.0`.
 2. ~~Phase 13~~: closed at `v0.13.0` (decisions §13.14-13.15).
 3. ~~WP-8~~: complete (9 Oct).
-4. ~~WP-9~~: labelled; the judge is not validated (kappa 0.134). Decide the §13.17 option before S3.
-5. ~~Phase 14~~: closed (decisions §14). The tags are pushed and the production run is recorded (§14.14). Its two findings are fixed on `ccr-fb31afd0-6kbama` (§14.15), and they reach production when that branch is merged into `main`. Then run the smoke checklist's new `request` line.
-6. **S1 and S3** (File C). The §13.17 decision is the first thing S3 needs.
+4. ~~WP-9~~: labelled; the judge is not validated (kappa 0.134). The §13.17 decision is now File C §3.7, taken at S3 start.
+5. ~~Phase 14~~: closed (decisions §14). Tags `v0.14.0` and `v1.0.0` are pushed. The production run is §14.14: the smoke checklist passes and the demo failed at the per-dependency remediation step. Both findings are fixed (§14.15) and on `main`; run the smoke checklist's new `request` line once Render has deployed them.
+6. **S1 and S3** (File C, with its §9 listing what each still needs). S3 starts with the judge decision, File C §3.7.
