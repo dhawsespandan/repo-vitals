@@ -46,6 +46,7 @@ from tests.factories import (
 pytestmark = pytest.mark.django_db
 
 WITH_KEY = override_settings(GROQ_API_KEY="gsk_test", GROQ_MODEL="test-model")
+STALE = services.STALE_GENERATION_AFTER
 
 
 @pytest.fixture
@@ -269,11 +270,9 @@ def test_a_generation_that_never_reported_back_is_released(counting_model):
         summary_text=None,
         generated_at=None,
     )
-    Report.objects.filter(pk=stuck.pk).update(
-        created_at=timezone.now()
-        - services.STALE_GENERATION_AFTER
-        - timezone.timedelta(minutes=1)
-    )
+    long_ago = timezone.now() - STALE - timezone.timedelta(minutes=1)
+    # `.update()` skips `auto_now`, so both clocks really are in the past.
+    Report.objects.filter(pk=stuck.pk).update(created_at=long_ago, updated_at=long_ago)
 
     report, cached = request_combined(scan)
 
@@ -293,6 +292,63 @@ def test_a_generation_still_within_its_budget_is_not_released(counting_model):
 
     with pytest.raises(GenerationInProgress):
         request_combined(scan)
+
+
+@WITH_KEY
+def test_a_retry_is_timed_from_the_retry_not_from_the_row(
+    counting_model, no_background_threads
+):
+    """Decisions §14.14, finding 2, as production met it.
+
+    A failed row is retried in place, so the row being retried was created at
+    least `STALE_GENERATION_AFTER` ago — that is how it came to fail. Timed
+    from `created_at`, the panel's next poll reaped the retry while it ran, and
+    the next click started a second generation beside it: the double spend the
+    lock exists to prevent.
+    """
+    scan = scan_with_a_finding()
+    failed = ReportFactory(
+        scan=scan,
+        status=ReportStatus.FAILED.value,
+        summary_text=None,
+        generated_at=None,
+        error_message=services.STALLED_MESSAGE,
+    )
+    long_ago = timezone.now() - STALE - timezone.timedelta(minutes=2)
+    Report.objects.filter(pk=failed.pk).update(created_at=long_ago, updated_at=long_ago)
+
+    report, cached = request_combined(scan)  # "Try again"
+    assert cached is False
+    # The worker picks it up: `run_combined`'s first write, and its last one
+    # until the model answers.
+    report.status = ReportStatus.RUNNING.value
+    report.save(update_fields=["status", "updated_at"])
+
+    # The panel polls through the read path while the retry runs...
+    assert combined_for(scan).status == ReportStatus.RUNNING.value
+    # ...and a second click is the 409, not a second generation.
+    with pytest.raises(GenerationInProgress):
+        request_combined(scan)
+    assert Report.objects.get(pk=failed.pk).status == ReportStatus.RUNNING.value
+
+
+@WITH_KEY
+def test_a_retry_that_never_reports_back_is_still_released(counting_model):
+    """The other half: keying on the last state change must not strand a
+    retry whose worker died — it is reaped once its own budget runs out."""
+    scan = scan_with_a_finding()
+    retried = ReportFactory(
+        scan=scan,
+        status=ReportStatus.RUNNING.value,
+        summary_text=None,
+        generated_at=None,
+    )
+    created = timezone.now() - STALE * 3
+    last_word = timezone.now() - STALE - timezone.timedelta(minutes=1)
+    Report.objects.filter(pk=retried.pk).update(created_at=created, updated_at=last_word)
+
+    assert combined_for(scan).status == ReportStatus.FAILED.value
+    assert combined_for(scan).error_message == services.STALLED_MESSAGE
 
 
 # ── Reading ────────────────────────────────────────────────────────────────

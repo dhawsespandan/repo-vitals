@@ -192,12 +192,21 @@ def expire_stale(scan: ScanRun) -> int:
     report whose worker was restarted mid-call would otherwise sit on a spinner
     until someone thought to reload. One UPDATE that normally matches nothing
     is a cheap price for a panel that repairs itself.
+
+    The clock is `updated_at`, the row's last state change, not `created_at`.
+    A failed row is retried in place (`_cache_or_queue`), so a retry is always
+    of a row created at least `STALE_GENERATION_AFTER` ago: timed from
+    `created_at`, the first read during a retry reaped it while it ran, and a
+    second click then started a second generation beside the first (decisions
+    §14.14, finding 2). Every transition saves `updated_at` — the queue, the
+    retry's reset, `running` — and nothing writes an active row in between, so
+    this measures how long the current attempt has gone without a word.
     """
     now = timezone.now()
     stalled = Report.objects.filter(
         scan=scan,
         status__in=ReportStatus.active(),
-        created_at__lt=now - STALE_GENERATION_AFTER,
+        updated_at__lt=now - STALE_GENERATION_AFTER,
     ).update(status=ReportStatus.FAILED.value, error_message=STALLED_MESSAGE)
     if stalled:
         logger.warning("Marked %d stalled report generation(s) failed.", stalled)
