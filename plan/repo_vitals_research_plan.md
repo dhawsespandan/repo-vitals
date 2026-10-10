@@ -224,3 +224,62 @@ Total: roughly 5–7 working weeks of analysis + writing for both, plus review c
 5. The revision matrix process running for anything under review.
 
 Nothing in this file requires writing new product code. The system, by design, is done.
+
+---
+
+## 9. Status at the end of File A, and what S1 and S3 still need (appended 2026-10-10)
+
+*Appended when File A closed at Phase 14 (`v1.0.0`, plus decisions §14.15's two production fixes). Sections 0–8 above are unchanged. File C's work has **not started**: everything below is still to do. A worked attempt at most of it was made and then removed from the branch on the owner's instruction to stop at P14. It stays in the history of `ccr-fb31afd0-6kbama` (reverted in `65a277b`) if it is ever wanted.*
+
+### 9.1 Inputs already in hand
+
+Every §0.1 artifact exists, and the two notebooks regenerate WP-6's and WP-8's signed tables from the export (`REPLICATION.md`):
+
+- **S1: WP-6's signed report.**
+  - RQ1: H1 is not supported. Cosine npm 0.898, PyPI 0.691, and the top two signals differ.
+  - RQ2: H2 is not supported. Scorecard ρ 0.047 [−0.077, 0.169] on 289/914.
+  - RQ3: H3 holds, at 4.7% max at ±20%.
+  - RQ4: 12/12 anchors.
+- **S3: WP-8's signed tables.**
+  - Correctness, the answer-not-given table, judged faithfulness, precision@k, paired tests with Holm, the RQ3 ecosystem contrast, and calibration.
+  - WP-9's kappa is 0.134.
+
+### 9.2 S1: left to do
+
+1. **RQ5, the PyPI trust gate (§2.4.6): its third part.**
+   - The distribution and anchor parts passed in WP-6's sign-off.
+   - "The roll-up behaves identically to npm's on matched dependency-count strata" has not been computed.
+   - File C states it in words. Fix numeric criteria (strata, minimum cell size, what "identically" means) **before** computing it, and record them. S3's PyPI arm waits on this gate.
+2. **Dependency-count control.** WP-6's sign-off found that score falls with dependency count (ρ −0.51 on the anchors). Any ecosystem comparison or reference correlation must control for it, for example within count strata or with a partial correlation.
+3. **Sampling-weighted population estimates (§1.3).** The corpus class distribution is reported unweighted only, by notebook 13_3 §3. The weighted shares, with the unweighted ones in an appendix, are still to compute.
+4. **Robustness rerun under `v1` (§2.4.7).** RQ1, RQ2 and RQ4 already carry `v1` rows. RQ3's perturbation sweep has not been run under `v1`. After it, mark which conclusions survive both weightings.
+5. **The weight-derivation narrative (§2.4.1).** Use WP-3's notes, including the single-judgment deviation, which must appear as a threat to validity beside L4.
+6. **The paper (§2.5)**, figures, the §5.4 replication package, the venue against its current CFP, and the adversarial read (§8.2).
+
+### 9.3 S3: left to do
+
+1. **The §3.4.1 judge decision, first.** κ = 0.134 is below 0.5. Decisions §13.17 sets out the two options:
+   - **(a)** Tighten the rubric:
+     - rule 4 must check MEASURED DATA;
+     - contradicted means unsupported;
+     - "safe" or "no code changes" claims are core;
+     - "fixes all known vulnerabilities" needs every fix at or below the target.
+
+     Then re-judge all 450 (about 750 Flash-Lite calls, two days) and re-validate on a **fresh** 50, labelled blind by someone who has not read §13.16–13.17.
+   - **(b)** Report the judge as not validated, and take faithfulness from the 50 human labels.
+
+   Option (b) needs the answer key, which is on the research machine (`research_data/runs/judge_validation/`), to split the labels by condition.
+2. **The interaction check (§3.4.6)**, condition × ecosystem, within `cve_fix` first. WP-8's tables give each ecosystem's rates per condition, but not the difference of the paired effects with an interval.
+3. **The qualitative slice (§3.4.9).** Choose 6–10 trace-backed examples by stated rules, one per outcome kind. The traces are in `wp/wp-8/runs/*/items.jsonl`.
+4. **RQ4 / condition D.** Not run. Either run it (`run_experiment --condition D`, about 150 Groq generations), or report RQ4 as unanswered.
+5. **Write up the known threats.**
+   - TARGET hands over most answers: only 22 items are not covered (§13.2, §13.13).
+   - PyPI retrieval is mostly READMEs (§13.14 (4)).
+   - The generator was `openai/gpt-oss-120b`, not Llama, so L8's wording needs updating.
+   - Generation was spread over four members' free-tier keys.
+6. **The paper (§3.5)**, figures, the §5.4 package, the venue, and the adversarial read.
+
+### 9.4 Also open
+
+- **P0 (§4):** the decision to draft it or not has not been taken.
+- **§8.4–8.5:** arXiv, Zenodo DOIs and the revision-matrix process, at submission and acceptance.
