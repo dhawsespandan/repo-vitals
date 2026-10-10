@@ -107,4 +107,4 @@ The sign-off is 5 lines plus the pasted query output:
 4. The occurrence and unassessable counts.
 5. The dump size, and anything flagged.
 
-The dump itself goes separately, as a OneDrive link.
+The dump itself goes separately, as a OneDrive link. (Superseded: it is committed as `wp/wp-5/wp5_research_db.dump` since `cabf0d9`.)

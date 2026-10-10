@@ -26,7 +26,7 @@
    - `pg_restore -l` lists `scan_history` and `dependency_history`.
    - It was restored into a scratch database: the same 914 / 29,494 rows and the same total score (42,161.55). The scratch database was then dropped.
 
-The file is local; upload it to OneDrive (it is not committed).
+The dump is committed as `wp/wp-5/wp5_research_db.dump` (since `cabf0d9`, same sha256); `REPLICATION.md` §3 restores it from there.
 
 **Checklist:**
 
