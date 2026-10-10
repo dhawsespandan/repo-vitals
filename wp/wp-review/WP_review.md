@@ -18,7 +18,7 @@ Each WP below says what was done, how it was checked, and what deviates from Fil
 | WP-5 | **Complete**: 914/914 scanned, 29,494 occurrences, dump verified | One repo rescanned after a crash damaged its archive (§11.30) |
 | WP-6 | **Signed** (8 Oct): weights v2 approved for adoption | Checks 3 and 4 acknowledged (entropy disagreement, Scorecard null); single-judgment matrix |
 | WP-8 | **Complete** (9 Oct): A, B and C each 150/150, 0 failed, all judged | Generation divided over four members' free-tier keys (disclosed); PyPI retrieval left as is (S3 limitation); no PyPI replacement items |
-| WP-9 | **Re-label needed**: attempt 1 (10 Oct) invalid, packet v2 ready in `wp-9/` | Attempt 1's packet hid 11 of the 15 measured fields every item carries; fixed (§13.16) |
+| WP-9 | **Labelled; judge NOT validated**: kappa 0.134 (File C needs ≥ 0.50) | S3 can't use the judge's faithfulness verdicts as they stand; see §13.17 for the options |
 
 ---
 
@@ -226,59 +226,38 @@ The same commit fixed `corpus_report`, which had counted 575 "strata" (one per s
 
 The judge cache is held back until WP-9 is labelled, to keep the labelling blind. Results are not interpreted here; that is the paper's job.
 
-## WP-9: Judge-validation labels. RE-LABEL WITH PACKET v2
-
-**Attempt 1 (labels returned 10 Oct) cannot be used.** Its packet showed only 4 of the 15 measured fields every item carries (plus the deprecation message, when there was one), so 11 fields the judge is given were hidden: no latest release, no specifier, manifest or staleness, and only one id and no CVSS per advisory. So the human and the judge labelled against different evidence, and the kappa it produced measures the packet, not the judge.
-- The labelling itself followed the rules. All 50 items have a note on every non-faithful label, and the labels match the workbook exactly.
-- The packet code is fixed (decisions §13.16, with a test that the packet shows every field the judge sees).
-- **Packet v2** (same 50 items, same order) is in `wp-9/`, and the README and workbook are updated to match.
-- Attempt 1's labels and its kappa report are kept **local only**, in `research_data/runs/judge_validation/attempt1_packet_hid_measured_fields/`. They are withheld until the re-label is back, so they can't influence it.
-
-**Re-label from blank.** Preferably a team member who did not do attempt 1. Otherwise the same person, starting from the blank v2 workbook without looking at their old labels.
-
-**The labeller needs only `wp-9/`.** Start with `wp-9/README_WP9.md`, which is self-contained: the rules, the rubric, worked examples, hard cases and how to return the labels.
+## WP-9: Judge-validation labels. DONE; JUDGE NOT VALIDATED
 
 `wp-9/` holds:
-- `README_WP9.md`: the full instructions.
-- `wp9_labelling_workbook.xlsx`, with four sheets:
-  - `Labels`: dropdown labels, note column and per-row checks;
-  - `Items`: all 50 items;
-  - `Progress`: shows READY TO RETURN when complete;
-  - `Start here`.
-- `judge_validation_packet.md`: the same 50 items in a readable layout, stratified by condition and ecosystem (A 18, B 16, C 16; 25 npm, 25 PyPI), with the judge's verdicts **hidden**.
-- `wp9_judge_labels_template.csv`: a plain-CSV alternative to the workbook.
+- `wp9_judge_labels.csv` and `wp9_labelling_workbook_filled.xlsx`: the labels from attempt 2, made against packet v2 and returned 2026-10-10. 50/50, with a note on every non-faithful label.
+- The kit that produced them.
 
-**The rubric matches the judge's exactly.** The measured facts count as evidence, as do the passages, so an item with no passages can still be `faithful`. The older `wp9_labelling_guide.md` said an empty source is always `major`, which contradicts the judge, so it was removed; git history keeps it. The workbook → CSV → kappa path was tested end to end on 10 Oct with throwaway labels, and the test files were deleted.
+**Result:** Cohen's kappa **0.134**, with 68% raw agreement.
+- The human found 16 of the 50 items unsupported; the judge flagged 4 of them.
+- **The judge is lenient.** It misses overclaims ("fixes all known vulnerabilities"), "safe/no code changes" assurances, misdescribed evidence, and "no successor known" when the measured deprecation message names one. That last one is a defect in the judge's rule 4.
+- File C §3.4.1 sets the bar at kappa 0.50: below it, **S3 can't use the judge's faithfulness verdicts as they stand.**
+- Details, and what re-validation needs, are in `docs/decisions.md` §13.17.
 
-The answer key (`research_data/runs/judge_validation/judge_validation_key.json`) stays local and gitignored. **Do not open it, or `research_data/runs/judge_cache.jsonl`, before labelling is finished.**
+**Attempt 1** (kappa −0.023) is void: its packet hid 11 of the 15 measured fields (§13.16).
 
-**Who labels:** one team member, alone. That person must not have seen any judge verdict. Neither the answer key nor the judge cache is on GitHub. Return the filled workbook (or CSV) to Spandan, privately. Spandan has the key, and runs the conversion and kappa steps at the end of `README_WP9.md`.
+**Decide before S3:**
+1. **Tighten the rubric, re-judge all 450, and re-validate on a fresh 50** (excluding these 50). Whoever labels the fresh 50 must not read §13.16–13.17 first.
+2. **Or** report the judge as not validated, and report faithfulness only from the 50 human labels.
 
-**How to label:** one sitting, about 3–4 hours.
-- Judge each remediation claim by claim, against only the facts and passages shown with it.
-- Use `faithful`, `minor_unsupported` or `major_unsupported`.
-- Add a one-line note for every label that is not `faithful`.
-- Skip nothing.
+Correctness, S3's deterministic measure, is unaffected either way.
 
-**After labelling:** save the filled sheet as `wp/wp-9/wp9_judge_labels.csv`. Then, from `backend/` with `DATABASE_URL` set as in the WP-8 runbook, run:
+**Kept local, not on GitHub:**
+- the answer key;
+- both kappa reports;
+- the attempt-1 files;
+- the full judge cache (`research_data/runs/`).
 
-```
-python manage.py judge_validation_kappa --labels ../wp/wp-9/wp9_judge_labels.csv --key ../research_data/runs/judge_validation/judge_validation_key.json
-```
-
-- It refuses a sheet with any blank or misspelt label, and names the row.
-- It writes `judge_validation_kappa.md` beside the key: Cohen's kappa, weighted kappa, the confusion matrix, every disagreement and File C §3.4.1's decision.
-- This pipeline was dry-run on 9 Oct against the real key with throwaway labels, and works. The dry run's outputs were deleted.
-
-**Then commit three things:**
-1. the labels;
-2. the kappa report;
-3. `research_data/runs/judge_cache.jsonl`, copied to `wp/wp-8/runs/`; it is safe to publish once labelling is over.
+They stay local so a fresh 50 can still be labelled blind. Publish them once that decision is made.
 
 ## Order from here
 
 1. ~~Phase 12, commit 7~~: done (§12.19). `v0.12.0` is not moved; commit 7 ships in `v0.13.0`.
 2. ~~Phase 13~~: closed at `v0.13.0` (decisions §13.14-13.15).
 3. ~~WP-8~~: complete (9 Oct).
-4. **WP-9:** Spandan labels the 50-item packet; then kappa.
+4. ~~WP-9~~: labelled; the judge is not validated (kappa 0.134). Decide the §13.17 option before S3.
 5. **Phase 14**, then S1 and S3.

@@ -5311,3 +5311,69 @@ on the judged runs and the seed). The labels and kappa report from attempt 1
 are kept locally and withheld until the re-label returns, so that nothing
 about the judge's behaviour reaches whoever labels next; this entry will be
 completed then.
+
+### 13.17 WP-9 result: the judge is not validated (kappa 0.134)
+
+**Attempt 1, completing §13.16.** Labelled against packet v1, kappa was
+-0.023. In 31 of the 35 items the human marked unsupported and the judge
+faithful, the human note named a "latest release" figure that was in the
+judge's MEASURED DATA but not in the packet. That run measured the packet,
+not the judge.
+
+**Attempt 2, the result.** The same 50 items were labelled against packet v2,
+which shows every measured field. The labels returned on 2026-10-10: 50/50,
+with a note on every non-faithful label, workbook and CSV identical. The
+labeller was the same person; three notes are word-for-word those of attempt
+1, on items whose evidence did not change.
+
+| | |
+|---|---|
+| Cohen's kappa | **0.134** |
+| Linearly weighted kappa | 0.186 |
+| Raw agreement | 68% (34/50) |
+| Human: faithful / minor / major | 34 / 10 / 6 |
+| Judge: faithful / minor / major | 45 / 4 / 1 |
+
+File C §3.4.1: kappa < 0.50 means tighten the rubric, re-judge and
+re-validate before any S3 claim. **The judge's faithfulness verdicts cannot be
+used in S3 as they stand.**
+
+The disagreement is one-sided. Of the 16 items the human found unsupported,
+the judge flagged 4. The judge is lenient, and the misses fall into four
+kinds:
+
+| Kind | Items |
+|---|---|
+| "Fixes all known vulnerabilities", contradicted by a measured fix version or an unfixed advisory | 001, 016, 020, 043 |
+| "Safe" or "no code changes needed" assurances, which the human reads as breaking-change claims | 003, 009, 042, 048 |
+| Says no successor is known when the measured deprecation message names one | 025, 026 |
+| Misstates or misdescribes the evidence it cites | 006, 014, 034, 038, 040 |
+
+The third kind is a defect in the judge's instructions, not a matter of
+leniency. Rule 4 of `FAITHFULNESS_SYSTEM` accepts "not enough information"
+whenever SOURCE is empty or silent, without checking MEASURED DATA. Items 025
+and 026 are condition-A items with no passages, where MEASURED DATA names the
+replacement.
+
+**What re-validation needs.** None of this is done yet; each step is a
+methodology decision.
+
+1. Tighten the rubric: rule 4 must check MEASURED DATA as well as SOURCE; a
+   claim contradicted by either is unsupported; assurances that an upgrade is
+   safe or non-breaking are breaking-change claims (core); "fixes all known
+   vulnerabilities" is supported only if every listed advisory's fix is at or
+   below the target. Bump `RUBRIC_VERSION`.
+2. Re-judge all 450 generations. The cache is keyed by rubric version, so
+   nothing old is reused. That is about 750 judge calls, two days of one free
+   Flash-Lite key, or one day on two.
+3. Re-validate on a **fresh** 50, excluding these 50, labelled blind. Tuning
+   the rubric on these 50 and re-scoring them would overfit.
+
+**The alternative, if there is no time.** Report the judge as not validated
+(kappa 0.134, with this table), and report faithfulness only from the 50
+human labels, about 16 per condition, as a small, honest sample. S3's
+correctness results are deterministic and do not depend on the judge.
+
+The answer key, both kappa reports and the full judge cache stay local, in
+`research_data/runs/judge_validation/` and `research_data/runs/`, until it is
+decided whether a fresh 50 will be labelled.
