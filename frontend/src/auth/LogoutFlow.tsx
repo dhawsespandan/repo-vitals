@@ -19,7 +19,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "./AuthContext";
 import { LogoutConfirm } from "./LogoutConfirm";
-import { wantsLogoutConfirm } from "./backNavGuard";
+import {
+  DEFAULT_APP_PATH,
+  isSafeInAppPath,
+  wantsLogoutConfirm,
+} from "./backNavGuard";
 
 interface LogoutFlowValue {
   open: boolean;
@@ -49,7 +53,8 @@ export function LogoutFlowProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!wantsLogoutConfirm(location.state)) return;
     setOpen(true);
-    navigate(`${location.pathname}${location.search}`, {
+    const here = `${location.pathname}${location.search}`;
+    navigate(isSafeInAppPath(here) ? here : DEFAULT_APP_PATH, {
       replace: true,
       state: null,
     });

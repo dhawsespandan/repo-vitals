@@ -35,6 +35,20 @@ export interface ConfirmLogoutState {
   [CONFIRM_LOGOUT_STATE]?: boolean;
 }
 
+/**
+ * A path this app may navigate to on its own say-so: one leading slash, then
+ * anything but another slash or a backslash. Browsers read `//host` — and
+ * `/\\host`, after normalising the backslash — as a different origin, which is
+ * how React Router's open-redirect advisories (GHSA-wrjc-x8rr-h8h6) reach a
+ * `navigate()` given a remembered path. Every route here starts with a fixed
+ * prefix and anything unmatched redirects to `/dashboard`, so no such path
+ * should ever be remembered; this keeps it that way whatever the router does
+ * (docs/decisions.md §14).
+ */
+export function isSafeInAppPath(path: string): boolean {
+  return /^\/(?![/\\])/.test(path);
+}
+
 export function isAuthEntryPath(pathname: string): boolean {
   return AUTH_ENTRY_PATHS.includes(normalise(pathname));
 }
@@ -55,8 +69,9 @@ export function useLastAppPath(): string {
   const lastAppPath = useRef(DEFAULT_APP_PATH);
 
   useEffect(() => {
-    if (!isAuthEntryPath(location.pathname)) {
-      lastAppPath.current = `${location.pathname}${location.search}`;
+    const path = `${location.pathname}${location.search}`;
+    if (!isAuthEntryPath(location.pathname) && isSafeInAppPath(path)) {
+      lastAppPath.current = path;
     }
   }, [location.pathname, location.search]);
 

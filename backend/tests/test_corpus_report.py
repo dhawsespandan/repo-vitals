@@ -363,7 +363,7 @@ class TestSummary:
 
 
 def _requirement_files(path: pathlib.Path) -> list[pathlib.Path]:
-    """`path` and every file it pulls in with `-r`, recursively."""
+    """`path` and every source file it pulls in with `-r`, recursively."""
     found = [path]
     for line in path.read_text(encoding="utf-8").splitlines():
         if line.startswith("-r "):
@@ -375,28 +375,31 @@ def test_matplotlib_is_declared_research_only():
     """§8: it must be installed for the figures and never installed on Render.
 
     This test never skips, because it is the one that protects the deploy.
-    `requirements.txt` is what the web service installs, against a 512 MB tier
-    already holding Django, the scan threads and fastembed's ONNX model (§8.9);
-    matplotlib and NumPy are ~50 MB of import no request path would reach.
-    `requirements-dev.txt` includes the research file (through the notebooks'
-    file since Phase 14) so CI has it and `TestFigures` runs for real rather
-    than skipping. Phase 14's research and notebook dependencies are held to
-    the same rule.
+    `requirements.txt` — since Phase 14 the frozen lock compiled from
+    `requirements.in` — is what the web service installs, against a 512 MB
+    tier already holding Django, the scan threads and fastembed's ONNX model
+    (§8.9); matplotlib and NumPy are ~50 MB of import no request path would
+    reach. The dev sources include the research one (through the notebooks'
+    since Phase 14) so CI has it and `TestFigures` runs for real rather than
+    skipping. Phase 14's research and notebook dependencies are held to the
+    same rule, in the sources and in the lock Render reads.
     """
     backend = pathlib.Path(__file__).resolve().parent.parent
-    runtime = "\n".join(
+    runtime_sources = "\n".join(
         path.read_text(encoding="utf-8")
-        for path in _requirement_files(backend / "requirements.txt")
+        for path in _requirement_files(backend / "requirements.in")
     )
-    research = (backend / "requirements-research.txt").read_text(encoding="utf-8")
-    dev = _requirement_files(backend / "requirements-dev.txt")
+    runtime_lock = (backend / "requirements.txt").read_text(encoding="utf-8")
+    research = (backend / "requirements-research.in").read_text(encoding="utf-8")
+    dev = _requirement_files(backend / "requirements-dev.in")
 
     assert "matplotlib" in research
     assert "pyarrow" in research
     for package in ("matplotlib", "pyarrow", "pandas", "nbclient", "ipykernel"):
-        assert package not in runtime, package
-    assert backend / "requirements-research.txt" in dev
-    assert backend / "requirements-notebooks.txt" in dev
+        assert package not in runtime_sources, package
+        assert f"\n{package}==" not in runtime_lock, package
+    assert backend / "requirements-research.in" in dev
+    assert backend / "requirements-notebooks.in" in dev
 
 
 def test_the_charts_module_imports_without_matplotlib():

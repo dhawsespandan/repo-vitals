@@ -1,0 +1,18 @@
+# The SOURCE of `requirements-dev.txt`, which is a compiled lockfile: edit this
+# file and recompile as `requirements.in`'s header says (§10 Phase 14).
+#
+-r requirements.in
+# The research-only extras (matplotlib, pyarrow) and the notebooks' runner
+# (§10 Phase 14), which includes them. Pulled in here so CI installs them and
+# the corpus-figure, export and notebook tests run rather than skip; Render
+# installs requirements.txt alone and never sees any of them.
+-r requirements-notebooks.in
+
+# 9.0.3 fixes CVE-2025-71176 (predictable /tmp/pytest-of-{user}), found by
+# Phase 14's audit of the frozen set.
+pytest>=9.0.3,<10.0
+pytest-django>=4.11,<5.0
+pytest-cov>=6.0
+factory_boy>=3.3,<4.0
+responses>=0.25,<0.26
+ruff>=0.9,<1.0
