@@ -18,30 +18,37 @@ auto-fix; the export is a handoff, not a commit.
 
 ## Status
 
-**Phase 3 of 14 — scanning.** GitHub sign-in and session lifecycle (Phase 1),
-repository registration with the four pre-scan validation checks (Phase 2),
-and now a background scanner: registration triggers a scan, the dashboard
-polls it, and the detail page lists every dependency from every manifest in
-the tree with its resolved version, where that version came from, how stale
-the package is, and any CVEs against it.
+**v1.0.0 — complete.** All fourteen phases of the implementation plan are
+built, deployed and accepted:
 
-**There is no score yet.** Phase 4 turns those signals into a number — every
-one of them is already stored raw, because scoring is a pure function over
-stored signals and history rows are never rewritten when the weights change.
-Until then the product measures and does not judge, and the UI says so rather
-than showing a placeholder.
+- **The product** (Phases 1–10): GitHub sign-in; registration with four
+  pre-scan checks; background scans of every npm and PyPI manifest in the
+  tree; the 0–100 score with a per-signal drill-down; a repo-wide triage
+  report and per-dependency remediation grounded in the package's own
+  changelog and README, shown beside the retrieved text with citations;
+  rescan guards, Markdown/JSON downloads, projects and score trends.
+- **The research instruments** (Phases 11–13): a 914-repository corpus sampled
+  on a documented frame and scored by the product's own code; the S1
+  validation harness, which produced the signed `v2` weights; and the S3
+  experiment harness, whose 450 generations are run and analysed.
+- **The replication package** (Phase 14): `export_research_data`, two
+  notebooks that regenerate both studies' signed tables from the export
+  alone, frozen dependencies, and [`REPLICATION.md`](REPLICATION.md).
 
-The build is planned end to end in [`plan/`](plan/):
+What remains is the papers (`plan/repo_vitals_research_plan.md`), and one
+methodology decision before S3's faithfulness results can be used: the
+automated judge is not validated (Cohen's kappa 0.134 against human labels;
+`docs/decisions.md` §13.17).
 
-| File | What it governs |
+| Document | What it is for |
 |---|---|
-| `repo_vitals_implementation_plan.md` | **the only guide for this codebase** — 14 phases, schema, API surface, scoring specs |
-| `repo_vitals_parallel_work_plan.md` | non-code work running alongside (weight elicitation, corpus, experiment runs, judge validation) |
-| `repo_vitals_research_plan.md` | the two studies, which begin only after the other two files complete |
-| `wireframe.html` | a visual reference — layout, spacing and component look where the implementation plan is silent. It does **not** outrank that plan, which never mentions it (`docs/decisions.md` §7.8) |
-
-Design decisions made during the build are logged in
-[`docs/decisions.md`](docs/decisions.md).
+| [`REPLICATION.md`](REPLICATION.md) | reproducing the studies: pins, seeds, weights lineage, every table's regeneration command, limitations |
+| [`docs/demo_script.md`](docs/demo_script.md) | the ten-minute walkthrough, with fallbacks |
+| [`docs/prod_smoke_checklist.md`](docs/prod_smoke_checklist.md) | what to check after every deploy |
+| [`docs/decisions.md`](docs/decisions.md) | every design decision made during the build, by phase |
+| [`docs/adapter_soundness.md`](docs/adapter_soundness.md) | the evidence that npm and PyPI go through one pipeline |
+| [`plan/`](plan/) | the governing plans: implementation (File A), work packages (File B), research (File C), and the wireframe |
+| [`wp/`](wp/) | the signed work-package deliverables, with `wp/wp-review/WP_review.md` as their status |
 
 ---
 
@@ -75,7 +82,11 @@ reaches the browser.
 
 ## Quickstart
 
-Prerequisites: Python 3.12+, Node 20+, Docker.
+From a fresh clone to a running development environment in under thirty
+minutes, most of it package installation.
+
+**Prerequisites:** Python 3.12 or later (3.11 for byte-exact research
+output — see `REPLICATION.md` §5), Node 20 or later, Docker, Git.
 
 ### 1. Database
 
@@ -97,34 +108,42 @@ whole OAuth round trip has to stay on one browser-visible origin for the
 session holding OAuth state to survive GitHub's redirect back.
 
 Keep a separate app for production — never share one between environments.
+(Skip this step if you only want to run the checks: the suite needs no
+credentials.)
 
 ### 3. Backend
 
 ```bash
-cd backend && python -m venv .venv && .venv/Scripts/activate && pip install -r requirements-dev.txt
+cd backend
+python -m venv .venv
+. .venv/bin/activate              # Windows: .venv\Scripts\activate
+pip install -r requirements-dev.txt
 ```
 
-Copy `.env.example` to `.env` and fill in the four blanks. Generate the two
-keys with:
+`requirements-dev.txt` is a frozen lockfile (see *Dependencies* below), so you
+get exactly the versions CI tests.
+
+Copy `.env.example` to `.env` and fill in the four blanks: the two OAuth
+values from step 2, and two keys generated with
 
 ```bash
-python -c "import secrets; print(secrets.token_urlsafe(64))"
+python -c "import secrets; print(secrets.token_urlsafe(64))"                         # DJANGO_SECRET_KEY
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"  # TOKEN_ENCRYPTION_KEY
 ```
 
-```bash
-python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-```
+`GROQ_API_KEY` is optional: without it everything works except generating
+reports, which answer "not configured".
 
 Then migrate and run:
 
 ```bash
-cd backend && python manage.py migrate && python manage.py runserver
+python manage.py migrate && python manage.py runserver
 ```
 
 ### 4. Frontend
 
 ```bash
-cd frontend && npm install && npm run dev
+cd frontend && npm ci && npm run dev
 ```
 
 Open <http://localhost:5173>. The Vite dev server proxies `/api` to
@@ -143,9 +162,12 @@ cd backend && ruff check . && ruff format --check . && pytest
 cd frontend && npm run typecheck && npm test && npm run build
 ```
 
-CI runs both on every push. Two suites grow with every phase: a **BOLA suite**
-(every resource endpoint, requested by a foreign user, must 404) and a
-**determinism suite** (identical inputs, identical score).
+The backend suite needs the `db` container from step 1 and no credentials or
+network: every external service is replaced at its edge. CI runs both on every
+push. Two suites grew with every phase: a **BOLA suite** (every resource
+endpoint, requested by a foreign user, must 404) and a **determinism suite**
+(identical inputs, identical score). The backend suite also executes both
+analysis notebooks end to end against an export built by the real commands.
 
 ### Memory smoke test
 
@@ -161,12 +183,47 @@ Record the production figure in `docs/decisions.md` §1.13.
 
 ---
 
+## Dependencies
+
+Python dependencies are declared, with the reason for each, in
+`backend/requirements*.in`, and **installed from the compiled lockfiles**
+`backend/requirements*.txt` — `requirements.txt` is the runtime set Render
+installs, `requirements-dev.txt` adds the research, notebook and test tools.
+The locks are universal (one file for Python 3.11–3.14) and pin one version of
+everything across all four. To change a dependency, edit the `.in` file and
+recompile with the four `uv pip compile` commands in `requirements.in`'s
+header; `tests/test_requirement_locks.py` fails if a pin falls outside its
+declared range or the locks disagree. The frontend's lock is
+`frontend/package-lock.json`; install with `npm ci`.
+
+---
+
+## Research
+
+The research commands run against a separate research database (D8), never
+the product's, and never write an operational table (D10). In the order the
+studies used them:
+
+| Command | Produces |
+|---|---|
+| `build_corpus`, `scan_corpus`, `corpus_report` | the sampled corpus, its scan, its descriptive figures (Phase 11) |
+| `validate_formula`, `scan_anchors`, `ahp_check`, `rescore` | S1's validation report and the `v2` weights (Phase 12) |
+| `extract_ground_truth`, `run_experiment`, `analyze_experiment`, `judge_validation_packet`, `judge_validation_kappa` | S3's labelled set, runs, tables and judge validation (Phase 13) |
+| `export_research_data` | the replication export File C reads (Phase 14) |
+
+To regenerate the studies' results from what is committed — restore WP-5's
+database dump, export, run `notebooks/13_3_validation.ipynb` (S1) and
+`notebooks/13_1_analysis.ipynb` (S3) — follow
+[`REPLICATION.md`](REPLICATION.md) §3. It needs Docker and no API key.
+
+---
+
 ## Deployment
 
 | | Service | Notes |
 |---|---|---|
 | Frontend | Vercel Hobby, root `frontend/` | `vercel.json` rewrites `/api/(.*)` to the Render service — update the host after the first deploy |
-| Backend | Render free web service, root `backend/` | build `pip install -r requirements.txt`; pre-deploy `python manage.py migrate`; start `gunicorn config.wsgi -c gunicorn.conf.py` |
+| Backend | Render free web service, root `backend/` | build `pip install -r requirements.txt` (the frozen lock); pre-deploy `python manage.py migrate`; start `gunicorn config.wsgi -c gunicorn.conf.py` |
 | Database | Supabase free | 500 MB; product data only — corpus data lives in a separate local research database |
 | Keepalive | `.github/workflows/keepalive.yml` | asks for every 10 min, actually runs every 2–11 h; **set the `RENDER_HEALTH_URL` repository variable** or every run fails |
 
@@ -192,12 +249,14 @@ All runs since are green.
 ## Repository layout
 
 ```
-backend/     Django + DRF — config/, apps/{common,accounts,...}, weights/, tests/
-frontend/    Vite + React + TS — api/, auth/, pages/, components/, styles/
-docs/        decision log, and the artifacts later phases produce
-plan/        the governing plan documents and the wireframe
-notebooks/   analysis notebooks (Phase 14)
-research_data/  git-ignored except manifests
+backend/        Django + DRF — config/, apps/{common,accounts,...,research}, weights/, tests/
+frontend/       Vite + React + TS — api/, auth/, pages/, components/, styles/
+docs/           decision log, demo script, smoke checklist, adapter soundness
+plan/           the governing plan documents and the wireframe
+notebooks/      13_3_validation (S1) and 13_1_analysis (S3), run against the export
+wp/             the signed work-package deliverables
+research_data/  git-ignored: the research machine's working files and the export
+REPLICATION.md  how to reproduce the studies
 ```
 
 ## Licence

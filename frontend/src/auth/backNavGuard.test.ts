@@ -5,7 +5,7 @@ import { isSafeInAppPath } from "./backNavGuard";
 describe("isSafeInAppPath", () => {
   it("accepts this app's own paths", () => {
     expect(isSafeInAppPath("/dashboard")).toBe(true);
-    expect(isSafeInAppPath("/repos/1f0e-uuid?tab=deps")).toBe(true);
+    expect(isSafeInAppPath("/repositories/1f0e-uuid?tab=deps")).toBe(true);
     expect(isSafeInAppPath("/projects")).toBe(true);
   });
 

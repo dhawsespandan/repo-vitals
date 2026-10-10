@@ -15,6 +15,10 @@ function initials(user: { name: string; username: string }): string {
   return letters.toUpperCase();
 }
 
+/** The project's documentation: the README, which links the rest. */
+export const DOCUMENTATION_URL =
+  "https://github.com/dhawsespandan/repo-vitals#readme";
+
 /** The sticky top bar every signed-in page sits under. */
 export function AppShell({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -80,11 +84,19 @@ export function AppShell({ children }: { children: ReactNode }) {
         >
           Projects
         </NavLink>
-        {/* Documentation is a Phase 14 deliverable; shown inert so the nav
-            does not shift shape when it lands. */}
-        <span className="text-muted" style={{ fontSize: 14 }}>
+        {/* Phase 14's deliverable: the README, REPLICATION.md and the demo
+            script live with the code, so the link goes there rather than to
+            a copy that could drift from it. A new tab, so a scan being
+            watched keeps polling. */}
+        <a
+          href={DOCUMENTATION_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="nav-link"
+          style={{ color: "inherit", textDecoration: "none", fontSize: 14 }}
+        >
           Documentation
-        </span>
+        </a>
 
         <div
           style={{
