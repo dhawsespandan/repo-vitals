@@ -15,3 +15,7 @@
 # `corpus_report`'s two PNGs (§10 Phase 11). Imported inside the function that
 # draws them, so every other research command runs without it.
 matplotlib>=3.9,<4.0
+
+# `export_research_data`'s Parquet files (§10 Phase 14) — the interface File C
+# reads. Imported inside the export, so every other command runs without it.
+pyarrow>=20.0,<27.0

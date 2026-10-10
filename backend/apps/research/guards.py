@@ -95,6 +95,42 @@ def check_statement(sql: str) -> None:
         raise OperationalWriteRefused(table, _verb(sql))
 
 
+class WriteRefused(Exception):
+    """A read-only research command tried to write anything at all."""
+
+    def __init__(self, table: str, statement: str) -> None:
+        self.table = table
+        super().__init__(
+            f"This command only reads: refusing {statement} on {table!r}. "
+            f"An export that wrote a row would no longer describe the database "
+            f"it was taken from."
+        )
+
+
+def check_read_only(sql: str) -> None:
+    """Raise if `sql` writes any table, the permanent three included."""
+    match = _WRITE.match(sql)
+    if match is not None:
+        raise WriteRefused(match.group("table"), _verb(sql))
+
+
+@contextmanager
+def no_writes() -> Iterator[None]:
+    """Refuse every write, to any table — D10's guard with an empty allowlist.
+
+    For commands whose output is files describing the database, where even a
+    write to a research table would make the files describe a database that
+    no longer exists (`export_research_data`, §10 Phase 14).
+    """
+
+    def wrapper(execute, sql, params, many, context):
+        check_read_only(sql)
+        return execute(sql, params, many, context)
+
+    with connection.execute_wrapper(wrapper):
+        yield
+
+
 @contextmanager
 def no_operational_writes() -> Iterator[None]:
     """Refuse every write to a table outside §5.1's permanent three.
