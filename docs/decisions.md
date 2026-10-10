@@ -5594,7 +5594,7 @@ inside the app could drift from the files; the link cannot.
 | Exports regenerate every notebook table | **passes**: S1's 10 files and S3's 8 regenerate from the export alone; byte-identical on 3.11, float-precision on 3.12+ (§14.5); in the suite on every push |
 | Demo script runs on prod without improvisation | **not verified on production** — the session could not reach it (this section's introduction). The product half of the script ran on a local stack (Django + Vite over the dev database, scans built from real WP-5 rows and completed by the product's own `finalize`) in Chromium: login screen, dashboard, Documentation opening the README in a new tab, the `v2` score with its arithmetic (`100 − 52.02 = 47.98`), the trend's `weights v2` marker, the drill-down with the maintainer's deprecation text, a PyPI repository, the sign-out guard on `/login`, a registration refused with §5.6's message, four research routes 404, health a database round trip; no console error but the browser's own log of that designed 404. `docs/prod_smoke_checklist.md` is the production run, after `main` moves |
 | WP-8 outputs + WP-9 kappa present | **passes**: A, B, C 150/150 each in `wp/wp-8/runs/`; kappa 0.134 (§13.17), labels in the export, key withheld |
-| All 15 tags exist | **passes** with this tag: `v0.1.0`–`v0.13.0`, `v0.12.0-rc`, `v1.0.0` |
+| All 15 tags exist | **14 on GitHub; the fifteenth is the owner's to push** (§14.12): `v0.1.0`–`v0.13.0` and `v0.12.0-rc` exist; `v1.0.0` was created in the session and refused by its git access |
 
 CI: the commits were each verified in a clean worktree against the full check
 command (1,358 → 1,385 backend tests; 207 → 210 frontend), and CI run
@@ -5618,4 +5618,22 @@ Two behaviours, both small, and no migration or variable:
 The check is `docs/prod_smoke_checklist.md`, start to end, with the new scan's
 `weights v2` tag as the version marker §13.15 used; then the demo script once,
 timed.
+
+### 14.12 The tag is the last step, and it is the owner's
+
+The session's git access pushes its working branch and nothing else: `git push
+origin v1.0.0` was answered 403, and the GitHub tools it had can create a
+branch or a file but not a tag. So `v1.0.0` exists only in the session's
+clone, and this record does not claim otherwise. The release is the head of
+`claude/inspiring-bell-90ibgz`. To finish it, from a clone with push access:
+
+```
+git fetch origin
+git push origin origin/claude/inspiring-bell-90ibgz:main      # fast-forward; Render and Vercel deploy
+git tag -a v1.0.0 origin/claude/inspiring-bell-90ibgz -m "Phase 14: replication package, final hardening (decisions §14)"
+git push origin v1.0.0
+```
+
+then `docs/prod_smoke_checklist.md` on the deploy, which is also §14.10's one
+unverified criterion.
 

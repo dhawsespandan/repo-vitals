@@ -260,5 +260,5 @@ They stay local so a fresh 50 can still be labelled blind. Publish them once tha
 2. ~~Phase 13~~: closed at `v0.13.0` (decisions §13.14-13.15).
 3. ~~WP-8~~: complete (9 Oct).
 4. ~~WP-9~~: labelled; the judge is not validated (kappa 0.134). Decide the §13.17 option before S3.
-5. ~~Phase 14~~: closed at `v1.0.0` (decisions §14). The replication package is in place: `export_research_data`, the two notebooks, `REPLICATION.md`. Not yet checked on production (decisions §14.10): fast-forward `main` to the release, then run `docs/prod_smoke_checklist.md`.
+5. ~~Phase 14~~: closed (decisions §14). The replication package is in place: `export_research_data`, the two notebooks, `REPLICATION.md`. Two owner steps remain (decisions §14.12): fast-forward `main` and push the `v1.0.0` tag, then run `docs/prod_smoke_checklist.md` on the deploy.
 6. **S1 and S3** (File C). The §13.17 decision is the first thing S3 needs.
