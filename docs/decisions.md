@@ -5377,3 +5377,245 @@ correctness results are deterministic and do not depend on the judge.
 The answer key, both kappa reports and the full judge cache stay local, in
 `research_data/runs/judge_validation/` and `research_data/runs/`, until it is
 decided whether a fresh 50 will be labelled.
+
+## Phase 14 — Replication package, final hardening, v1.0
+
+§10 Phase 14: "A stranger can reproduce the system and studies; seminars run
+from a script; the repo is `v1.0.0`." One command (`export_research_data`),
+two notebooks, `REPLICATION.md`, the dependency freeze, the security
+re-sweep, a production smoke checklist, the README and the demo script. No
+migration, no new environment variable, no new host on the allowlist.
+
+Built on 2026-10-10 in one session under Spandan's delegation ("decisions i
+leave to u"). Two constraints of that session shape §14.10: its network policy
+denies `repo-vitals.onrender.com` and `repo-vitals-lilac.vercel.app` (and
+`api.osv.dev`, `api.groq.com`), and Claude in Chrome — the browser tool the
+request named — was not connected to it, so nothing here was checked on
+production; and its instructions
+were to push to the working branch `claude/inspiring-bell-90ibgz`, not to
+`main`, which Render and Vercel deploy from.
+
+### 14.1 The export reads the signed deliverables, not the working copies
+
+File A says the export carries "corpus manifest, weights files, run outputs".
+Those exist twice on the research machine: the working copies under
+`research_data/` and the signed copies committed under `wp/`. They are not the
+same thing. `research_data/runs/` also holds the judge cache, the abandoned
+first extraction (§13.14 (1)) and the pilot; a working copy can be edited after
+its sign-off where a committed deliverable cannot. File C analyses what was
+signed, so the documents come from `wp/` and the three tables from the
+database `DATABASE_URL` names. `MANIFEST.json` records the source of every
+file beside its sha256, so the choice is visible in the package itself.
+
+`runs/` in the export keeps `research_data/runs/`'s layout (the labelled set at
+`runs/ground_truth/`), so the analysis code reads an export exactly as it reads
+the research machine's folder.
+
+### 14.2 Corpus rows only, unless asked — and traces are live data
+
+File C §1.2: "All research analysis runs on `corpus_scan` rows; `live_scan`
+rows ... are never pooled into a corpus estimate." A live row also names a
+RepoVitals user and may name a private repository. So `--source` defaults to
+`corpus_scan`, and `agent_execution_traces` — written by every live
+per-dependency report and by nothing research-side (§13.4) — is treated as live
+data: with the default, `agent_traces.parquet` is written with its full schema
+and no rows. The research database holds no traces at all, so for WP-5's data
+the default loses nothing.
+
+Decimals are Parquet `decimal128` at the column's own precision and exact text
+in the CSV, never floats: D6's "the stored score reproduces from the stored
+signals" has to survive the copy, and the notebook checks that it does (914 of
+914).
+
+### 14.3 An export never empties a folder
+
+The first version replaced a non-empty `--out` with `--overwrite` by deleting
+it. On the research machine `research_data/exports/` is not the export's
+alone: it already holds WP-5's original dump (`wp5_signoff.md`) and the
+materialized `v2` panel (§12.19). So an export refuses when any path it writes
+already exists, and `--overwrite` removes exactly the files the previous
+export's own `MANIFEST.json` lists, then writes; nothing else in the folder is
+touched, and a test puts a dump and a rescore panel beside an export and
+overwrites it. The deliverables archive is additive for File B's own reason
+("never edit a deliverable after handoff — send a v2"): it can be copied over,
+never deleted from.
+
+The whole export runs inside `guards.no_writes`, D10's guard with an empty
+allowlist: a file set that describes a database is wrong the moment the export
+writes a row of it.
+
+### 14.4 The notebooks regenerate with the harnesses' own code, and assert
+
+"Exports regenerate every notebook table" is met literally. Each notebook is
+thin; every number it shows comes from `apps/research/replication.py`, which
+feeds the export to the code that produced the signed output and compares the
+result, file by file, with the signed copy:
+
+- **S1** (`13_3_validation`): the panel is rebuilt from Parquet by
+  `panel.build_panel` — factored out of `load_panel` so both sources go through
+  one constructor — and `harness.run_validation` (which now accepts a panel)
+  re-runs WP-6 from its recorded `inputs.json`, its deps.dev answers as
+  observed and its anchor scan. `report.md` and all nine data files come back.
+- **S3** (`13_1_analysis`): correctness is recomputed for all 450 generations
+  and agrees with the signed `metrics.csv` on every deterministic column; the
+  judge's verdicts are read as recorded; `analysis.render` re-renders
+  `tables.md` and the seven CSVs, with the bootstrap and seed the signed header
+  states.
+
+The notebooks run under `config.settings.offline`, whose database backend is
+Django's `dummy`: a query raises. The suite builds an export from the real
+commands (`validate_formula`, `analyze_experiment`, `export_research_data`)
+and executes both notebooks in a fresh kernel; their asserts are the checks,
+and a deliberately wrong bootstrap parameter turned the S3 notebook's test red
+before it was reverted. The executed notebooks are committed with their
+outputs — run on Python 3.11 against an export of the release's own parent
+commit — so GitHub shows the regenerated tables and every file *identical*.
+
+WP-9's kappa is recomputed only with the answer key (`RV_WP9_KEY`), which stays
+withheld (§13.17): the notebook says so rather than reconstructing the sample.
+
+### 14.5 Two things the replication found about exactness
+
+**Python's `sum()`.** Re-running both studies from the export under Python 3.12
+reproduced every rounded table exactly, and three full-precision CSVs of S1
+(`entropy.csv` 5 cells, `correlation.csv` 84, `confusion.csv` 108) and S3's
+`precision.csv` (3) differed in the last one or two digits. Under Python 3.11.17
+every file is byte-identical. Python 3.12 made `sum()` of floats compensated;
+WP-6 and WP-8's analyses ran on 3.11. The comparison now reports such a file as
+*equal to float precision* (relative tolerance 1e-12) and still fails on
+anything larger or on any difference in a rounded table. `REPLICATION.md` §5
+names 3.11 for byte-exact output.
+
+**The collation behind WP-6's bootstrap.** `load_panel` orders repositories by
+`repo_full_name` in the research database's collation, and the seeded
+bootstrap resamples by position. WP-6 ran on Docker's `postgres:16`
+(`en_US.utf8`); re-running `validate_formula` on a `C.UTF-8` database gave the
+same point estimates and intervals that moved in the third decimal (ρ =
+0.047 [-0.078, 0.165] against the signed [-0.077, 0.169]). Not changed in
+`load_panel`: it is the code WP-6 signed, and an `en_US` database — the one the
+README and `REPLICATION.md` create — reproduces it. Instead the notebook
+rebuilds the panel in WP-6's own order, read from the signed `scores.csv`, and
+reproduces the intervals on any machine; and the export sorts its text keys
+under the `C` collation, so two research databases created under different
+locales export byte-identical files (checked: a dump restored into an ICU
+`en-US` database and a `C.UTF-8` one gave the same sha256 for every table
+file).
+
+### 14.6 The dependency freeze: sources and locks
+
+The requirement files carried their reasons in comments and ranges in their
+pins, so "freeze" could not mean pinning them in place. The pip-tools layout
+does both: the hand-edited files become `requirements*.in`, unchanged in
+content, and the `requirements*.txt` files become locks compiled from them
+with `uv pip compile --universal --python-version 3.11`. Render's build command
+already installs `requirements.txt`, so production installs exact pins with no
+dashboard change, and every other `pip install -r requirements-dev.txt` in the
+README, CI and the runbooks keeps working.
+
+The four locks are resolved against the dev lock, so they pin one version of
+everything (numpy alone forks by Python version: 2.4.6 on 3.11, 2.5.3 on
+3.12+). `test_requirement_locks` fails on a pin outside its declared range, on
+a version the dev lock does not pin, and on a lock that does not name its
+command; a hand-edited Django pin turned it red. The locked set installs and
+passes the whole suite on Python 3.12 and on 3.14, Render's runtime (§8.15).
+
+### 14.7 The security re-sweep
+
+§11's risks, re-checked against `v1.0.0`'s tree:
+
+| Risk (§11) | Re-checked by | Result |
+|---|---|---|
+| SSRF via repo URL | `test_outbound_http`, `test_repository_validation` | 24 + 49 pass |
+| BOLA | `test_bola_suite` (coverage guard over every id route) | 32 pass |
+| OAuth token exposure | `test_token_crypto`, `test_log_redaction`, `test_no_write_calls`; the git history scanned for token, key and connection-string patterns | 7 + 6 + 18 pass; the history holds only the suite's fake tokens |
+| Duplicate/concurrent scans and generations | `test_rescan_guard`, `test_scan_api` | 28 + 43 pass |
+| Manifest parsing abuse | `test_npm_adapter`, `test_pypi_adapter` | 52 + 66 pass |
+| Prompt injection; issue search unreachable (D13) | `test_report_generation`, `test_agent_graph`, `test_experiment_conditions` | 36 + 27 + 14 pass; four research routes 404 on the local stack |
+| Chroma version-tag mismatch / writes | `test_rag_retrieval` | 44 pass |
+| Non-determinism | `test_scoring_engine` and the determinism cases | 39 pass |
+| Research tables outliving deletions | `test_project_cascade` | 15 pass |
+| Research data vs prod | `test_corpus_pipeline`, `test_export_research_data` | 6 + 15 pass |
+| Production settings | `manage.py check --deploy --settings=config.settings.prod` | no issues |
+
+**The frozen set, audited** (`pip-audit` on the locks, `npm audit`):
+
+- **pytest 8.4.2**, CVE-2025-71176 (predictable `/tmp/pytest-of-{user}`), dev
+  only: upgraded to 9.1.1 with pytest-django 4.14; the suite passes unchanged.
+- **chromadb 1.5.9** (CVE-2026-45829, -45830, -45831, -45833; no fix
+  released), **langgraph 0.6.11, langgraph-checkpoint 3.0.1** (CVE-2026-28277,
+  -27794, -48775; fixed in 1.0.10 / 4.1.1), **langgraph-sdk 0.2.15**
+  (CVE-2026-48776, GHSA-fvww-7h3r-vfhp): **kept, unreachable.** Chroma's are in
+  its server's HTTP API and RBAC provider, and Chroma runs embedded; LangGraph's
+  need a checkpointer or a node cache, and the graph compiles with neither; the
+  SDK is the Platform client, imported by nothing. A major LangGraph upgrade in
+  a release freeze would be the larger risk, so instead
+  `test_advisory_reachability` pins each reason — the compiled graph's
+  `checkpointer`, `cache` and `store` are `None`, no module creates a Chroma
+  server client, nothing imports `langgraph_sdk` — and says what to upgrade the
+  day one of them stops being true.
+- **react-router 6**, GHSA-wrjc-x8rr-h8h6 (open redirect via a backslash path;
+  fixed only in v7): unreachable — every route has a fixed prefix and anything
+  unmatched redirects to the constant `/dashboard`. The one `navigate()` fed a
+  remembered path (the back-navigation guard's restore) now refuses anything a
+  browser would read as another origin (`isSafeInAppPath`), whatever the
+  router does.
+- **source-map-js**: fixed by `npm audit fix`. The other npm advisories (vitest
+  and tinypool; braces, micromatch, chokidar through Tailwind 3) are in test
+  and build tooling, fixed only in those tools' next majors, and nothing of
+  theirs ships to a browser or a server.
+
+### 14.8 Documentation, in the top bar
+
+The nav has carried an inert "Documentation" since Phase 1, "so the nav does
+not shift shape when it lands". The repository is public, and the
+documentation is the README with `REPLICATION.md`, the demo script and the
+checklist beside it, so the item is now a link to the README on GitHub, in a
+new tab (`noopener`; a scan being watched keeps polling). A copy rendered
+inside the app could drift from the files; the link cannot.
+
+### 14.9 Recorded deviations
+
+- **Commit order.** §10's commits 3 and 4 are swapped, so `REPLICATION.md`
+  cites lockfiles that already exist.
+- **Not on `main`.** The commits and the tag are on
+  `claude/inspiring-bell-90ibgz`, which `main` can fast-forward to. Nothing
+  reaches production until it does; what then changes there is §14.11.
+- **WP-9's decision is not taken.** §13.17's two ways forward (re-judge and
+  re-validate on a fresh 50, or report faithfulness from the human labels only)
+  are a study-design decision that needs a new blind labeller for the first
+  option. Phase 14's gate is that WP-9's kappa is *present*; it is (0.134), and
+  every document that carries S3's numbers says the judge is not validated.
+
+### 14.10 Acceptance, as of `v1.0.0`
+
+| Criterion (§10 Phase 14) | State |
+|---|---|
+| Fresh clone → dev env < 30 min from the README alone | **passes, measured**: **114 s** from `git clone` of the pushed branch to a migrated backend and a built frontend, with no pip or npm cache; Docker's `db` service stood in for by a local Postgres 16 (no Docker daemon in the session). The replication path of `REPLICATION.md` §3 on the same clone, Python 3.11: **46 s** for restore, export and both notebooks, all 18 signed files byte-identical |
+| Exports regenerate every notebook table | **passes**: S1's 10 files and S3's 8 regenerate from the export alone; byte-identical on 3.11, float-precision on 3.12+ (§14.5); in the suite on every push |
+| Demo script runs on prod without improvisation | **not verified on production** — the session could not reach it (this section's introduction). The product half of the script ran on a local stack (Django + Vite over the dev database, scans built from real WP-5 rows and completed by the product's own `finalize`) in Chromium: login screen, dashboard, Documentation opening the README in a new tab, the `v2` score with its arithmetic (`100 − 52.02 = 47.98`), the trend's `weights v2` marker, the drill-down with the maintainer's deprecation text, a PyPI repository, the sign-out guard on `/login`, a registration refused with §5.6's message, four research routes 404, health a database round trip; no console error but the browser's own log of that designed 404. `docs/prod_smoke_checklist.md` is the production run, after `main` moves |
+| WP-8 outputs + WP-9 kappa present | **passes**: A, B, C 150/150 each in `wp/wp-8/runs/`; kappa 0.134 (§13.17), labels in the export, key withheld |
+| All 15 tags exist | **passes** with this tag: `v0.1.0`–`v0.13.0`, `v0.12.0-rc`, `v1.0.0` |
+
+CI: the commits were each verified in a clean worktree against the full check
+command (1,358 → 1,385 backend tests; 207 → 210 frontend), and CI run
+38021326834 passed on Postgres at `8b22ecb`, the last feature commit.
+
+**Handoff state — §10's "the plan's whole point".** Engineering is done. What
+remains is File C (the two papers) and one methodology decision inside it
+(§13.17); nothing in either needs code.
+
+### 14.11 What production gains when `main` moves
+
+Two behaviours, both small, and no migration or variable:
+
+- **Render installs the lock**: the versions the declared ranges resolved to on
+  2026-10-10, instead of whatever they resolve to on the day of each deploy.
+  Every pin was installed, and the suite passed, on Python 3.14. A pin that failed to build would fail the
+  build, and Render would keep serving the previous deploy.
+- **The frontend's top bar** links Documentation, and the back-navigation
+  guard refuses to restore a path that is not this app's own (§14.7).
+
+The check is `docs/prod_smoke_checklist.md`, start to end, with the new scan's
+`weights v2` tag as the version marker §13.15 used; then the demo script once,
+timed.
+
