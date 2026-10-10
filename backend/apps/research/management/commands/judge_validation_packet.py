@@ -10,10 +10,15 @@ and ecosystem, and writes three files into `--out`:
     judge_validation_key.json      KEEP: the judge's verdicts and where each item came from
 
 Reads files only.
+
+A re-validation (decisions §13.17, §15.4) labels a fresh 50: pass the first
+round's key with `--exclude-key`, and its items are left out of the sample.
+`wp/wp-9/judge_validation_key.json` is that key for the 2026-10-10 round.
 """
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from django.conf import settings
@@ -35,6 +40,13 @@ class Command(BaseCommand):
         )
         parser.add_argument("--size", type=int, default=judge_validation.DEFAULT_SIZE)
         parser.add_argument("--seed", type=int, default=42)
+        parser.add_argument(
+            "--exclude-key",
+            action="append",
+            default=[],
+            metavar="KEY.json",
+            help="leave out every item an earlier packet's key names (repeatable)",
+        )
 
     def handle(self, *args, **options) -> None:
         runs_dir = Path(options["runs_dir"]).expanduser()
@@ -53,6 +65,11 @@ class Command(BaseCommand):
             ]
             if missing:
                 raise CommandError(f"No results for run(s): {', '.join(missing)}.")
+            exclude = frozenset(
+                (entry["item_id"], entry["condition"])
+                for path in options["exclude_key"]
+                for entry in _key_items(Path(path).expanduser())
+            )
             written = judge_validation.build_packet(
                 run_dirs,
                 {item["item_id"]: item for item in items},
@@ -60,6 +77,7 @@ class Command(BaseCommand):
                 out,
                 size=options["size"],
                 seed=options["seed"],
+                exclude=exclude,
             )
         except (runner.RunError, judge_validation.ValidationPacketError) as exc:
             raise CommandError(str(exc)) from exc
@@ -72,3 +90,10 @@ class Command(BaseCommand):
                 f"{judge_validation.KEY_FILENAME} holds the judge's verdicts."
             )
         )
+
+
+def _key_items(path: Path) -> list[dict]:
+    try:
+        return list(json.loads(path.read_text(encoding="utf-8"))["items"].values())
+    except (OSError, ValueError, KeyError, AttributeError, TypeError) as exc:
+        raise CommandError(f"{path} is not a packet key: {exc}") from exc

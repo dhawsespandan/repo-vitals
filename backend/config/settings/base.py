@@ -219,6 +219,9 @@ EPSS_ENABLED = env.bool("EPSS_ENABLED", default=False)
 # per Flash-Lite model, which is why the default is Flash-Lite (§13.14).
 GEMINI_API_KEY = env("GEMINI_API_KEY", default="")
 JUDGE_MODEL = env("JUDGE_MODEL", default="gemini-3.5-flash-lite")
+# The faithfulness rubric (`judge.RUBRICS`). Empty is rubric-v1, the one WP-8's
+# signed verdicts used; rubric-v2 is decisions §13.17's tightened text.
+JUDGE_RUBRIC = env("JUDGE_RUBRIC", default="")
 
 # ── Retrieval (§6, Phase 8) ────────────────────────────────────────────────
 # Where the embedded Chroma collections live. A *cache*, not storage: §5.9

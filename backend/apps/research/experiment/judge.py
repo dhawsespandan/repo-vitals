@@ -52,9 +52,13 @@ logger = logging.getLogger(__name__)
 GEMINI_API = "https://generativelanguage.googleapis.com/v1beta/models"
 JUDGE_TIMEOUT: tuple[float, float] = (5.0, 90.0)
 
-#: Bumped whenever the rubric text changes: a verdict under one rubric is not
-#: a verdict under another, and the cache must not pretend otherwise.
+#: The rubric WP-8's signed verdicts were made under, and the default. Each
+#: rubric text has its own version, and the version is in every cache key: a
+#: verdict under one rubric is not a verdict under another, and the cache must
+#: not pretend otherwise. `JUDGE_RUBRIC` selects another (`RUBRICS`).
 RUBRIC_VERSION = "rubric-v1"
+#: decisions §13.17's tightened rubric, for the re-validation of §15.4.
+RUBRIC_V2 = "rubric-v2"
 
 FAITHFUL = "faithful"
 MINOR = "minor_unsupported"
@@ -110,8 +114,23 @@ def judge_model() -> str:
     return getattr(settings, "JUDGE_MODEL", "") or DEFAULT_JUDGE_MODEL
 
 
+def rubric_version() -> str:
+    """The rubric in force: `JUDGE_RUBRIC`, or the one the signed runs used."""
+    chosen = getattr(settings, "JUDGE_RUBRIC", "") or RUBRIC_VERSION
+    if chosen not in RUBRICS:
+        raise JudgeRefused(
+            f"JUDGE_RUBRIC={chosen!r} is not a rubric; the rubrics are "
+            f"{', '.join(sorted(RUBRICS))}."
+        )
+    return chosen
+
+
+def faithfulness_system() -> str:
+    return RUBRICS[rubric_version()]
+
+
 def judge_version() -> str:
-    return f"{judge_model()}|{RUBRIC_VERSION}"
+    return f"{judge_model()}|{rubric_version()}"
 
 
 def is_configured() -> bool:
@@ -194,6 +213,65 @@ Answer with one JSON object and nothing else:
 "evidence" is the SOURCE passage id, "measured", or null. "note" names the \
 unsupported claim that matters most, or is empty.
 """
+
+#: decisions §13.17, step 1. WP-9 found the rubric-v1 judge lenient in four
+#: ways (kappa 0.134 against a human on 50 items), and each change below closes
+#: one of them; nothing else differs from rubric-v1:
+#:
+#: * rule 2 adds that a claim contradicted by MEASURED DATA or SOURCE is
+#:   unsupported, even if the other is silent (misdescribed evidence);
+#: * rule 3 makes an assurance that an upgrade is safe, compatible or needs no
+#:   code changes a breaking-change claim, and so core;
+#: * rule 4 checks MEASURED DATA as well as SOURCE before accepting "not enough
+#:   information" or "no successor is known" — rubric-v1 accepted either
+#:   whenever SOURCE was empty, so a deprecation message naming the successor
+#:   went unread (items 025 and 026);
+#: * rule 5 is new: "fixes all known vulnerabilities" is supported only when
+#:   every advisory in MEASURED DATA has a fixed version at or below the target.
+FAITHFULNESS_SYSTEM_V2 = """\
+You are an evaluator. You check a dependency-remediation report against the \
+evidence its author was given, claim by claim. You never use outside knowledge.
+
+You are given MEASURED DATA (facts a scanner recorded about the dependency), \
+SOURCE (the passages the author was shown; it may be empty), and REPORT.
+
+1. List every claim REPORT makes: each recommended version, replacement \
+package, migration step, breaking-change assertion, and statement about what a \
+release contains or fixes. Restating a fact from MEASURED DATA is a claim too, \
+and so is any description of what SOURCE or MEASURED DATA says.
+2. For each claim decide "supported": true only if MEASURED DATA or SOURCE \
+states it or directly entails it. A claim that MEASURED DATA or SOURCE \
+contradicts is unsupported, even if the other is silent. Your own knowledge of \
+the package does not count, even if you are sure the claim is true.
+3. For each claim decide "core": true for the recommended version, the \
+replacement package, and any assertion that something breaks or does not \
+break. An assurance that an upgrade is safe, compatible, non-breaking or needs \
+no code changes is a breaking-change assertion, so it is core. False for \
+peripheral remarks.
+4. A statement that there is not enough information to recommend something, \
+or that no successor or fix is known, is supported only when neither SOURCE \
+nor MEASURED DATA provides it. Read MEASURED DATA's deprecation message and \
+advisories before accepting it: if either names a successor or a fixed \
+version, the statement is unsupported.
+5. A claim that the recommendation fixes all known vulnerabilities is supported \
+only if every advisory in MEASURED DATA has a fixed version at or below the \
+recommended version. An advisory with no recorded fix, or one fixed above the \
+recommended version, makes the claim unsupported.
+
+Answer with one JSON object and nothing else:
+{"claims": [{"claim": string, "core": boolean, "supported": boolean, \
+"evidence": string or null}], "verdict": "faithful" | "minor_unsupported" | \
+"major_unsupported", "note": string}
+"evidence" is the SOURCE passage id, "measured", or null. "note" names the \
+unsupported claim that matters most, or is empty.
+"""
+
+#: Every faithfulness rubric by version. rubric-v1 stays as it was signed, so
+#: WP-8's cached verdicts still match their keys.
+RUBRICS: dict[str, str] = {
+    RUBRIC_VERSION: FAITHFULNESS_SYSTEM,
+    RUBRIC_V2: FAITHFULNESS_SYSTEM_V2,
+}
 
 RELEVANCE_SYSTEM = """\
 You are an evaluator. For each PASSAGE, decide whether it helps answer \
@@ -353,7 +431,7 @@ class Judge:
             self.hits += 1
             return cached
         answer = self._ask(
-            FAITHFULNESS_SYSTEM,
+            faithfulness_system(),
             faithfulness_prompt(item["target"], inputs["generation"], shown),
         )
         claims = [c for c in answer.get("claims") or [] if isinstance(c, dict)]

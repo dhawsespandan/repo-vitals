@@ -91,6 +91,41 @@ def signed_runs(fixture: dict, deliverables: Path) -> Path:
     return runs_dir
 
 
+def signed_wp9(fixture: dict, deliverables: Path, tmp_path: Path) -> dict:
+    """WP-9's packet over those runs, and a human's labels for it.
+
+    The labels disagree with the judge on every third item, so the kappa and
+    the human-label tables have something to say.
+    """
+    from apps.research.experiment import judge, judge_validation, runner
+
+    items, _ = runner.load_items(fixture["labelled"])
+    out = tmp_path / "wp9_build"
+    judge_validation.build_packet(
+        fixture["dirs"],
+        {item["item_id"]: item for item in items},
+        judge.JudgeCache(fixture["runs_dir"] / judge.CACHE_FILENAME),
+        out,
+        size=12,
+    )
+    key = json.loads((out / judge_validation.KEY_FILENAME).read_text())["items"]
+    shutil.copyfile(
+        out / judge_validation.PACKET_FILENAME,
+        deliverables / "wp-9" / "judge_validation_packet.md",
+    )
+    lines = ["item_id,label,note"]
+    for index, (number, entry) in enumerate(sorted(key.items())):
+        label = entry["judge_verdict"]
+        if index % 3 == 0:
+            label = judge.MINOR if label != judge.MINOR else judge.FAITHFUL
+        note = "" if label == judge.FAITHFUL else "a claim the passages do not make"
+        lines.append(f"{number},{label},{note}")
+    (deliverables / "wp-9" / "wp9_judge_labels.csv").write_text(
+        "\n".join(lines) + "\n", encoding="utf-8"
+    )
+    return key
+
+
 def exported(tmp_path, deliverables: Path) -> Path:
     out = tmp_path / "research_data" / "exports"
     call_command(
@@ -110,6 +145,7 @@ def study(tmp_path, runs):  # noqa: F811 - the imported fixture
     deliverables = fake_deliverables(tmp_path / "wp")
     signed_validation(tmp_path, deliverables)
     signed_runs(runs, deliverables)
+    signed_wp9(runs, deliverables, tmp_path)
     return exported(tmp_path, deliverables)
 
 
@@ -258,6 +294,30 @@ class TestComparisons:
         assert not replication.compare_text(
             "report.md", regenerated.replace("0.047", "0.048"), signed
         ).identical
+
+
+@pytest.mark.django_db
+class TestWp9FromTheExport:
+    def test_the_key_is_rebuilt_and_checked_against_the_packet(self, study):
+        from apps.research.experiment import judge_validation
+
+        key = replication.wp9_key(study)
+        labels = judge_validation.read_labels(study / replication.WP9_LABELS, key)
+
+        assert len(key) == 12 and set(labels) == set(key)
+        result = judge_validation.kappa(labels, key)
+        assert result.agreement == pytest.approx(8 / 12)
+
+    def test_a_packet_from_other_runs_is_refused(self, study):
+        from apps.research.experiment import judge_validation
+
+        packet = study / replication.WP9_PACKET
+        packet.write_text(
+            packet.read_text(encoding="utf-8").replace("Upgrade", "Upgrayedd", 1),
+            encoding="utf-8",
+        )
+        with pytest.raises(judge_validation.ValidationPacketError, match="verbatim"):
+            replication.wp9_key(study)
 
 
 # ── the notebooks ──────────────────────────────────────────────────────────

@@ -393,7 +393,13 @@ DOCUMENTS: tuple[Document, ...] = (
     Document(
         "judge_validation/wp9_judge_labels.csv",
         "wp-9/wp9_judge_labels.csv",
-        "WP-9: the human labels (the answer key is withheld: decisions §13.17)",
+        "WP-9: the human labels",
+    ),
+    Document(
+        "judge_validation/judge_validation_packet.md",
+        "wp-9/judge_validation_packet.md",
+        "WP-9: the blind packet the labels were made against (packet v2); the "
+        "answer key is rebuilt from it and the runs (decisions §15.3)",
     ),
 )
 
