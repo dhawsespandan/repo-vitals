@@ -5857,3 +5857,76 @@ that a retry whose worker dies is still reaped once its own five minutes pass.
 It is prepared the day before with the checklist's new step 5 line (*Try
 again* once, with health polled). It names `lodash`'s stored plan as the
 fallback that does exist, and says not to press *Try again* on stage.
+
+### 14.16 The production check of §14.15 (2026-10-10): both fixes hold, and the demo's step is stored
+
+Run from Spandan's machine on 2026-10-10, 16:50–17:35 UTC, driven by an AI
+tool at Spandan's direction in Spandan's own Chrome session (signed in to
+GitHub, the app and Vercel; Render signed in partway through, by Spandan).
+
+**What was deployed.** `main` was at `c004d2c`. Vercel shows it as the
+Production deployment. Render's Events tab shows "Deploy live for `c004d2c`" at
+16:13 UTC, before anything below ran. This closes §14.14's unconfirmed deploy.
+
+**§14.14's two restarts were out-of-memory kills.** The Events tab lists
+"Instance failed: h67wf. Ran out of memory (used over 512MB) while running your
+code." at 07:56 and 08:06 UTC, with "Service recovered" at 07:57 between
+them. Nothing but deploy events follows `c004d2c` going live.
+
+**Finding 1, on production.** On `rv-accept-monorepo`, `request`'s row was
+still `failed` from §14.14. *Try again* was pressed once at 16:58 UTC. Its
+plan completed at 16:59:56 UTC: one fix, five retrieved passages, none cited,
+with the "Nothing cited" banner. `/api/health/` was polled every 3 s from
+another process, from 16:57:57 to 17:10:16 UTC: 150 polls, all 200, the slowest
+3.6 s. Render recorded no instance failure. The plan is now stored, and it is
+what `docs/demo_script.md` opens at 4:45. Render's Memory chart drew no data
+on the free tier, so there is no peak figure from production. The evidence is
+the absent kill, against §14.15's 352 MB measured off it.
+
+**Finding 2, on production.** The page was reloaded about 20 s into the
+retry. It came back still running ("Reading the changelog…"), not "This report
+stopped before it finished". A second request for the same report, sent the
+way the button sends it while the panel hid the button, was refused with
+409 `report_generating` carrying the same `reportId`.
+
+**`docs/prod_smoke_checklist.md`**
+
+| Step | Result |
+|---|---|
+| 0 Warm | a cold start. Health answered after about a minute |
+| 0 Know what was deployed | passes: `c004d2c` on both (above) |
+| 0 Foreground tab | the automated tab reports `document.hidden`, so polling paused. Pages were reloaded to read results |
+| 1 Health | `{"status":"ok","database":"ok"}` |
+| 1 Security headers | all four present on `/api/health/` |
+| 1 Research unreachable | all four routes 404 through Vercel |
+| 1 Memory | passes by the Events tab: no out-of-memory restart during or after step 5's `request` retry. The chart drew no data |
+| 2 Sign in | **passes, re-exercised** (§14.14 skipped it): Sign out → "Continue with GitHub" → `/dashboard` with the avatar and name |
+| 2 Refresh keeps the session | passes |
+| 2 Back gesture | not exercised this run (§14.14 passes it) |
+| 3 Rejection | passes: `github.com/django/django` → "You need write or collaborator access on this repository to monitor it here." |
+| 3 A fixture scans | passes on `rv-accept-basic`, removed from the dashboard by Spandan and registered again: the scan completed in 6 s. The card showed it after a reload (the hidden tab, above). The trend kept its past, with 5 scans where there were 4 |
+| 3 Weights tag | passes: the new scan reads `weights v2` |
+| 3 Rescan asks first | passes on `rv-accept-monorepo` ("This scan has 2 generated reports"); "Keep this scan" kept them |
+| 4 Drill-down | passes: `lodash` on `rv-accept-monorepo`, 0.00 + 39.11 + 7.85 + 1.52 = 48.48, "weights v2 · npm vector" |
+| 4 PyPI | passes as §14.14 records it: three manifests plus `poetry.lock`; `django 4.2.12` Deprecated (yanked); `oauth2client` Deprecated (Inactive) |
+| 4 Unassessable | passes: seven specifiers (`npm:` alias, `link:`, `github:`, `workspace:`, `file:`, URL, `git+ssh`), each with its reason and no component score |
+| 5 Combined report | `rv-accept-mixed`'s, from 07:49 UTC, loads from the stored row. `rv-accept-basic`'s new scan generated one in about 20 s |
+| 5 The heavy one | passes (finding 1, above) |
+| 5 Per-dependency report | passes: `request`, the thin-retrieval branch, says so in its banner |
+| 5 Downloads | passes: `.md` and `.json` both 200; the JSON parses (`repovitals/report@1`) |
+| 6 Projects | passes: `rv-accept-basic` grouped with `rv-accept-monorepo`. `basic`'s combined report names `lodash` and `request` as "flagged too" there, and `express` and the second `lodash` as not flagged, with the disclaimer. The project was ungrouped afterwards. A first attempt paired `monorepo` with `rv-accept-mixed`, which share no package (`mixed` has `requests`, not `request`). It left a combined report on `monorepo`'s current scan saying so |
+| 6 Trend | passes: 7 scans on `rv-accept-monorepo`, the "weights v2" marker before the first `v2` scan |
+| 7 Console | no errors on the dashboard, a repository page and Projects |
+
+**`docs/demo_script.md`.** Every step was run: the login, the rejection, the
+live registration, the score, the drill-down, PyPI, the stored `request` plan
+with its JSON download, the trend, and the four GitHub research pages, all of
+which render. It was not one continuous timed run. The path without the live
+registration took about 3 min without narration, and the registration was run
+afterwards, once `rv-accept-basic` had been removed. On the day,
+`rv-accept-basic` is already registered again, so the "free one fixture"
+preparation step has to be repeated.
+
+**Left as it was found.** Production holds two reports this run made: the
+combined reports on `rv-accept-monorepo`'s and `rv-accept-basic`'s current
+scans. No project remains.
