@@ -1,8 +1,9 @@
 -r requirements.txt
-# Phase 11's research-only extras (matplotlib). Pulled in here so CI installs
-# them and the corpus-figure tests run rather than skip; Render installs
-# requirements.txt alone and never sees them.
--r requirements-research.txt
+# The research-only extras (matplotlib, pyarrow) and the notebooks' runner
+# (§10 Phase 14), which includes them. Pulled in here so CI installs them and
+# the corpus-figure, export and notebook tests run rather than skip; Render
+# installs requirements.txt alone and never sees any of them.
+-r requirements-notebooks.txt
 
 pytest>=8.3,<9.0
 pytest-django>=4.9,<5.0

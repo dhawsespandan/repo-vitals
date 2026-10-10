@@ -181,8 +181,14 @@ def run_validation(
     client_factory=None,
     depsdev: reference.DepsDevClient | None = None,
     progress=None,
+    panel: CorpusPanel | None = None,
 ) -> ValidationRun:
-    """Everything §10 Phase 12 asks the harness to compute, in refusal order."""
+    """Everything §10 Phase 12 asks the harness to compute, in refusal order.
+
+    `panel` replaces the database read with a panel built elsewhere — an export
+    folder's, in the replication notebook (§10 Phase 14). Everything after it
+    is the same code either way.
+    """
     _say(progress, f"AHP: {inputs.ahp_path}")
     result = gate_matrix(inputs.ahp_path)
 
@@ -193,7 +199,8 @@ def run_validation(
     )
     candidate, pypi_rule = build_candidate(result, baseline, inputs.pypi_shift)
 
-    panel = load_panel(inputs.snapshot_date)
+    if panel is None:
+        panel = load_panel(inputs.snapshot_date)
     _say(
         progress,
         f"corpus: {len(panel.repositories)} repositories, {panel.occurrence_count} "

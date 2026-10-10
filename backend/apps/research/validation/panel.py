@@ -27,6 +27,7 @@ than picking the newest the way `corpus_report` does for a chart.
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
@@ -134,50 +135,69 @@ def resolve_snapshot(requested: date | None) -> date:
     return available[0]
 
 
-def load_panel(snapshot_date: date | None = None) -> CorpusPanel:
-    """Every corpus repository of one snapshot, with its occurrences.
+#: The columns `build_panel` reads from each `scan_history` row, in order.
+SCAN_COLUMNS: tuple[str, ...] = (
+    "scan_history_id",
+    "github_repo_id",
+    "repo_full_name",
+    "github_username",
+    "ecosystems",
+    "sampling_weight",
+    "risk_score",
+    "classification",
+    "scoring_formula_version",
+)
 
-    Two queries — the repositories, then all their occurrences in one pass —
-    rather than one per repository: a thousand round trips is what makes a
-    research command slow on the teammate's laptop. `.order_by()` clears
-    `Meta.ordering` on both, for §11.21's reason.
+#: The columns `build_panel` reads from each `dependency_history` row, in order.
+OCCURRENCE_COLUMNS: tuple[str, ...] = (
+    "scan_history_id",
+    "ecosystem",
+    "is_unassessable",
+    "is_deprecated",
+    "vulnerability_count",
+    "cvss_max",
+    "staleness_days",
+    "manifest_path",
+    "package_name",
+)
+
+
+def build_panel(
+    snapshot: date, scans: Iterable[tuple], occurrences: Iterable[tuple]
+) -> CorpusPanel:
+    """A panel from rows shaped as `SCAN_COLUMNS` and `OCCURRENCE_COLUMNS`.
+
+    The one construction both sources go through — the research database
+    (`load_panel`) and an export folder (`replication.panel_from_export`) — so
+    a notebook's panel cannot differ from the harness's in anything but where
+    its rows were read. Repositories keep the order `scans` arrives in.
     """
-    snapshot = resolve_snapshot(snapshot_date)
-    scans = ScanHistory.objects.filter(
-        data_source=DataSource.CORPUS_SCAN.value, snapshot_date=snapshot
-    ).order_by("repo_full_name", "scan_history_id")
-
     repositories: dict = {}
-    for row in scans.iterator(chunk_size=1000):
-        repositories[row.pk] = PanelRepository(
-            scan_history_id=str(row.pk),
-            github_repo_id=row.github_repo_id,
-            full_name=row.repo_full_name,
-            owner=row.github_username,
-            ecosystems=row.ecosystems,
-            sampling_weight=float(row.sampling_weight)
-            if row.sampling_weight is not None
+    for (
+        scan_id,
+        github_repo_id,
+        full_name,
+        owner,
+        ecosystems,
+        sampling_weight,
+        risk_score,
+        classification,
+        version,
+    ) in scans:
+        repositories[str(scan_id)] = PanelRepository(
+            scan_history_id=str(scan_id),
+            github_repo_id=github_repo_id,
+            full_name=full_name,
+            owner=owner,
+            ecosystems=ecosystems,
+            sampling_weight=float(sampling_weight)
+            if sampling_weight is not None
             else None,
-            stored_score=row.risk_score,
-            stored_classification=row.classification,
-            stored_version=row.scoring_formula_version,
+            stored_score=risk_score,
+            stored_classification=classification,
+            stored_version=version,
         )
 
-    rows = (
-        DependencyHistory.objects.filter(scan_history__in=scans.order_by())
-        .order_by()
-        .values_list(
-            "scan_history_id",
-            "ecosystem",
-            "is_unassessable",
-            "is_deprecated",
-            "vulnerability_count",
-            "cvss_max",
-            "staleness_days",
-            "manifest_path",
-            "package_name",
-        )
-    )
     grouped: dict = defaultdict(list)
     for (
         scan_id,
@@ -189,8 +209,8 @@ def load_panel(snapshot_date: date | None = None) -> CorpusPanel:
         staleness,
         manifest_path,
         package_name,
-    ) in rows.iterator(chunk_size=5000):
-        grouped[scan_id].append(
+    ) in occurrences:
+        grouped[str(scan_id)].append(
             (
                 manifest_path,
                 package_name,
@@ -208,16 +228,47 @@ def load_panel(snapshot_date: date | None = None) -> CorpusPanel:
                 ),
             )
         )
-    for scan_id, occurrences in grouped.items():
+    for scan_id, found in grouped.items():
         repository = repositories.get(scan_id)
-        if repository is None:  # pragma: no cover - the filter makes this unreachable
+        if repository is None:
             continue
         # A fixed order, so anything that iterates occurrences (a bootstrap,
         # a tie in the roll-up's sort) is reproducible across databases.
-        occurrences.sort(key=lambda entry: (entry[0], entry[1]))
-        repository.occurrences = [entry[2] for entry in occurrences]
+        found.sort(key=lambda entry: (entry[0], entry[1]))
+        repository.occurrences = [entry[2] for entry in found]
 
     return CorpusPanel(snapshot_date=snapshot, repositories=list(repositories.values()))
+
+
+def load_panel(snapshot_date: date | None = None) -> CorpusPanel:
+    """Every corpus repository of one snapshot, with its occurrences.
+
+    Two queries — the repositories, then all their occurrences in one pass —
+    rather than one per repository: a thousand round trips is what makes a
+    research command slow on the teammate's laptop. `.order_by()` clears
+    `Meta.ordering` on both, for §11.21's reason.
+
+    **The repository order is the database's collation's** (decisions §14):
+    `repo_full_name` sorts differently under `en_US.utf8` (Docker's
+    `postgres:16`, where WP-6 ran) and `C.UTF-8`. Every point estimate is
+    order-free; the seeded bootstrap intervals are not, and move in their third
+    decimal. `replication.panel_from_export` can rebuild WP-6's own order from
+    its `scores.csv`.
+    """
+    snapshot = resolve_snapshot(snapshot_date)
+    scans = ScanHistory.objects.filter(
+        data_source=DataSource.CORPUS_SCAN.value, snapshot_date=snapshot
+    ).order_by("repo_full_name", "scan_history_id")
+    rows = (
+        DependencyHistory.objects.filter(scan_history__in=scans.order_by())
+        .order_by()
+        .values_list(*OCCURRENCE_COLUMNS)
+    )
+    return build_panel(
+        snapshot,
+        scans.values_list(*SCAN_COLUMNS).iterator(chunk_size=1000),
+        rows.iterator(chunk_size=5000),
+    )
 
 
 # ── scoring ────────────────────────────────────────────────────────────────

@@ -1,0 +1,16 @@
+# The analysis notebooks (§10 Phase 14): `notebooks/13_1_analysis.ipynb` (S3)
+# and `notebooks/13_3_validation.ipynb` (S1). The research machine and CI
+# install this; Render never does.
+#
+# nbclient runs a notebook headless — `jupyter execute --inplace
+# notebooks/13_3_validation.ipynb` — and is how the suite runs both; ipykernel
+# is the kernel it starts. pandas serves the notebooks' "Exploring" cells only:
+# every regenerated table is computed by the harnesses' own code. To browse the
+# notebooks interactively, add JupyterLab (`pip install jupyterlab`).
+
+-r requirements-research.txt
+
+nbclient>=0.10,<0.12
+nbformat>=5.10,<6.0
+ipykernel>=6.29,<8.0
+pandas>=2.2,<4.0
