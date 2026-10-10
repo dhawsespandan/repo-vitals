@@ -10,7 +10,7 @@
 
 # Frozen research inputs are hashed byte for byte (a labelled set's sha256
 # names every run over it), so git stores them exactly as written.
-wp/wp-8/**/*.jsonl -text
+research/work-packages/wp-8/**/*.jsonl -text
 # Raw run records copied from research_data/ are archived exactly as the
 # research machine wrote them, so a copy back restores the original bytes.
-wp/*/raw/** -text
+research/work-packages/*/raw/** -text
