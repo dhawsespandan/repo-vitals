@@ -73,3 +73,19 @@ def test_smoke_memory_emits_machine_readable_marks(monkeypatch):
     # continuously and the marks are a subset of what it saw.
     assert payload["peak_mb"] >= payload["highest_settled_mb"]
     assert "baseline (django loaded)" in payload["marks_mb"]
+
+
+def test_the_embedded_corpus_is_a_changelog_s_worth_of_tokens():
+    """§14.15: the corpus used to be forty copies of "release note text", about
+    210 tokens a chunk, and passed at a batch size that a real changelog took
+    over 512 MB. The peak follows tokens, not characters, so the corpus has to
+    be as dense as `request`'s release notes: chunker-sized passages of PR-link
+    lines, and as many of them as that changelog has."""
+    from apps.accounts.management.commands.smoke_memory import _changelog_chunk
+    from apps.reports.rag.chunker import TARGET_CHARS
+
+    chunk = _changelog_chunk(7)
+
+    assert abs(len(chunk) - TARGET_CHARS) <= 100
+    assert chunk.count("https://github.com/") == 12
+    assert len({_changelog_chunk(index) for index in range(100)}) == 100

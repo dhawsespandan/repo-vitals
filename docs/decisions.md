@@ -5784,3 +5784,76 @@ during it.
 read the 07:57 and 08:05 UTC restarts. Run the GitHub sign-in round trip once
 (two minutes). Then fix finding 1 before the seminar, or rewrite the demo's
 remediation row to open `lodash`'s stored plan.
+
+### 14.15 Both findings fixed: one chunk per embedding, and expiry keyed on the last state change
+
+Built on 2026-10-10, after §14.14, in a cloud session under Spandan's
+delegation ("I leave all the decisions to you"). Its network policy denies
+HuggingFace, Groq, OSV, deps.dev and both production hosts, so nothing below
+was run on production. The production check is the smoke checklist's new
+step 5 line, after `main` moves.
+
+**Finding 1 reproduced, and its cause measured.** HuggingFace was unreachable,
+so the model came from Chroma's public copy of the same export
+(`chroma-onnx-models/all-MiniLM-L6-v2/onnx.tar.gz`: a 6-layer, 384-wide BERT,
+the same architecture fastembed's `Qdrant/all-MiniLM-L6-v2-onnx` serves).
+`request`'s `CHANGELOG.md` (69,061 bytes, fetched from GitHub) went through
+the production chunker, `rag.embeddings` and the Chroma store, with LangGraph
+compiled, while a 2 ms sampler read peak RSS:
+
+| Runtime | Tokens | Batch | Peak | Embed time |
+|---|---|---|---|---|
+| Python 3.11, fastembed 0.8.0, ORT 1.29.0 | 512 | 8 | 479.6 MB | 36.4 s |
+| Python 3.11, fastembed 0.9.0, ORT 1.31.0 (the lock) | 512 | 8 | 501.7 MB | 34.9 s |
+| **Python 3.14, the lock (Render's runtime)** | 512 | 8 | **553.4 MB** | 34.1 s |
+| Python 3.14, the lock | 512 | 2 | 362.4 MB | 15.8 s |
+| **Python 3.14, the lock** | 512 | **1** | **352.0 MB** | **11.3 s** |
+| Python 3.14, the lock | 256 | 8 | 390.3 MB | 9.6 s |
+
+The changelog is 97 chunks, and every line of it is a PR link, so a
+1,200-character chunk tokenizes to a median of 372 tokens (p90 467, max 491;
+61 of 97 over 256). Attention is quadratic in the padded length, and eight
+such chunks at once is what §8.15's measurement never saw: its corpus was
+"release note text" repeated, about 210 tokens a chunk. On Render's runtime
+the configuration that shipped peaks over the 512 MB cap. The 34-second embed
+also matches §14.14's 503 "about 40 s into the generation".
+
+So the regression §14.14 suspected is partly real and mostly not. Under
+identical model files, the lock's fastembed 0.9.0 / ORT 1.31.0 cost 22 MB
+more than the research machine's 0.8.0 / 1.29.0, and Python 3.14 another
+52 MB. But the configuration was always near the edge on a dense changelog.
+§8.16's success on the same `request` plan was with whatever Render resolved
+then, which §14.14 records as unknown.
+
+**The fix: `MAX_EMBED_BATCH = 1`.** Batches of one are the lowest peak and also
+the fastest: with one ORT thread, a batch buys nothing but the padding its
+shorter members run over. Neither the vectors nor the truncation change. On the
+whole changelog, every vector from batches of one is bit-identical to batches
+of eight (maximum absolute difference 0.0, top-5 retrieval unchanged), because
+padding is masked out of the mean. Capping the tokenizer at 256 was the other
+candidate (a lower peak, and the model's training length). It was rejected
+because it changes every vector of a long chunk, and so moves retrieval away
+from what WP-8 measured. It also reaches into fastembed's internals.
+
+**`smoke_memory` measures tokens now.** Its corpus is 100 chunker-sized
+passages of PR-link lines, about 470 tokens each, shaped like `request`'s.
+Under Python 3.14 and the lock it reports **490.0 MB at batches of eight**,
+over its 80% line, and **371.5 MB at batches of one**. A test pins the batch
+at one and says what to run before raising it. Another checks the corpus stays
+chunk-sized and link-dense.
+
+**Finding 2: `expire_stale` is keyed on `updated_at`.** Every transition of a
+report row saves `updated_at`: the queue, the retry's reset in
+`_cache_or_queue`, and `running`. Nothing writes an active row between them,
+so `updated_at` measures how long the current attempt has gone without a word.
+`created_at` keeps meaning when the row was made: the serializer exposes it,
+and resetting it on retry would have changed that. A test reproduces
+production's sequence (a row created long ago, retried, polled through the
+read path while running, then clicked again): it fails on the old key with
+the retry reaped, and passes on the new one with a 409. A second test checks
+that a retry whose worker dies is still reaped once its own five minutes pass.
+
+**The demo.** `docs/demo_script.md` now opens a stored `request` plan at 4:45.
+It is prepared the day before with the checklist's new step 5 line (*Try
+again* once, with health polled). It names `lodash`'s stored plan as the
+fallback that does exist, and says not to press *Try again* on stage.

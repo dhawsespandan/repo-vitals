@@ -39,6 +39,23 @@ chunks in one call allocates ~160 MB transiently, and a spike is as fatal as a
 resident cost when a cap kills the process. Neither changes a single vector —
 the same text produces the same embedding either way, so §10's determinism
 acceptance is untouched.
+
+**The batch is one chunk (§14.15).** §8.15's table was measured on chunks of
+about 210 tokens. A real changelog is denser: `request`'s 69 KB `CHANGELOG.md`
+is 97 chunks with a median of 372 tokens, because every line is a PR link, and
+the tokenizer truncates at 512. Attention is quadratic in the padded length, so
+eight such chunks at once took the production worker down again on 2026-10-10.
+Re-measured on that file through this module, with the locked versions:
+
+    Python 3.14, fastembed 0.9.0, ORT 1.31   peak       embed time
+    batches of 8                             553.4 MB   34.1 s
+    batches of 2                             362.4 MB   15.8 s
+    batches of 1                             352.0 MB   11.3 s
+
+One at a time is also the fastest: with one ORT thread, a batch buys nothing
+but the padding its shorter members are run over. And it is exactly as
+deterministic: on that file every vector is bit-identical to batches of eight
+(maximum absolute difference 0.0), because padding is masked out of the mean.
 """
 
 from __future__ import annotations
@@ -55,10 +72,10 @@ logger = logging.getLogger(__name__)
 #: cannot index, and the failure would surface as an unrelated Chroma error.
 EXPECTED_DIMENSION = 384
 
-#: Chunks per `model.embed` call. See the module docstring for the measurements.
-#: Eight rather than four because the two are within 10 MB of each other and
-#: eight is half the ORT invocations; a whole changelog still fits the tier.
-MAX_EMBED_BATCH = 8
+#: Chunks per `model.embed` call. See the module docstring for the measurements:
+#: eight 512-token chunks at once peaked at 553 MB on Render's runtime, one at a
+#: time at 352 MB, and one at a time is also the fastest (§14.15).
+MAX_EMBED_BATCH = 1
 
 _model = None
 _model_lock = threading.Lock()
@@ -134,8 +151,9 @@ def embed(texts: list[str]) -> list[list[float]]:
     a loop pays per-call overhead per chunk. That reasoning was right about
     speed and wrong about the constraint that actually binds: embedding forty
     1,200-character chunks in a single call allocated ~160 MB transiently and
-    took the production worker over 512 MB (§8.15). Batching caps the spike at
-    roughly 20 MB for the same total work.
+    took the production worker over 512 MB (§8.15). Batching caps the spike for
+    the same total work; how small the batch must be depends on how many tokens
+    a chunk carries, which §14.15 measured on a real changelog.
 
     Order is preserved across batch boundaries, which is what the caller relies
     on when it zips these back onto the chunks.

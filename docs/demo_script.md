@@ -22,8 +22,13 @@ is the longer, unhurried version of the product half; run it the day before.
   from the dashboard (its history is kept — the trend is keyed on GitHub's
   ids, decisions §10.9 — so it comes back with its past).
 - [ ] **Have a fallback report.** `rv-accept-monorepo`'s `request` remediation
-  should already exist; if Groq's free tier is exhausted on the day, the stored
-  plan is served from the database exactly as a fresh one would be.
+  must already be stored, generated the day before with the smoke checklist's
+  step 5 (decisions §14.15): on 2026-10-10 its row was left `failed` (§14.14),
+  so open it and press *Try again* once. If Groq's free tier is exhausted on
+  the day, the stored plan is served from the database exactly as a fresh one
+  would be. If it could not be generated, use `lodash`'s stored plan on the
+  same repository instead, and say at 4:45 that the plan shown is the thin-retrieval
+  branch.
 - [ ] **Open the research tabs**, in order: on GitHub,
   `wp/wp-4/strata_report.md`, `wp/wp-5/score_histogram.png`,
   `notebooks/13_3_validation.ipynb` and `notebooks/13_1_analysis.ipynb`
@@ -41,7 +46,7 @@ is the longer, unhurried version of the product half; run it the day before.
 | 2:00 | **The score.** Open the repository: the badge, the class, and *Where the points went* — `100 − … = …`, **weights v2**. | "Deterministic: no LLM touches the number. The worst dependency counts in full and each next one half as much as the one before, so five hundred clean dependencies cannot hide three critical ones." |
 | 3:00 | **Drill-down.** *Why?* on the flagged `lodash` row: *How this score was computed*. | "Every flag says why: deprecation, the worst CVSS, the CVE count, staleness — each term's contribution, adding up to the row's score, under the weights version that scored it." |
 | 4:00 | **The PyPI proof.** Open `rv-accept-pypi`. | "Five Python manifest formats through the same pipeline, unchanged. PyPI deprecation is real but terse — a yanked release, an *Inactive* classifier — and that asymmetry is what study S3 measures." |
-| 4:45 | **Cited remediation.** On `rv-accept-monorepo`, *Generate remediation* for `request` (about 35 s; or open the stored one). Show the fixes, the citations, and *Retrieved source passages* beside them; then *Download this plan* as JSON. | "One retrieval pass over the package's own changelog and README, a deterministic grounding gate, one model call. When the sources are thin, it says so in its first sentence instead of guessing. The JSON is a handoff to a coding agent — Repo Vitals never commits anything." |
+| 4:45 | **Cited remediation.** On `rv-accept-monorepo`, open the stored remediation for `request` (prepared before; a fresh one takes about 30 s). Show the fixes, the citations, and *Retrieved source passages* beside them; then *Download this plan* as JSON. | "One retrieval pass over the package's own changelog and README, a deterministic grounding gate, one model call. When the sources are thin, it says so in its first sentence instead of guessing. The JSON is a handoff to a coding agent — Repo Vitals never commits anything." |
 | 6:30 | **The trend.** *Score history* on `rv-accept-monorepo`. | "Every scan is kept, tagged with the weights that scored it; the marker is where `v2` took over. Old scores are never rewritten: research recomputes, the product shows what it showed." |
 | 7:15 | **The corpus.** The strata report, then the score histogram. | "914 repositories sampled on a documented frame — 240 strata, stale ones deliberately oversampled — and scored once, by the exact code the product runs. That cross-section is study S1's dataset." |
 | 8:15 | **Validation.** The 13_3 notebook: the checklist, then RQ1–RQ3. | "AHP weights against entropy weights from the corpus — they disagree, and we say so. Classes survive ±20% perturbation with under 5% flips. Against an *independent* reference, deps.dev's Scorecard, there is no correlation: no weighting of these four signals tracks a repository's own security practices. And this whole report regenerates, offline, from the export." |
@@ -57,5 +62,5 @@ is the longer, unhurried version of the product half; run it the day before.
 | The site spins on first load | Render was cold. Talk through the architecture slide for 50 s; it comes back. |
 | GitHub sign-in fails | Use the already signed-in window; the session survives a refresh. |
 | The scan sits at *queued* | The tab is in the background, or the instance restarted. Bring it to the front; if it is still queued after a minute, rescan. |
-| "Generate remediation" fails or is slow | Groq's free tier is per minute and per day. Open the stored plan on `rv-accept-monorepo` instead — reports are cache-first by design. |
+| "Generate remediation" fails or is slow | Groq's free tier is per minute and per day. Open the stored plan on `rv-accept-monorepo` instead — reports are cache-first by design. Do not press *Try again* on stage: a failed row retries a full generation. |
 | A notebook tab will not render on GitHub | Open the same section in `wp/wp-6/validation_report/report.md` or `wp/wp-8/runs/analysis/tables.md`: the notebooks regenerate exactly those files. |

@@ -37,7 +37,9 @@ the developer's account: `rv-accept-basic`, `rv-accept-monorepo`,
   `/api/research/issue-search/` and `/api/issues/search/` all answer 404
   (D13, decisions §13.15).
 - [ ] **Memory.** Render's metrics show the instance under 512 MB after the
-  per-dependency report in step 5 (decisions §1.13, §8.9: about 280 MB peak).
+  per-dependency report on `request` in step 5, and its Events tab shows no
+  out-of-memory restart during it (decisions §8.15, §14.15: about 370 MB peak
+  for a 512-token changelog under `smoke_memory`).
 
 ## 2. Identity
 
@@ -80,6 +82,12 @@ the developer's account: `rv-accept-basic`, `rv-accept-monorepo`,
   fixes, the citations and the retrieved chunks render side by side, or — with
   thin retrieval — the plan says in its first sentence that it rests on the
   scan's measurements (§5.9).
+- [ ] **The heavy one does not take the instance down.** Generate (or *Try
+  again*) `request` on `rv-accept-monorepo` — its 69 KB changelog is the
+  densest the fixtures carry — while `/api/health/` is polled every 3 s in
+  another tab. Pass: health answers 200 throughout and the plan completes. A
+  503 about 40 s in is the embedding step being killed for memory: stop, and
+  read Render's Events tab (decisions §14.14 finding 1, §14.15).
 - [ ] **Downloads.** The `.md` and `.json` downloads open, and the JSON parses
   (§5.8).
 

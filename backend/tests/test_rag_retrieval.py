@@ -681,8 +681,16 @@ def test_a_corpus_is_embedded_in_bounded_batches(recording_model):
 
     embeddings.embed(texts)
 
-    assert recording_model.batches == [8, 8, 4]
+    assert recording_model.batches == [1] * 20
     assert max(recording_model.batches) <= embeddings.MAX_EMBED_BATCH
+
+
+def test_the_cap_is_one_chunk_at_a_time():
+    """§14.15: eight of a real changelog's 512-token chunks at once peaked at
+    553 MB on Render's runtime and took production down a second time; one at a
+    time peaked at 352 MB, ran faster, and gave bit-identical vectors. Raising
+    this again needs a fresh `smoke_memory` on a token-dense corpus first."""
+    assert embeddings.MAX_EMBED_BATCH == 1
 
 
 def test_order_survives_the_batch_boundaries(recording_model):

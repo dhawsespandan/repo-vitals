@@ -73,6 +73,20 @@ class _SmokeChunk:
         self.source_kind = "changelog"
 
 
+def _changelog_chunk(index: int) -> str:
+    """One chunker-sized passage shaped like a real changelog (§14.15).
+
+    Twelve PR-link lines under a release heading: ~1,200 characters, as the
+    chunker cuts them, and ~470 tokens, as `request`'s release notes tokenize.
+    """
+    lines = "".join(
+        f"- [#{2900 + index * 12 + line}](https://github.com/example/library/pull/"
+        f"{2900 + index * 12 + line}) Fix header parsing for port {line} (@maintainer)\n"
+        for line in range(12)
+    )
+    return f"### v2.{index}.0 (2018/08/10)\n{lines}"
+
+
 class Command(BaseCommand):
     help = (
         "Measure worker RSS through a representative request + background-thread cycle."
@@ -214,6 +228,15 @@ class Command(BaseCommand):
         # production uses. A smoke test that constructed the model differently
         # from the code it is vouching for would be measuring a configuration
         # nobody ships.
+        #
+        # And the chunks carry a real changelog's *tokens*, not only its
+        # characters (§14.15). This corpus used to be forty copies of "release
+        # note text" repeated — about 210 tokens a chunk — and it passed at
+        # batches of eight, while `request`'s changelog (97 chunks, a median of
+        # 372 tokens: every line is a PR link) took production over 512 MB at
+        # the same setting. Attention is quadratic in the padded length, so the
+        # token count is the number the peak follows. These lines are shaped
+        # like `request`'s: about 470 tokens per 1,200 characters.
         if options["skip_embedding"]:
             self.stdout.write(self.style.WARNING("  embedding step skipped"))
         else:
@@ -224,8 +247,7 @@ class Command(BaseCommand):
                 rag_embeddings.load_model()
                 mark("after model load")
 
-                body = "release note text " * 70
-                corpus = [f"## 1.{index}.0 {body}" for index in range(40)]
+                corpus = [_changelog_chunk(index) for index in range(100)]
                 vectors = rag_embeddings.embed(corpus)
                 elapsed = time.monotonic() - started
                 self.stdout.write(
