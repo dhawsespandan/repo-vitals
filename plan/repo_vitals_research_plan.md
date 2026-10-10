@@ -157,7 +157,16 @@ Intro (flag→fix gap; grounding hypothesis; ecosystem-metadata angle) → Relat
 
 ### 3.6 Gates, effort, venue
 
-Gates: S1's PyPI trust gate passed (§2.4.6); WP-8/WP-9 in hand. Effort: **3–4 weeks**. Venue: MSR (primary), alternates ICSME/SANER; AI-for-SE venues (CAIN, AIware) as strong alternates; journal EMSE. Step-down: workshops co-located with the above, then national venues.
+Gates: S1's PyPI trust gate passed (§2.4.6); WP-8/WP-9 in hand; the judge decision of §3.7 taken. Effort: **3–4 weeks**. Venue: MSR (primary), alternates ICSME/SANER; AI-for-SE venues (CAIN, AIware) as strong alternates; journal EMSE. Step-down: workshops co-located with the above, then national venues.
+
+### 3.7 Carried in from File A: the judge decision (decide at S3 start)
+
+WP-9 returned Cohen's kappa **0.134** (linearly weighted 0.186; raw agreement 34/50) against §3.4.1's 0.50 bar, so the judge's faithfulness verdicts cannot be used as they stand (`docs/decisions.md` §13.17; `wp/wp-review/WP_review.md`, WP-9). The judge is lenient — it flagged 4 of the 16 items the human found unsupported — and its rule 4 accepts "not enough information" without checking MEASURED DATA. This was deliberately left open at the end of engineering and is decided here, first, before any S3 analysis:
+
+1. **§3.4.1 as written — tighten, re-judge, re-validate.** Rule 4 checks MEASURED DATA as well as SOURCE; a claim contradicted by either is unsupported; "safe / no code changes" assurances count as breaking-change claims (core); "fixes all known vulnerabilities" is supported only if every listed advisory's fix is at or below the target. Bump `judge.RUBRIC_VERSION` (a small code change), re-judge all 450 generations (~750 calls, about two days of one free Gemini Flash-Lite key; the cache is keyed by rubric version), then label a **fresh** blind 50 that excludes the first 50, by someone who has not read `docs/decisions.md` §13.16–13.17. Kappa ≥ 0.50 → proceed under §3.4.1's bands.
+2. **Report the judge as not validated** and report faithfulness only from the 50 human labels (about 16 per condition), with the kappa and the disagreement table. This departs from §3.4.1's prespecified rule and must be stated as a deviation in the paper.
+
+Either way: correctness (deterministic) is unaffected and stays the headline; RQ1/RQ2 faithfulness claims are qualified by whichever path was taken; and once the choice is made, publish what was withheld to keep a fresh 50 blind — the WP-9 answer key, both kappa reports, attempt 1's files and the judge cache (`research_data/runs/` on the research machine), which `REPLICATION.md` §9 lists.
 
 ---
 
@@ -196,7 +205,7 @@ Each submission's artifact = the study's notebook + only the exports it reads + 
 | S1 anchors fail | explain mechanism or revisit formula **before** submission (§2.4.5) |
 | S1 AHP-entropy disagree (<0.75) | lead the discussion with it; still publishable (§2.4.2) |
 | PyPI trust gate fails | fix vector via WP-6 path before S3 analysis; disclose in both papers (§2.4.6) |
-| Judge κ < 0.5 | tighten rubric, re-judge, re-validate before any S3 claims (§3.4.1) |
+| Judge κ < 0.5 | tighten rubric, re-judge, re-validate before any S3 claims (§3.4.1). **Triggered: κ = 0.134; the choice is §3.7, taken at S3 start** |
 | Any RQ null | report at face value; framing already null-proof (§3.4.8) |
 | Reviewer asks for reweighted analysis | notebook cell via recomputation principle (§1.1) — never new data collection |
 | Reviewer asks for longitudinal or causal evidence | out of scope by construction (L12): answer with the cross-sectional framing and cite it as future work — never open a new data-collection round mid-review |
