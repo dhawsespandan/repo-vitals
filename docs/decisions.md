@@ -5675,3 +5675,112 @@ by an independent check that tried to refute it:
 WP-1's note now gives the corpus figures, says they describe the corpus and
 not PyPI, and marks them as measured after the note was written. The weights
 do not change.
+
+### 14.14 The production run (2026-10-10): tags pushed, smoke passes, the demo fails at one step
+
+Run from Spandan's machine on 2026-10-10, 07:35–08:15 UTC, driven by an AI
+tool at Spandan's direction in Spandan's own Chrome session (already signed in
+to GitHub and to the app; not signed in to Render).
+
+**Tags.** `v0.14.0` and `v1.0.0` were created as annotated tags on
+`origin/main` (`fab4df5`) with §14.12's commands and pushed at about 07:35 UTC.
+`v0.1.0`…`v0.14.0` plus `v1.0.0` makes the fifteen §4.3 names, so §14.10's
+last row now passes. `claude/inspiring-bell-90ibgz` was at `fab4df5` and fully
+merged, and was deleted from the remote after the tags.
+
+**Render's deploy of `fab4df5`: not confirmed.** The dashboard was not signed
+in from that browser, and production exposes no version marker. The backend's
+served code is unchanged between `v0.13.0` and `fab4df5`: only the
+`requirements*` files differ (§14.6), so no response can tell the two builds
+apart. What can be seen: the repository's webhook list shows the Render deploy
+hook's last delivery as successful, so Render accepted a deploy request for
+the day's pushes. A tag push is a push event too, so the tags triggered one
+more deploy of `main`'s head. Whether the frozen lock built, and which build
+is live, is on the dashboard's Deploys tab. **Vercel** serves the Phase 14
+frontend: the top bar's Documentation link (§14.8) is present.
+
+**`docs/prod_smoke_checklist.md`**
+
+| Step | Result |
+|---|---|
+| 0 Warm | health answered after a 38 s cold start. The Chrome window was in the background, so `document.hidden` was overridden on each page (§8, §12.17) |
+| 0 Know what was deployed | Vercel yes; Render not confirmed (above) |
+| 1 Health | `{"status":"ok","database":"ok"}` |
+| 1 Security headers | all four present on `/api/health/`: HSTS (`max-age=2592000; includeSubDomains; preload`), `x-frame-options: DENY`, `x-content-type-options: nosniff`, `referrer-policy: same-origin` |
+| 1 Research unreachable | all four routes 404, through Vercel and on Render directly |
+| 1 Memory | not checked (dashboard). See finding 1 |
+| 2 Sign in | **not re-exercised.** The run used the session already in the browser, and signing out was refused by the session's own permission policy, so the GitHub round trip was not repeated |
+| 2 Refresh keeps the session | passes |
+| 2 Back gesture | passes by the same rule (`LoginRoute` in `App.tsx`, which treats a typed URL and a back gesture alike): `/login` while signed in returned to `/dashboard` with "Sign out?" open, and "Stay signed in" kept the session |
+| 3 Rejection | passes: `github.com/django/django` → "You need write or collaborator access on this repository to monitor it here." |
+| 3 A fixture scans | passes on `rv-accept-unassessable` (rescanned rather than `rv-accept-monorepo`, whose scan holds a stored report the rescan would clear): Starting… → Scanning… → Scanned in under 19 s, no refresh |
+| 3 Weights tag | passes: that fixture's previous scan read `weights v1`, and the new one reads **`weights v2`** |
+| 3 Rescan asks first | passes on `rv-accept-monorepo`: "Rescan and clear this scan's reports? This scan has 1 generated report." "Keep this scan" kept it |
+| 4 Drill-down | passes: `lodash` on `rv-accept-monorepo`, 0.00 + 39.11 + 7.85 + 1.52 = 48.48, "weights v2 · npm vector" |
+| 4 PyPI | passes: the five formats (`requirements.txt`, `legacy/setup.py`, `legacy/extra.txt`, `service/pyproject.toml` + `poetry.lock`) as three manifests; the Poetry-locked `django 4.2.12` flagged Deprecated (yanked); `oauth2client` Deprecated (Inactive); the `pytz`/`six` canary absent; `setup.py`'s computed extras listed as unassessable |
+| 4 Unassessable | passes: all seven non-registry specifiers listed with reasons; 100/Safe over nothing assessed |
+| 5 Combined report | passes: `rv-accept-mixed`, under 20 s, `openai/gpt-oss-120b` at temperature 0; after a reload, "Generated 1 min ago" from the stored row |
+| 5 Per-dependency report | passes on `left-pad` (`rv-accept-mixed`) in about 43 s, on the thin-retrieval branch: the plan opens "Nothing cited", shows all 3 retrieved passages (0 cited) beside it, and recommends `String.prototype.padStart()` from the registry's deprecation message. **Fails on `request`**, finding 1 |
+| 5 Downloads | passes: `.md` and `.json` both 200 as attachments; the Markdown opens with a heading, and the JSON parses (14 keys, the 2.34.2 fix present) |
+| 6 Projects | passes: `rv-accept-basic` + `rv-accept-monorepo` grouped as "Smoke check 2026-10-10"; `rv-accept-basic`'s combined report carried the same four lines §10.14 recorded (express clean, lodash `packages/ui` flagged too, lodash `services/api` clean, request flagged too) and the scope sentence. Then ungrouped, so the demo's removal of `rv-accept-basic` cannot cascade (§10.14); both repositories stayed |
+| 6 Trend | passes: `rv-accept-monorepo` draws 7 scans with the `weights v2` marker; `rv-accept-pypi` draws 5 |
+| 7 Console | no errors on the dashboard, the detail pages, the drill-down, the reports or Projects |
+
+**`docs/demo_script.md`, timed.** Start 07:53:07 UTC, end about 08:09:30:
+**16 min 23 s** of wall clock, of which 11 min 41 s (07:56:27–08:08:08) was
+the failed remediation and its diagnosis. Without that window, the path took
+about **4 min 42 s** of system time. Each detail page needs about 16 s to load
+on this tier (its API calls run in sequence). So the script's ten minutes is
+bounded by the narration, not by the system, except at the remediation step.
+One planned substitution: the live registration step was run as a duplicate
+paste plus a rescan, because removing `rv-accept-basic` was refused by the same
+permission policy. The paste was refused with "You're already monitoring this
+repository." and the rescan completed in 19 s at `weights v2` (0/100,
+`100 − 100.00 = 0.00`); `lodash`'s drill-down summed to 48.50. The PyPI page,
+the trend, the strata report, the histogram (1800 × 675) and both notebooks
+(rendered by GitHub's notebook viewer) all showed as scripted. **The criterion
+"demo runs on prod without improvisation" is not met**, at the remediation
+step.
+
+**Finding 1: generating `request`'s plan takes the production instance down.**
+The run clicked *Generate remediation* on `rv-accept-monorepo`'s `request` at
+07:56:31 UTC. The row stayed `running`, health kept answering, and after five
+minutes `expire_stale` reaped it into "This report stopped before it
+finished." *Try again* at 08:04:54 failed the same way, this time with
+`/api/health/` polled every 3 s. It answered 200 until 08:05:30, then **503
+from 08:05:36**, then 429, and 200 again by 08:06:27. That is about 40 s into
+the generation, which is the embedding stage for a 69 KB changelog. A worker
+that dies mid-generation, with the instance back within a minute, is what an
+OOM kill looked like in §8.15–8.16. The same plan generated on production in
+§8.16, after §8.15's fix, with health at 200 throughout. So this is a
+regression of that headroom. Its cause is not established: either the
+resident footprint has grown since Phase 8, or the build now installs
+different versions. `fab4df5` pins `fastembed 0.9.0` and `onnxruntime 1.31.0`.
+What Render resolved before is not recorded, and the development virtualenv on
+Spandan's machine still has `0.8.0` / `1.29.0`. Render's Events tab names an out-of-memory restart if
+that is what happened. Until it is fixed:
+
+- the demo's remediation step must use a stored plan;
+- the fallback the script names does not exist. `rv-accept-monorepo`'s stored
+  plan is `lodash`'s (thin retrieval, 1 passage, 0 cited), and `request`'s row
+  is `failed`, so *Try again* will attempt the generation once more;
+- one click on it takes the service down for every user for about a minute.
+
+**Finding 2: a retried report can be reaped while it runs.** `_cache_or_queue`
+retries a failed row in place by resetting `status` and `error_message`, but
+not `created_at`. `expire_stale` fails every active row whose `created_at` is
+more than `STALE_GENERATION_AFTER` (5 min) old. A retry is always of a row
+first created at least that long ago, or it would not have been reaped. So the
+first read through `combined_for`, `per_dependency_for` or a new trigger
+while the retry runs marks it "stopped before it finished". A second *Try
+again* would then start a second generation beside the first, which is the
+double spend the lock exists to prevent. Not observed doing harm here, because
+the instance died first, but it is reachable by reloading the page during any
+retry. The fix is to reset `created_at` on retry, or to key the expiry on
+`updated_at`. §8.16's retry succeeded because nothing called the read path
+during it.
+
+**Left for the owner.** Sign in to Render to confirm the `fab4df5` build and
+read the 07:57 and 08:05 UTC restarts. Run the GitHub sign-in round trip once
+(two minutes). Then fix finding 1 before the seminar, or rewrite the demo's
+remediation row to open `lodash`'s stored plan.
